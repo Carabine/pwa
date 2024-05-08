@@ -1,0 +1,17 @@
+{
+    "name": "PWA Japenese Website",
+    "short_name": "Japanese",
+    "description": "A simple PWA japanese website",
+    "author": "Nikita",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4caf50",
+    "icons": [
+        {
+            "src": "pwa.png",
+            "sizes": "256x256",
+            "type": "image/png"
+        }
+    ]
+}
