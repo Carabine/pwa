@@ -65,11 +65,13 @@ function displayData(data) {
     const itemElement = document.createElement('div');
     const video = document.createElement("video")
     video.src = data.video
-
-    video.innerHTML
+    video.controls = true
+    //video.muted = true
+    video.autoplay = true
 
     const audio = document.createElement("audio")
     audio.src = data.audio
+    audio.controls = true
 
     dataDisplay.appendChild(video);
     dataDisplay.appendChild(audio);
