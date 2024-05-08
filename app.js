@@ -54,29 +54,80 @@ async function fetchDataFromServer() {
     }
 }
 
-// Function to display data
-function displayData(data) {
+function displayFrontSideData(data) {
+    const cardBackSide = document.querySelector('.back-side');
+    const cardFrontSide = document.querySelector('.front-side');
+
+    cardBackSide.innerHTML = ''
+    cardFrontSide.innerHTML = ''
+
+    const wordEl = document.createElement("div")
+    wordEl.classList.add("word")
+    wordEl.innerText = data.word
+
+    cardFrontSide.appendChild(wordEl);
+
+    const showBtn = document.createElement("button")
+    showBtn.innerHTML = 'Show'
+
+    showBtn.addEventListener("click", () => displayBackSideData(data))
+
+    document.querySelector(".buttons").innerHTML = ''
+
+    document.querySelector(".buttons").appendChild(showBtn)
+}
+
+function displayBackSideData(data) {
     console.log(123)
-    const dataDisplay = document.getElementById('dataDisplay');
+    const cardBackSide = document.querySelector('.back-side');
     // Clear previous data
-    dataDisplay.innerHTML = '';
     // Display new data
 
-    const itemElement = document.createElement('div');
     const video = document.createElement("video")
     video.src = data.video
     video.controls = true
-    //video.muted = true
     video.autoplay = true
+    video.height = 300
+    video.width = 500
 
     const audio = document.createElement("audio")
     audio.src = data.audio
     audio.controls = true
+    audio.volume = 0.4
 
-    dataDisplay.appendChild(video);
-    dataDisplay.appendChild(audio);
+    const hiraganaEl = document.createElement("div")
+    hiraganaEl.classList.add("hiragana")
+    hiraganaEl.innerText = data.kana
+
+    const sentenceEl = document.createElement("div")
+    sentenceEl.classList.add("sentence")
+    sentenceEl.innerText = data.sentence
+
+    const meaningEl = document.createElement("div")
+    meaningEl.classList.add("meaning")
+    meaningEl.innerText = data.meaning
+
+    cardBackSide.appendChild(video);
+    cardBackSide.appendChild(audio);
+    cardBackSide.appendChild(meaningEl);
+    cardBackSide.appendChild(hiraganaEl);
+    cardBackSide.appendChild(sentenceEl);
 
     console.log(localStorage.getItem('words'))
+
+    const keepWordBtn = document.createElement("button")
+    keepWordBtn.innerHTML = "Bad"
+
+    const buryWordBtn = document.createElement("button")
+    buryWordBtn.innerHTML = "Good"
+
+    keepWordBtn.addEventListener('click', keepWord);
+    buryWordBtn.addEventListener('click', buryWord);
+
+    document.querySelector(".buttons").innerHTML = ''
+
+    document.querySelector(".buttons").appendChild(keepWordBtn)
+    document.querySelector(".buttons").appendChild(buryWordBtn)
 }
 
 function shuffle(array) {
@@ -108,13 +159,13 @@ const keepWord = () => {
     const filteredPool = wordsPool.filter(w => w.id !== currentWord.id)
     setWordsPool([...shuffle(filteredPool), currentWord])
     currentWord = wordsPool[0]
-    displayData(currentWord)
+    displayFrontSideData(currentWord)
 }
 
 const buryWord = () => {
     setWordsPool(wordsPool.filter(w => w.id !== currentWord.id))
     currentWord = wordsPool[0]
-    displayData(currentWord)
+    displayFrontSideData(currentWord)
 }
 
 const refresh = () => {
@@ -122,13 +173,12 @@ const refresh = () => {
 
     setWordsPool(words)
     currentWord = wordsPool[0]
-    displayData(currentWord)
+    displayFrontSideData(currentWord)
 }
 
-document.getElementById('fetchButton').addEventListener('click', fetchDataFromServer);
-document.getElementById('keep-word-btn').addEventListener('click', keepWord);
-document.getElementById('bury-word-btn').addEventListener('click', buryWord);
-document.getElementById('refresh-btn').addEventListener('click', refresh);
+document.querySelector('.fetch-button').addEventListener('click', fetchDataFromServer);
+
+document.querySelector('.refresh-btn').addEventListener('click', refresh);
 
 const onLoad = () => {
     console.log(localStorage.getItem('wordsPool'))
@@ -142,7 +192,7 @@ const onLoad = () => {
         }
 
         currentWord = wordsPool[0]
-        displayData(currentWord);
+        displayFrontSideData(currentWord);
         console.log(localStorage.getItem('words'))
     }
 
