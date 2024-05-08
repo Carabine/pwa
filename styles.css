@@ -222,3 +222,13 @@ button:disabled::after {
     bottom: 0;
     right: 120px;
 }
+
+.buttons {
+    display: flex;
+    gap: 12px;
+}
+
+video {
+    max-width: 100%;
+    margin: 0 24px;
+}
