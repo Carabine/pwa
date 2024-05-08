@@ -229,6 +229,6 @@ button:disabled::after {
 }
 
 video {
-    max-width: 100%;
+    max-width: calc(100% - 48px);
     margin: 0 24px;
 }
