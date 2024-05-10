@@ -111,7 +111,7 @@ function displayBackSideData(data) {
     video.src = data.video
     video.controls = true
     video.autoplay = true
-    video.height = 300
+    //video.height = 300
     video.width = 500
 
     const audio = document.createElement("audio")

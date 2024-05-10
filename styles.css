@@ -98,6 +98,7 @@ button {
     outline: none;
     cursor: pointer;
     transition: box-shadow 0.2s;
+    border: 1px solid gray;
 }
 
 button::-moz-focus-inner {
@@ -178,12 +179,17 @@ button:disabled::after {
     opacity: 0;
 }
 
+body {
+    color: white;
+}
 .main {
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     min-height: 100%;
+    background: #0c0c0c;
+    color: white;
 }
 
 .back-side {
@@ -191,6 +197,8 @@ button:disabled::after {
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
 .word {
@@ -202,7 +210,7 @@ button:disabled::after {
 .front-side {
     display: flex;
     justify-content: center;
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid white;
     width: 50%;
     margin-bottom: 12px;
 }
