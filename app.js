@@ -15,34 +15,58 @@ async function fetchDataFromServer() {
         // const data = await response.json();
         const data = {
             "words": [
-                {
-                    "id": "423432432",
-                    "kana": "ざんねんな",
-                    "word": "残念な",
-                    "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/zan-noko(ru)_06_a.mp3",
-                    "video": "https://i.imgur.com/4LJ5Xgc.mp4",
-                    "meaning": "unfortunate, disappointing",
-                    "sentence": "残念 … 何が"
-                },
-                {
-                    "id": "2324324",
-                    "kana": "ゆめ",
-                    "word": "夢",
-                    "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/yume_06_d.mp3",
-                    "video": "https://i.imgur.com/53Etqza.mp4",
-                    "meaning": "dream [n.]",
-                    "sentence": "夢 か 何か 寝不足 だ な"
-                },
-                {
-                    "id": "12345",
-                    "kana": "さくや",
-                    "word": "昨夜",
-                    "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/saku(jitsu)_06_a.mp3",
-                    "video": "https://i.imgur.com/cgt9CW6.mp4",
-                    "meaning": "last night",
-                    "sentence": "昨夜 の 本当 びっくり し た"
-                }
-            ]
+            {
+                "id": "423432432",
+                "kana": "ざんねんな",
+                "word": "残念な",
+                "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/zan-noko(ru)_06_a.mp3",
+                "video": "https://i.imgur.com/4LJ5Xgc.mp4",
+                "meaning": "unfortunate, disappointing",
+                "sentence": "残念 … 何が",
+                "translatedSentence": "Too bad… What?"
+            },
+            {
+                "id": "2324324",
+                "kana": "ゆめ",
+                "word": "夢",
+                "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/yume_06_d.mp3",
+                "video": "https://i.imgur.com/53Etqza.mp4",
+                "meaning": "dream [n.]",
+                "sentence": "夢 か 何か 寝不足 だ な",
+                "translatedSentence": "Is it a dream or something like lack of sleep?"
+            },
+            {
+                "id": "12345",
+                "kana": "さくや",
+                "word": "昨夜",
+                "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/saku(jitsu)_06_a.mp3",
+                "video": "https://i.imgur.com/cgt9CW6.mp4",
+                "meaning": "last night",
+                "sentence": "昨夜 の 本当 びっくり し た",
+                "translatedSentence": "I was really surprised last night."
+
+            },
+            {
+                "id": "lw13br2c6popmqk856v",
+                "kana": "ねる",
+                "word": "寝る",
+                "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/shin-ne(ru)_06_c.mp3",
+                "video": "https://i.imgur.com/B7mnbxy.mp4",
+                "meaning": "sleep [v.i.]",
+                "sentence": "寝ぼけ て コード で 縛ったり する から よ",
+                "translatedSentence": "I'll tie you up with cords when I'm half asleep."
+            },
+            {
+                "id": "lw13nmxgakm9ga82ohg",
+                "kana": "のぼる",
+                "word": "登る",
+                "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/tou-nobo(ru)_06_f.mp3",
+                "video": "https://i.imgur.com/Kgfpfeo.mp4",
+                "meaning": "rise, ascend, climb",
+                "sentence": "登って くる",
+                "translatedSentence": "Come up"
+            }
+        ]
         }
         // Update localStorage with the fetched data
         console.log(JSON.stringify(data.words))
@@ -103,6 +127,10 @@ function displayBackSideData(data) {
     sentenceEl.classList.add("sentence")
     sentenceEl.innerText = data.sentence
 
+    const translatedSentenceEl = document.createElement("div")
+    translatedSentenceEl.classList.add("translatedSentence")
+    translatedSentenceEl.innerText = data.translatedSentence
+
     const meaningEl = document.createElement("div")
     meaningEl.classList.add("meaning")
     meaningEl.innerText = data.meaning
@@ -112,6 +140,7 @@ function displayBackSideData(data) {
     cardBackSide.appendChild(meaningEl);
     cardBackSide.appendChild(hiraganaEl);
     cardBackSide.appendChild(sentenceEl);
+    cardBackSide.appendChild(translatedSentenceEl);
 
     console.log(localStorage.getItem('words'))
 
