@@ -1,0 +1,164 @@
+{
+  "words": [
+    {
+      "id": "423432432",
+      "kana": "ざんねんな",
+      "word": "残念な",
+      "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/zan-noko(ru)_06_a.mp3",
+      "video": "https://i.imgur.com/4LJ5Xgc.mp4",
+      "meaning": "unfortunate, disappointing",
+      "sentence": "残念 … 何が",
+      "translatedSentence": "Too bad… What?"
+    },
+    {
+      "id": "2324324",
+      "kana": "ゆめ",
+      "word": "夢",
+      "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/yume_06_d.mp3",
+      "video": "https://i.imgur.com/53Etqza.mp4",
+      "meaning": "dream [n.]",
+      "sentence": "夢 か 何か 寝不足 だ な",
+      "translatedSentence": "Is it a dream or something like lack of sleep?"
+    },
+    {
+      "id": "lw13nmxgakm9ga82ohg",
+      "kana": "のぼる",
+      "word": "登る",
+      "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/tou-nobo(ru)_06_f.mp3",
+      "video": "https://i.imgur.com/Kgfpfeo.mp4",
+      "meaning": "rise, ascend, climb",
+      "sentence": "登って くる",
+      "translatedSentence": "Come up"
+    },
+    {
+      "id": "lw5dzrrbwyo6v441c8",
+      "kana": "ねむる",
+      "word": "眠る",
+      "audio": "",
+      "video": "https://i.imgur.com/eOJr0V2.mp4",
+      "meaning": "to sleep",
+      "sentence": "疲れ た 眠る",
+      "translatedSentence": "Tired"
+    },
+    {
+      "id": "lwdx3mg4jwl2ycvidq",
+      "kana": "しっぱい",
+      "word": "失敗",
+      "audio": "",
+      "video": "https://i.imgur.com/ukHGOL1.mp4",
+      "meaning": "failure, mistake, blunder",
+      "sentence": "残念 だ … 失敗 し た …",
+      "translatedSentence": "I'm sorry ... I failed ..."
+    },
+    {
+      "id": "lwdx5qw42c6dasax6up",
+      "kana": "しびれる",
+      "word": "痺れる",
+      "audio": "",
+      "video": "https://i.imgur.com/xUJaTHq.mp4",
+      "meaning": "to become numb, to go to sleep (e.g. a limb)",
+      "sentence": "なんか 痺れる ん だ",
+      "translatedSentence": "I'm paralyzed"
+    },
+    {
+      "id": "lwdx6x4f4re3h4bclh4",
+      "kana": "ねぼける",
+      "word": "寝ぼける",
+      "audio": "",
+      "video": "https://i.imgur.com/7T2jJB9.mp4",
+      "meaning": "to be still half asleep, to be half awake, to be not yet quite awake",
+      "sentence": "寝ぼけ て コード で 縛ったり する から よ",
+      "translatedSentence": "I'm going to sleep and tie up with code"
+    },
+    {
+      "id": "lwdx9e05q87p3d5n3oo",
+      "kana": "ぜんぜん",
+      "word": "全然",
+      "audio": "",
+      "video": "https://i.imgur.com/9WidSHo.mp4",
+      "meaning": "(not) at all, (not) in the slightest",
+      "sentence": "いや 全然",
+      "translatedSentence": "No at all"
+    },
+    {
+      "id": "lwdxbzd5gneykg94hqu",
+      "kana": "まちがい",
+      "word": "間違い",
+      "audio": "",
+      "video": "https://i.imgur.com/njtXRpD.mp4",
+      "meaning": "improper conduct (e.g. between man and woman), indiscretion",
+      "sentence": "これ は 何 か の 間違い という か なんと いう か その …",
+      "translatedSentence": "This is something wrong or something ..."
+    },
+    {
+      "id": "lwdxgc1g1bb1axrg93tg",
+      "kana": "そうぜつ",
+      "word": "壮絶",
+      "audio": "",
+      "video": "https://i.imgur.com/PCRGcFM.mp4",
+      "meaning": "heroic, fierce, grand, sublime, magnificent",
+      "sentence": "あー あ 壮絶 な 寝ぼけ 方 だ な",
+      "translatedSentence": "Oh, it's a fierce sleep"
+    },
+    {
+      "id": "lwdxj7zwl43ruk72r1e",
+      "kana": "へん",
+      "word": "変",
+      "audio": "",
+      "video": "https://i.imgur.com/xIsIHFr.mp4",
+      "meaning": "strange, odd, peculiar, weird, curious, queer, eccentric, funny, suspicious, fishy",
+      "sentence": "あの 変 な 生き物 は 本当 に 入り込ん で い たり し て",
+      "translatedSentence": "That weird creature really got in"
+    },
+    {
+      "id": "lwdxlbvnscfr2jbhq79",
+      "kana": "でんげん",
+      "word": "電源",
+      "audio": "",
+      "video": "https://i.imgur.com/PJCRHH5.mp4",
+      "meaning": "source of electricity, electrical power",
+      "sentence": "でも 電源 切って おい た し その …",
+      "translatedSentence": "But I turned off the power and that ..."
+    },
+    {
+      "id": "lwdxnn4effgokq5lz",
+      "kana": "そうとう",
+      "word": "相当",
+      "audio": "",
+      "video": "https://i.imgur.com/WJSMFvl.mp4",
+      "meaning": "considerable, substantial",
+      "sentence": "ありゃ 相当 怒ってる ね",
+      "translatedSentence": "I'm quite angry"
+    },
+    {
+      "id": "lwdxons84jdnx4bynce",
+      "kana": "おこる",
+      "word": "怒る",
+      "audio": "",
+      "video": "https://i.imgur.com/XxsW9WE.mp4",
+      "meaning": "to get angry, to get mad",
+      "sentence": "ありゃ 相当 怒ってる ね",
+      "translatedSentence": "I'm quite angry"
+    },
+    {
+      "id": "lwdxq7vgdzikftsjzlb",
+      "kana": "きぶん",
+      "word": "気分",
+      "audio": "",
+      "video": "https://i.imgur.com/I6gP2Wm.mp4",
+      "meaning": "feeling, mood",
+      "sentence": "うん ちょっと 気分 も 悪い し",
+      "translatedSentence": "Yeah, I feel a little sick"
+    },
+    {
+      "id": "lwdxubpgb8v60htqfq",
+      "kana": "かんけい",
+      "word": "関係",
+      "audio": "",
+      "video": "https://i.imgur.com/YrVhSjN.mp4",
+      "meaning": "relation, relationship, connection",
+      "sentence": "でも 昨夜 の あの 変 な 生き物 と 関係 が ある と し たら",
+      "translatedSentence": "But if it was related to that strange creature last night"
+    }
+  ]
+}

@@ -5,6 +5,27 @@ body {
     background-color: #f0f0f0;
 }
 
+.main-page a {
+    color: white;
+    font-size: 26px;
+    margin-top: 16px;
+}
+
+.main {
+    position: relative;
+}
+
+.back-btn {
+    position: absolute;
+    left: 16px;
+    top: 16px;
+}
+
+.back-btn a {
+    color: white;
+    text-decoration: none;
+}
+
 .container {
     max-width: 800px;
     margin: 20px auto;
@@ -202,8 +223,8 @@ body {
 }
 
 .word {
-    font-size: 46px;
-    font-weight: bold;
+    font-size: 50px;
+    font-weight: 500;
     margin-bottom: 12px;
 }
 
@@ -215,8 +236,21 @@ body {
     margin-bottom: 12px;
 }
 
+.meaning {
+    font-size: 22px;
+}
+
 .hiragana {
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 22px;
+}
+
+.sentence {
+    font-size: 18px;
+}
+
+.translatedSentence {
+    font-size: 18px;
 }
 
 .fetch-button {
@@ -238,5 +272,9 @@ body {
 
 video {
     max-width: calc(100% - 48px);
-    margin: 0 24px;
+    margin: 0 24px 12px;
+}
+
+audio {
+    display: none;
 }

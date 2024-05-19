@@ -1,4 +1,3 @@
-// Check if the browser supports service workers
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js', { scope: '/' })
         .then(function(registration) {
@@ -9,65 +8,13 @@ if ('serviceWorker' in navigator) {
         });
 }
 
+
 async function fetchDataFromServer() {
     try {
         // const response = await fetch('your_server_endpoint');
         // const data = await response.json();
-        const data = {
-            "words": [
-            {
-                "id": "423432432",
-                "kana": "ざんねんな",
-                "word": "残念な",
-                "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/zan-noko(ru)_06_a.mp3",
-                "video": "https://i.imgur.com/4LJ5Xgc.mp4",
-                "meaning": "unfortunate, disappointing",
-                "sentence": "残念 … 何が",
-                "translatedSentence": "Too bad… What?"
-            },
-            {
-                "id": "2324324",
-                "kana": "ゆめ",
-                "word": "夢",
-                "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/yume_06_d.mp3",
-                "video": "https://i.imgur.com/53Etqza.mp4",
-                "meaning": "dream [n.]",
-                "sentence": "夢 か 何か 寝不足 だ な",
-                "translatedSentence": "Is it a dream or something like lack of sleep?"
-            },
-            {
-                "id": "12345",
-                "kana": "さくや",
-                "word": "昨夜",
-                "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/saku(jitsu)_06_a.mp3",
-                "video": "https://i.imgur.com/cgt9CW6.mp4",
-                "meaning": "last night",
-                "sentence": "昨夜 の 本当 びっくり し た",
-                "translatedSentence": "I was really surprised last night."
-
-            },
-            {
-                "id": "lw13br2c6popmqk856v",
-                "kana": "ねる",
-                "word": "寝る",
-                "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/shin-ne(ru)_06_c.mp3",
-                "video": "https://i.imgur.com/B7mnbxy.mp4",
-                "meaning": "sleep [v.i.]",
-                "sentence": "寝ぼけ て コード で 縛ったり する から よ",
-                "translatedSentence": "I'll tie you up with cords when I'm half asleep."
-            },
-            {
-                "id": "lw13nmxgakm9ga82ohg",
-                "kana": "のぼる",
-                "word": "登る",
-                "audio": "https://media.kanjialive.com/examples_audio/audio-mp3/tou-nobo(ru)_06_f.mp3",
-                "video": "https://i.imgur.com/Kgfpfeo.mp4",
-                "meaning": "rise, ascend, climb",
-                "sentence": "登って くる",
-                "translatedSentence": "Come up"
-            }
-        ]
-        }
+        const res = await fetch('data.json')
+        const data = await res.json()
         // Update localStorage with the fetched data
         console.log(JSON.stringify(data.words))
         localStorage.setItem('words', JSON.stringify(data.words));
@@ -76,87 +23,6 @@ async function fetchDataFromServer() {
     } catch (error) {
         console.error('Error fetching data:', error);
     }
-}
-
-function displayFrontSideData(data) {
-    const cardBackSide = document.querySelector('.back-side');
-    const cardFrontSide = document.querySelector('.front-side');
-
-    cardBackSide.innerHTML = ''
-    cardFrontSide.innerHTML = ''
-
-    const wordEl = document.createElement("div")
-    wordEl.classList.add("word")
-    wordEl.innerText = data.word
-
-    cardFrontSide.appendChild(wordEl);
-
-    const showBtn = document.createElement("button")
-    showBtn.innerHTML = 'Show'
-
-    showBtn.addEventListener("click", () => displayBackSideData(data))
-
-    document.querySelector(".buttons").innerHTML = ''
-
-    document.querySelector(".buttons").appendChild(showBtn)
-}
-
-function displayBackSideData(data) {
-    console.log(123)
-    const cardBackSide = document.querySelector('.back-side');
-    // Clear previous data
-    // Display new data
-
-    const video = document.createElement("video")
-    video.src = data.video
-    video.controls = true
-    video.autoplay = true
-    //video.height = 300
-    video.width = 500
-
-    const audio = document.createElement("audio")
-    audio.src = data.audio
-    audio.controls = true
-    audio.volume = 0.4
-
-    const hiraganaEl = document.createElement("div")
-    hiraganaEl.classList.add("hiragana")
-    hiraganaEl.innerText = data.kana
-
-    const sentenceEl = document.createElement("div")
-    sentenceEl.classList.add("sentence")
-    sentenceEl.innerText = data.sentence
-
-    const translatedSentenceEl = document.createElement("div")
-    translatedSentenceEl.classList.add("translatedSentence")
-    translatedSentenceEl.innerText = data.translatedSentence
-
-    const meaningEl = document.createElement("div")
-    meaningEl.classList.add("meaning")
-    meaningEl.innerText = data.meaning
-
-    cardBackSide.appendChild(video);
-    cardBackSide.appendChild(audio);
-    cardBackSide.appendChild(meaningEl);
-    cardBackSide.appendChild(hiraganaEl);
-    cardBackSide.appendChild(sentenceEl);
-    cardBackSide.appendChild(translatedSentenceEl);
-
-    console.log(localStorage.getItem('words'))
-
-    const keepWordBtn = document.createElement("button")
-    keepWordBtn.innerHTML = "Bad"
-
-    const buryWordBtn = document.createElement("button")
-    buryWordBtn.innerHTML = "Good"
-
-    keepWordBtn.addEventListener('click', keepWord);
-    buryWordBtn.addEventListener('click', buryWord);
-
-    document.querySelector(".buttons").innerHTML = ''
-
-    document.querySelector(".buttons").appendChild(keepWordBtn)
-    document.querySelector(".buttons").appendChild(buryWordBtn)
 }
 
 function shuffle(array) {
@@ -175,63 +41,3 @@ function shuffle(array) {
     }
     return array
 }
-
-let wordsPool
-let currentWord
-
-const setWordsPool = (data) => {
-    localStorage.setItem("wordsPool", JSON.stringify(data))
-    wordsPool = data
-}
-
-const keepWord = () => {
-    const filteredPool = wordsPool.filter(w => w.id !== currentWord.id)
-    setWordsPool([...shuffle(filteredPool), currentWord])
-    currentWord = wordsPool[0]
-    displayFrontSideData(currentWord)
-}
-
-const buryWord = () => {
-    setWordsPool(wordsPool.filter(w => w.id !== currentWord.id))
-    currentWord = wordsPool[0]
-    displayFrontSideData(currentWord)
-}
-
-const refresh = () => {
-    const words = JSON.parse(localStorage.getItem('words') ?? "[]")
-
-    setWordsPool(words)
-    currentWord = wordsPool[0]
-    displayFrontSideData(currentWord)
-}
-
-document.querySelector('.fetch-button').addEventListener('click', fetchDataFromServer);
-
-document.querySelector('.refresh-btn').addEventListener('click', refresh);
-
-const onLoad = () => {
-    console.log(localStorage.getItem('wordsPool'))
-    const words = JSON.parse(localStorage.getItem('words') ?? "[]")
-    wordsPool = JSON.parse(localStorage.getItem('wordsPool') ?? "[]")
-
-    if (words) {
-        if(wordsPool.length === 0) {
-            setWordsPool(shuffle(words))
-            wordsPool = words
-        }
-
-        currentWord = wordsPool[0]
-        displayFrontSideData(currentWord);
-        console.log(localStorage.getItem('words'))
-    }
-
-}
-// On page load, check if data is available in localStorage and display it
-window.addEventListener('load', () => {
-    onLoad()
-});
-
-// Check if the app can be installed
-window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault(); // Prevent the default browser install prompt
-});
