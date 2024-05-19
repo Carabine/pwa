@@ -116,10 +116,9 @@ const onLoad = () => {
     wordsPool = JSON.parse(localStorage.getItem('wordsPool') ?? "[]")
 
     if (words) {
-        if(wordsPool.length === 0) {
-            setWordsPool(shuffle(words))
-            wordsPool = words
-        }
+        setWordsPool(shuffle(words))
+        wordsPool = words
+
 
         currentWord = wordsPool[0]
         displayFrontSideData(currentWord);

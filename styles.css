@@ -232,7 +232,8 @@ body {
     display: flex;
     justify-content: center;
     border-bottom: 1px solid white;
-    width: 50%;
+    min-width: 50%;
+    max-width: 90%;
     margin-bottom: 12px;
 }
 
