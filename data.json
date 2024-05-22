@@ -159,6 +159,156 @@
       "meaning": "relation, relationship, connection",
       "sentence": "でも 昨夜 の あの 変 な 生き物 と 関係 が ある と し たら",
       "translatedSentence": "But if it was related to that strange creature last night"
+    },
+    {
+      "id": "lwhz5x5eoxvdnvb9g4k",
+      "kana": "さける",
+      "word": "避ける",
+      "audio": "",
+      "video": "https://i.imgur.com/cia22IN.mp4",
+      "meaning": "to avoid (physical contact with)",
+      "sentence": "避ける な よ",
+      "translatedSentence": "Don't avoid"
+    },
+    {
+      "id": "lwhzac1r8peciokv52a",
+      "kana": "れんらく",
+      "word": "連絡",
+      "audio": "",
+      "video": "https://i.imgur.com/JqFXSmg.mp4",
+      "meaning": "contacting, (making) contact, getting in touch, communication, correspondence, call, message",
+      "sentence": "学校 から 連絡 が あった ん だ けど 今日 早退 し た そう ね",
+      "translatedSentence": "I was contacted by the school, but I left early today."
+    },
+    {
+      "id": "lwhzc3uyq9qh1ttxgfn",
+      "kana": "めずらしい",
+      "word": "珍らしい",
+      "audio": "",
+      "video": "https://i.imgur.com/zynNJ0A.mp4",
+      "meaning": "unusual, rare, curious",
+      "sentence": "あら おかわり なの 珍しい わ ね",
+      "translatedSentence": "It's unusual"
+    },
+    {
+      "id": "lwhzduw1fy7i4neihy",
+      "kana": "なおる",
+      "word": "治る",
+      "audio": "",
+      "video": "https://i.imgur.com/6mKZEpL.mp4",
+      "meaning": "to get better, to get well, to recover (from an illness), to be cured, to be restored, to heal",
+      "sentence": "治った ん だ よ",
+      "translatedSentence": "It was cured"
+    },
+    {
+      "id": "lwhzf53qg4gnf8cqbft",
+      "kana": "びょういん",
+      "word": "病院",
+      "audio": "",
+      "video": "https://i.imgur.com/8sYmzt0.mp4",
+      "meaning": "hospital, clinic, doctor's office, doctor's surgery, infirmary",
+      "sentence": "病院 で 調べ られ たら",
+      "translatedSentence": "If you are investigated at the hospital"
+    },
+    {
+      "id": "lwhzgzgvgqlhbnuih3b",
+      "kana": "ふつうに",
+      "word": "普通に",
+      "audio": "",
+      "video": "https://i.imgur.com/CbSFPOt.mp4",
+      "meaning": "normally, ordinarily, usually, generally, commonly",
+      "sentence": "普通 に 喋れ る よう に なった ん だ な",
+      "translatedSentence": "I was able to speak normally"
+    },
+    {
+      "id": "lwhzignyzqs0pt60dnq",
+      "kana": "しらべる",
+      "word": "調べる",
+      "audio": "",
+      "video": "https://i.imgur.com/HIAn9aM.mp4",
+      "meaning": "to examine, to look up, to investigate, to check up, to sense, to study, to inquire, to search",
+      "sentence": "病院 で 調べ られ たら",
+      "translatedSentence": "If you are investigated at the hospital"
+    },
+    {
+      "id": "lwhzjf0ue4zakrhvjir",
+      "kana": "しょうたい",
+      "word": "正体",
+      "audio": "",
+      "video": "https://i.imgur.com/XXls82a.mp4",
+      "meaning": "true character, true form, true colors (colours), identity, truth (of a mystery, phenomenon, etc.), origin",
+      "sentence": "あの ヘビ みたい な の が お前 の 正体 な ん だろ",
+      "translatedSentence": "It's your identity like that snake"
+    },
+    {
+      "id": "lwhzk1xiihi0suinyhq",
+      "kana": "うばう",
+      "word": "奪う",
+      "audio": "",
+      "video": "https://i.imgur.com/hbDMT7C.mp4",
+      "meaning": "to take (by force), to take away, to snatch, to steal, to rob (someone) of, to dispossess of, to deprive of, to usurp",
+      "sentence": "脳 を まさか お前 次 は 僕 の 脳 を 奪う つもり じゃ",
+      "translatedSentence": "I'm going to take my brain next time"
+    },
+    {
+      "id": "lwhzlhdr1re0fwl1mxs",
+      "kana": "せいこう",
+      "word": "成功",
+      "audio": "",
+      "video": "https://i.imgur.com/usbcQTb.mp4",
+      "meaning": "success, achievement",
+      "sentence": "脳 を 奪う のに 成功 し て たら どうなって た ん だ",
+      "translatedSentence": "What would happen if I succeeded in taking my brain"
+    },
+    {
+      "id": "lwhzmzgxbzca9vzqp94",
+      "kana": "えらぶ",
+      "word": "選ぶ",
+      "audio": "",
+      "video": "https://i.imgur.com/KZaSkJD.mp4",
+      "meaning": "to choose, to select",
+      "sentence": "偶然 だ 君 を 選ん だ わけ で は ない",
+      "translatedSentence": "I didn't choose you by chance"
+    },
+    {
+      "id": "lwhznp3gmxa0q8bxe6g",
+      "kana": "ぐうぜん",
+      "word": "偶然",
+      "audio": "",
+      "video": "https://i.imgur.com/Cx6UbLB.mp4",
+      "meaning": "coincidence, chance, accident, fortuity",
+      "sentence": "偶然 だ 君 を 選ん だ わけ で は ない",
+      "translatedSentence": "I didn't choose you by chance"
+    },
+    {
+      "id": "lwhzrp0t9hxzdd1gmxe",
+      "kana": "おたがい",
+      "word": "お互い",
+      "audio": "",
+      "video": "https://i.imgur.com/VhReEgO.mp4",
+      "meaning": "each other, one another",
+      "sentence": "お互い 損 じゃ ない",
+      "translatedSentence": "It's not a loss"
+    },
+    {
+      "id": "lwhzsp6w7hs0b4puwt2",
+      "kana": "そん",
+      "word": "損",
+      "audio": "",
+      "video": "https://i.imgur.com/tUhjqWj.mp4",
+      "meaning": "loss, damage, harm, unprofitable",
+      "sentence": "お互い 損 じゃ ない",
+      "translatedSentence": "It's not a loss"
+    },
+    {
+      "id": "lwhztbzq13sd8wwkqhv",
+      "kana": "じゆうに",
+      "word": "自由に",
+      "audio": "",
+      "video": "https://i.imgur.com/idZspxi.mp4",
+      "meaning": "freely, at liberty, at will, as one likes",
+      "sentence": "君 が 自由 に 動かせ る よう に 回路 を 繋ぐ",
+      "translatedSentence": "Connect the circuit so that you can move freely"
     }
   ]
 }
