@@ -309,6 +309,126 @@
       "meaning": "freely, at liberty, at will, as one likes",
       "sentence": "君 が 自由 に 動かせ る よう に 回路 を 繋ぐ",
       "translatedSentence": "Connect the circuit so that you can move freely"
+    },
+    {
+      "id": "lwn7xr6e54h2oa9bck3",
+      "kana": "あくむ",
+      "word": "悪夢",
+      "audio": "",
+      "video": "https://i.imgur.com/jAAa7jm.mp4",
+      "meaning": "nightmare, bad dream",
+      "sentence": "悪夢 が 覚め て くれ ない",
+      "translatedSentence": "Nightmare doesn't wake me"
+    },
+    {
+      "id": "lwn81z6e2kom496sa8",
+      "kana": "たしかに",
+      "word": "確かに",
+      "audio": "",
+      "video": "https://i.imgur.com/I6AJO2J.mp4",
+      "meaning": "surely, certainly",
+      "sentence": "確かに どんな 生物 の 本 を 調べ て も 私 の こと は 載って い なかった",
+      "translatedSentence": "Certainly, no matter what living book book, I didn't mention me"
+    },
+    {
+      "id": "lwn877hxswmxq47z54d",
+      "kana": "むり",
+      "word": "無理",
+      "audio": "",
+      "video": "https://i.imgur.com/fg58dNd.mp4",
+      "meaning": "impossible",
+      "sentence": "だが 無理 だ 脳 を 食わ ず に 成熟 し て しまって は もう 遅い",
+      "translatedSentence": "But it's impossible, it's too late to mature without eating your brain"
+    },
+    {
+      "id": "lwn8ak2az0wz5al904",
+      "kana": "こまる",
+      "word": "困る",
+      "audio": "",
+      "video": "https://i.imgur.com/WOhkB45.mp4",
+      "meaning": "to be troubled, to be problematic",
+      "sentence": "それ は 困る な",
+      "translatedSentence": "Don't worry about it"
+    },
+    {
+      "id": "lwn8k66lwphd4q5syeb",
+      "kana": "だいじ",
+      "word": "大事に",
+      "audio": "",
+      "video": "https://i.imgur.com/TYMftHD.mp4",
+      "meaning": "safe, carefull (大事な = important)",
+      "sentence": "大事 に 使えよ",
+      "translatedSentence": "Use it very much"
+    },
+    {
+      "id": "lwn8tqfjtqffmmdl8fb",
+      "kana": "そうだん",
+      "word": "相談",
+      "audio": "",
+      "video": "https://i.imgur.com/Sbj91QZ.mp4",
+      "meaning": "consultation, discussion, discussing, asking (someone) for advice",
+      "sentence": "警察 に 相談 すること に し た よ",
+      "translatedSentence": "I decided to consult the police"
+    },
+    {
+      "id": "lwn919hrnl3xq53m2xk",
+      "kana": "きづく",
+      "word": "気づく",
+      "audio": "",
+      "video": "https://i.imgur.com/J0h0nIe.mp4",
+      "meaning": "to notice, to realize",
+      "sentence": "向こう も 気づい た よう だ",
+      "translatedSentence": "It seems that I noticed over there"
+    },
+    {
+      "id": "lwn9317bw030fh62rbf",
+      "kana": "じゅうよう",
+      "word": "重要",
+      "audio": "",
+      "video": "https://i.imgur.com/BGaQC7w.mp4",
+      "meaning": "important, essential, significant, major, key, principal",
+      "sentence": "君 に とって も これ は 重要 な こと で ある はず だ",
+      "translatedSentence": "This should be an important thing for you"
+    },
+    {
+      "id": "lwn97ohlt3fxzh5a1xj",
+      "kana": "けいかい",
+      "word": "警戒",
+      "audio": "",
+      "video": "https://i.imgur.com/T4SDuAh.mp4",
+      "meaning": "vigilance, caution, alertness, precaution, being on guard",
+      "sentence": "人間 の まま の お前 を 異常 な ほど 警戒 し て いる",
+      "translatedSentence": "Unusually alert to you as a human"
+    },
+    {
+      "id": "lwn99zd2o6zl1sfpba8",
+      "kana": "やるき",
+      "word": "ヤル気",
+      "audio": "",
+      "video": "https://i.imgur.com/KX9C3AD.mp4",
+      "meaning": "will (to do something), drive, motivation, enthusiasm, eagerness",
+      "sentence": "やる気 らしい ここ で 戦う ぞ",
+      "translatedSentence": "Motivated, fight here"
+    },
+    {
+      "id": "lwn9bsjw24hivzwje88",
+      "kana": "しんぞう",
+      "word": "心臓",
+      "audio": "",
+      "video": "https://i.imgur.com/ei7kJqv.mp4",
+      "meaning": "heart",
+      "sentence": "し … 心臓",
+      "translatedSentence": "Shi ... heart"
+    },
+    {
+      "id": "lwn9hpoepytj2p5uhr",
+      "kana": "さんまん",
+      "word": "散漫",
+      "audio": "",
+      "video": "https://i.imgur.com/jMz481N.mp4",
+      "meaning": "vague, desultory, distracted, loose, half-hearted, diffuse, scattered",
+      "sentence": "注意力 が 散漫 に なり 死角 を 作った",
+      "translatedSentence": "The attention became distracted and created a blind spot"
     }
   ]
 }
