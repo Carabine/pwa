@@ -429,6 +429,356 @@
       "meaning": "vague, desultory, distracted, loose, half-hearted, diffuse, scattered",
       "sentence": "注意力 が 散漫 に なり 死角 を 作った",
       "translatedSentence": "The attention became distracted and created a blind spot"
+    },
+    {
+      "id": "lwq8qe46d8jqwg1q4m8",
+      "kana": "かんたん",
+      "word": "簡単",
+      "audio": "",
+      "video": "https://i.imgur.com/d9cXL3v.mp4",
+      "meaning": "simple, easy, uncomplicated",
+      "sentence": "ああ お前 が い ない と 僕 は 簡単 に 殺さ れ て しまう",
+      "translatedSentence": "Oh, I would be killed easily without you"
+    },
+    {
+      "id": "lwq9r50scghgrfn8k3j",
+      "kana": "きょうみ",
+      "word": "興味",
+      "audio": "",
+      "video": "https://i.imgur.com/iaZFvWc.mp4",
+      "meaning": "interest (in something), curiosity (about something), zest (for)",
+      "sentence": "名前 とや ら に 興味 が ない だけ だ",
+      "translatedSentence": "I'm just not interested in the name and"
+    },
+    {
+      "id": "lwq9t0ye6uyvidj6w0f",
+      "kana": "こんど",
+      "word": "今度",
+      "audio": "",
+      "video": "https://i.imgur.com/jejhEmu.mp4",
+      "meaning": "this time, now",
+      "sentence": "今度 の 日曜日 に パンケーキ 奢って くれ たら 許し て あげて も いい かな",
+      "translatedSentence": "I wonder if I can give me a pancake on the next Sunday."
+    },
+    {
+      "id": "lwq9ud93t72kygtsyvp",
+      "kana": "こないだ",
+      "word": "こないだ",
+      "audio": "",
+      "video": "https://i.imgur.com/eKkTQwk.mp4",
+      "meaning": "the other day, recently",
+      "sentence": "もう 一本 決め たら 里美 が こないだ の こと 許し て くれる って",
+      "translatedSentence": "If you decide another one, he will forgive that Satomi will not come."
+    },
+    {
+      "id": "lwqab61b24cds59v35d",
+      "kana": "やくそく",
+      "word": "約束",
+      "audio": "",
+      "video": "https://i.imgur.com/gCPewyL.mp4",
+      "meaning": "promise, agreement, arrangement, one's word, contract, pact",
+      "sentence": "約束 する",
+      "translatedSentence": "promise"
+    },
+    {
+      "id": "lwqalxt1z2xpbc7irvd",
+      "kana": "きがえ",
+      "word": "着替え",
+      "audio": "",
+      "video": "https://i.imgur.com/ZjnQ7nE.mp4",
+      "meaning": "changing clothes, change of clothes",
+      "sentence": "そろそろ 着替え に 行か なきゃ",
+      "translatedSentence": "I have to go to change clothes soon"
+    },
+    {
+      "id": "lws7xuinwrh3ybz0yrh",
+      "kana": "はんだん",
+      "word": "判断",
+      "audio": "",
+      "video": "https://i.imgur.com/CCiNH4H.mp4",
+      "meaning": "judgment, judgement, decision, conclusion, adjudication",
+      "sentence": "賢明 な 判断 だ",
+      "translatedSentence": "It's a wise judgment"
+    },
+    {
+      "id": "lws84jq7bbcztocs1i4",
+      "kana": "かんべん",
+      "word": "勘弁",
+      "audio": "",
+      "video": "https://i.imgur.com/SnhUXTt.mp4",
+      "meaning": "pardon, forgiveness, forbearance",
+      "sentence": "勘弁 し てよ",
+      "translatedSentence": "Give me a break"
+    },
+    {
+      "id": "lws8927x8ej6iub1vn5",
+      "kana": "なぐる",
+      "word": "殴る",
+      "audio": "",
+      "video": "https://i.imgur.com/jyvvyjA.mp4",
+      "meaning": "to strike, to hit, to beat, to punch",
+      "sentence": "どう し た 殴り返せ ない の か",
+      "translatedSentence": "What can't be beaten back?"
+    },
+    {
+      "id": "lws89im0ykzod1pvixk",
+      "kana": "かえす",
+      "word": "返す",
+      "audio": "",
+      "video": "https://i.imgur.com/QHSJB4n.mp4",
+      "meaning": "to return (something), to restore, to put back",
+      "sentence": "どう し た 殴り返せ ない の か",
+      "translatedSentence": "What can't be beaten back?"
+    },
+    {
+      "id": "lws8e3626gdp1zccjf3",
+      "kana": "ほんき",
+      "word": "本気",
+      "audio": "",
+      "video": "https://i.imgur.com/1N5kzCe.mp4",
+      "meaning": "seriousness, earnestness, truth, sanctity",
+      "sentence": "この 間 みたい に ミギー が 本気 を 出す と",
+      "translatedSentence": "When Miggy is serious like this"
+    },
+    {
+      "id": "lws8fpzjkxzz7adgakd",
+      "kana": "けが",
+      "word": "怪我",
+      "audio": "",
+      "video": "https://i.imgur.com/L3Tq4vx.mp4",
+      "meaning": "injury, wound",
+      "sentence": "大怪我 さ せる かも しれ ない",
+      "translatedSentence": "May be seriously injured"
+    },
+    {
+      "id": "lws8lanipp1gyy41cq",
+      "kana": "あんしん",
+      "word": "安心",
+      "audio": "",
+      "video": "https://i.imgur.com/CJZcteU.mp4",
+      "meaning": "peace of mind, relief, (sense of) security, safety, assurance, confidence",
+      "sentence": "安心 しろ",
+      "translatedSentence": "do not worry"
+    },
+    {
+      "id": "lws8oo2itc3zxqnsdm",
+      "kana": "あらう",
+      "word": "洗う",
+      "audio": "",
+      "video": "https://i.imgur.com/jZsPnOd.mp4",
+      "meaning": "to wash, to cleanse, to rinse",
+      "sentence": "ちゃんと 洗わ ない と 白癬菌 が 繁殖 し て イン キン タムシ …",
+      "translatedSentence": "If you do not wash it properly, Trichophyton will propagate and it will be a kinta ..."
+    },
+    {
+      "id": "lws8um5sb1khrq00uog",
+      "kana": "つかまる",
+      "word": "捕まる",
+      "audio": "",
+      "video": "https://i.imgur.com/H4pIbrk.mp4",
+      "meaning": "to be caught, to be arrested",
+      "sentence": "まだ 捕まって ない",
+      "translatedSentence": "Not caught yet"
+    },
+    {
+      "id": "lws8vi2nwecodtvo6fp",
+      "kana": "しゅうだん",
+      "word": "集団",
+      "audio": "",
+      "video": "https://i.imgur.com/RPnk8l8.mp4",
+      "meaning": "group, mass",
+      "sentence": "犯人 は 一人 じゃ なく て たぶん 狂信的 な カルト 集団 とか",
+      "translatedSentence": "The culprit is not alone, maybe a fanatic cult group"
+    },
+    {
+      "id": "lws8xwqdnbzkuf1h9z7",
+      "kana": "うら",
+      "word": "裏",
+      "audio": "",
+      "video": "https://i.imgur.com/PJqPk8o.mp4",
+      "meaning": "opposite side, bottom, other side, side hidden from view, undersurface, reverse side",
+      "sentence": "てこ と は 裏 を 返せ ば",
+      "translatedSentence": "If you turn it over"
+    },
+    {
+      "id": "lws8ygvj8jzyws5d1xw",
+      "kana": "せいふ",
+      "word": "政府",
+      "audio": "",
+      "video": "https://i.imgur.com/hgyxEt2.mp4",
+      "meaning": "government, administration, ministry",
+      "sentence": "警察 とか 政府 か すでに 動き出し て いる って こと じゃ ない",
+      "translatedSentence": "It doesn't mean that the police or the government are already moving"
+    },
+    {
+      "id": "lws943082u9t05zv60e",
+      "kana": "せんもん",
+      "word": "専門",
+      "audio": "",
+      "video": "https://i.imgur.com/OXPhL7H.mp4",
+      "meaning": "speciality, specialty, special subject of study, area of expertise, (one's) field, (one's) major",
+      "sentence": "共食い 専門 という 訳 だ",
+      "translatedSentence": "It's a specialized in eating."
+    },
+    {
+      "id": "lws959b7z4kzn1xpeuk",
+      "kana": "だまる",
+      "word": "黙る",
+      "audio": "",
+      "video": "https://i.imgur.com/4XSTWFF.mp4",
+      "meaning": "to be silent, to say nothing",
+      "sentence": "このまま 黙って て いいの かな",
+      "translatedSentence": "I wonder if I can keep silent as it is"
+    },
+    {
+      "id": "lws98o15sk4nocilrv",
+      "kana": "ふえる",
+      "word": "増える",
+      "audio": "",
+      "video": "https://i.imgur.com/00WNsa1.mp4",
+      "meaning": "to increase, to multiply",
+      "sentence": "このまま じゃ 犠牲者 が 増える ばかり だ よ",
+      "translatedSentence": "If this is the case, the number of victims will only increase"
+    },
+    {
+      "id": "lws99y8aky3zmuzp58d",
+      "kana": "はっぴょう",
+      "word": "発表",
+      "audio": "",
+      "video": "https://i.imgur.com/ZZ5GCk0.mp4",
+      "meaning": "announcement, publication, presenting, statement, communique, making known, breaking (news story), expressing (one's opinion), releasing, unveiling",
+      "sentence": "お前 の こと 世の中 に 発表 し て 研究 し て もらえ ば …",
+      "translatedSentence": "If you give it to the world and research it ..."
+    },
+    {
+      "id": "lws9adq2nmr6rlq432",
+      "kana": "けんきゅう",
+      "word": "研究",
+      "audio": "",
+      "video": "https://i.imgur.com/CwsFoPT.mp4",
+      "meaning": "study, research, investigation",
+      "sentence": "お前 の こと 世の中 に 発表 し て 研究 し て もらえ ば …",
+      "translatedSentence": "If you give it to the world and research it ..."
+    },
+    {
+      "id": "lws9bi3tyzm3ytatta",
+      "kana": "とうぜん",
+      "word": "当然",
+      "audio": "",
+      "video": "https://i.imgur.com/OZYV0QI.mp4",
+      "meaning": "natural, right, proper, just, reasonable, appropriate, deserved",
+      "sentence": "生物 なら 当然 の 行為 じゃ ない か",
+      "translatedSentence": "Isn't it a natural act if you are a living thing?"
+    },
+    {
+      "id": "lws9c0cl623aabu1kqx",
+      "kana": "せいぶつ",
+      "word": "生物",
+      "audio": "",
+      "video": "https://i.imgur.com/HuFY4hv.mp4",
+      "meaning": "living thing, organism, creature, life",
+      "sentence": "生物 なら 当然 の 行為 じゃ ない か",
+      "translatedSentence": "Isn't it a natural act if you are a living thing?"
+    },
+    {
+      "id": "lws9ivgx1ef5veu7g6n",
+      "kana": "いがい",
+      "word": "以外",
+      "audio": "",
+      "video": "https://i.imgur.com/poqlzmq.mp4",
+      "meaning": "with the exception of, excepting, excluding",
+      "sentence": "私 は 私 の 命 以外 を 大事 に 考え た こと は ない",
+      "translatedSentence": "I have never thought about anything other than my life"
+    },
+    {
+      "id": "lws9omi7zov4hwmn8sn",
+      "kana": "み",
+      "word": "身",
+      "audio": "",
+      "video": "https://i.imgur.com/CFMQwr7.mp4",
+      "meaning": "one's body, one's person",
+      "sentence": "もし 君 が 私 の 身 に 害 を 及ぼす よう な 行動 に 出る なら",
+      "translatedSentence": "If you take action that harms me"
+    },
+    {
+      "id": "lws9pvc6yofm9u5ulj",
+      "kana": "がい",
+      "word": "害",
+      "audio": "",
+      "video": "https://i.imgur.com/7qBN2Am.mp4",
+      "meaning": "injury, harm, evil influence, damage",
+      "sentence": "もし 君 が 私 の 身 に 害 を 及ぼす よう な 行動 に 出る なら",
+      "translatedSentence": "If you take action that harms me"
+    },
+    {
+      "id": "lws9qz62mg7dw52qcw",
+      "kana": "およぼす",
+      "word": "及ぼす",
+      "audio": "",
+      "video": "https://i.imgur.com/O1bmiLv.mp4",
+      "meaning": "to exert (influence), to exercise, to cause (e.g. damage), to do (e.g. harm), to bring about (e.g. benefits), to extend, to have an effect (on)",
+      "sentence": "もし 君 が 私 の 身 に 害 を 及ぼす よう な 行動 に 出る なら",
+      "translatedSentence": "If you take action that harms me"
+    },
+    {
+      "id": "lws9rjhsgq4f5xnxihn",
+      "kana": "こうどう",
+      "word": "行動",
+      "audio": "",
+      "video": "https://i.imgur.com/nEOeUBI.mp4",
+      "meaning": "action, conduct, behaviour, behavior, mobilization, mobilisation",
+      "sentence": "もし 君 が 私 の 身 に 害 を 及ぼす よう な 行動 に 出る なら",
+      "translatedSentence": "If you take action that harms me"
+    },
+    {
+      "id": "lws9tdbz4moillkhr4p",
+      "kana": "さからう",
+      "word": "逆らう",
+      "audio": "",
+      "video": "https://i.imgur.com/ii2zqyX.mp4",
+      "meaning": "to go against, to oppose, to disobey, to defy",
+      "sentence": "へえ 僕 に 逆らって 生き て いける の 寄生虫 の クセ に",
+      "translatedSentence": "For a parasitic insect habit that can live against me"
+    },
+    {
+      "id": "lws9v6zzrn7du0y44b",
+      "kana": "きょうふしん",
+      "word": "恐怖心",
+      "audio": "",
+      "video": "https://i.imgur.com/je2LZnO.mp4",
+      "meaning": "fear, terror",
+      "sentence": "ほう すごい 恐怖心 だ 少し 休ん だ 方 が いい な",
+      "translatedSentence": "I'm so scared that you should rest a little"
+    },
+    {
+      "id": "lws9vvmywhqpnbkpm1n",
+      "kana": "あくま",
+      "word": "悪魔",
+      "audio": "",
+      "video": "https://i.imgur.com/AnjQmBB.mp4",
+      "meaning": "devil, demon, fiend",
+      "sentence": "悪魔",
+      "translatedSentence": "devil"
+    },
+    {
+      "id": "lwsa4mcsc9csfksheu",
+      "kana": "おどろく",
+      "word": "驚く",
+      "audio": "",
+      "video": "https://i.imgur.com/Hfwh8kf.mp4",
+      "meaning": "to be surprised, to be astonished",
+      "sentence": "牛 や 豚 を 平気 で ひき肉 に し て いる 人間 ども が 今さら 何 を 驚い てる",
+      "translatedSentence": "What are the people who are fine with cows and pigs with minced meat?"
+    },
+    {
+      "id": "lwsa64mrc7wz0n5fpy",
+      "kana": "ちかづく",
+      "word": "近づく",
+      "audio": "",
+      "video": "https://i.imgur.com/SMgBRbS.mp4",
+      "meaning": "to approach, to draw near, to get close",
+      "sentence": "シン イチ 近づい て くる ぞ",
+      "translatedSentence": "I'm approaching Shinchi"
     }
   ]
 }
