@@ -779,6 +779,206 @@
       "meaning": "to approach, to draw near, to get close",
       "sentence": "シン イチ 近づい て くる ぞ",
       "translatedSentence": "I'm approaching Shinchi"
+    },
+    {
+      "id": "lx0p06a2oevr18z79fr",
+      "kana": "このまえ",
+      "word": "この前",
+      "audio": "",
+      "video": "https://i.imgur.com/iMmZNId.mp4",
+      "meaning": "last (Sunday, summer, etc.), previous (e.g. mayor, chapter), preceding",
+      "sentence": "この 前 の イヌ の よう に は 行か ない と 思い が な",
+      "translatedSentence": "I don't think it's going to go like the dog before"
+    },
+    {
+      "id": "lx0q2iu6wlbmkvtxpc",
+      "kana": "かす",
+      "word": "貸す",
+      "audio": "",
+      "video": "https://i.imgur.com/IHYDMCZ.mp4",
+      "meaning": "to lend, to loan",
+      "sentence": "手 を 貸し て くれよ",
+      "translatedSentence": "Lend me"
+    },
+    {
+      "id": "lx0qaymw3aezlfzp4p",
+      "kana": "いきのこる",
+      "word": "生き残る",
+      "audio": "",
+      "video": "https://i.imgur.com/kVlEzOH.mp4",
+      "meaning": "to survive",
+      "sentence": "人間 の 脳 が 丸々 生き残ってる",
+      "translatedSentence": "The human brain is surviving"
+    },
+    {
+      "id": "lx0qivb413fjddcabq88",
+      "kana": "きけん",
+      "word": "危険",
+      "audio": "",
+      "video": "https://i.imgur.com/dL31exY.mp4",
+      "meaning": "danger, peril, hazard",
+      "sentence": "こいつ は 確かに 危険 な 存在 だ な",
+      "translatedSentence": "This guy is certainly dangerous"
+    },
+    {
+      "id": "lx0qjjuhscx5ofrhcq",
+      "kana": "そんざい",
+      "word": "存在",
+      "audio": "",
+      "video": "https://i.imgur.com/1Ylm1eB.mp4",
+      "meaning": "existence, being, presence",
+      "sentence": "こいつ は 確かに 危険 な 存在 だ な",
+      "translatedSentence": "This guy is certainly dangerous"
+    },
+    {
+      "id": "lx0qp7f1utdrmrlxif",
+      "kana": "こうげき",
+      "word": "攻撃",
+      "audio": "",
+      "video": "https://i.imgur.com/Keo6GLr.mp4",
+      "meaning": "attack, assault, raid, onslaught, offensive",
+      "sentence": "この 人間 を 攻撃 する の なら お前 を 殺す",
+      "translatedSentence": "If you attack this person, kill you"
+    },
+    {
+      "id": "lx0qv6kqhueipc8i5tc",
+      "kana": "こす",
+      "word": "越す",
+      "audio": "",
+      "video": "https://i.imgur.com/A7mKFSC.mp4",
+      "meaning": "to get over (e.g. hardship)",
+      "sentence": "だが 右手 さん 君 は こっち に 引っ越し て くりゃ いい ん だ よ",
+      "translatedSentence": "But right -handed, you should move here."
+    },
+    {
+      "id": "lx0qxci2bzt66dttvj",
+      "kana": "いまさら",
+      "word": "今更",
+      "audio": "",
+      "video": "https://i.imgur.com/kfpbphp.mp4",
+      "meaning": "now (when it is already much too late), at this stage",
+      "sentence": "引っ越す ？ 今更 移動 は 不可能 な はず",
+      "translatedSentence": "Do you move?"
+    },
+    {
+      "id": "lx0qxp32098246ah6jl4",
+      "kana": "いどう",
+      "word": "移動",
+      "audio": "",
+      "video": "https://i.imgur.com/haFCBqW.mp4",
+      "meaning": "movement, transfer, migration, removal, travel",
+      "sentence": "引っ越す ？ 今更 移動 は 不可能 な はず",
+      "translatedSentence": "Do you move?"
+    },
+    {
+      "id": "lx0qy7xjr1li91l9v5",
+      "kana": "ふかのう",
+      "word": "不可能",
+      "audio": "",
+      "video": "https://i.imgur.com/EfuX4KB.mp4",
+      "meaning": "impossible",
+      "sentence": "引っ越す ？ 今更 移動 は 不可能 な はず",
+      "translatedSentence": "Do you move?"
+    },
+    {
+      "id": "lx0qzf95scjwdkxp1ts",
+      "kana": "ふそく",
+      "word": "不足",
+      "audio": "",
+      "video": "https://i.imgur.com/1GMnVC1.mp4",
+      "meaning": "insufficiency, deficiency, shortage, lack, scarcity, deficit",
+      "sentence": "何だ お前 勉強 不足 だ ぞ",
+      "translatedSentence": "What are you not studying?"
+    },
+    {
+      "id": "lx0r3csl8rvc5rsofo3",
+      "kana": "たんじゅん",
+      "word": "単純",
+      "audio": "",
+      "video": "https://i.imgur.com/37vbzGS.mp4",
+      "meaning": "simple, plain, uncomplicated, straightforward, simple-minded, naive",
+      "sentence": "確かに 単純 な 腕 から 複雑 な 頭 へ の 移動 は 無理 だ",
+      "translatedSentence": "Certainly it is impossible to move from a simple arm to a complicated head"
+    },
+    {
+      "id": "lx0r4p55m2pbbnon11",
+      "kana": "ふくざつ",
+      "word": "複雑",
+      "audio": "",
+      "video": "https://i.imgur.com/3pQxSUc.mp4",
+      "meaning": "complex, complicated, intricate, mixed (feelings)",
+      "sentence": "確かに 単純 な 腕 から 複雑 な 頭 へ の 移動 は 無理 だ",
+      "translatedSentence": "Certainly it is impossible to move from a simple arm to a complicated head"
+    },
+    {
+      "id": "lx0r90wwjfjl6b695p",
+      "kana": "しんじる",
+      "word": "信じる",
+      "audio": "",
+      "video": "https://i.imgur.com/A7oTWiW.mp4",
+      "meaning": "to believe, to believe in, to place trust in, to confide in, to have faith in",
+      "sentence": "これ で 信じ た か",
+      "translatedSentence": "Did you believe this"
+    },
+    {
+      "id": "lx0rbpxyrkzxghv6k2a",
+      "kana": "うつる",
+      "word": "移る",
+      "audio": "",
+      "video": "https://i.imgur.com/7lA2x9p.mp4",
+      "meaning": "to move (house), to transfer (department)",
+      "sentence": "さあ 移って 来 て 俺 の 右腕 に なれ",
+      "translatedSentence": "Come on and become my right arm"
+    },
+    {
+      "id": "lx0rdkeiwqohu9y0os",
+      "kana": "けつえき",
+      "word": "血液",
+      "audio": "",
+      "video": "https://i.imgur.com/6Mo4ZZt.mp4",
+      "meaning": "blood",
+      "sentence": "血液 が もったいない",
+      "translatedSentence": "Waste of blood"
+    },
+    {
+      "id": "lx0reb2tz3mb19wrldm",
+      "kana": "かんり",
+      "word": "管理",
+      "audio": "",
+      "video": "https://i.imgur.com/wD4k5nB.mp4",
+      "meaning": "control, management (e.g. of a business)",
+      "sentence": "我々 が 管理 する この 肉体 なら 140 年 は 生き られる だろ う",
+      "translatedSentence": "This body we manage will live for 140 years"
+    },
+    {
+      "id": "lx0rl3meo8clvxbjvod",
+      "kana": "おとす",
+      "word": "落す",
+      "audio": "",
+      "video": "https://i.imgur.com/CM9i1wg.mp4",
+      "meaning": "to drop, to lose, to let fall, to shed (light), to cast (one's gaze), to pour in (liquid), to leave behind",
+      "sentence": "だが その 人間 の 首 を 落とせ ば 否応なし だ",
+      "translatedSentence": "But if you drop that human's neck, it's inevitable"
+    },
+    {
+      "id": "lx0rq7fc7k0up7bqjg",
+      "kana": "へんじ",
+      "word": "返事",
+      "audio": "",
+      "video": "https://i.imgur.com/2sB48Pt.mp4",
+      "meaning": "reply, answer, response",
+      "sentence": "何 その気 の ない 返事",
+      "translatedSentence": "What a bad reply"
+    },
+    {
+      "id": "lx0rrug58vwaj6nf7oi",
+      "kana": "がいしゅつ",
+      "word": "外出",
+      "audio": "",
+      "video": "https://i.imgur.com/eM4qzvz.mp4",
+      "meaning": "going out, outing, leaving (one's home, office, etc.)",
+      "sentence": "うち って さ 今 外出 する の も うるさい ん だ",
+      "translatedSentence": "It's noisy to go out now"
     }
   ]
 }
