@@ -1,4 +1,4 @@
-function displayFrontSideData(data) {
+function displayFrontSideData(word) {
     const cardBackSide = document.querySelector('.back-side');
     const cardFrontSide = document.querySelector('.front-side');
 
@@ -7,53 +7,53 @@ function displayFrontSideData(data) {
 
     const wordEl = document.createElement("div")
     wordEl.classList.add("word")
-    wordEl.innerText = data.word
+    wordEl.innerText = word.data.word
 
     cardFrontSide.appendChild(wordEl);
 
     const showBtn = document.createElement("button")
     showBtn.innerHTML = 'Show'
 
-    showBtn.addEventListener("click", () => displayBackSideData(data))
+    showBtn.addEventListener("click", () => displayBackSideData(word))
 
     document.querySelector(".buttons").innerHTML = ''
 
     document.querySelector(".buttons").appendChild(showBtn)
 }
 
-function displayBackSideData(data) {
+function displayBackSideData(word) {
     console.log(123)
     const cardBackSide = document.querySelector('.back-side');
     // Clear previous data
     // Display new data
 
     const video = document.createElement("video")
-    video.src = data.video
+    video.src = word.data.video
     video.controls = true
     video.autoplay = true
     //video.height = 300
     video.width = 500
 
     const audio = document.createElement("audio")
-    audio.src = data.audio
+    audio.src = word.data.audio
     audio.controls = true
     audio.volume = 0.4
 
     const hiraganaEl = document.createElement("div")
     hiraganaEl.classList.add("hiragana")
-    hiraganaEl.innerText = data.kana
+    hiraganaEl.innerText = word.data.kana
 
     const sentenceEl = document.createElement("div")
     sentenceEl.classList.add("sentence")
-    sentenceEl.innerText = data.sentence
+    sentenceEl.innerText = word.data.sentence
 
     const translatedSentenceEl = document.createElement("div")
     translatedSentenceEl.classList.add("translatedSentence")
-    translatedSentenceEl.innerText = data.translatedSentence
+    translatedSentenceEl.innerText = word.data.translatedSentence
 
     const meaningEl = document.createElement("div")
     meaningEl.classList.add("meaning")
-    meaningEl.innerText = data.meaning
+    meaningEl.innerText = word.data.meaning
 
     cardBackSide.appendChild(video);
     cardBackSide.appendChild(audio);
@@ -79,65 +79,114 @@ function displayBackSideData(data) {
     document.querySelector(".buttons").appendChild(buryWordBtn)
 }
 
-let wordsPool
-let currentWord
-
-const setWordsPool = (data) => {
-    localStorage.setItem("wordsPool", JSON.stringify(data))
-    wordsPool = data
+const keepWord = () => {
+    const filteredTodayWords = todayWords.filter(w => w.data.id !== currentWord.data.id)
+    todayWords = [...shuffle(filteredTodayWords), currentWord]
+    currentWord = todayWords[0]
+    displayFrontSideData(currentWord)
 }
 
-const keepWord = () => {
-    const filteredPool = wordsPool.filter(w => w.id !== currentWord.id)
-    setWordsPool([...shuffle(filteredPool), currentWord])
-    currentWord = wordsPool[0]
-    displayFrontSideData(currentWord)
+const calcNextDateToShow = (showAt, period) => {
+    if(period) {
+        return addDays(removeTimeFromDate(new Date()), period * 2)
+    } else {
+        return addDays(removeTimeFromDate(new Date()), 1)
+    }
+}
+
+const showNoWords = () => {
+    alert("NO WORDS")
 }
 
 const buryWord = () => {
-    setWordsPool(wordsPool.filter(w => w.id !== currentWord.id))
-    currentWord = wordsPool[0]
+    currentWord.timesToShow--
+    if(currentWord.timesToShow < 1) {
+        todayWords = todayWords.filter(w => w.data.id !== currentWord.data.id)
+        currentWord.showAt = calcNextDateToShow(currentWord.showAt, currentWord.period)
+        if(todayWords.length < 0) return showNoWords()
+    } else {
+        todayWords = todayWords.filter(w => w.data.id !== currentWord.data.id)
+        todayWords = [...shuffle(todayWords), currentWord]
+    }
+    currentWord = todayWords[0]
+    saveWord(currentWord)
     displayFrontSideData(currentWord)
+
 }
 
-const refresh = () => {
-    const words = JSON.parse(localStorage.getItem('words') ?? "[]")
+let progress
+let todayWords = []
+let currentWord
 
-    setWordsPool(words)
-    currentWord = wordsPool[0]
-    displayFrontSideData(currentWord)
+const saveWord = (word) => {
+    setProgress(progress.map(p => p.data.id !== word.data.id ? p : word))
 }
 
+const setProgress = (data) => {
+    progress = data
+}
 
+function removeTimeFromDate(date) {
+    return new Date(date.setHours(0,0,0,0));
+}
+
+function addDays(date, days) {
+    console.log(date, days)
+    var result = new Date(date);
+    result.setDate(result.getDate() + days);
+    console.log(result)
+    return result;
+}
+
+function randomInteger(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 const onLoad = () => {
     console.log(localStorage.getItem('wordsPool'))
     const words = JSON.parse(localStorage.getItem('words') ?? "[]")
-    wordsPool = JSON.parse(localStorage.getItem('wordsPool') ?? "[]")
+    progress = JSON.parse(localStorage.getItem('progress') ?? "[]")
 
-    if (words) {
-        setWordsPool(shuffle(words))
-        wordsPool = words
-
-
-        currentWord = wordsPool[0]
-        displayFrontSideData(currentWord);
-        console.log(localStorage.getItem('words'))
+    const freshWordsCount = localStorage.getItem("freshWordsCount") ?? 0
+    const temp = []
+    for(let i = 0; i <= words.length; i++) {
+        console.log(new Date())
+        console.log(removeTimeFromDate(new Date()))
+        const isFreshWord = i < words.length - freshWordsCount
+        if(isFreshWord || randomInteger(0, 1)) {
+            temp.push({
+                data: words[i],
+                showAt: removeTimeFromDate(new Date()),
+                period: 0,
+                timesToShow: 2,
+            })
+        }
     }
+    console.log(temp)
+    setProgress(temp)
 
+    todayWords = progress
+
+    todayWords = shuffle(todayWords)
+
+    currentWord = todayWords[0]
+    displayFrontSideData(currentWord);
+    console.log(localStorage.getItem('words'))
 }
 
 window.addEventListener('load', () => {
+    const freshWordsInput = document.querySelector('.fresh-words-input input')
+    freshWordsInput.value = localStorage.getItem("freshWordsCount") ?? 0
+
+    freshWordsInput.addEventListener("input", e => {
+        e.stopPropagation()
+        localStorage.setItem("freshWordsCount", e.target.value)
+        freshWordsInput.value = e.target.value
+    })
     document.querySelector('.fetch-button').addEventListener('click', async () => {
         await fetchDataFromServer()
         onLoad()
     });
 
-    document.querySelector('.refresh-btn').addEventListener('click', refresh);
-
     onLoad()
-});
-
-window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault(); // Prevent the default browser install prompt
 });

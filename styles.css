@@ -21,6 +21,17 @@ body {
     top: 16px;
 }
 
+.fresh-words-input {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    font-size: 12px;
+}
+
+.fresh-words-input input {
+    width: 60px;
+}
+
 .back-btn a {
     color: white;
     text-decoration: none;
