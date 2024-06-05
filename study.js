@@ -147,7 +147,7 @@ const onLoad = () => {
     if(progress.length === 0) {
         const temp = []
         const length = words.length > 4 ? 4 : words.length
-        for(let i = 0; i <= length; i++) {
+        for(let i = 0; i < length; i++) {
             console.log(new Date())
             console.log(removeTimeFromDate(new Date()))
             temp.push({

@@ -81,7 +81,7 @@ function displayBackSideData(word) {
 
 const keepWord = () => {
     const filteredTodayWords = todayWords.filter(w => w.data.id !== currentWord.data.id)
-    todayWords = [...shuffle(filteredTodayWords), currentWord]
+    setTodayWords([...shuffle(filteredTodayWords), currentWord])
     currentWord = todayWords[0]
     displayFrontSideData(currentWord)
 }
@@ -101,22 +101,33 @@ const showNoWords = () => {
 const buryWord = () => {
     currentWord.timesToShow--
     if(currentWord.timesToShow < 1) {
-        todayWords = todayWords.filter(w => w.data.id !== currentWord.data.id)
+        console.log(todayWords, 1)
+        setTodayWords(todayWords.filter(w => w.data?.id !== currentWord.data.id))
         currentWord.showAt = calcNextDateToShow(currentWord.showAt, currentWord.period)
         if(todayWords.length < 0) return showNoWords()
     } else {
-        todayWords = todayWords.filter(w => w.data.id !== currentWord.data.id)
-        todayWords = [...shuffle(todayWords), currentWord]
+        console.log(todayWords, 2)
+        setTodayWords(todayWords.filter(w => w.data?.id !== currentWord.data.id))
+        setTodayWords([...shuffle(todayWords), currentWord])
     }
     currentWord = todayWords[0]
     saveWord(currentWord)
     displayFrontSideData(currentWord)
-
 }
 
 let progress
 let todayWords = []
 let currentWord
+
+const setTodayWords = (words) => {
+    todayWords = words
+    todaysWordsOnChange()
+}
+
+const todaysWordsOnChange = () => {
+    document.querySelector('.words-count .green').innerHTML = todayWords.filter(w => w.timesToShow === 1).length
+    document.querySelector('.words-count .red').innerHTML = todayWords.filter(w => w.timesToShow === 2).length
+}
 
 const saveWord = (word) => {
     setProgress(progress.map(p => p.data.id !== word.data.id ? p : word))
@@ -147,27 +158,32 @@ const onLoad = () => {
     const words = JSON.parse(localStorage.getItem('words') ?? "[]")
     progress = JSON.parse(localStorage.getItem('progress') ?? "[]")
 
-    const freshWordsCount = localStorage.getItem("freshWordsCount") ?? 0
+    const freshWordsCount = Number(localStorage.getItem("freshWordsCount"))
     const temp = []
-    for(let i = 0; i <= words.length; i++) {
-        console.log(new Date())
-        console.log(removeTimeFromDate(new Date()))
-        const isFreshWord = i < words.length - freshWordsCount
-        if(isFreshWord || randomInteger(0, 1)) {
+    const freshWords = words.slice(words.length - freshWordsCount, words.length)
+    console.log(freshWords,words.length, words.length - freshWordsCount, freshWordsCount)
+    const learnedWords = shuffle(words.slice(0, words.length - freshWordsCount))
+    const slicedWords = [
+        ...freshWords,
+        ...learnedWords.slice(0, Math.round(learnedWords.length * 30 / 100)  )
+    ]
+
+    for(let i = 0; i < slicedWords.length; i++) {
+
             temp.push({
-                data: words[i],
+                data: slicedWords[i],
                 showAt: removeTimeFromDate(new Date()),
                 period: 0,
                 timesToShow: 2,
             })
-        }
+
     }
-    console.log(temp)
+
     setProgress(temp)
 
-    todayWords = progress
+    setTodayWords(progress)
 
-    todayWords = shuffle(todayWords)
+    setTodayWords(shuffle(todayWords))
 
     currentWord = todayWords[0]
     displayFrontSideData(currentWord);
@@ -175,14 +191,23 @@ const onLoad = () => {
 }
 
 window.addEventListener('load', () => {
+    let freshWordsCount = Number(localStorage.getItem("freshWordsCount") ?? "0")
+    if(!freshWordsCount) {
+        const words = JSON.parse(localStorage.getItem('words') ?? "[]")
+        freshWordsCount = words.length
+        localStorage.setItem("freshWordsCount", freshWordsCount.toString())
+    }
     const freshWordsInput = document.querySelector('.fresh-words-input input')
-    freshWordsInput.value = localStorage.getItem("freshWordsCount") ?? 0
+    freshWordsInput.value = freshWordsCount
 
     freshWordsInput.addEventListener("input", e => {
         e.stopPropagation()
         localStorage.setItem("freshWordsCount", e.target.value)
         freshWordsInput.value = e.target.value
     })
+
+    document.querySelector('.refresh-btn').addEventListener('click', onLoad);
+
     document.querySelector('.fetch-button').addEventListener('click', async () => {
         await fetchDataFromServer()
         onLoad()

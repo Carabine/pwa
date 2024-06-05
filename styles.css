@@ -17,19 +17,38 @@ body {
 
 .back-btn {
     position: absolute;
-    left: 16px;
+    left: 20px;
     top: 16px;
 }
 
 .fresh-words-input {
     position: absolute;
-    right: 16px;
+    right: 20px;
     top: 16px;
     font-size: 12px;
 }
 
 .fresh-words-input input {
     width: 60px;
+}
+
+.words-count {
+    position: absolute;
+    left: 20px;
+    top: 50px;
+    font-size: 16px;
+}
+
+.words-count .green {
+    color: #1ec31e;
+}
+
+.words-count .red {
+    color: #ED2939;
+}
+
+.words-count .blue {
+    color: #0000f2;
 }
 
 .back-btn a {
