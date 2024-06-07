@@ -36,6 +36,8 @@ body {
     position: absolute;
     left: 20px;
     top: 50px;
+    display: flex;
+    gap: 8px;
     font-size: 16px;
 }
 
@@ -48,7 +50,7 @@ body {
 }
 
 .words-count .blue {
-    color: #0000f2;
+    color: #0D47A1;
 }
 
 .back-btn a {
@@ -250,6 +252,7 @@ body {
     flex-direction: column;
     gap: 8px;
     margin-bottom: 12px;
+    padding: 0 12px;
 }
 
 .word {
@@ -299,6 +302,20 @@ body {
 .buttons {
     display: flex;
     gap: 12px;
+}
+
+.bury-word-btn {
+    background: #2e8b57;
+    width: 140px;
+}
+
+.keep-word-btn {
+    background: #880808;
+    width: 140px;
+}
+
+.show-btn {
+    width: 140px;
 }
 
 video {

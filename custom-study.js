@@ -12,6 +12,7 @@ function displayFrontSideData(word) {
     cardFrontSide.appendChild(wordEl);
 
     const showBtn = document.createElement("button")
+    showBtn.classList.add('show-btn')
     showBtn.innerHTML = 'Show'
 
     showBtn.addEventListener("click", () => displayBackSideData(word))
@@ -66,9 +67,11 @@ function displayBackSideData(word) {
 
     const keepWordBtn = document.createElement("button")
     keepWordBtn.innerHTML = "Bad"
+    keepWordBtn.classList.add('keep-word-btn')
 
     const buryWordBtn = document.createElement("button")
     buryWordBtn.innerHTML = "Good"
+    buryWordBtn.classList.add('bury-word-btn')
 
     keepWordBtn.addEventListener('click', keepWord);
     buryWordBtn.addEventListener('click', buryWord);
