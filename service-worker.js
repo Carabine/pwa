@@ -29,6 +29,8 @@ self.addEventListener('install', function(event) {
         '/styles.css',
         '/app.js',
         '/pwa.png',
+        '/custom-study.html',
+        '/study.html',
     ];
 
     // All of these logging statements should be visible via the "Inspect" interface

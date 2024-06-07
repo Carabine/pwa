@@ -22,7 +22,6 @@ function displayFrontSideData(word) {
 }
 
 function displayBackSideData(word) {
-    console.log(123)
     const cardBackSide = document.querySelector('.back-side');
     // Clear previous data
     // Display new data
