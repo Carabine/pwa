@@ -979,6 +979,276 @@
       "meaning": "going out, outing, leaving (one's home, office, etc.)",
       "sentence": "うち って さ 今 外出 する の も うるさい ん だ",
       "translatedSentence": "It's noisy to go out now"
+    },
+    {
+      "id": "lx0ru382pf1op5b44vh",
+      "kana": "いや",
+      "word": "嫌",
+      "audio": "",
+      "video": "https://i.imgur.com/6mS2XYP.mp4",
+      "meaning": "unpleasant, disagreeable, nasty, horrible, disgusting, undesirable, unwelcome",
+      "sentence": "嫌 だ よ ね ミンチ に さ れる なんて",
+      "translatedSentence": "I don't like it, it's a mince"
+    },
+    {
+      "id": "lxfscc347kxj4imlsot",
+      "kana": "かいわ",
+      "word": "会話",
+      "audio": "",
+      "video": "https://i.imgur.com/OCJJnNr.mp4",
+      "meaning": "conversation, talk, chat",
+      "sentence": "爬虫類 と 会話 が できる よう に なった 男 の 話",
+      "translatedSentence": "The story of a man who has become able to talk with reptile"
+    },
+    {
+      "id": "lxfsczh8reqrmgsju1q",
+      "kana": "じけん",
+      "word": "事件",
+      "audio": "",
+      "video": "https://i.imgur.com/zm6tf5L.mp4",
+      "meaning": "event, affair, incident, case, plot, trouble, scandal",
+      "sentence": "その 事件 の 真相 を 知って いる 人間",
+      "translatedSentence": "A person who knows the truth of the case"
+    },
+    {
+      "id": "lxfsf5ip9m62qtd99k",
+      "kana": "さいきん",
+      "word": "最近",
+      "audio": "",
+      "video": "https://i.imgur.com/DjMTNZ4.mp4",
+      "meaning": "recently, lately, these days, nowadays, right now",
+      "sentence": "最近 さあ 変わった ね",
+      "translatedSentence": "It has changed recently"
+    },
+    {
+      "id": "lxfsftppv085agt4ma",
+      "kana": "かわる",
+      "word": "変る",
+      "audio": "",
+      "video": "https://i.imgur.com/RRqlvUy.mp4",
+      "meaning": "to change, to be transformed, to be altered, to vary",
+      "sentence": "最近 さあ 変わった ね",
+      "translatedSentence": "It has changed recently"
+    },
+    {
+      "id": "lxfsgjj4bf5kycmgy57",
+      "kana": "こえ",
+      "word": "声",
+      "audio": "",
+      "video": "https://i.imgur.com/hT2nbgm.mp4",
+      "meaning": "voice",
+      "sentence": "今 確かに 声 が …",
+      "translatedSentence": "Now my voice is ..."
+    },
+    {
+      "id": "lxfskz2ia1u8vbk5n4s",
+      "kana": "あいて",
+      "word": "相手",
+      "audio": "",
+      "video": "https://i.imgur.com/44OIipe.mp4",
+      "meaning": "opponent (sports, etc.)",
+      "sentence": "相手 まで の 距離 は 約 70 メートル",
+      "translatedSentence": "The distance to the opponent is about 70 meters"
+    },
+    {
+      "id": "lxfsmw03bqopb16dk2f",
+      "kana": "やく",
+      "word": "約",
+      "audio": "",
+      "video": "https://i.imgur.com/T5ASUYa.mp4",
+      "meaning": "approximately, about",
+      "sentence": "相手 まで の 距離 は 約 70 メートル",
+      "translatedSentence": "The distance to the opponent is about 70 meters"
+    },
+    {
+      "id": "lxfssglisxmocls0s4",
+      "kana": "せんじつ",
+      "word": "先日",
+      "audio": "",
+      "video": "https://i.imgur.com/fHrFj4F.mp4",
+      "meaning": "the other day, a few days ago",
+      "sentence": "先日 交通 事故 で 入院 さ れ た 松山 先生 に 代わり",
+      "translatedSentence": "Instead of Dr. Matsuyama, who was hospitalized in a traffic accident the other day"
+    },
+    {
+      "id": "lxfsumr61w8jnrc0vk4",
+      "kana": "じこ",
+      "word": "事故",
+      "audio": "",
+      "video": "https://i.imgur.com/ynYB7EL.mp4",
+      "meaning": "accident, incident, trouble",
+      "sentence": "先日 交通 事故 で 入院 さ れ た 松山 先生 に 代わり",
+      "translatedSentence": "Instead of Dr. Matsuyama, who was hospitalized in a traffic accident the other day"
+    },
+    {
+      "id": "lxfsx9gcwm5oj3lcc4p",
+      "kana": "かわりに",
+      "word": "代りに",
+      "audio": "",
+      "video": "https://i.imgur.com/MeTJH5X.mp4",
+      "meaning": "instead of, in place of, as a substitute for",
+      "sentence": "先日 交通 事故 で 入院 さ れ た 松山 先生 に 代わり",
+      "translatedSentence": "Instead of Dr. Matsuyama, who was hospitalized in a traffic accident the other day"
+    },
+    {
+      "id": "lxfsye84ef2puui5hd",
+      "kana": "たんとう",
+      "word": "担当",
+      "audio": "",
+      "video": "https://i.imgur.com/99e8o1q.mp4",
+      "meaning": "being in charge (of an area of responsibility), being responsible (for a work role, etc.)",
+      "sentence": "数学 を 担当 さ れる 新任 の 先生 を 紹介 し ましょ う",
+      "translatedSentence": "Let's introduce a new teacher in charge of mathematics"
+    },
+    {
+      "id": "lxfszneqsr9247k084",
+      "kana": "しょうかい",
+      "word": "紹介",
+      "audio": "",
+      "video": "https://i.imgur.com/VtdxQMm.mp4",
+      "meaning": "introduction, presentation, referral, showcase (of a product)",
+      "sentence": "数学 を 担当 さ れる 新任 の 先生 を 紹介 し ましょ う",
+      "translatedSentence": "Let's introduce a new teacher in charge of mathematics"
+    },
+    {
+      "id": "lxft2ob4p853ocs9kvm",
+      "kana": "けっこう",
+      "word": "結構",
+      "audio": "",
+      "video": "https://i.imgur.com/wfU3Kcb.mp4",
+      "meaning": "splendid, nice, wonderful, delightful, lovely, excellent, fine",
+      "sentence": "あの 先生 結構 美人 よ ね",
+      "translatedSentence": "That teacher is pretty beautiful"
+    },
+    {
+      "id": "lxft5ef0epi7m1c68e",
+      "kana": "ふたたび",
+      "word": "再び",
+      "audio": "",
+      "video": "https://i.imgur.com/u9HYBRf.mp4",
+      "meaning": "again, once more, a second time",
+      "sentence": "再び ストレッチ で 筋肉 を よく ほぐす よう に",
+      "translatedSentence": "Stretch again with stretching again"
+    },
+    {
+      "id": "lxft950imorksala1id",
+      "kana": "うしなう",
+      "word": "失う",
+      "audio": "",
+      "video": "https://i.imgur.com/6bquro8.mp4",
+      "meaning": "to lose",
+      "sentence": "その 人間 固有 の 身分 を 失わ ず そっくり 引き継ぐ と は",
+      "translatedSentence": "What is the person who will take over without losing his personality?"
+    },
+    {
+      "id": "lxftagzy8psg9m2ahdc",
+      "kana": "さいのう",
+      "word": "才能",
+      "audio": "",
+      "video": "https://i.imgur.com/b79IEuf.mp4",
+      "meaning": "talent, ability",
+      "sentence": "これ は 大変 な 才能 だ ぞ",
+      "translatedSentence": "This is a great talent"
+    },
+    {
+      "id": "lxftb5w9oengzloxgtb",
+      "kana": "いみ",
+      "word": "意味",
+      "audio": "",
+      "video": "https://i.imgur.com/PN1iAqc.mp4",
+      "meaning": "meaning, significance, sense",
+      "sentence": "どういう 意味 だ",
+      "translatedSentence": "What do you mean"
+    },
+    {
+      "id": "lxftbolx81kdss09jmw",
+      "kana": "しゃかい",
+      "word": "社会",
+      "audio": "",
+      "video": "https://i.imgur.com/hfgpfdd.mp4",
+      "meaning": "society, public, community, the world",
+      "sentence": "ヤツ は 人間 社会 に 溶け込ん で い たい の だ",
+      "translatedSentence": "He wants to blend into human society"
+    },
+    {
+      "id": "lxftchn7s1d5om3tik",
+      "kana": "ちょくせつ",
+      "word": "直接",
+      "audio": "",
+      "video": "https://i.imgur.com/DyYLg5h.mp4",
+      "meaning": "direct, immediate, personal, firsthand",
+      "sentence": "社会生活 に 直接 関わる 人間 を 食料 に は し ない だろ う",
+      "translatedSentence": "You won't make people directly involved in social life"
+    },
+    {
+      "id": "lxftd69h9lek16qio6t",
+      "kana": "しゅうい",
+      "word": "周囲",
+      "audio": "",
+      "video": "https://i.imgur.com/9T45cHz.mp4",
+      "meaning": "surroundings, environs",
+      "sentence": "ヤツ の 周囲 は 安全 な はず だ",
+      "translatedSentence": "The area around the guy should be safe"
+    },
+    {
+      "id": "lxftdxgal5al7zjb5v",
+      "kana": "あんせん",
+      "word": "安全",
+      "audio": "",
+      "video": "https://i.imgur.com/RUei9hI.mp4",
+      "meaning": "safety, security",
+      "sentence": "ヤツ の 周囲 は 安全 な はず だ",
+      "translatedSentence": "The area around the guy should be safe"
+    },
+    {
+      "id": "lxftehoj08xf7s7qr9p",
+      "kana": "ようす",
+      "word": "様子",
+      "audio": "",
+      "video": "https://i.imgur.com/L2bgf7t.mp4",
+      "meaning": "state, condition, appearance, situation",
+      "sentence": "まあ しばらく 様子 を 見よ う",
+      "translatedSentence": "Well let's see the situation for a while"
+    },
+    {
+      "id": "lxfthko28kct9la2frx",
+      "kana": "うらやましい",
+      "word": "羨ましい",
+      "audio": "",
+      "video": "https://i.imgur.com/sL2JGtj.mp4",
+      "meaning": "envious, jealous",
+      "sentence": "羨ましい な お前",
+      "translatedSentence": "Envy you"
+    },
+    {
+      "id": "lxftj9yojkvja28l4pb",
+      "kana": "みりょく",
+      "word": "魅力",
+      "audio": "",
+      "video": "https://i.imgur.com/t8EFrdW.mp4",
+      "meaning": "charm, fascination, glamour, glamor, attraction, appeal",
+      "sentence": "いやいや 田宮 先生 の 大人 の 魅力 に は 敵わ ない って",
+      "translatedSentence": "No, I can't compete with the charm of Dr. Tamiya's adult"
+    },
+    {
+      "id": "lxftmkg2lsba36ky3eg",
+      "kana": "しゅみ",
+      "word": "趣味",
+      "audio": "",
+      "video": "https://i.imgur.com/tNBg2MO.mp4",
+      "meaning": "hobby, pastime",
+      "sentence": "だけど あの 先生 泉 みたい な の が 趣味 な ん だ",
+      "translatedSentence": "But my hobby is like that teacher Izumi"
+    },
+    {
+      "id": "lxftoxnly8blwbm8aq",
+      "kana": "しちらい",
+      "word": "失礼",
+      "audio": "",
+      "video": "https://i.imgur.com/XVnifLj.mp4",
+      "meaning": "to be rude",
+      "sentence": "失礼 し ます",
+      "translatedSentence": "Excuse me"
     }
   ]
 }
