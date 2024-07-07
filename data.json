@@ -1249,6 +1249,216 @@
       "meaning": "to be rude",
       "sentence": "失礼 し ます",
       "translatedSentence": "Excuse me"
+    },
+    {
+      "id": "ly9211zcmj1dbdbgoss",
+      "kana": "じゃま",
+      "word": "邪魔",
+      "audio": "",
+      "video": "https://i.imgur.com/h3ve11X.mp4",
+      "meaning": "hindrance, obstacle, nuisance, disturbance, interruption, interference",
+      "sentence": "勝手 に 邪魔 し てん じゃ ねえ よ",
+      "translatedSentence": "You don't get in the way without permission"
+    },
+    {
+      "id": "ly923tthlhrm67ex8m",
+      "kana": "あぶない",
+      "word": "危ない",
+      "audio": "",
+      "video": "https://i.imgur.com/fLA6jsT.mp4",
+      "meaning": "dangerous, risky, hazardous, perilous, precarious",
+      "sentence": "危ない",
+      "translatedSentence": "Dangerous"
+    },
+    {
+      "id": "ly926qt7bh7zi0nh5kp",
+      "kana": "とおり",
+      "word": "通り",
+      "audio": "",
+      "video": "https://i.imgur.com/EhlyGNA.mp4",
+      "meaning": "the same status or way, as (e.g. as expected, as I said)",
+      "sentence": "ミギー の 言う 通り",
+      "translatedSentence": "As Miggy says"
+    },
+    {
+      "id": "lybmq5bzbo94yzh13jk",
+      "kana": "きょり",
+      "word": "距離",
+      "audio": "",
+      "video": "https://i.imgur.com/qgp2hlJ.mp4",
+      "meaning": "distance, range, interval",
+      "sentence": "第 一 この 距離 で やりあったら お互い が 致命傷 を 受ける わ",
+      "translatedSentence": "First, if you do it at this distance, you will be fatal."
+    },
+    {
+      "id": "lybmufo4isyoq7k2tk",
+      "kana": "うける",
+      "word": "受ける",
+      "audio": "",
+      "video": "https://i.imgur.com/JVsGmF4.mp4",
+      "meaning": "to receive, to get",
+      "sentence": "第 一 この 距離 で やりあったら お互い が 致命傷 を 受ける わ",
+      "translatedSentence": "First, if you do it at this distance, you will be fatal."
+    },
+    {
+      "id": "lybmvu9gem1a9crdyj",
+      "kana": "いろいろ",
+      "word": "色々",
+      "audio": "",
+      "video": "https://i.imgur.com/BFpjTrV.mp4",
+      "meaning": "various, all sorts of, variety of",
+      "sentence": "あなた と は もっと 色々 話し たい の",
+      "translatedSentence": "I want to talk to you more"
+    },
+    {
+      "id": "lybn2qtnzm6m1105yoo",
+      "kana": "じょうほう",
+      "word": "情報",
+      "audio": "",
+      "video": "https://i.imgur.com/WuYWRvX.mp4",
+      "meaning": "information (data contained in characters, signals, code, etc.)",
+      "sentence": "お互い 情報 を 交換 し 今後 の こと も 相談 し たい から",
+      "translatedSentence": "I want to exchange information with each other and talk about the future"
+    },
+    {
+      "id": "lybn3q2h5m305044vlh",
+      "kana": "こうかん",
+      "word": "交換",
+      "audio": "",
+      "video": "https://i.imgur.com/6wb8ize.mp4",
+      "meaning": "exchange, interchange, switching, reciprocity, barter, substitution, replacement, clearing (of checks, cheques)",
+      "sentence": "お互い 情報 を 交換 し 今後 の こと も 相談 し たい から",
+      "translatedSentence": "I want to exchange information with each other and talk about the future"
+    },
+    {
+      "id": "lybn6o2p2qne5ncpjf",
+      "kana": "よてい",
+      "word": "予定",
+      "audio": "",
+      "video": "https://i.imgur.com/Tk755Ts.mp4",
+      "meaning": "plans, arrangement, schedule, program, programme, expectation, estimate",
+      "sentence": "あの 今日 何 かご 予定 は",
+      "translatedSentence": "What is your plan today?"
+    },
+    {
+      "id": "lybn8jy7w2grof8eem",
+      "kana": "けんか",
+      "word": "喧嘩",
+      "audio": "",
+      "video": "https://i.imgur.com/Iyex1Ae.mp4",
+      "meaning": "quarrel, brawl, fight, squabble, scuffle, argument",
+      "sentence": "喧嘩 する わけ じゃ ない ん だろ",
+      "translatedSentence": "It's not a quarrel"
+    },
+    {
+      "id": "lybnbdiqvmhjdl6g26",
+      "kana": "ゆるやか",
+      "word": "緩やか",
+      "audio": "",
+      "video": "https://i.imgur.com/FT8aHQi.mp4",
+      "meaning": "gentle (slope, curve), slow (speed)",
+      "sentence": "それ より シン イチ 心臓 の 鼓動 を 少し 緩やか に し て くれ",
+      "translatedSentence": "Make the heartbeat of the heart of the heart a little more than that"
+    },
+    {
+      "id": "lybnfrbdfhclz7v834d",
+      "kana": "けっか",
+      "word": "結果",
+      "audio": "",
+      "video": "https://i.imgur.com/OKt4eju.mp4",
+      "meaning": "result, consequence, outcome, effect",
+      "sentence": "結果 どうなった と 思う ？",
+      "translatedSentence": "What happened as a result?"
+    },
+    {
+      "id": "lybnh0jf1f1rq258mqr",
+      "kana": "そだつ",
+      "word": "育つ",
+      "audio": "",
+      "video": "https://i.imgur.com/BAsqkP7.mp4",
+      "meaning": "to be raised (e.g. child), to be brought up, to grow (up)",
+      "sentence": "今 私 の 体内 で 育って いる もの それ は 一体 何でしょう",
+      "translatedSentence": "What is growing in my body right now?"
+    },
+    {
+      "id": "lybnid18h7fi29ngq7",
+      "kana": "あかんぼ",
+      "word": "赤ん坊",
+      "audio": "",
+      "video": "https://i.imgur.com/wmVuzea.mp4",
+      "meaning": "baby, infant",
+      "sentence": "そう まったく なんの 変哲 も ない 人間 の 赤ん坊 よ",
+      "translatedSentence": "A human baby who has nothing to do at all"
+    },
+    {
+      "id": "lybnli696zks6t9ub8h",
+      "kana": "りゆう",
+      "word": "理由",
+      "audio": "",
+      "video": "https://i.imgur.com/4Zq9IUL.mp4",
+      "meaning": "reason, pretext, motive",
+      "sentence": "共食い の 理由 も 分から ん",
+      "translatedSentence": "I don't know why"
+    },
+    {
+      "id": "lybnnbe4vgnmr2k83f",
+      "kana": "のうりょく",
+      "word": "能力",
+      "audio": "",
+      "video": "https://i.imgur.com/MAYZM5I.mp4",
+      "meaning": "ability, faculty",
+      "sentence": "繁殖 能力 は なく ひたすら 共食い みたい な こと を 繰り返す",
+      "translatedSentence": "There is no breeding ability and repeats things like eating together"
+    },
+    {
+      "id": "lybnojkjwzz6axahq5",
+      "kana": "くりかえす",
+      "word": "繰返す",
+      "audio": "",
+      "video": "https://i.imgur.com/3XBnZ6b.mp4",
+      "meaning": "to repeat, to do something over again",
+      "sentence": "繁殖 能力 は なく ひたすら 共食い みたい な こと を 繰り返す",
+      "translatedSentence": "There is no breeding ability and repeats things like eating together"
+    },
+    {
+      "id": "lybnrf9zkoyf1x1c86d",
+      "kana": "ふしぎ",
+      "word": "不思議",
+      "audio": "",
+      "video": "https://i.imgur.com/k3xzpky.mp4",
+      "meaning": "wonderful, marvelous, strange, incredible, amazing, curious, miraculous, mysterious",
+      "sentence": "その点 に つい て は 私 も 不思議 に 思って い た",
+      "translatedSentence": "I was wondering about that point"
+    },
+    {
+      "id": "lybnwfibksfw78vlqe",
+      "kana": "りかい",
+      "word": "理解",
+      "audio": "",
+      "video": "https://i.imgur.com/E9EusQ4.mp4",
+      "meaning": "understanding, comprehension, appreciation",
+      "sentence": "人間 は 時々 理解 でき ない よう な 行動 を 取る から",
+      "translatedSentence": "Humans take actions that they can't understand from time to time"
+    },
+    {
+      "id": "lybnzd4qfrnf8m0i0a",
+      "kana": "さわぐ",
+      "word": "騒ぐ",
+      "audio": "",
+      "video": "https://i.imgur.com/Q7iV7jn.mp4",
+      "meaning": "to make noise, to make racket, to be noisy",
+      "sentence": "仮に 私 と 敵対 し て 騒ぎ を 起こし た 場合",
+      "translatedSentence": "If you make a fuss with me with me"
+    },
+    {
+      "id": "lybo00ynkx08zgbckx",
+      "kana": "たちば",
+      "word": "立場",
+      "audio": "",
+      "video": "https://i.imgur.com/2ozt518.mp4",
+      "meaning": "position, situation",
+      "sentence": "顔 を 変え られ ない あなた の 方 が 立場 は 不利 よ",
+      "translatedSentence": "You can't change your face, you're more disadvantageous"
     }
   ]
 }
