@@ -1459,6 +1459,226 @@
       "meaning": "position, situation",
       "sentence": "顔 を 変え られ ない あなた の 方 が 立場 は 不利 よ",
       "translatedSentence": "You can't change your face, you're more disadvantageous"
+    },
+    {
+      "id": "lz4f5hhxb232shauw6",
+      "kana": "たいした",
+      "word": "大した",
+      "audio": "",
+      "video": "https://i.imgur.com/I1wJjMu.mp4",
+      "meaning": "considerable, great, important, significant, a big deal",
+      "sentence": "大した 奴 だ",
+      "translatedSentence": "A big guy"
+    },
+    {
+      "id": "lz4f8ghw2n7cfjx22xz",
+      "kana": "ひきだす",
+      "word": "引出す",
+      "audio": "",
+      "video": "https://i.imgur.com/yySPCyG.mp4",
+      "meaning": "to pull out, to take out, to draw out",
+      "sentence": "シン イチ の 恐怖心 を ここ まで 引き出す と は",
+      "translatedSentence": "To bring out the fear of Shinichi so far"
+    },
+    {
+      "id": "lz4fb6s95f60z76e3mu",
+      "kana": "しんぱい",
+      "word": "心配",
+      "audio": "",
+      "video": "https://i.imgur.com/RTCoAmb.mp4",
+      "meaning": "worry, concern, anxiety, uneasiness, fear",
+      "sentence": "里美 も 心配 し て た よ",
+      "translatedSentence": "I was worried about Satomi"
+    },
+    {
+      "id": "lz4fcixn1abejth5kq9",
+      "kana": "せめる",
+      "word": "攻める",
+      "audio": "",
+      "video": "https://i.imgur.com/OnSsDlZ.mp4",
+      "meaning": "to attack, to assault, to assail",
+      "sentence": "シン イチ 攻め て き た ぞ",
+      "translatedSentence": "I've been attacking Shinichi"
+    },
+    {
+      "id": "lz4feff3khx5l737u0k",
+      "kana": "きょか",
+      "word": "許可",
+      "audio": "",
+      "video": "https://i.imgur.com/6XpJJxV.mp4",
+      "meaning": "permission, approval, authorization, license",
+      "sentence": "待て 許可 な しで 校内 へ 入る なんて どういう つもり だ",
+      "translatedSentence": "What do you mean to enter the school without waiting?"
+    },
+    {
+      "id": "lz4fmpucwbdfmsv10t7",
+      "kana": "すすむ",
+      "word": "進む",
+      "audio": "",
+      "video": "https://i.imgur.com/ij4nYfO.mp4",
+      "meaning": "to advance, to go forward",
+      "sentence": "押す な 早く あちら に 進め",
+      "translatedSentence": "Don't press it quickly"
+    },
+    {
+      "id": "lz4g0fbr3nhdh77t9ec",
+      "kana": "きにする",
+      "word": "気にする",
+      "audio": "",
+      "video": "https://i.imgur.com/rF4s3IE.mp4",
+      "meaning": "to mind (negative nuance), to care about, to worry, to pay undue (amount of) attention to (something)",
+      "sentence": "相手 は 人目 も 気にせ ず 白昼 堂々 と 乗り込ん で 来る よう な ヤツ だ ぞ",
+      "translatedSentence": "The other person is a guy who comes in in the daytime without worrying about the eyes."
+    },
+    {
+      "id": "lz4g3pu5xgamd6kuzqc",
+      "kana": "かならず",
+      "word": "必ず",
+      "audio": "",
+      "video": "https://i.imgur.com/QIMPPxW.mp4",
+      "meaning": "always, without exception, necessarily, certainly, without fail, positively, invariably",
+      "sentence": "逃げ て も 必ず 追って くる ここ で 倒し た ほう が いい",
+      "translatedSentence": "Even if you escape, you will always follow you here, you should defeat it here"
+    },
+    {
+      "id": "lz4g7yp45s9jssxkmvi",
+      "kana": "ゆうり",
+      "word": "有利",
+      "audio": "",
+      "video": "https://i.imgur.com/859jZ2v.mp4",
+      "meaning": "advantageous, favourable, better, stronger",
+      "sentence": "それ に 今 なら こっち が 有利 だ",
+      "translatedSentence": "And this is an advantage now"
+    },
+    {
+      "id": "lz5iltz7wf9asec0d3a",
+      "kana": "いち",
+      "word": "位置",
+      "audio": "",
+      "video": "https://i.imgur.com/E1T1yn1.mp4",
+      "meaning": "place, position, location",
+      "sentence": "ヤツ は シン イチ の いや 私 の 位置 を 突き止めよ う として いる",
+      "translatedSentence": "He is trying to find out my position in Shinchi"
+    },
+    {
+      "id": "lz5iwe3i9knq519sh1",
+      "kana": "にく",
+      "word": "肉",
+      "audio": "",
+      "video": "https://i.imgur.com/mLmc6z0.mp4",
+      "meaning": "meat",
+      "sentence": "シン イチ は 壁 の 肉 という 盾 で 守ら れ て いる",
+      "translatedSentence": "Shinichi is protected by the shield of the meat on the wall"
+    },
+    {
+      "id": "lz5ixjssyl8ta0cqbki",
+      "kana": "たて",
+      "word": "盾",
+      "audio": "",
+      "video": "https://i.imgur.com/keN9lLE.mp4",
+      "meaning": "shield, buckler, escutcheon, pretext",
+      "sentence": "シン イチ は 壁 の 肉 という 盾 で 守ら れ て いる",
+      "translatedSentence": "Shinichi is protected by the shield of the meat on the wall"
+    },
+    {
+      "id": "lz5iyvdiocc6laffa5r",
+      "kana": "やっかい",
+      "word": "厄介",
+      "audio": "",
+      "video": "https://i.imgur.com/8Hhl38k.mp4",
+      "meaning": "trouble, burden, nuisance, bother, worry",
+      "sentence": "それ は A に とって は 厄介 な 障害物 と なる はず だ",
+      "translatedSentence": "It should be a troublesome obstacle for A"
+    },
+    {
+      "id": "lz5j2h73ywzctvd568",
+      "kana": "はなる",
+      "word": "離る",
+      "audio": "",
+      "video": "https://i.imgur.com/6mFv4bU.mp4",
+      "meaning": "to leave, to go away",
+      "sentence": "近寄る な 僕 から 離れろ",
+      "translatedSentence": "Don't get close to me"
+    },
+    {
+      "id": "lz5j44idx47lb1khqhp",
+      "kana": "いそぐ",
+      "word": "急ぐ",
+      "audio": "",
+      "video": "https://i.imgur.com/pgs2TjI.mp4",
+      "meaning": "to hurry, to rush, to hasten, to make something happen sooner",
+      "sentence": "とにかく 急い で 避難 し て",
+      "translatedSentence": "Anyway, evacuate in a hurry"
+    },
+    {
+      "id": "lz5j637wy71ofigaf1q",
+      "kana": "どうぶつ",
+      "word": "動物",
+      "audio": "",
+      "video": "https://i.imgur.com/vdbYDjw.mp4",
+      "meaning": "animal",
+      "sentence": "動物 は そうやって 生き て いる の だ",
+      "translatedSentence": "Animals live that way"
+    },
+    {
+      "id": "lz5j74x2iniioztziwo",
+      "kana": "じさつ",
+      "word": "自殺",
+      "audio": "",
+      "video": "https://i.imgur.com/XBg82YD.mp4",
+      "meaning": "suicide",
+      "sentence": "人間 は 自殺 する という めずらしい 動物 だった な",
+      "translatedSentence": "Humans were rare animals to commit suicide"
+    },
+    {
+      "id": "lz5j95xi5d24nwcvblh",
+      "kana": "ひま",
+      "word": "暇",
+      "audio": "",
+      "video": "https://i.imgur.com/qO7nf77.mp4",
+      "meaning": "spare time, free time, leisure",
+      "sentence": "怒る ？ 私 は そんなに 暇 で は ない",
+      "translatedSentence": "Get angry ?"
+    },
+    {
+      "id": "lz5jdvlgwb0xom5tfw8",
+      "kana": "ぶき",
+      "word": "武器",
+      "audio": "",
+      "video": "https://i.imgur.com/CTNE1Be.mp4",
+      "meaning": "weapon (something used to gain an advantage), asset",
+      "sentence": "はい シン イチ の 武器",
+      "translatedSentence": "Yes Shinichi's weapon"
+    },
+    {
+      "id": "lz5ki6ieati5v0z0kp",
+      "kana": "かんぺき",
+      "word": "完璧",
+      "audio": "",
+      "video": "https://i.imgur.com/2jMSAyv.mp4",
+      "meaning": "perfect, complete, flawless",
+      "sentence": "信じる ん だ ミギー の 防御 は 完璧",
+      "translatedSentence": "I believe Miggy's defense is perfect"
+    },
+    {
+      "id": "lz5kltcgewo37td5bh",
+      "kana": "こんらん",
+      "word": "混乱",
+      "audio": "",
+      "video": "https://i.imgur.com/8XSCVOe.mp4",
+      "meaning": "disorder, chaos, confusion, mayhem",
+      "sentence": "だいぶ 混乱 し て いる な",
+      "translatedSentence": "I'm pretty confused"
+    },
+    {
+      "id": "lz5lk6g5698a8emli7",
+      "kana": "ぶじ",
+      "word": "無事",
+      "audio": "",
+      "video": "https://i.imgur.com/1RUND9E.mp4",
+      "meaning": "safety, security, peace, quiet",
+      "sentence": "まあ 無事 で よかった が な",
+      "translatedSentence": "I'm glad it was safe"
     }
   ]
 }
