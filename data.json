@@ -1473,7 +1473,7 @@
     {
       "id": "lz4f8ghw2n7cfjx22xz",
       "kana": "ひきだす",
-      "word": "引出す",
+      "word": "引き出す",
       "audio": "",
       "video": "https://i.imgur.com/yySPCyG.mp4",
       "meaning": "to pull out, to take out, to draw out",
@@ -1679,6 +1679,186 @@
       "meaning": "safety, security, peace, quiet",
       "sentence": "まあ 無事 で よかった が な",
       "translatedSentence": "I'm glad it was safe"
+    },
+    {
+      "id": "lzecvrk6wuxs4r3wb",
+      "kana": "のこる",
+      "word": "残る",
+      "audio": "",
+      "video": "https://i.imgur.com/Mj1CTAg.mp4",
+      "meaning": "to remain, to be left",
+      "sentence": "まだ 刺し た とき の 感触 が 残ってる",
+      "translatedSentence": "I still feel the feeling of stinging"
+    },
+    {
+      "id": "lzecwaora0d8iy6dvos",
+      "kana": "せけん",
+      "word": "世間",
+      "audio": "",
+      "video": "https://i.imgur.com/pYPga0a.mp4",
+      "meaning": "world, society, people, the public",
+      "sentence": "世間 も 落ち着き を 取り戻し た 頃",
+      "translatedSentence": "When the public regained calm"
+    },
+    {
+      "id": "lzecyxqjga3z3utaycp",
+      "kana": "つく",
+      "word": "着く",
+      "audio": "",
+      "video": "https://i.imgur.com/HrNyYPz.mp4",
+      "meaning": "to arrive at, to reach",
+      "sentence": "世間 も 落ち着き を 取り戻し た 頃",
+      "translatedSentence": "When the public regained calm"
+    },
+    {
+      "id": "lzed0i99fqmjq3h4wdm",
+      "kana": "おちつく",
+      "word": "落ち着く",
+      "audio": "",
+      "video": "https://i.imgur.com/nTVtrF3.mp4",
+      "meaning": "to calm down, to settle down, to die down, to become stable, to abate",
+      "sentence": "世間 も 落ち着き を 取り戻し た 頃",
+      "translatedSentence": "When the public regained calm"
+    },
+    {
+      "id": "lzed2s9tc3f4q2ixnp9",
+      "kana": "もどす",
+      "word": "戻す",
+      "audio": "",
+      "video": "https://i.imgur.com/oc2K0lu.mp4",
+      "meaning": "to put back, to return, to give back, вернуть (modoru - вернуться)",
+      "sentence": "世間 も 落ち着き を 取り戻し た 頃",
+      "translatedSentence": "When the public regained calm"
+    },
+    {
+      "id": "lzed9te4bqa4qs7prc",
+      "kana": "へいき",
+      "word": "平気",
+      "audio": "",
+      "video": "https://i.imgur.com/f4gLFsr.mp4",
+      "meaning": "cool, calm, composed, unconcerned, nonchalant, unmoved, indifferent",
+      "sentence": "平気 な 顔 で 授業 を 続け て いる",
+      "translatedSentence": "I continue classes with a calm face"
+    },
+    {
+      "id": "lzedeoieksmkt24mwzj",
+      "kana": "かたち",
+      "word": "形",
+      "audio": "",
+      "video": "https://i.imgur.com/q0WTf1L.mp4",
+      "meaning": "form, shape, figure",
+      "sentence": "まさか こんな 形 で 終わり に なる と は",
+      "translatedSentence": "No way, it will end in this way"
+    },
+    {
+      "id": "lzedj5e8zqsk6vz1zv",
+      "kana": "ち",
+      "word": "血",
+      "audio": "",
+      "video": "https://i.imgur.com/cuqEM3x.mp4",
+      "meaning": "blood",
+      "sentence": "僕 の 右手 は 僕 の 血 で 生き て いる",
+      "translatedSentence": "My right hand is alive with my blood"
+    },
+    {
+      "id": "lzedlhtqo8us87zqoz8",
+      "kana": "しょくりょう",
+      "word": "食料",
+      "audio": "",
+      "video": "https://i.imgur.com/pswS10P.mp4",
+      "meaning": "food",
+      "sentence": "お前 ら だって 人間 を 食料 に し なく て も 生き られる ん じゃ ない の か",
+      "translatedSentence": "Can you live without having to make humans food?"
+    },
+    {
+      "id": "lzedmm7r12cnxdctffm",
+      "kana": "かのう",
+      "word": "可能",
+      "audio": "",
+      "video": "https://i.imgur.com/G1AaLeK.mp4",
+      "meaning": "possible, potential, practicable, feasible",
+      "sentence": "たぶん 可能 だろ う な",
+      "translatedSentence": "Probably possible"
+    },
+    {
+      "id": "lzedr4copums5k67k3e",
+      "kana": "よう",
+      "word": "用",
+      "audio": "",
+      "video": "https://i.imgur.com/c06oWlo.mp4",
+      "meaning": "use, purpose",
+      "sentence": "用 が なけれ ば 食う",
+      "translatedSentence": "Eat if there is no need"
+    },
+    {
+      "id": "lzee18msgt5xjj8vox4",
+      "kana": "とくべつ",
+      "word": "特別",
+      "audio": "",
+      "video": "https://i.imgur.com/Rh6gZVR.mp4",
+      "meaning": "special, particular, extraordinary, exceptional, especial",
+      "sentence": "この 女 に 特別 な 能力 が あった とも 思え ない が",
+      "translatedSentence": "I don't think this woman had a special ability"
+    },
+    {
+      "id": "lzee3765zd4leva2p39",
+      "kana": "さんぽ",
+      "word": "散歩",
+      "audio": "",
+      "video": "https://i.imgur.com/hnpEP7u.mp4",
+      "meaning": "walk, stroll",
+      "sentence": "朝 の 散歩 の つもり か",
+      "translatedSentence": "Are you going to take a walk in the morning?"
+    },
+    {
+      "id": "lzee4mljnulwvr0aby",
+      "kana": "じょうだん",
+      "word": "冗談",
+      "audio": "",
+      "video": "https://i.imgur.com/Z2aZh4D.mp4",
+      "meaning": "joke, jest, funny story",
+      "sentence": "冗談 だ よ",
+      "translatedSentence": "Im kidding"
+    },
+    {
+      "id": "lzeecl52jv7i0jjfsf",
+      "kana": "たのむ",
+      "word": "頼む",
+      "audio": "",
+      "video": "https://i.imgur.com/oYsOV2I.mp4",
+      "meaning": "to request, to beg, to ask",
+      "sentence": "しばらく 留守番 を 頼む",
+      "translatedSentence": "Ask for an answering machine for a while"
+    },
+    {
+      "id": "lzeef9s0554blfquaal",
+      "kana": "へる",
+      "word": "減る",
+      "audio": "",
+      "video": "https://i.imgur.com/5e93qh8.mp4",
+      "meaning": "to decrease (in size or number), to diminish, to abate",
+      "sentence": "数 が 減ってる の は 表向き だ よ",
+      "translatedSentence": "It's ostensible that the number is decreasing"
+    },
+    {
+      "id": "lzeegb777vhewe3d9x2",
+      "kana": "はんたい",
+      "word": "反対",
+      "audio": "",
+      "video": "https://i.imgur.com/XzD0LTK.mp4",
+      "meaning": "opposition, resistance, antagonism, hostility, objection, dissent",
+      "sentence": "反対 な の",
+      "translatedSentence": "Opposite"
+    },
+    {
+      "id": "lzeephainvu4e64u4o8",
+      "kana": "かくす",
+      "word": "隠くす",
+      "audio": "",
+      "video": "https://i.imgur.com/e4BERE1.mp4",
+      "meaning": "to hide, to conceal",
+      "sentence": "あの子 何か 隠し てる わ",
+      "translatedSentence": "I'm hiding something"
     }
   ]
 }
