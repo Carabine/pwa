@@ -11,7 +11,7 @@ if ('serviceWorker' in navigator) {
 
 async function fetchDataFromServer() {
     try {
-        const response = await fetch('http://localhost:3005/words/test');
+        const response = await fetch('https://animei.space/words/test');
         const data = await response.json();
         console.log(data)
         //const res = await fetch('data.json')
@@ -29,14 +29,11 @@ async function fetchDataFromServer() {
 function shuffle(array) {
     let currentIndex = array.length;
 
-    // While there remain elements to shuffle...
     while (currentIndex != 0) {
 
-        // Pick a remaining element...
         let randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
 
-        // And swap it with the current element.
         [array[currentIndex], array[randomIndex]] = [
             array[randomIndex], array[currentIndex]];
     }
