@@ -29,11 +29,25 @@ function displayBackSideData(word) {
     // Display new data
 
     const video = document.createElement("video")
-    video.src = word.data.video
+    console.log(word)
+    video.src = word.data.Video.url
+    //video.src = 'https://drive.google.com/uc?export=download&id=11ca1x_2lQqdJJy6qX7lDWKHMoJjpZ0gR'
     video.controls = true
     video.autoplay = true
     //video.height = 300
     video.width = 500
+
+    // var startTime = word.data.videoStart;
+    // var endTime = word.data.videoEnd;
+    //
+    // video.currentTime = startTime;
+    //
+    // video.addEventListener('timeupdate', function() {
+    //     if (video.currentTime >= endTime) {
+    //         video.pause();
+    //         video.currentTime = startTime;
+    //     }
+    // }, false);
 
     const audio = document.createElement("audio")
     audio.src = word.data.audio

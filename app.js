@@ -11,13 +11,14 @@ if ('serviceWorker' in navigator) {
 
 async function fetchDataFromServer() {
     try {
-        // const response = await fetch('your_server_endpoint');
-        // const data = await response.json();
-        const res = await fetch('data.json')
-        const data = await res.json()
-        // Update localStorage with the fetched data
-        console.log(JSON.stringify(data.words))
-        localStorage.setItem('words', JSON.stringify(data.words));
+        const response = await fetch('http://localhost:3005/words/test');
+        const data = await response.json();
+        console.log(data)
+        //const res = await fetch('data.json')
+        //const data = await res.json()
+        //console.log(JSON.stringify(data.words))
+        const changedData = data.data.map(d => ({...d, url: d.url, word: d.kanji, meaning: d.translation, translatedSentence: d.sentenceTranslation}))
+        localStorage.setItem('words', JSON.stringify(changedData));
         // Display the fetched data
         onLoad()
     } catch (error) {
