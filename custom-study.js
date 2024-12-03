@@ -1,3 +1,23 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('modal-overlay');
+    const openModalBtn = document.getElementById('open-modal-btn');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+
+    openModalBtn.addEventListener('click', () => {
+        modal.classList.remove('hidden');
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+        modal.classList.add('hidden');
+    });
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            modal.classList.add('hidden');
+        }
+    });
+});
+
 function displayFrontSideData(word) {
     const cardBackSide = document.querySelector('.back-side');
     const cardFrontSide = document.querySelector('.front-side');
@@ -20,6 +40,8 @@ function displayFrontSideData(word) {
     document.querySelector(".buttons").innerHTML = ''
 
     document.querySelector(".buttons").appendChild(showBtn)
+
+    document.querySelector('.hint-btn').classList.add("hidden")
 }
 
 function displayBackSideData(word) {
@@ -49,11 +71,6 @@ function displayBackSideData(word) {
     //     }
     // }, false);
 
-    const audio = document.createElement("audio")
-    audio.src = word.data.audio
-    audio.controls = true
-    audio.volume = 0.4
-
     const hiraganaEl = document.createElement("div")
     hiraganaEl.classList.add("hiragana")
     hiraganaEl.innerText = word.data.kana
@@ -71,7 +88,6 @@ function displayBackSideData(word) {
     meaningEl.innerText = word.data.meaning
 
     cardBackSide.appendChild(video);
-    cardBackSide.appendChild(audio);
     cardBackSide.appendChild(meaningEl);
     cardBackSide.appendChild(hiraganaEl);
     cardBackSide.appendChild(sentenceEl);
@@ -94,6 +110,10 @@ function displayBackSideData(word) {
 
     document.querySelector(".buttons").appendChild(keepWordBtn)
     document.querySelector(".buttons").appendChild(buryWordBtn)
+    if(word.data.hint) {
+        document.querySelector('.hint-btn').classList.remove("hidden")
+        document.querySelector('#modal-content').innerHTML = word.data.hint
+    }
 }
 
 const keepWord = () => {

@@ -5,6 +5,10 @@ body {
     background-color: #f0f0f0;
 }
 
+.cursor-pointer {
+    cursor: pointer;
+}
+
 .main-page a {
     color: white;
     font-size: 26px;
@@ -289,14 +293,20 @@ body {
 
 .fetch-button {
     position: absolute;
-    bottom: 0;
-    right: 0;
+    bottom: 10px;
+    right: 20px;
 }
 
 .refresh-btn {
     position: absolute;
-    bottom: 0;
-    right: 120px;
+    bottom: 10px;
+    right: 140px;
+}
+
+.hint-btn {
+    position: absolute;
+    bottom: 10px;
+    left: 20px;
 }
 
 .buttons {
@@ -325,4 +335,36 @@ video {
 
 audio {
     display: none;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#modal {
+    background: #f0f0f0;
+    color: black;
+    transform: scale(0.9);
+    font-size: 12px;
+    padding: 14px;
+    border-radius: 5px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+}
+
+#modal button {
+    width: 100%;
+    transform: scale(0.8);
 }
