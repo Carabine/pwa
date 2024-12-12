@@ -15,10 +15,6 @@ body {
     margin-top: 16px;
 }
 
-.main {
-    position: relative;
-}
-
 .back-btn {
     position: absolute;
     left: 20px;
@@ -38,8 +34,8 @@ body {
 
 .words-count {
     position: absolute;
-    left: 20px;
-    top: 50px;
+    left: 12px;
+    top: 12px;
     display: flex;
     gap: 8px;
     font-size: 16px;
@@ -239,12 +235,12 @@ button:disabled::after {
 body {
     color: white;
 }
+
 .main {
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    min-height: 100%;
     background: #0c0c0c;
     color: white;
 }
@@ -325,7 +321,7 @@ body {
 }
 
 .show-btn {
-    width: 140px;
+    width: 160px;
 }
 
 video {

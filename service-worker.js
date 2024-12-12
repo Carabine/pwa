@@ -3,7 +3,7 @@ const CACHE_NAME = 'pwa-cache-v1'; // Change this to update the cache
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(cacheUrls);
+            //return cache.addAll(cacheUrls);
         })
     );
 });
@@ -25,11 +25,11 @@ self.addEventListener('install', function(event) {
     var urlsToPrefetch = [
         'https://storage.googleapis.com/media-session/sample.webm',
         '/',
-        '/index.html',
+        '/index2.html',
         '/styles.css',
         '/app.js',
         '/pwa.png',
-        '/custom-study.html',
+        '/index.html',
         '/study.html',
     ];
 
@@ -41,7 +41,7 @@ self.addEventListener('install', function(event) {
 
     event.waitUntil(
         caches.open(CURRENT_CACHES.prefetch).then(function(cache) {
-            return cache.addAll(urlsToPrefetch);
+            //return cache.addAll(urlsToPrefetch);
         })
     );
 });

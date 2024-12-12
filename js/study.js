@@ -185,13 +185,8 @@ const onLoad = () => {
 
 }
 
-
-
-window.addEventListener('load', () => {
-    document.querySelector('.fetch-button').addEventListener('click', async () => {
-        await fetchDataFromServer()
-        onLoad()
-    });
+window.addEventListener('load', async() => {
+    await fetchDataFromServer()
 
     onLoad()
 });

@@ -27,13 +27,13 @@ function displayFrontSideData(word) {
 
     const wordEl = document.createElement("div")
     wordEl.classList.add("word")
-    wordEl.innerText = word.data.word
+    wordEl.innerText = word.data?.word ?? ''
 
     cardFrontSide.appendChild(wordEl);
 
     const showBtn = document.createElement("button")
     showBtn.classList.add('show-btn')
-    showBtn.innerHTML = 'Show'
+    showBtn.innerHTML = 'Show answer'
 
     showBtn.addEventListener("click", () => displayBackSideData(word))
 
@@ -120,6 +120,7 @@ const keepWord = () => {
     const filteredTodayWords = todayWords.filter(w => w.data.id !== currentWord.data.id)
     setTodayWords([...shuffle(filteredTodayWords), currentWord])
     currentWord = todayWords[0]
+    console.log(todayWords)
     displayFrontSideData(currentWord)
 }
 
@@ -146,6 +147,9 @@ const buryWord = () => {
         console.log(todayWords, 2)
         setTodayWords(todayWords.filter(w => w.data?.id !== currentWord.data.id))
         setTodayWords([...shuffle(todayWords), currentWord])
+    }
+    if(!todayWords.length) {
+        onLoad()
     }
     currentWord = todayWords[0]
     saveWord(currentWord)
@@ -223,32 +227,25 @@ const onLoad = () => {
     setTodayWords(shuffle(todayWords))
 
     currentWord = todayWords[0]
+    if(!currentWord) {
+        console.log("no words", todayWords)
+        return
+    }
     displayFrontSideData(currentWord);
     console.log(localStorage.getItem('words'))
 }
 
-window.addEventListener('load', () => {
+window.addEventListener('load', async() => {
+    await fetchDataFromServer()
+
+    localStorage.setItem('freshWordsCount', 999)
+
     let freshWordsCount = Number(localStorage.getItem("freshWordsCount") ?? "0")
     if(!freshWordsCount) {
         const words = JSON.parse(localStorage.getItem('words') ?? "[]")
         freshWordsCount = words.length
         localStorage.setItem("freshWordsCount", freshWordsCount.toString())
     }
-    const freshWordsInput = document.querySelector('.fresh-words-input input')
-    freshWordsInput.value = freshWordsCount
-
-    freshWordsInput.addEventListener("input", e => {
-        e.stopPropagation()
-        localStorage.setItem("freshWordsCount", e.target.value)
-        freshWordsInput.value = e.target.value
-    })
-
-    document.querySelector('.refresh-btn').addEventListener('click', onLoad);
-
-    document.querySelector('.fetch-button').addEventListener('click', async () => {
-        await fetchDataFromServer()
-        onLoad()
-    });
 
     onLoad()
 });
