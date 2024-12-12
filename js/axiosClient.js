@@ -1,5 +1,5 @@
-//const domain = 'https://animei.space'
-const domain = 'http://localhost:3005'
+const domain = 'https://animei.space'
+//const domain = 'http://localhost:3005'
 const refreshTokenKey = 'animei:refreshToken'
 const accessTokenKey = 'animei:accessToken'
 
