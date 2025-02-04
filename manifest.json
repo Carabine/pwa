@@ -3,7 +3,7 @@
     "short_name": "Animei",
     "description": "Learn japanese with anime",
     "author": "Nikita",
-    "start_url": "/index.html",
+    "start_url": "/pwa/index.html",
     "scope": ".",
     "display": "standalone",
     "background_color": "#ffffff",
