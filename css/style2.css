@@ -3,7 +3,7 @@
 }
 
 .app, .app button {
-    font-family: Poppins, serif;
+    font-family: Poppins, sans-serif;
     letter-spacing: 0.6px;
     font-size: 14px;
 }
