@@ -3,7 +3,7 @@
 }
 
 .app, .app button {
-    font-family: Poppins, sans-serif;
+    font-family: Poppins, Noto Sans JP, Yu Gothic, Meiryo, sans-serif;
     letter-spacing: 0.6px;
     font-size: 14px;
 }
