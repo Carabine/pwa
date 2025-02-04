@@ -1,0 +1,382 @@
+{
+  "data": [
+    {
+      "id": "1ec795c0-4952-4230-ad97-7d99c67ab5ef",
+      "kanji": "忙しい",
+      "kana": "いそがひい",
+      "romaji": "isogashii",
+      "translation": "Busy",
+      "sentence": "そう？明日は忙しいの",
+      "sentenceTranslation": "",
+      "videoStart": 13,
+      "videoEnd": 16,
+      "hint": "<p><b>Original sentence:</b><br>弱いくせになんで出しゃばるの</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>弱い</b> (<i>よわい</i>): Weak (adjective)</li>\n  <li><b>くせに</b>: Despite, although (used critically)</li>\n  <li><b>なんで</b>: Why (interrogative adverb)</li>\n  <li><b>出しゃばる</b> (<i>でしゃばる</i>): To intrude, to butt in, to meddle (verb)</li>\n  <li><b>の</b>: Sentence-ending particle for emphasis or questioning</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Why are you butting in even though you&#039;re weak?\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe sentence has a critical or accusatory tone due to the use of <b>くせに</b>, implying frustration or disdain.\n</p>",
+      "videoId": "1650fe2c-1005-4764-92b5-375e8c382c92",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "1650fe2c-1005-4764-92b5-375e8c382c92",
+        "url": "https://i.imgur.com/rKSoYV4.mp4",
+        "createdAt": "2024-12-03T13:19:10.555Z",
+        "updatedAt": "2024-12-03T13:19:35.431Z",
+        "wordId": "1ec795c0-4952-4230-ad97-7d99c67ab5ef"
+      }
+    },
+    {
+      "id": "b9d45f39-8e2b-4b05-8f89-9790ebe1b15a",
+      "kanji": "神経",
+      "kana": "ひんけい",
+      "romaji": "shinkei",
+      "translation": "Nerve",
+      "sentence": "私の体は神経や体液をかえして君の脳にも繋がっている",
+      "sentenceTranslation": "",
+      "videoStart": 221,
+      "videoEnd": 226,
+      "hint": "<p><b>Original sentence:</b><br>私の体は神経や体液をかえして君の脳にも繋がっている</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>私の体</b> (<i>わたしのからだ</i>): \"My body\"\n    <ul>\n      <li><b>私</b> (<i>わたし</i>): I, me</li>\n      <li><b>体</b> (<i>からだ</i>): Body</li>\n    </ul>\n  </li>\n  <li><b>神経や体液</b> (<i>しんけいやたいえき</i>): \"Nerves and bodily fluids\"\n    <ul>\n      <li><b>神経</b> (<i>しんけい</i>): Nerves</li>\n      <li><b>体液</b> (<i>たいえき</i>): Bodily fluids</li>\n      <li><b>や</b>: A particle meaning \"and\" or \"as well as\" (used to list examples)</li>\n    </ul>\n  </li>\n  <li><b>かえして</b>: \"Through\" or \"via\" (causal connection or medium)</li>\n  <li><b>君の脳</b> (<i>きみののう</i>): \"Your brain\"\n    <ul>\n      <li><b>君</b> (<i>きみ</i>): You (informal, used for close relationships)</li>\n      <li><b>脳</b> (<i>のう</i>): Brain</li>\n    </ul>\n  </li>\n  <li><b>にも</b>: \"Also to\" (indicates additional direction)</li>\n  <li><b>繋がっている</b> (<i>つながっている</i>): \"Is connected\" or \"is linked\" (present continuous form of <i>繋がる</i>)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"My body is also connected to your brain through nerves and bodily fluids.\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe sentence conveys a scientific or physiological connection, likely describing some sort of shared or symbiotic relationship. The use of <b>君</b> makes it informal and personal.\n</p>",
+      "videoId": "d02fceef-658d-460b-9529-c533b28e03e1",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "d02fceef-658d-460b-9529-c533b28e03e1",
+        "url": "https://i.imgur.com/g8TzK5k.mp4",
+        "createdAt": "2024-12-03T13:21:07.310Z",
+        "updatedAt": "2024-12-03T13:21:37.833Z",
+        "wordId": "b9d45f39-8e2b-4b05-8f89-9790ebe1b15a"
+      }
+    },
+    {
+      "id": "86baacbb-31c4-4a3d-875c-c2f9b4acc875",
+      "kanji": "覚める",
+      "kana": "さめる",
+      "romaji": "sameru",
+      "translation": "wake up",
+      "sentence": "目が覚めたかメガネくん",
+      "sentenceTranslation": "",
+      "videoStart": 329,
+      "videoEnd": 332,
+      "hint": "<p><b>Original sentence:</b><br>目が覚めたかメガネくん</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>目が覚めた</b> (<i>めがさめた</i>): \"Woke up\" or \"have come to your senses\"\n    <ul>\n      <li><b>目</b> (<i>め</i>): Eye</li>\n      <li><b>覚めた</b> (<i>さめた</i>): Past form of <i>覚める</i>, meaning \"to wake up\" or \"to regain consciousness\"</li>\n    </ul>\n  </li>\n  <li><b>か</b>: Question particle, asking for confirmation</li>\n  <li><b>メガネくん</b>: \"Glasses-kun\" (a nickname for someone wearing glasses, casual or teasing)\n    <ul>\n      <li><b>メガネ</b> (<i>めがね</i>): Glasses</li>\n      <li><b>くん</b>: Honorific suffix, often used for boys or young men</li>\n    </ul>\n  </li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Have you woken up, Glasses-kun?\" or \"Have you come to your senses, Glasses-kun?\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe tone is casual and possibly teasing, especially with the use of \"メガネくん\" as a nickname. It could be playful or slightly mocking, depending on the context.\n</p>",
+      "videoId": "72cf7a20-7dd5-47d7-93a1-42e76c693c35",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "72cf7a20-7dd5-47d7-93a1-42e76c693c35",
+        "url": "https://i.imgur.com/TRCNRzk.mp4",
+        "createdAt": "2024-12-03T13:24:55.351Z",
+        "updatedAt": "2024-12-03T13:25:18.092Z",
+        "wordId": "86baacbb-31c4-4a3d-875c-c2f9b4acc875"
+      }
+    },
+    {
+      "id": "41e49e50-0b60-40ef-a60f-40b466cc843b",
+      "kanji": "他人",
+      "kana": "たにん",
+      "romaji": "tanin",
+      "translation": "Others",
+      "sentence": "つまり自分にとって損でも他人のために何かをする",
+      "sentenceTranslation": "",
+      "videoStart": 348,
+      "videoEnd": 353,
+      "hint": "<p><b>Original sentence:</b><br>つまり自分にとって損でも他人のために何かをする</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>つまり</b>: \"In other words\" or \"That is to say\" (used to summarize or explain)</li>\n  <li><b>自分にとって</b> (<i>じぶんにとって</i>): \"For oneself\" or \"from one&#039;s own perspective\"</li>\n  <li><b>損でも</b> (<i>そんでも</i>): \"Even if it&#039;s a loss\" or \"even if it&#039;s disadvantageous\"\n    <ul>\n      <li><b>損</b> (<i>そん</i>): Loss, disadvantage</li>\n      <li><b>でも</b>: \"Even if\" (expresses a concessive condition)</li>\n    </ul>\n  </li>\n  <li><b>他人のために</b> (<i>たにんのために</i>): \"For the sake of others\"\n    <ul>\n      <li><b>他人</b> (<i>たにん</i>): Others, other people</li>\n      <li><b>ために</b>: \"For the sake of\" or \"in order to\"</li>\n    </ul>\n  </li>\n  <li><b>何かをする</b> (<i>なにかをする</i>): \"To do something\"\n    <ul>\n      <li><b>何か</b> (<i>なにか</i>): Something</li>\n      <li><b>をする</b>: To do (used as a general action verb)</li>\n    </ul>\n  </li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"In other words, doing something for others even if it is a loss for oneself.\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe sentence emphasizes selflessness or altruism, highlighting the willingness to act for the benefit of others despite personal disadvantages. It has a reflective or philosophical tone.\n</p>",
+      "videoId": "1d8e4888-f456-4c34-9792-fc82af2f09b7",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "1d8e4888-f456-4c34-9792-fc82af2f09b7",
+        "url": "https://i.imgur.com/rpyByUA.mp4",
+        "createdAt": "2024-12-03T13:25:29.886Z",
+        "updatedAt": "2024-12-03T13:25:59.836Z",
+        "wordId": "41e49e50-0b60-40ef-a60f-40b466cc843b"
+      }
+    },
+    {
+      "id": "f62007cc-785d-4d3a-9b90-6c6b78191a67",
+      "kanji": "注意",
+      "kana": "ちゅうい",
+      "romaji": "chuui",
+      "translation": "Attention",
+      "sentence": "いけねぇミギーに前もって注意しとくの忘れてた",
+      "sentenceTranslation": "",
+      "videoStart": 398,
+      "videoEnd": 402,
+      "hint": "<p><b>Original sentence:</b><br>いけねぇミギーに前もって注意しとくの忘れてた</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>いけねぇ</b>: Casual/slang form of <i>いけない</i>, meaning \"Oh no!\" or \"I messed up!\" (expression of regret or realization)</li>\n  <li><b>ミギー</b>: Likely refers to a name or nickname, possibly the character Migi from \"Parasyte\" (depends on context)</li>\n  <li><b>前もって</b>: In advance, beforehand</li>\n  <li><b>注意しとく</b>:\n    <ul>\n      <li><b>注意</b> (<i>ちゅうい</i>): Caution, warning</li>\n      <li><b>しとく</b>: Casual contraction of <i>しておく</i>, meaning \"to do something in preparation\" or \"to take care of\"</li>\n    </ul>\n  </li>\n  <li><b>の</b>: Particle that nominalizes the preceding phrase</li>\n  <li><b>忘れてた</b> (<i>わすれてた</i>): Casual past form of <i>忘れる</i> (to forget), meaning \"I forgot\"</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Oh no! I forgot to warn Migi about it beforehand.\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe tone is casual and expresses a realization or regret about forgetting to do something in advance. The use of <b>いけねぇ</b> gives it a more colloquial and emotional feel.\n</p>",
+      "videoId": "ca7a7882-b7c6-4109-b95c-9c73020dc036",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "ca7a7882-b7c6-4109-b95c-9c73020dc036",
+        "url": "https://i.imgur.com/68uTFvt.mp4",
+        "createdAt": "2024-12-03T13:27:41.917Z",
+        "updatedAt": "2024-12-03T13:27:58.235Z",
+        "wordId": "f62007cc-785d-4d3a-9b90-6c6b78191a67"
+      }
+    },
+    {
+      "id": "1bc27b34-a173-4af1-bb36-7413aabe3c4a",
+      "kanji": "幅",
+      "kana": "はば",
+      "romaji": "",
+      "translation": "Width",
+      "sentence": "あいつらここんとこやたら幅きかせてんだ",
+      "sentenceTranslation": "",
+      "videoStart": 489,
+      "videoEnd": 492,
+      "hint": "<p><b>Original sentence:</b><br>あいつらここんとこやたら幅きかせてんだ</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>あいつら</b>: \"Those guys\" or \"they\" (informal/casual, often used with a slightly rude or dismissive tone)</li>\n  <li><b>ここんとこ</b>: \"Lately\" or \"recently\" (casual expression)</li>\n  <li><b>やたら</b>: \"Excessively\" or \"overly\" (used to indicate something happening to an extreme degree)</li>\n  <li><b>幅きかせてんだ</b>: \"Are throwing their weight around\" or \"acting like they own the place\"\n    <ul>\n      <li><b>幅</b> (<i>はば</i>): Influence, power, or \"space to act\"</li>\n      <li><b>きかせて</b>: Te-form of <i>きかす</i> (to exert or wield, in this case influence or power)</li>\n      <li><b>んだ</b>: Casual explanatory particle, short for <i>のだ</i>, indicating emphasis or explanation</li>\n    </ul>\n  </li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Those guys have been throwing their weight around a lot lately.\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe tone is informal and slightly critical. The speaker expresses annoyance or frustration with the behavior of \"those guys,\" implying they&#039;re acting excessively assertive or dominant.\n</p>",
+      "videoId": "057b8b9f-07b1-4b16-8a61-c267b030a6c2",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "057b8b9f-07b1-4b16-8a61-c267b030a6c2",
+        "url": "https://i.imgur.com/13Zf5uk.mp4",
+        "createdAt": "2024-12-03T13:30:23.030Z",
+        "updatedAt": "2024-12-03T13:31:06.628Z",
+        "wordId": "1bc27b34-a173-4af1-bb36-7413aabe3c4a"
+      }
+    },
+    {
+      "id": "e68c84f0-f13c-4ab1-b671-c6de80e3df95",
+      "kanji": "拾う",
+      "kana": "ひろう",
+      "romaji": "inochibiroi",
+      "translation": "to pick up",
+      "sentence": "命拾いしたな",
+      "sentenceTranslation": "You saved your life",
+      "videoStart": 410,
+      "videoEnd": 414,
+      "hint": "",
+      "videoId": "60e76d15-6c3a-489f-a54a-aca3f05ecd45",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "60e76d15-6c3a-489f-a54a-aca3f05ecd45",
+        "url": "https://i.imgur.com/m6yBh4t.mp4",
+        "createdAt": "2024-12-03T13:36:10.002Z",
+        "updatedAt": "2024-12-03T13:36:25.216Z",
+        "wordId": "e68c84f0-f13c-4ab1-b671-c6de80e3df95"
+      }
+    },
+    {
+      "id": "b922da3a-c4d9-4fbb-a395-c514c241d55d",
+      "kanji": "寝坊",
+      "kana": "ねぼう",
+      "romaji": "nebou",
+      "translation": "Oversleeping",
+      "sentence": "君が寝坊したのは体が睡眠を欲していたからだろう",
+      "sentenceTranslation": "You overslept because your body wanted sleep",
+      "videoStart": 200,
+      "videoEnd": 205,
+      "hint": "<p><b>Original sentence:</b><br>君が寝坊したのは体が睡眠を欲していたからだろう</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>君が</b> (<i>きみが</i>): \"You\" (subject marker; informal, often used with close or familiar individuals)</li>\n  <li><b>寝坊した</b> (<i>ねぼうした</i>): \"Overslept\"\n    <ul>\n      <li><b>寝坊</b> (<i>ねぼう</i>): Oversleeping</li>\n      <li><b>した</b>: Past form of <i>する</i>, meaning \"did\"</li>\n    </ul>\n  </li>\n  <li><b>のは</b>: \"The reason why...\" (nominalizes the preceding clause)</li>\n  <li><b>体が</b> (<i>からだが</i>): \"Your body\" (subject marker)</li>\n  <li><b>睡眠を欲していた</b> (<i>すいみんをほっしていた</i>): \"Was craving sleep\"\n    <ul>\n      <li><b>睡眠</b> (<i>すいみん</i>): Sleep</li>\n      <li><b>欲していた</b> (<i>ほっしていた</i>): Past progressive form of <i>欲する</i>, meaning \"to crave\" or \"to desire\"</li>\n    </ul>\n  </li>\n  <li><b>から</b>: \"Because\" (indicates the reason or cause)</li>\n  <li><b>だろう</b>: \"Probably\" or \"isn&#039;t it?\" (adds a conjectural tone, often seeking agreement or expressing confidence in a statement)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"You overslept because your body was craving sleep, right?\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe tone is explanatory and slightly empathetic, suggesting that oversleeping was due to the body&#039;s natural needs rather than a fault of the person.\n</p>",
+      "videoId": "432c71f7-8c64-4c24-acf7-cd12469d6cc1",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "432c71f7-8c64-4c24-acf7-cd12469d6cc1",
+        "url": "https://i.imgur.com/OPiryUL.mp4",
+        "createdAt": "2024-12-05T13:13:49.066Z",
+        "updatedAt": "2024-12-05T13:14:08.567Z",
+        "wordId": "b922da3a-c4d9-4fbb-a395-c514c241d55d"
+      }
+    },
+    {
+      "id": "3ee0bce9-bd35-45a7-9d3b-daf865437c46",
+      "kanji": "健康",
+      "kana": "けんこう",
+      "romaji": "kenkou",
+      "translation": "Health",
+      "sentence": "君の健康は私の健康でもある",
+      "sentenceTranslation": "Your health is also my health",
+      "videoStart": 208,
+      "videoEnd": 213,
+      "hint": "<p><b>Original sentence:</b><br>君の健康は私の健康でもある</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>君の健康</b> (<i>きみのけんこう</i>): \"Your health\"\n    <ul>\n      <li><b>君</b> (<i>きみ</i>): You (informal)</li>\n      <li><b>の</b>: Possessive particle (\"of\" or \"&#039;s\")</li>\n      <li><b>健康</b> (<i>けんこう</i>): Health</li>\n    </ul>\n  </li>\n  <li><b>は</b>: Topic particle (\"as for\" or \"is\")</li>\n  <li><b>私の健康</b> (<i>わたしのけんこう</i>): \"My health\"\n    <ul>\n      <li><b>私</b> (<i>わたし</i>): I, me</li>\n      <li><b>の</b>: Possessive particle</li>\n      <li><b>健康</b> (<i>けんこう</i>): Health</li>\n    </ul>\n  </li>\n  <li><b>でもある</b> (<i>でもある</i>): \"Is also\" (combination of <i>でも</i>, meaning \"also,\" and <i>ある</i>, the verb \"to be\")</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Your health is also my health.\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe sentence expresses a deep connection, possibly emotional or physical, indicating that the well-being of one person directly affects the other.\n</p>\n",
+      "videoId": "3b2b58ed-0ac6-46b6-a124-2420e83d0af2",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "3b2b58ed-0ac6-46b6-a124-2420e83d0af2",
+        "url": "https://i.imgur.com/fgeLrYD.mp4",
+        "createdAt": "2024-12-05T13:15:01.225Z",
+        "updatedAt": "2024-12-05T13:16:42.430Z",
+        "wordId": "3ee0bce9-bd35-45a7-9d3b-daf865437c46"
+      }
+    },
+    {
+      "id": "0abb836a-6070-4ddf-8000-ea3a162b9d32",
+      "kanji": "匂い",
+      "kana": "におい",
+      "romaji": "",
+      "translation": "The smell",
+      "sentence": "君に人間以外の匂いを感じたのだろう",
+      "sentenceTranslation": "I must have sensed a non-human scent in you",
+      "videoStart": 237,
+      "videoEnd": 240,
+      "hint": "<p><b>Original sentence:</b><br>君に人間以外の匂いを感じたのだろう</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>君に</b> (<i>きみに</i>): \"From you\" or \"on you\" (indicates the source or target of an action)</li>\n  <li><b>人間以外の匂い</b> (<i>にんげんいがいのにおい</i>): \"A non-human scent\"\n    <ul>\n      <li><b>人間</b> (<i>にんげん</i>): Human</li>\n      <li><b>以外</b> (<i>いがい</i>): Other than, except for</li>\n      <li><b>匂い</b> (<i>におい</i>): Scent, smell</li>\n      <li><b>の</b>: Possessive particle, connecting \"non-human\" with \"scent\"</li>\n    </ul>\n  </li>\n  <li><b>を</b>: Object marker, indicating what is being sensed</li>\n  <li><b>感じた</b> (<i>かんじた</i>): \"Felt\" or \"sensed\" (past form of <i>感じる</i>, meaning \"to feel\" or \"to sense\")</li>\n  <li><b>のだろう</b> (<i>のだろう</i>): \"Probably\" or \"I guess\" (used for conjecture or explanation)\n    <ul>\n      <li><b>の</b>: Explanatory particle</li>\n      <li><b>だろう</b>: Indicates probability or conjecture</li>\n    </ul>\n  </li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"They probably sensed a non-human scent on you.\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe sentence suggests someone or something detected a scent that is not typical of a human, with the tone being reflective or speculative due to <b>のだろう</b>.\n</p>\n",
+      "videoId": "ea810fa0-eeb0-406c-af09-d667606826f3",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "ea810fa0-eeb0-406c-af09-d667606826f3",
+        "url": "https://i.imgur.com/utkVCzC.mp4",
+        "createdAt": "2024-12-05T13:15:33.317Z",
+        "updatedAt": "2024-12-05T13:15:50.661Z",
+        "wordId": "0abb836a-6070-4ddf-8000-ea3a162b9d32"
+      }
+    },
+    {
+      "id": "a343fc5a-bfd0-46f8-a150-9b4a9b121257",
+      "kanji": "変化",
+      "kana": "へんか",
+      "romaji": "henka",
+      "translation": "change",
+      "sentence": "特に精神構造になんらかの変化があったとしても不思議ではない",
+      "sentenceTranslation": "It is not surprising that there has been some change in the mental structure, especially",
+      "videoStart": 245,
+      "videoEnd": 250,
+      "hint": "<p><b>Original sentence:</b><br>特に精神構造になんらかの変化があったとしても不思議ではない</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>特に</b> (<i>とくに</i>): \"Especially\" or \"particularly\"</li>\n  <li><b>精神構造</b> (<i>せいしんこうぞう</i>): \"Mental structure\" or \"psychological structure\"\n    <ul>\n      <li><b>精神</b> (<i>せいしん</i>): Spirit, mind, or psyche</li>\n      <li><b>構造</b> (<i>こうぞう</i>): Structure</li>\n    </ul>\n  </li>\n  <li><b>になんらかの</b>: \"In some way\" or \"to some extent\"\n    <ul>\n      <li><b>にな</b>: Indicates a state or change</li>\n      <li><b>なんらかの</b> (<i>何らかの</i>): \"Some kind of\" or \"in some way\"</li>\n    </ul>\n  </li>\n  <li><b>変化があった</b> (<i>へんかがあった</i>): \"There was a change\"\n    <ul>\n      <li><b>変化</b> (<i>へんか</i>): Change</li>\n      <li><b>があった</b>: \"Occurred\" or \"happened\" (past tense of <i>ある</i>)</li>\n    </ul>\n  </li>\n  <li><b>としても</b>: \"Even if\" or \"assuming that\"</li>\n  <li><b>不思議ではない</b> (<i>ふしぎではない</i>): \"Not surprising\" or \"not strange\"\n    <ul>\n      <li><b>不思議</b> (<i>ふしぎ</i>): Strange, mysterious, or surprising</li>\n      <li><b>ではない</b>: Negative form of <i>です</i>, meaning \"is not\"</li>\n    </ul>\n  </li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Especially, it wouldn&#039;t be surprising if there were some kind of change in the mental structure.\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe sentence has a reflective and analytical tone, suggesting that changes in psychological states or structures are understandable or to be expected under certain circumstances.\n</p>",
+      "videoId": "20c4a105-d2e8-43c3-b123-dbc3822dea1e",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "20c4a105-d2e8-43c3-b123-dbc3822dea1e",
+        "url": "https://i.imgur.com/YvGO4pT.mp4",
+        "createdAt": "2024-12-05T13:16:46.566Z",
+        "updatedAt": "2024-12-05T13:18:01.215Z",
+        "wordId": "a343fc5a-bfd0-46f8-a150-9b4a9b121257"
+      }
+    },
+    {
+      "id": "bfba5907-8a30-47eb-a6e4-af01cf3325ff",
+      "kanji": "かわいそう",
+      "kana": "かわいそう",
+      "romaji": "kawaisou",
+      "translation": "The poor",
+      "sentence": "やめなよかわいそうじゃん",
+      "sentenceTranslation": "Don&#039;t stop, poor thing.",
+      "videoStart": 334,
+      "videoEnd": 336,
+      "hint": "<p><b>Original sentence:</b><br>やめなよかわいそうじゃん</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>やめなよ</b>: \"Stop it\" or \"You should stop\"\n    <ul>\n      <li><b>やめな</b>: Imperative form of <i>やめる</i> (to stop or quit)</li>\n      <li><b>よ</b>: Particle used to add emphasis or a sense of urging</li>\n    </ul>\n  </li>\n  <li><b>かわいそう</b>: \"Pitiful\" or \"Poor (thing)\"\n    <ul>\n      <li>Expresses sympathy or pity for someone</li>\n    </ul>\n  </li>\n  <li><b>じゃん</b>: Casual contraction of <i>じゃない</i>, meaning \"isn&#039;t it?\" or \"right?\"\n    <ul>\n      <li>Used for emphasis or to seek agreement in casual conversation</li>\n    </ul>\n  </li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Stop it, that’s mean, isn’t it?\" or \"Stop it, that’s pitiful!\"\n</p>\n\n<p><b>Nuance:</b><br>\nThis is a casual and empathetic remark, urging someone to stop their behavior because it seems unkind or unfair to another person. The tone is informal and conversational.\n</p>\n",
+      "videoId": "d1b24643-56b2-4861-a03a-4c315e2bedf3",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "d1b24643-56b2-4861-a03a-4c315e2bedf3",
+        "url": "https://i.imgur.com/tbelbCL.mp4",
+        "createdAt": "2024-12-05T13:17:14.302Z",
+        "updatedAt": "2024-12-05T13:17:31.918Z",
+        "wordId": "bfba5907-8a30-47eb-a6e4-af01cf3325ff"
+      }
+    },
+    {
+      "id": "7575dbe8-0934-4fdd-a605-3ca3ea8a29c9",
+      "kanji": "知らせる",
+      "kana": "ひらせる",
+      "romaji": "shiraseru",
+      "translation": "inform",
+      "sentence": "なんかあったら俺に知らせろよ",
+      "sentenceTranslation": "If something happens, let me know.",
+      "videoStart": 492,
+      "videoEnd": 495,
+      "hint": "<p><b>Original sentence:</b><br>なんかあったら俺に知らせろよ</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>なんか</b>: \"Something\" or \"anything\" (casual expression)</li>\n  <li><b>あったら</b>: \"If something happens\" or \"if there&#039;s anything\"\n    <ul>\n      <li><b>あった</b>: Past form of <i>ある</i> (to exist or to happen)</li>\n      <li><b>ら</b>: Conditional particle (\"if\")</li>\n    </ul>\n  </li>\n  <li><b>俺に</b> (<i>おれに</i>): \"To me\"\n    <ul>\n      <li><b>俺</b>: \"I\" or \"me\" (masculine, informal)</li>\n      <li><b>に</b>: Particle indicating the target or recipient</li>\n    </ul>\n  </li>\n  <li><b>知らせろ</b>: \"Let me know\" or \"Inform me\"\n    <ul>\n      <li>Imperative form of <i>知らせる</i> (to inform or notify)</li>\n    </ul>\n  </li>\n  <li><b>よ</b>: Particle for emphasis or to soften the imperative tone</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"If anything happens, let me know.\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe sentence is casual and uses a masculine tone with the pronoun <b>俺</b>. The speaker is expressing concern or offering support, indicating they want to be informed about any situation that arises.\n</p>\n",
+      "videoId": "e894c1db-b1cc-44d0-9ac2-36e8f76540dc",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "e894c1db-b1cc-44d0-9ac2-36e8f76540dc",
+        "url": "https://i.imgur.com/q9JtqF6.mp4",
+        "createdAt": "2024-12-05T13:17:32.320Z",
+        "updatedAt": "2024-12-05T13:17:55.807Z",
+        "wordId": "7575dbe8-0934-4fdd-a605-3ca3ea8a29c9"
+      }
+    },
+    {
+      "id": "3bddbdaf-6898-4140-b928-4344b23a122b",
+      "kanji": "感覚",
+      "kana": "かんかく",
+      "romaji": "kankaku",
+      "translation": "sense",
+      "sentence": "ミギー右手の感覚が鈍い",
+      "sentenceTranslation": "Miggy&#039;s right hand is numb",
+      "videoStart": 647,
+      "videoEnd": 650,
+      "hint": "<p><b>Original sentence:</b><br>ミギー右手の感覚が鈍い</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>ミギー</b>: \"Migi\" (a name, often referring to a character or entity)</li>\n  <li><b>右手</b> (<i>みぎて</i>): \"Right hand\"\n    <ul>\n      <li><b>右</b> (<i>みぎ</i>): Right</li>\n      <li><b>手</b> (<i>て</i>): Hand</li>\n    </ul>\n  </li>\n  <li><b>の</b>: Possessive particle (\"of\"), connecting \"right hand\" to \"sense\"</li>\n  <li><b>感覚</b> (<i>かんかく</i>): \"Sense\" or \"sensation\"</li>\n  <li><b>が</b>: Subject marker, indicating that the \"sense of the right hand\" is the subject</li>\n  <li><b>鈍い</b> (<i>にぶい</i>): \"Dull\" or \"insensitive\" (referring to a lack of sharpness or responsiveness)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Migi, the sense in your right hand is dull.\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe sentence suggests that Migi&#039;s right hand is experiencing a diminished sense of feeling or responsiveness, with a factual and possibly concerned tone.\n</p>\n",
+      "videoId": "a9487b54-4f71-4350-b9aa-c9d78673a893",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "a9487b54-4f71-4350-b9aa-c9d78673a893",
+        "url": "https://i.imgur.com/s1mMWqK.mp4",
+        "createdAt": "2024-12-05T13:18:04.891Z",
+        "updatedAt": "2024-12-05T13:19:34.410Z",
+        "wordId": "3bddbdaf-6898-4140-b928-4344b23a122b"
+      }
+    },
+    {
+      "id": "18e2d196-5c0a-4580-8622-8c0abcb9b5a4",
+      "kanji": "多数",
+      "kana": "たすう",
+      "romaji": "tasuu",
+      "translation": "Many",
+      "sentence": "多数が少数に襲いかかる",
+      "sentenceTranslation": "The Many Strike at the Few",
+      "videoStart": 704,
+      "videoEnd": 707,
+      "hint": "<p><b>Original sentence:</b><br>多数が少数に襲いかかる</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>多数</b> (<i>たすう</i>): \"Majority\" or \"larger number\"\n    <ul>\n      <li><b>多</b> (<i>おお</i>): Many, large number</li>\n      <li><b>数</b> (<i>すう</i>): Number</li>\n    </ul>\n  </li>\n  <li><b>が</b>: Subject marker, indicating that the majority is the subject of the action</li>\n  <li><b>少数</b> (<i>しょうすう</i>): \"Minority\" or \"smaller number\"\n    <ul>\n      <li><b>少</b> (<i>しょう</i>): Few, small number</li>\n      <li><b>数</b> (<i>すう</i>): Number</li>\n    </ul>\n  </li>\n  <li><b>に</b>: Particle indicating the target or direction of the action (\"to\" or \"at\")</li>\n  <li><b>襲いかかる</b> (<i>おそいかかる</i>): \"Attack\" or \"pounce on\"\n    <ul>\n      <li><b>襲う</b> (<i>おそう</i>): To attack, to assault</li>\n      <li><b>かかる</b>: To charge at or to strike</li>\n    </ul>\n  </li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"The majority attacks the minority.\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe sentence expresses an action where a larger group aggressively targets or overwhelms a smaller group. It could be interpreted metaphorically or literally, depending on the context.\n</p>",
+      "videoId": "4e7d0fe9-a882-4d11-bf25-3efd48531490",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "4e7d0fe9-a882-4d11-bf25-3efd48531490",
+        "url": "https://i.imgur.com/kWhP8FK.mp4",
+        "createdAt": "2024-12-05T13:18:31.484Z",
+        "updatedAt": "2024-12-05T13:19:31.585Z",
+        "wordId": "18e2d196-5c0a-4580-8622-8c0abcb9b5a4"
+      }
+    },
+    {
+      "id": "0b96bf9f-1707-4c71-b0ec-c5f240d4720e",
+      "kanji": "町",
+      "kana": "まち",
+      "romaji": "",
+      "translation": "Town",
+      "sentence": "町を離れたのは失敗だった",
+      "sentenceTranslation": "Leaving town was a failure",
+      "videoStart": 753,
+      "videoEnd": 756,
+      "hint": "<p><b>Original sentence:</b><br>町を離れたのは失敗だった</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>町</b> (<i>まち</i>): \"Town\" or \"city\"</li>\n  <li><b>を</b>: Object marker, indicating that \"town\" is the direct object of the verb</li>\n  <li><b>離れた</b> (<i>はなれた</i>): \"Left\" or \"departed\" (past form of <i>離れる</i>, meaning \"to leave\" or \"to separate\")</li>\n  <li><b>のは</b>: \"The thing about\" or \"the reason for\" (used to nominalize the clause and make it the subject of the sentence)\n    <ul>\n      <li><b>の</b>: Explanatory particle, making the preceding clause into a noun phrase</li>\n      <li><b>は</b>: Topic marker, indicating that \"leaving the town\" is the topic of the sentence</li>\n    </ul>\n  </li>\n  <li><b>失敗</b> (<i>しっぱい</i>): \"Failure\" or \"mistake\"</li>\n  <li><b>だった</b>: Past form of <i>だ</i>, meaning \"was\" (indicating that the failure happened in the past)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Leaving the town was a mistake.\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe sentence reflects a regretful or reflective tone, expressing that the decision to leave the town turned out to be a failure or an unfortunate choice.\n</p>\n",
+      "videoId": "aa4ba12b-9fb3-42d6-b25d-f95283b5bf30",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "aa4ba12b-9fb3-42d6-b25d-f95283b5bf30",
+        "url": "https://i.imgur.com/hRRUgY0.mp4",
+        "createdAt": "2024-12-05T13:18:59.691Z",
+        "updatedAt": "2024-12-05T13:20:01.821Z",
+        "wordId": "0b96bf9f-1707-4c71-b0ec-c5f240d4720e"
+      }
+    },
+    {
+      "id": "8d355555-a644-4fb1-8982-d62ddc6ab95a",
+      "kanji": "傷",
+      "kana": "きづ",
+      "romaji": "kizu",
+      "translation": "Wound",
+      "sentence": "ほら左手がこんなに傷だらけなのに",
+      "sentenceTranslation": "You see, my left hand is so scarred",
+      "videoStart": 782,
+      "videoEnd": 787,
+      "hint": "<p><b>Original sentence:</b><br>ほら左手がこんなに傷だらけなのに</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>ほら</b>: \"Look!\" or \"See!\" (used to get someone&#039;s attention, often with a sense of pointing something out)</li>\n  <li><b>左手</b> (<i>ひだりて</i>): \"Left hand\"\n    <ul>\n      <li><b>左</b> (<i>ひだり</i>): Left</li>\n      <li><b>手</b> (<i>て</i>): Hand</li>\n    </ul>\n  </li>\n  <li><b>が</b>: Subject marker, indicating that the \"left hand\" is the subject of the sentence</li>\n  <li><b>こんなに</b>: \"This much\" or \"so much\" (used to emphasize the extent of something)</li>\n  <li><b>傷だらけ</b> (<i>きずだらけ</i>): \"Full of wounds\" or \"covered in scars\"\n    <ul>\n      <li><b>傷</b> (<i>きず</i>): Wound or scar</li>\n      <li><b>だらけ</b>: Suffix meaning \"full of\" or \"covered with\" (often used to describe something in a negative or undesirable state)</li>\n    </ul>\n  </li>\n  <li><b>なのに</b>: \"Even though\" or \"despite that\" (used to indicate a contradiction or unexpected result)\n    <ul>\n      <li><b>な</b>: Colloquial form of the copula <i>だ</i> in the context of the noun phrase</li>\n      <li><b>のに</b>: \"Even though\" or \"despite\" (used to express contrast or an unexpected situation)</li>\n    </ul>\n  </li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Look, my left hand is covered in so many wounds.\"\n</p>\n\n<p><b>Nuance:</b><br>\nThe sentence is likely expressing a sense of surprise or frustration, drawing attention to the state of the left hand, which is visibly injured or scarred. The tone could be one of emphasis or complaint.\n</p>",
+      "videoId": "9ab18e15-8a79-4a4a-9aed-c54f8437888a",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "9ab18e15-8a79-4a4a-9aed-c54f8437888a",
+        "url": "https://i.imgur.com/jspIi0t.mp4",
+        "createdAt": "2024-12-05T13:19:36.235Z",
+        "updatedAt": "2024-12-05T13:21:15.805Z",
+        "wordId": "8d355555-a644-4fb1-8982-d62ddc6ab95a"
+      }
+    },
+    {
+      "id": "ee85287f-352c-46b9-ac3c-ea70f83191bf",
+      "kanji": "褒める",
+      "kana": "ほめる",
+      "romaji": "homeru",
+      "translation": "praise",
+      "sentence": "それ褒めてくれてるの",
+      "sentenceTranslation": "That&#039;s a compliment",
+      "videoStart": 815,
+      "videoEnd": 820,
+      "hint": "<p><b>Original sentence:</b><br>それ褒めてくれてるの</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>それ</b>: \"That\" (referring to something mentioned previously or something being pointed out)</li>\n  <li><b>褒めて</b> (<i>ほめて</i>): \"Praising\" or \"complimenting\" (te-form of <i>褒める</i>, meaning \"to praise\" or \"to compliment\")</li>\n  <li><b>くれてる</b>: Casual, contracted form of <i>くれている</i>, which means \"doing (something) for me\" or \"giving (something) to me\"\n    <ul>\n      <li><b>くれる</b>: To give (from the speaker&#039;s perspective, often used when someone does something for the speaker)</li>\n      <li><b>いる</b>: Auxiliary verb indicating ongoing action or state</li>\n    </ul>\n  </li>\n  <li><b>の</b>: Explanatory particle, used to turn the sentence into a question or to seek clarification</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Are you complimenting me?\"\n</p>\n\n<p><b>Nuance:</b><br>\nThis sentence is asking for clarification, with the speaker wondering if the other person is giving them a compliment. The tone can be a bit playful or surprised, depending on the context.\n</p>\n",
+      "videoId": "a1bc2aab-06b5-4c1a-ade2-b986f70af4b7",
+      "userId": "88528ae0-bcf9-4f0f-aaab-b27a25def4b4",
+      "Video": {
+        "id": "a1bc2aab-06b5-4c1a-ade2-b986f70af4b7",
+        "url": "https://i.imgur.com/dtVad0d.mp4",
+        "createdAt": "2024-12-05T13:20:12.935Z",
+        "updatedAt": "2024-12-05T13:20:31.671Z",
+        "wordId": "ee85287f-352c-46b9-ac3c-ea70f83191bf"
+      }
+    }
+  ]
+}

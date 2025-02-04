@@ -60,8 +60,10 @@ window.addEventListener('localStorageChanged', (event) => {
 
 async function fetchDataFromServer() {
     try {
-        const response = await client.get(domain + '/words')
-        const { data } = response;
+        // const response = await client.get(domain + '/words')
+        // const { data } = response;
+        const res = await fetch('./../data2.json')
+        const data = await res.json()
         console.log(data)
         //const res = await fetch('data.json')
         //const data = await res.json()

@@ -198,7 +198,8 @@ const checkAuth = async () => {
     const accessToken = getCurrentAccessToken()
     console.log("AT", accessToken, window.location.href)
     console.log(localStorage)
-    if (accessToken) {
+    // if (accessToken) {
+    if (true) {
         if(window.location.href.includes('register.html') || window.location.href.includes('login.html')) {
             window.location.href = 'index.html';
         }
