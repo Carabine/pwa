@@ -2,7 +2,7 @@ const loadWords = async () => {
     const wordsListEl = document.querySelector('.words-list');
     wordsListEl.innerHTML = 'Loading...'
 
-    const res = await fetch('./data2.json')
+    const res = await fetchAndDecode('./data2.json')
     const data = await res.json()
 
    // const { data: { data } } = await client.get(`${domain}/words`)

@@ -58,11 +58,35 @@ window.addEventListener('localStorageChanged', (event) => {
     }
 });
 
+async function fetchAndDecode(url) {
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Function to decode HTML entities
+        const decodeHTML = (str) => {
+            const parser = new DOMParser();
+            const decodedString = parser.parseFromString(str, "text/html").body.textContent;
+            return decodedString;
+        };
+
+        // Assuming `data` contains an object with text values that need decoding
+        const decodedData = JSON.parse(JSON.stringify(data), (_, value) =>
+            typeof value === "string" ? decodeHTML(value) : value
+        );
+
+        console.log(decodedData);
+        return decodedData;
+    } catch (error) {
+        console.error("Error fetching JSON:", error);
+    }
+}
+
 async function fetchDataFromServer() {
     try {
         // const response = await client.get(domain + '/words')
         // const { data } = response;
-        const res = await fetch('./data2.json')
+        const res = await fetchAndDecode('./data2.json')
         const data = await res.json()
         console.log(data)
         //const res = await fetch('data.json')
