@@ -63,14 +63,14 @@ async function fetchAndDecode(url) {
         const response = await fetch(url);
         const data = await response.json();
 
-        // Function to decode HTML entities using a hidden textarea
+        // Function to decode HTML entities
         const decodeHTML = (str) => {
-            const textarea = document.createElement("textarea");
-            textarea.innerHTML = str;
-            return textarea.value;
+            const parser = new DOMParser();
+            const decodedString = parser.parseFromString(str, "text/html").body.textContent;
+            return decodedString;
         };
 
-        // Recursively decode all string values in the JSON
+        // Assuming `data` contains an object with text values that need decoding
         const decodedData = JSON.parse(JSON.stringify(data), (_, value) =>
             typeof value === "string" ? decodeHTML(value) : value
         );
@@ -86,8 +86,7 @@ async function fetchDataFromServer() {
     try {
         // const response = await client.get(domain + '/words')
         // const { data } = response;
-        const res = await fetchAndDecode('./data2.json')
-        const data = await res.json()
+        const data = await fetchAndDecode('./data2.json')
         console.log(data)
         //const res = await fetch('data.json')
         //const data = await res.json()
