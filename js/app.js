@@ -63,14 +63,12 @@ async function fetchAndDecode(url) {
         const response = await fetch(url);
         const data = await response.json();
 
-        // Function to decode HTML entities
         const decodeHTML = (str) => {
-            const parser = new DOMParser();
-            const decodedString = parser.parseFromString(str, "text/html").body.textContent;
-            return decodedString;
+            const textarea = document.createElement("textarea");
+            textarea.innerHTML = str;
+            return textarea.value;
         };
 
-        // Assuming `data` contains an object with text values that need decoding
         const decodedData = JSON.parse(JSON.stringify(data), (_, value) =>
             typeof value === "string" ? decodeHTML(value) : value
         );
