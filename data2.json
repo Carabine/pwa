@@ -378,280 +378,261 @@
         "wordId": "ee85287f-352c-46b9-ac3c-ea70f83191bf"
       }
     },
-    [
-      {
-        "id": "e44a4a2c-cd03-460c-aa2f-2a988840b98e",
-        "kanji": "夢",
-        "kana": "ゆめ",
-        "romaji": "yume",
-        "translation": "dream",
-        "sentence": "夢か何か寝不足だな",
-        "sentenceTranslation": "",
-        "videoStart": 146,
-        "videoEnd": 151,
-        "hint": "",
-        "videoId": "ce941a45-1109-44d9-985d-fba33ec4b334",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "ce941a45-1109-44d9-985d-fba33ec4b334",
-          "url": "https://i.imgur.com/TpiqREq.mp4",
-          "createdAt": "2024-12-09T14:38:12.271Z",
-          "updatedAt": "2024-12-09T14:38:33.240Z",
-          "wordId": "e44a4a2c-cd03-460c-aa2f-2a988840b98e"
-        }
-      },
-      {
-        "id": "ee9653f0-a1c5-4e32-8032-0e8c79fcb45e",
-        "kanji": "謝る",
-        "kana": "あやまる",
-        "romaji": "",
-        "translation": "to apologize",
-        "sentence": "謝りに来ただけ",
-        "sentenceTranslation": "I&#039;m just here to apologize",
-        "videoStart": 860,
-        "videoEnd": 864,
-        "hint": "<p><b>Original Phrase:</b><br>謝りに来ただけ</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>謝り</b> (<i>あやまり</i>): \"Apology\" (noun form of 謝る, meaning \"to apologize\")</li>\n  <li><b>に</b>: Purpose marker, meaning \"in order to\" or \"for the purpose of\"</li>\n  <li><b>来た</b> (<i>きた</i>): \"Came\" (past form of 来る, meaning \"to come\")</li>\n  <li><b>だけ</b>: \"Only\" or \"Just\"</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"I just came to apologize.\"  \nor  \n\"I&#039;m only here to apologize.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **だけ** emphasizes that the speaker&#039;s sole purpose is to apologize.  \n- Depending on tone, it could sound sincere or cold/dismissive.  \n- If spoken bluntly, it may imply \"Nothing more, nothing less.\"</p>",
-        "videoId": "e6d46021-d0f5-4545-962c-9b84ce109c17",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "e6d46021-d0f5-4545-962c-9b84ce109c17",
-          "url": null,
-          "createdAt": "2025-02-16T08:46:40.317Z",
-          "updatedAt": "2025-02-16T08:46:40.317Z",
-          "wordId": null
-        }
-      },
-      {
-        "id": "7b7a2d75-d205-4f5c-b05d-8795f08df3fc",
-        "kanji": "少なくとも",
-        "kana": "すくなくとも",
-        "romaji": "sukunakutomo",
-        "translation": "At least",
-        "sentence": "少なくともあなたと私は仲直り",
-        "sentenceTranslation": "At least you and I reconcile",
-        "videoStart": 871,
-        "videoEnd": 876,
-        "hint": "<p><b>Original Phrase:</b><br>少なくともあなたと私は仲直り</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>少なくとも</b> (<i>すくなくとも</i>): \"At least\"</li>\n  <li><b>あなたと私</b>: \"You and I\"</li>\n  <li><b>は</b>: Topic marker (\"as for...\")</li>\n  <li><b>仲直り</b> (<i>なかなおり</i>): \"Reconciliation\" or \"Making up\" (noun form of 仲直りする)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"At least, you and I have made up.\"  \nor  \n\"At the very least, you and I are reconciled.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **少なくとも** suggests that even if other things aren&#039;t resolved, at least this one thing is.  \n- **仲直り** is a noun, so this phrase is slightly incomplete.  \n- A more natural phrasing might be:\n  <ul>\n    <li>少なくともあなたと私は仲直りした。 → \"At least, you and I have made up.\"</li>\n    <li>少なくともあなたと私は仲直りできた。 → \"At least, we were able to reconcile.\"</li>\n  </ul>\n</p>",
-        "videoId": "27d7bf1a-95fe-4884-90e1-f2b40edfcbb5",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "27d7bf1a-95fe-4884-90e1-f2b40edfcbb5",
-          "url": null,
-          "createdAt": "2025-02-16T08:47:37.125Z",
-          "updatedAt": "2025-02-16T08:47:37.125Z",
-          "wordId": null
-        }
-      },
-      {
-        "id": "0d979d77-4f61-42ce-bf0b-857533f5d6a3",
-        "kanji": "食事",
-        "kana": "しょくじ",
-        "romaji": "",
-        "translation": "meal",
-        "sentence": "君の食事には偏りがあるようだ",
-        "sentenceTranslation": "Your diet seems to be biased",
-        "videoStart": 965,
-        "videoEnd": 968,
-        "hint": "<p><b>Original Sentence:</b><br>君の食事には偏りがあるようだ</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>君の</b> (<i>きみの</i>): \"Your\" (casual/informal)</li>\n  <li><b>食事</b> (<i>しょくじ</i>): \"Meal\" or \"Diet\"</li>\n  <li><b>には</b>: Topic marker (emphasizing the subject of the statement)</li>\n  <li><b>偏り</b> (<i>かたより</i>): \"Imbalance\" or \"Bias\" (noun form of 偏る, meaning \"to be unbalanced\")</li>\n  <li><b>がある</b>: \"Exists\" or \"There is\"</li>\n  <li><b>ようだ</b>: \"It seems\" or \"It appears\" (used to express an observation or assumption)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"It seems like your diet is unbalanced.\"  \nor  \n\"Your meals appear to be imbalanced.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **ようだ** softens the statement, indicating an observation rather than a direct accusation.  \n- If spoken in a concerned tone, it could imply dietary advice.  \n- More casual alternatives:\n  <ul>\n    <li>君の食事、ちょっと偏ってるよ。 → \"Your diet is a bit unbalanced.\"</li>\n    <li>君の食生活、偏りすぎじゃない？ → \"Isn&#039;t your diet way too unbalanced?\"</li>\n  </ul>\n</p>",
-        "videoId": "f8dc44a8-e338-459b-905d-00979e19b468",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "f8dc44a8-e338-459b-905d-00979e19b468",
-          "url": null,
-          "createdAt": "2025-02-16T08:51:22.909Z",
-          "updatedAt": "2025-02-16T08:51:22.909Z",
-          "wordId": null
-        }
-      },
-      {
-        "id": "c4cf9e03-3cc3-4f74-b7ca-58379c62c6dc",
-        "kanji": "味",
-        "kana": "あぢ",
-        "romaji": "aji",
-        "translation": "Taste",
-        "sentence": "味なんか分からないくせに",
-        "sentenceTranslation": "I don&#039;t know what it tastes like.",
-        "videoStart": 968,
-        "videoEnd": 971,
-        "hint": "<p><b>Original Phrase:</b><br>味なんか分からないくせに</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>味</b> (<i>あじ</i>): \"Flavor\" or \"Taste\"</li>\n  <li><b>なんか</b>: \"Things like\" (adds a dismissive or belittling tone)</li>\n  <li><b>分からない</b> (<i>わからない</i>): \"Don&#039;t understand\" or \"Can&#039;t perceive\"</li>\n  <li><b>くせに</b>: \"Even though\" or \"Despite (the fact that)\" (expresses criticism or frustration)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Even though you don’t understand taste at all.\"  \nor  \n\"As if you even know what flavor is!\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **なんか** makes \"taste\" seem unimportant or trivial.  \n- **くせに** implies annoyance, frustration, or looking down on someone.  \n- This phrase is often used to criticize someone who acts like they understand something but actually doesn’t.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>味も分からないくせに偉そうにするなよ。<br> → \"You act all high and mighty even though you don’t even know what taste is.\"</li>\n  <li>味なんか分からないくせに意見するな。<br> → \"Don&#039;t give your opinion if you don’t even understand taste.\"</li>\n</ul>",
-        "videoId": "69e9b0bd-9d21-4259-b349-b70a872bbb4f",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "69e9b0bd-9d21-4259-b349-b70a872bbb4f",
-          "url": null,
-          "createdAt": "2025-02-16T08:52:21.124Z",
-          "updatedAt": "2025-02-16T08:52:21.124Z",
-          "wordId": null
-        }
-      },
-      {
-        "id": "a6425bbe-fbcc-4901-b5ce-1711e56f896f",
-        "kanji": "とにかく",
-        "kana": "とにかく",
-        "romaji": "tonikaku",
-        "translation": "Anyway",
-        "sentence": "とにかく警察に言って",
-        "sentenceTranslation": "Anyway tell the police",
-        "videoStart": 997,
-        "videoEnd": 999,
-        "hint": "",
-        "videoId": "0eb1510a-0af3-44db-8f8e-d8cd4e818ed5",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "0eb1510a-0af3-44db-8f8e-d8cd4e818ed5",
-          "url": null,
-          "createdAt": "2025-02-16T08:53:32.651Z",
-          "updatedAt": "2025-02-16T08:53:32.651Z",
-          "wordId": null
-        }
-      },
-      {
-        "id": "7c58a853-ecc3-4aa0-a6c1-6187c1ac378a",
-        "kanji": "場所",
-        "kana": "ばほ",
-        "romaji": "basho",
-        "translation": "Location",
-        "sentence": "せめて場所さえ分かれば",
-        "sentenceTranslation": "At least if you know the place",
-        "videoStart": 1064,
-        "videoEnd": 1069,
-        "hint": "<p><b>Original Phrase:</b><br>せめて場所さえ分かれば</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>せめて</b>: \"At least\" (expresses a minimum expectation or hope)</li>\n  <li><b>場所</b> (<i>ばしょ</i>): \"Place\" / \"Location\"</li>\n  <li><b>さえ</b>: \"Even\" / \"If only\" (emphasizes a critical point)</li>\n  <li><b>分かれば</b> (<i>わかれば</i>): \"If (I/We) knew\" (conditional form of 分かる, meaning \"to understand\" or \"to know\")</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"If only we knew the location...\"  \nor  \n\"At the very least, if we could just figure out the place...\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **せめて** implies frustration or regret, as if lacking critical information.  \n- **さえ** emphasizes that even knowing just the location would be enough.  \n- This phrase is often used when grasping for a minimum hope in a difficult situation.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>せめて時間さえ分かれば。<br> → \"If only we knew the time...\"</li>\n  <li>せめて名前さえ分かれば助かるのに。<br> → \"If only we knew the name, it would help...\"</li>\n</ul>",
-        "videoId": "3b648ce0-cf85-4496-9126-82406a02911e",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "3b648ce0-cf85-4496-9126-82406a02911e",
-          "url": null,
-          "createdAt": "2025-02-16T08:56:06.321Z",
-          "updatedAt": "2025-02-16T08:56:06.321Z",
-          "wordId": null
-        }
-      },
-      {
-        "id": "efbfc455-86e7-4c28-9f49-92c29f07b714",
-        "kanji": "電話",
-        "kana": "でんわ",
-        "romaji": "denwa",
-        "translation": "Phone",
-        "sentence": "電話で父さんは確かにそう言った",
-        "sentenceTranslation": "On the phone, Dad certainly said so",
-        "videoStart": 1074,
-        "videoEnd": 1077,
-        "hint": "<p><b>Original Phrase:</b><br>電話で父さんは確かにそう言った</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>電話で</b> (<i>でんわで</i>): \"On the phone\" / \"By phone\" (indicates the method of communication)</li>\n  <li><b>父さん</b> (<i>とうさん</i>): \"Dad\" / \"Father\" (casual, affectionate term)</li>\n  <li><b>は</b>: Topic marker (\"as for Dad...\")</li>\n  <li><b>確かに</b> (<i>たしかに</i>): \"Certainly\" / \"For sure\" (emphasizes the truth of the statement)</li>\n  <li><b>そう</b>: \"That\" / \"Like that\" (refers to something previously mentioned or implied)</li>\n  <li><b>言った</b> (<i>いった</i>): \"Said\" (past tense of 言う, meaning \"to say\")</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Dad certainly said that on the phone.\"  \nor  \n\"My father definitely said so over the phone.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **確かに** confirms certainty, implying the speaker is sure of what was said.  \n- This sentence can be used to reassure someone or to emphasize that the information is correct.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>父さんは電話で確かにそう言ったよ。<br> → \"Dad definitely said that on the phone.\" (More natural in spoken Japanese)</li>\n  <li>電話で父さんがそう言ったのは確かだ。<br> → \"It&#039;s certain that Dad said that over the phone.\" (More formal/literal)</li>\n</ul>",
-        "videoId": "90fb4850-08d6-429c-8367-a144d50f120b",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "90fb4850-08d6-429c-8367-a144d50f120b",
-          "url": null,
-          "createdAt": "2025-02-16T08:57:08.295Z",
-          "updatedAt": "2025-02-16T08:57:08.295Z",
-          "wordId": null
-        }
-      },
-      {
-        "id": "75658eda-7701-496e-b486-93a9bc28c6f7",
-        "kanji": "旅行",
-        "kana": "よこう",
-        "romaji": "ryokou",
-        "translation": "Travel",
-        "sentence": "僕はもともと旅行には反対だったんだ",
-        "sentenceTranslation": "I&#039;ve always been against traveling",
-        "videoStart": 1092,
-        "videoEnd": 1095,
-        "hint": "<p><b>Original Phrase:</b><br>僕はもともと旅行には反対だったんだ</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>僕</b> (<i>ぼく</i>): \"I\" (casual, commonly used by men)</li>\n  <li><b>は</b>: Topic marker (\"As for me...\")</li>\n  <li><b>もともと</b>: \"Originally\" / \"From the start\"</li>\n  <li><b>旅行</b> (<i>りょこう</i>): \"Trip\" / \"Travel\"</li>\n  <li><b>には</b>: Emphasized \"to\" or \"regarding\" (には adds focus to \"旅行\")</li>\n  <li><b>反対</b> (<i>はんたい</i>): \"Opposition\" / \"Being against\"</li>\n  <li><b>だった</b>: Past tense of です, meaning \"was\"</li>\n  <li><b>んだ</b>: Emphasizing particle (adds explanation or emotion)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"I was against the trip from the beginning.\"  \nor  \n\"I originally didn’t agree with going on this trip.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **もともと** stresses that the opinion was there from the start.  \n- **には** puts emphasis on the trip, meaning \"as for the trip, I was against it.\"  \n- **んだ** makes it sound more explanatory or slightly emotional.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>僕は最初から旅行には反対だったんだ。<br> → \"I was against the trip from the very beginning.\" (Stronger emphasis)</li>\n  <li>実は、僕はもともと旅行に行きたくなかったんだ。<br> → \"To be honest, I never wanted to go on this trip in the first place.\" (More natural for conversation)</li>\n</ul>",
-        "videoId": "a4639fbf-a5f8-4b78-a783-036ce8f4531a",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "a4639fbf-a5f8-4b78-a783-036ce8f4531a",
-          "url": null,
-          "createdAt": "2025-02-16T08:58:44.844Z",
-          "updatedAt": "2025-02-16T08:58:44.844Z",
-          "wordId": null
-        }
-      },
-      {
-        "id": "33ba2636-0d64-416c-9e3e-247179cad575",
-        "kanji": "倒す",
-        "kana": "たおす",
-        "romaji": "taosu",
-        "translation": "Defeat",
-        "sentence": "相手がわれわれを敵と判断する前に私が一撃で倒す",
-        "sentenceTranslation": "I will kill them with a single blow before they judge us as enemies",
-        "videoStart": 1121,
-        "videoEnd": 1126,
-        "hint": "<p><b>Original Phrase:</b><br>相手がわれわれを敵と判断する前に私が一撃で倒す</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>相手</b> (<i>あいて</i>): \"Opponent\" / \"The other party\"</li>\n  <li><b>が</b>: Subject marker (marks \"相手\" as the one performing the action)</li>\n  <li><b>われわれ</b>: \"We\" / \"Us\" (formal or collective way to refer to one&#039;s group)</li>\n  <li><b>を</b>: Object marker (marks \"われわれ\" as the object of \"判断する\")</li>\n  <li><b>敵</b> (<i>てき</i>): \"Enemy\"</li>\n  <li><b>と</b>: Quotation particle (used to indicate how something is judged or considered)</li>\n  <li><b>判断する</b> (<i>はんだんする</i>): \"To judge\" / \"To consider\" / \"To decide\"</li>\n  <li><b>前に</b> (<i>まえに</i>): \"Before\" (indicates an action happens before another)</li>\n  <li><b>私</b> (<i>わたし</i>): \"I\" (formal pronoun, can indicate authority or seriousness)</li>\n  <li><b>が</b>: Subject marker (marks \"私\" as the one performing the action)</li>\n  <li><b>一撃</b> (<i>いちげき</i>): \"A single strike\" / \"One blow\"</li>\n  <li><b>で</b>: Means or method particle (\"by means of\" or \"with\")</li>\n  <li><b>倒す</b> (<i>たおす</i>): \"To defeat\" / \"To take down\"</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Before the opponent judges us as enemies, I will take them down in one strike.\"  \nor  \n\"I&#039;ll defeat them in a single blow before they can consider us as enemies.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **相手がわれわれを敵と判断する前に** → The key idea is acting preemptively.  \n- **私が一撃で倒す** → This suggests confidence and efficiency, implying the speaker is skilled or powerful.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>相手が敵と判断する前に、一撃で倒す。<br> → \"Before the opponent decides we&#039;re enemies, I&#039;ll take them down in one hit.\" (More concise)</li>\n  <li>敵と見なされる前に、私が先に仕留める。<br> → \"Before we&#039;re seen as enemies, I&#039;ll finish them first.\" (Slightly different phrasing)</li>\n</ul>",
-        "videoId": "833ef384-22ef-4f42-80c8-1f5ba061efb8",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "833ef384-22ef-4f42-80c8-1f5ba061efb8",
-          "url": null,
-          "createdAt": "2025-02-16T09:01:28.120Z",
-          "updatedAt": "2025-02-16T09:01:28.120Z",
-          "wordId": null
-        }
-      },
-      {
-        "id": "5310be85-5e47-4006-bdd6-c4d6ebdfded0",
-        "kanji": "憎い",
-        "kana": "にくい",
-        "romaji": "nikui",
-        "translation": "hateful",
-        "sentence": "僕は今憎くて憎くてたまらないんだ",
-        "sentenceTranslation": "I hate and hate right now",
-        "videoStart": 1127,
-        "videoEnd": 1131,
-        "hint": "<p><b>Original Phrase:</b><br>僕は今憎くて憎くてたまらないんだ</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>僕</b> (<i>ぼく</i>): \"I\" (casual, commonly used by men)</li>\n  <li><b>は</b>: Topic marker (\"As for me...\")</li>\n  <li><b>今</b> (<i>いま</i>): \"Now\" / \"At this moment\"</li>\n  <li><b>憎くて憎くて</b> (<i>にくくて にくくて</i>): \"So hateful, so hateful\" (repetition emphasizes intensity)</li>\n  <li><b>たまらない</b>: \"Unbearable\" / \"I can&#039;t stand it\" (expresses an overwhelming feeling)</li>\n  <li><b>んだ</b>: Explanatory particle (adds emotional emphasis or explanation)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"I’m so filled with hatred right now that I can’t stand it.\"  \nor  \n\"I hate it so much, so much, I can’t take it anymore.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **憎くて憎くて** (repetition) makes it sound extremely intense and emotional.  \n- **たまらない** implies an uncontrollable emotion, making the hatred feel overwhelming.  \n- **んだ** adds an explanatory tone, as if the speaker is venting or justifying their feelings.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>僕は今、憎くてたまらない。<br> → \"Right now, I can&#039;t stand how much I hate it.\" (Slightly more direct)</li>\n  <li>今の僕は、憎しみに飲み込まれそうだ。<br> → \"Right now, I feel like I’m being consumed by hatred.\" (More dramatic)</li>\n</ul>",
-        "videoId": "d7a57f09-f90e-4cf2-a53a-df8a84a426a7",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "d7a57f09-f90e-4cf2-a53a-df8a84a426a7",
-          "url": null,
-          "createdAt": "2025-02-16T09:02:39.861Z",
-          "updatedAt": "2025-02-16T09:02:39.861Z",
-          "wordId": null
-        }
-      },
-      {
-        "id": "ca4ce8be-532f-403e-a610-a84a9208820c",
-        "kanji": "すでに",
-        "kana": "すでに",
-        "romaji": "sudeni",
-        "translation": "Already",
-        "sentence": "動きが止まったすでに玄関前だ",
-        "sentenceTranslation": "It was already in front of the front door when the movement stopped",
-        "videoStart": 1132,
-        "videoEnd": 1137,
-        "hint": "<p><b>Original Phrase:</b><br>動きが止まったすでに玄関前だ</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>動き</b> (<i>うごき</i>): \"Movement\" / \"Motion\"</li>\n  <li><b>が</b>: Subject marker (marks \"動き\" as the subject of the sentence)</li>\n  <li><b>止まった</b> (<i>とまった</i>): \"Stopped\" (past tense of 止まる, meaning \"to stop\")</li>\n  <li><b>すでに</b>: \"Already\" (indicates that something has happened prior to the moment in question)</li>\n  <li><b>玄関前</b> (<i>げんかんまえ</i>): \"In front of the entrance\" / \"At the front door\"</li>\n  <li><b>だ</b>: Copula (casual form of \"is\")</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"The movement has stopped, and we’re already in front of the entrance.\"  \nor  \n\"The motion has ceased, and we are already at the front door.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **すでに** emphasizes that the action has already occurred, implying a sense of arrival or readiness.  \n- The phrase **玄関前だ** suggests that the situation has reached a critical point—at the entrance—where no further movement is needed or possible.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>動きが止まった。すでに玄関に着いた。<br> → \"The movement stopped. We’ve already arrived at the entrance.\" (Alternative phrasing)</li>\n  <li>動きは止まり、すぐに玄関前に立っている。<br> → \"The movement stopped, and now I’m standing in front of the door.\" (More immediate feeling)</li>\n</ul>",
-        "videoId": "bdb5300f-0cd4-496d-a024-2bbad8f5a465",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "bdb5300f-0cd4-496d-a024-2bbad8f5a465",
-          "url": null,
-          "createdAt": "2025-02-16T09:03:47.527Z",
-          "updatedAt": "2025-02-16T09:03:47.527Z",
-          "wordId": null
-        }
-      },
-      {
-        "id": "61f1befc-0f7c-4470-8b56-9bed25dd9b03",
-        "kanji": "確認",
-        "kana": "かくにん",
-        "romaji": "kakunin",
-        "translation": "Review",
-        "sentence": "いやあの場所に戻ってもう一度確認する必要があるな",
-        "sentenceTranslation": "No, I need to go back to that place and check again.",
-        "videoStart": 1210,
-        "videoEnd": 1215,
-        "hint": "<p><b>Original Phrase:</b><br>いやあの場所に戻ってもう一度確認する必要があるな</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>いや</b>: \"No\" / \"Well\" / \"Actually\" (used to introduce a correction or reconsideration)</li>\n  <li><b>あの</b>: \"That\" (indicating a place or thing previously mentioned or in the context)</li>\n  <li><b>場所</b> (<i>ばしょ</i>): \"Place\" / \"Location\"</li>\n  <li><b>に</b>: Directional particle (indicates the destination of the action)</li>\n  <li><b>戻って</b> (<i>もどって</i>): \"Return\" (te-form of 戻る, meaning \"to return\")</li>\n  <li><b>もう一度</b> (<i>もういちど</i>): \"Once more\" / \"One more time\"</li>\n  <li><b>確認する</b> (<i>かくにんする</i>): \"To confirm\" / \"To check\"</li>\n  <li><b>必要</b> (<i>ひつよう</i>): \"Need\" / \"Necessity\"</li>\n  <li><b>が</b>: Subject marker (marks \"確認する必要\" as the subject)</li>\n  <li><b>ある</b>: \"There is\" / \"Exist\" (used to express necessity or existence)</li>\n  <li><b>な</b>: Casual ending particle (often adds a sense of reflection or contemplation)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"No, we need to go back to that place and check it again.\"  \nor  \n\"Well, it looks like we need to return to that place and confirm it one more time.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **いや**: Signals a shift in thinking, like reconsidering or realizing something.  \n- **必要があるな**: The **な** adds a casual or reflective tone, making the statement feel more like a thought or realization than a direct command.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>いや、あの場所に戻ってもう一度確認しなきゃならない。<br> → \"Actually, we have to go back to that place and check it again.\" (A bit stronger in the sense of necessity)</li>\n  <li>あの場所を再度確認する必要があるな。<br> → \"We need to confirm that place again.\" (More formal)</li>\n</ul>",
-        "videoId": "b677d9b9-8e95-447b-ad75-7d17cc78ad88",
-        "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
-        "Video": {
-          "id": "b677d9b9-8e95-447b-ad75-7d17cc78ad88",
-          "url": null,
-          "createdAt": "2025-02-16T09:05:55.011Z",
-          "updatedAt": "2025-02-16T09:05:55.011Z",
-          "wordId": null
-        }
+
+
+
+    
+    {
+      "id": "ee9653f0-a1c5-4e32-8032-0e8c79fcb45e",
+      "kanji": "謝る",
+      "kana": "あやまる",
+      "romaji": "",
+      "translation": "to apologize",
+      "sentence": "謝りに来ただけ",
+      "sentenceTranslation": "I&#039;m just here to apologize",
+      "videoStart": 860,
+      "videoEnd": 864,
+      "hint": "<p><b>Original Phrase:</b><br>謝りに来ただけ</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>謝り</b> (<i>あやまり</i>): \"Apology\" (noun form of 謝る, meaning \"to apologize\")</li>\n  <li><b>に</b>: Purpose marker, meaning \"in order to\" or \"for the purpose of\"</li>\n  <li><b>来た</b> (<i>きた</i>): \"Came\" (past form of 来る, meaning \"to come\")</li>\n  <li><b>だけ</b>: \"Only\" or \"Just\"</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"I just came to apologize.\"  \nor  \n\"I&#039;m only here to apologize.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **だけ** emphasizes that the speaker&#039;s sole purpose is to apologize.  \n- Depending on tone, it could sound sincere or cold/dismissive.  \n- If spoken bluntly, it may imply \"Nothing more, nothing less.\"</p>",
+      "videoId": "e6d46021-d0f5-4545-962c-9b84ce109c17",
+      "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
+      "Video": {
+        "id": "e6d46021-d0f5-4545-962c-9b84ce109c17",
+        "url": null,
+        "createdAt": "2025-02-16T08:46:40.317Z",
+        "updatedAt": "2025-02-16T08:46:40.317Z",
+        "wordId": null
       }
-    ]
+    },
+    {
+      "id": "7b7a2d75-d205-4f5c-b05d-8795f08df3fc",
+      "kanji": "少なくとも",
+      "kana": "すくなくとも",
+      "romaji": "sukunakutomo",
+      "translation": "At least",
+      "sentence": "少なくともあなたと私は仲直り",
+      "sentenceTranslation": "At least you and I reconcile",
+      "videoStart": 871,
+      "videoEnd": 876,
+      "hint": "<p><b>Original Phrase:</b><br>少なくともあなたと私は仲直り</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>少なくとも</b> (<i>すくなくとも</i>): \"At least\"</li>\n  <li><b>あなたと私</b>: \"You and I\"</li>\n  <li><b>は</b>: Topic marker (\"as for...\")</li>\n  <li><b>仲直り</b> (<i>なかなおり</i>): \"Reconciliation\" or \"Making up\" (noun form of 仲直りする)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"At least, you and I have made up.\"  \nor  \n\"At the very least, you and I are reconciled.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **少なくとも** suggests that even if other things aren&#039;t resolved, at least this one thing is.  \n- **仲直り** is a noun, so this phrase is slightly incomplete.  \n- A more natural phrasing might be:\n  <ul>\n    <li>少なくともあなたと私は仲直りした。 → \"At least, you and I have made up.\"</li>\n    <li>少なくともあなたと私は仲直りできた。 → \"At least, we were able to reconcile.\"</li>\n  </ul>\n</p>",
+      "videoId": "27d7bf1a-95fe-4884-90e1-f2b40edfcbb5",
+      "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
+      "Video": {
+        "id": "27d7bf1a-95fe-4884-90e1-f2b40edfcbb5",
+        "url": null,
+        "createdAt": "2025-02-16T08:47:37.125Z",
+        "updatedAt": "2025-02-16T08:47:37.125Z",
+        "wordId": null
+      }
+    },
+    {
+      "id": "0d979d77-4f61-42ce-bf0b-857533f5d6a3",
+      "kanji": "食事",
+      "kana": "しょくじ",
+      "romaji": "",
+      "translation": "meal",
+      "sentence": "君の食事には偏りがあるようだ",
+      "sentenceTranslation": "Your diet seems to be biased",
+      "videoStart": 965,
+      "videoEnd": 968,
+      "hint": "<p><b>Original Sentence:</b><br>君の食事には偏りがあるようだ</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>君の</b> (<i>きみの</i>): \"Your\" (casual/informal)</li>\n  <li><b>食事</b> (<i>しょくじ</i>): \"Meal\" or \"Diet\"</li>\n  <li><b>には</b>: Topic marker (emphasizing the subject of the statement)</li>\n  <li><b>偏り</b> (<i>かたより</i>): \"Imbalance\" or \"Bias\" (noun form of 偏る, meaning \"to be unbalanced\")</li>\n  <li><b>がある</b>: \"Exists\" or \"There is\"</li>\n  <li><b>ようだ</b>: \"It seems\" or \"It appears\" (used to express an observation or assumption)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"It seems like your diet is unbalanced.\"  \nor  \n\"Your meals appear to be imbalanced.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **ようだ** softens the statement, indicating an observation rather than a direct accusation.  \n- If spoken in a concerned tone, it could imply dietary advice.  \n- More casual alternatives:\n  <ul>\n    <li>君の食事、ちょっと偏ってるよ。 → \"Your diet is a bit unbalanced.\"</li>\n    <li>君の食生活、偏りすぎじゃない？ → \"Isn&#039;t your diet way too unbalanced?\"</li>\n  </ul>\n</p>",
+      "videoId": "f8dc44a8-e338-459b-905d-00979e19b468",
+      "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
+      "Video": {
+        "id": "f8dc44a8-e338-459b-905d-00979e19b468",
+        "url": null,
+        "createdAt": "2025-02-16T08:51:22.909Z",
+        "updatedAt": "2025-02-16T08:51:22.909Z",
+        "wordId": null
+      }
+    },
+    {
+      "id": "c4cf9e03-3cc3-4f74-b7ca-58379c62c6dc",
+      "kanji": "味",
+      "kana": "あぢ",
+      "romaji": "aji",
+      "translation": "Taste",
+      "sentence": "味なんか分からないくせに",
+      "sentenceTranslation": "I don&#039;t know what it tastes like.",
+      "videoStart": 968,
+      "videoEnd": 971,
+      "hint": "<p><b>Original Phrase:</b><br>味なんか分からないくせに</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>味</b> (<i>あじ</i>): \"Flavor\" or \"Taste\"</li>\n  <li><b>なんか</b>: \"Things like\" (adds a dismissive or belittling tone)</li>\n  <li><b>分からない</b> (<i>わからない</i>): \"Don&#039;t understand\" or \"Can&#039;t perceive\"</li>\n  <li><b>くせに</b>: \"Even though\" or \"Despite (the fact that)\" (expresses criticism or frustration)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Even though you don’t understand taste at all.\"  \nor  \n\"As if you even know what flavor is!\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **なんか** makes \"taste\" seem unimportant or trivial.  \n- **くせに** implies annoyance, frustration, or looking down on someone.  \n- This phrase is often used to criticize someone who acts like they understand something but actually doesn’t.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>味も分からないくせに偉そうにするなよ。<br> → \"You act all high and mighty even though you don’t even know what taste is.\"</li>\n  <li>味なんか分からないくせに意見するな。<br> → \"Don&#039;t give your opinion if you don’t even understand taste.\"</li>\n</ul>",
+      "videoId": "69e9b0bd-9d21-4259-b349-b70a872bbb4f",
+      "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
+      "Video": {
+        "id": "69e9b0bd-9d21-4259-b349-b70a872bbb4f",
+        "url": null,
+        "createdAt": "2025-02-16T08:52:21.124Z",
+        "updatedAt": "2025-02-16T08:52:21.124Z",
+        "wordId": null
+      }
+    },
+    {
+      "id": "a6425bbe-fbcc-4901-b5ce-1711e56f896f",
+      "kanji": "とにかく",
+      "kana": "とにかく",
+      "romaji": "tonikaku",
+      "translation": "Anyway",
+      "sentence": "とにかく警察に言って",
+      "sentenceTranslation": "Anyway tell the police",
+      "videoStart": 997,
+      "videoEnd": 999,
+      "hint": "",
+      "videoId": "0eb1510a-0af3-44db-8f8e-d8cd4e818ed5",
+      "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
+      "Video": {
+        "id": "0eb1510a-0af3-44db-8f8e-d8cd4e818ed5",
+        "url": null,
+        "createdAt": "2025-02-16T08:53:32.651Z",
+        "updatedAt": "2025-02-16T08:53:32.651Z",
+        "wordId": null
+      }
+    },
+    {
+      "id": "7c58a853-ecc3-4aa0-a6c1-6187c1ac378a",
+      "kanji": "場所",
+      "kana": "ばほ",
+      "romaji": "basho",
+      "translation": "Location",
+      "sentence": "せめて場所さえ分かれば",
+      "sentenceTranslation": "At least if you know the place",
+      "videoStart": 1064,
+      "videoEnd": 1069,
+      "hint": "<p><b>Original Phrase:</b><br>せめて場所さえ分かれば</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>せめて</b>: \"At least\" (expresses a minimum expectation or hope)</li>\n  <li><b>場所</b> (<i>ばしょ</i>): \"Place\" / \"Location\"</li>\n  <li><b>さえ</b>: \"Even\" / \"If only\" (emphasizes a critical point)</li>\n  <li><b>分かれば</b> (<i>わかれば</i>): \"If (I/We) knew\" (conditional form of 分かる, meaning \"to understand\" or \"to know\")</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"If only we knew the location...\"  \nor  \n\"At the very least, if we could just figure out the place...\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **せめて** implies frustration or regret, as if lacking critical information.  \n- **さえ** emphasizes that even knowing just the location would be enough.  \n- This phrase is often used when grasping for a minimum hope in a difficult situation.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>せめて時間さえ分かれば。<br> → \"If only we knew the time...\"</li>\n  <li>せめて名前さえ分かれば助かるのに。<br> → \"If only we knew the name, it would help...\"</li>\n</ul>",
+      "videoId": "3b648ce0-cf85-4496-9126-82406a02911e",
+      "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
+      "Video": {
+        "id": "3b648ce0-cf85-4496-9126-82406a02911e",
+        "url": null,
+        "createdAt": "2025-02-16T08:56:06.321Z",
+        "updatedAt": "2025-02-16T08:56:06.321Z",
+        "wordId": null
+      }
+    },
+    {
+      "id": "efbfc455-86e7-4c28-9f49-92c29f07b714",
+      "kanji": "電話",
+      "kana": "でんわ",
+      "romaji": "denwa",
+      "translation": "Phone",
+      "sentence": "電話で父さんは確かにそう言った",
+      "sentenceTranslation": "On the phone, Dad certainly said so",
+      "videoStart": 1074,
+      "videoEnd": 1077,
+      "hint": "<p><b>Original Phrase:</b><br>電話で父さんは確かにそう言った</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>電話で</b> (<i>でんわで</i>): \"On the phone\" / \"By phone\" (indicates the method of communication)</li>\n  <li><b>父さん</b> (<i>とうさん</i>): \"Dad\" / \"Father\" (casual, affectionate term)</li>\n  <li><b>は</b>: Topic marker (\"as for Dad...\")</li>\n  <li><b>確かに</b> (<i>たしかに</i>): \"Certainly\" / \"For sure\" (emphasizes the truth of the statement)</li>\n  <li><b>そう</b>: \"That\" / \"Like that\" (refers to something previously mentioned or implied)</li>\n  <li><b>言った</b> (<i>いった</i>): \"Said\" (past tense of 言う, meaning \"to say\")</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Dad certainly said that on the phone.\"  \nor  \n\"My father definitely said so over the phone.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **確かに** confirms certainty, implying the speaker is sure of what was said.  \n- This sentence can be used to reassure someone or to emphasize that the information is correct.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>父さんは電話で確かにそう言ったよ。<br> → \"Dad definitely said that on the phone.\" (More natural in spoken Japanese)</li>\n  <li>電話で父さんがそう言ったのは確かだ。<br> → \"It&#039;s certain that Dad said that over the phone.\" (More formal/literal)</li>\n</ul>",
+      "videoId": "90fb4850-08d6-429c-8367-a144d50f120b",
+      "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
+      "Video": {
+        "id": "90fb4850-08d6-429c-8367-a144d50f120b",
+        "url": null,
+        "createdAt": "2025-02-16T08:57:08.295Z",
+        "updatedAt": "2025-02-16T08:57:08.295Z",
+        "wordId": null
+      }
+    },
+    {
+      "id": "75658eda-7701-496e-b486-93a9bc28c6f7",
+      "kanji": "旅行",
+      "kana": "よこう",
+      "romaji": "ryokou",
+      "translation": "Travel",
+      "sentence": "僕はもともと旅行には反対だったんだ",
+      "sentenceTranslation": "I&#039;ve always been against traveling",
+      "videoStart": 1092,
+      "videoEnd": 1095,
+      "hint": "<p><b>Original Phrase:</b><br>僕はもともと旅行には反対だったんだ</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>僕</b> (<i>ぼく</i>): \"I\" (casual, commonly used by men)</li>\n  <li><b>は</b>: Topic marker (\"As for me...\")</li>\n  <li><b>もともと</b>: \"Originally\" / \"From the start\"</li>\n  <li><b>旅行</b> (<i>りょこう</i>): \"Trip\" / \"Travel\"</li>\n  <li><b>には</b>: Emphasized \"to\" or \"regarding\" (には adds focus to \"旅行\")</li>\n  <li><b>反対</b> (<i>はんたい</i>): \"Opposition\" / \"Being against\"</li>\n  <li><b>だった</b>: Past tense of です, meaning \"was\"</li>\n  <li><b>んだ</b>: Emphasizing particle (adds explanation or emotion)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"I was against the trip from the beginning.\"  \nor  \n\"I originally didn’t agree with going on this trip.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **もともと** stresses that the opinion was there from the start.  \n- **には** puts emphasis on the trip, meaning \"as for the trip, I was against it.\"  \n- **んだ** makes it sound more explanatory or slightly emotional.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>僕は最初から旅行には反対だったんだ。<br> → \"I was against the trip from the very beginning.\" (Stronger emphasis)</li>\n  <li>実は、僕はもともと旅行に行きたくなかったんだ。<br> → \"To be honest, I never wanted to go on this trip in the first place.\" (More natural for conversation)</li>\n</ul>",
+      "videoId": "a4639fbf-a5f8-4b78-a783-036ce8f4531a",
+      "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
+      "Video": {
+        "id": "a4639fbf-a5f8-4b78-a783-036ce8f4531a",
+        "url": null,
+        "createdAt": "2025-02-16T08:58:44.844Z",
+        "updatedAt": "2025-02-16T08:58:44.844Z",
+        "wordId": null
+      }
+    },
+    {
+      "id": "33ba2636-0d64-416c-9e3e-247179cad575",
+      "kanji": "倒す",
+      "kana": "たおす",
+      "romaji": "taosu",
+      "translation": "Defeat",
+      "sentence": "相手がわれわれを敵と判断する前に私が一撃で倒す",
+      "sentenceTranslation": "I will kill them with a single blow before they judge us as enemies",
+      "videoStart": 1121,
+      "videoEnd": 1126,
+      "hint": "<p><b>Original Phrase:</b><br>相手がわれわれを敵と判断する前に私が一撃で倒す</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>相手</b> (<i>あいて</i>): \"Opponent\" / \"The other party\"</li>\n  <li><b>が</b>: Subject marker (marks \"相手\" as the one performing the action)</li>\n  <li><b>われわれ</b>: \"We\" / \"Us\" (formal or collective way to refer to one&#039;s group)</li>\n  <li><b>を</b>: Object marker (marks \"われわれ\" as the object of \"判断する\")</li>\n  <li><b>敵</b> (<i>てき</i>): \"Enemy\"</li>\n  <li><b>と</b>: Quotation particle (used to indicate how something is judged or considered)</li>\n  <li><b>判断する</b> (<i>はんだんする</i>): \"To judge\" / \"To consider\" / \"To decide\"</li>\n  <li><b>前に</b> (<i>まえに</i>): \"Before\" (indicates an action happens before another)</li>\n  <li><b>私</b> (<i>わたし</i>): \"I\" (formal pronoun, can indicate authority or seriousness)</li>\n  <li><b>が</b>: Subject marker (marks \"私\" as the one performing the action)</li>\n  <li><b>一撃</b> (<i>いちげき</i>): \"A single strike\" / \"One blow\"</li>\n  <li><b>で</b>: Means or method particle (\"by means of\" or \"with\")</li>\n  <li><b>倒す</b> (<i>たおす</i>): \"To defeat\" / \"To take down\"</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"Before the opponent judges us as enemies, I will take them down in one strike.\"  \nor  \n\"I&#039;ll defeat them in a single blow before they can consider us as enemies.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **相手がわれわれを敵と判断する前に** → The key idea is acting preemptively.  \n- **私が一撃で倒す** → This suggests confidence and efficiency, implying the speaker is skilled or powerful.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>相手が敵と判断する前に、一撃で倒す。<br> → \"Before the opponent decides we&#039;re enemies, I&#039;ll take them down in one hit.\" (More concise)</li>\n  <li>敵と見なされる前に、私が先に仕留める。<br> → \"Before we&#039;re seen as enemies, I&#039;ll finish them first.\" (Slightly different phrasing)</li>\n</ul>",
+      "videoId": "833ef384-22ef-4f42-80c8-1f5ba061efb8",
+      "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
+      "Video": {
+        "id": "833ef384-22ef-4f42-80c8-1f5ba061efb8",
+        "url": null,
+        "createdAt": "2025-02-16T09:01:28.120Z",
+        "updatedAt": "2025-02-16T09:01:28.120Z",
+        "wordId": null
+      }
+    },
+    {
+      "id": "5310be85-5e47-4006-bdd6-c4d6ebdfded0",
+      "kanji": "憎い",
+      "kana": "にくい",
+      "romaji": "nikui",
+      "translation": "hateful",
+      "sentence": "僕は今憎くて憎くてたまらないんだ",
+      "sentenceTranslation": "I hate and hate right now",
+      "videoStart": 1127,
+      "videoEnd": 1131,
+      "hint": "<p><b>Original Phrase:</b><br>僕は今憎くて憎くてたまらないんだ</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>僕</b> (<i>ぼく</i>): \"I\" (casual, commonly used by men)</li>\n  <li><b>は</b>: Topic marker (\"As for me...\")</li>\n  <li><b>今</b> (<i>いま</i>): \"Now\" / \"At this moment\"</li>\n  <li><b>憎くて憎くて</b> (<i>にくくて にくくて</i>): \"So hateful, so hateful\" (repetition emphasizes intensity)</li>\n  <li><b>たまらない</b>: \"Unbearable\" / \"I can&#039;t stand it\" (expresses an overwhelming feeling)</li>\n  <li><b>んだ</b>: Explanatory particle (adds emotional emphasis or explanation)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"I’m so filled with hatred right now that I can’t stand it.\"  \nor  \n\"I hate it so much, so much, I can’t take it anymore.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **憎くて憎くて** (repetition) makes it sound extremely intense and emotional.  \n- **たまらない** implies an uncontrollable emotion, making the hatred feel overwhelming.  \n- **んだ** adds an explanatory tone, as if the speaker is venting or justifying their feelings.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>僕は今、憎くてたまらない。<br> → \"Right now, I can&#039;t stand how much I hate it.\" (Slightly more direct)</li>\n  <li>今の僕は、憎しみに飲み込まれそうだ。<br> → \"Right now, I feel like I’m being consumed by hatred.\" (More dramatic)</li>\n</ul>",
+      "videoId": "d7a57f09-f90e-4cf2-a53a-df8a84a426a7",
+      "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
+      "Video": {
+        "id": "d7a57f09-f90e-4cf2-a53a-df8a84a426a7",
+        "url": null,
+        "createdAt": "2025-02-16T09:02:39.861Z",
+        "updatedAt": "2025-02-16T09:02:39.861Z",
+        "wordId": null
+      }
+    },
+    {
+      "id": "ca4ce8be-532f-403e-a610-a84a9208820c",
+      "kanji": "すでに",
+      "kana": "すでに",
+      "romaji": "sudeni",
+      "translation": "Already",
+      "sentence": "動きが止まったすでに玄関前だ",
+      "sentenceTranslation": "It was already in front of the front door when the movement stopped",
+      "videoStart": 1132,
+      "videoEnd": 1137,
+      "hint": "<p><b>Original Phrase:</b><br>動きが止まったすでに玄関前だ</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>動き</b> (<i>うごき</i>): \"Movement\" / \"Motion\"</li>\n  <li><b>が</b>: Subject marker (marks \"動き\" as the subject of the sentence)</li>\n  <li><b>止まった</b> (<i>とまった</i>): \"Stopped\" (past tense of 止まる, meaning \"to stop\")</li>\n  <li><b>すでに</b>: \"Already\" (indicates that something has happened prior to the moment in question)</li>\n  <li><b>玄関前</b> (<i>げんかんまえ</i>): \"In front of the entrance\" / \"At the front door\"</li>\n  <li><b>だ</b>: Copula (casual form of \"is\")</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"The movement has stopped, and we’re already in front of the entrance.\"  \nor  \n\"The motion has ceased, and we are already at the front door.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **すでに** emphasizes that the action has already occurred, implying a sense of arrival or readiness.  \n- The phrase **玄関前だ** suggests that the situation has reached a critical point—at the entrance—where no further movement is needed or possible.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>動きが止まった。すでに玄関に着いた。<br> → \"The movement stopped. We’ve already arrived at the entrance.\" (Alternative phrasing)</li>\n  <li>動きは止まり、すぐに玄関前に立っている。<br> → \"The movement stopped, and now I’m standing in front of the door.\" (More immediate feeling)</li>\n</ul>",
+      "videoId": "bdb5300f-0cd4-496d-a024-2bbad8f5a465",
+      "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
+      "Video": {
+        "id": "bdb5300f-0cd4-496d-a024-2bbad8f5a465",
+        "url": null,
+        "createdAt": "2025-02-16T09:03:47.527Z",
+        "updatedAt": "2025-02-16T09:03:47.527Z",
+        "wordId": null
+      }
+    },
+    {
+      "id": "61f1befc-0f7c-4470-8b56-9bed25dd9b03",
+      "kanji": "確認",
+      "kana": "かくにん",
+      "romaji": "kakunin",
+      "translation": "Review",
+      "sentence": "いやあの場所に戻ってもう一度確認する必要があるな",
+      "sentenceTranslation": "No, I need to go back to that place and check again.",
+      "videoStart": 1210,
+      "videoEnd": 1215,
+      "hint": "<p><b>Original Phrase:</b><br>いやあの場所に戻ってもう一度確認する必要があるな</p>\n\n<p><b>Analysis:</b></p>\n<ul>\n  <li><b>いや</b>: \"No\" / \"Well\" / \"Actually\" (used to introduce a correction or reconsideration)</li>\n  <li><b>あの</b>: \"That\" (indicating a place or thing previously mentioned or in the context)</li>\n  <li><b>場所</b> (<i>ばしょ</i>): \"Place\" / \"Location\"</li>\n  <li><b>に</b>: Directional particle (indicates the destination of the action)</li>\n  <li><b>戻って</b> (<i>もどって</i>): \"Return\" (te-form of 戻る, meaning \"to return\")</li>\n  <li><b>もう一度</b> (<i>もういちど</i>): \"Once more\" / \"One more time\"</li>\n  <li><b>確認する</b> (<i>かくにんする</i>): \"To confirm\" / \"To check\"</li>\n  <li><b>必要</b> (<i>ひつよう</i>): \"Need\" / \"Necessity\"</li>\n  <li><b>が</b>: Subject marker (marks \"確認する必要\" as the subject)</li>\n  <li><b>ある</b>: \"There is\" / \"Exist\" (used to express necessity or existence)</li>\n  <li><b>な</b>: Casual ending particle (often adds a sense of reflection or contemplation)</li>\n</ul>\n\n<p><b>Translation:</b><br>\n\"No, we need to go back to that place and check it again.\"  \nor  \n\"Well, it looks like we need to return to that place and confirm it one more time.\"\n</p>\n\n<p><b>Nuance:</b><br>\n- **いや**: Signals a shift in thinking, like reconsidering or realizing something.  \n- **必要があるな**: The **な** adds a casual or reflective tone, making the statement feel more like a thought or realization than a direct command.</p>\n\n<p><b>More Variations:</b></p>\n<ul>\n  <li>いや、あの場所に戻ってもう一度確認しなきゃならない。<br> → \"Actually, we have to go back to that place and check it again.\" (A bit stronger in the sense of necessity)</li>\n  <li>あの場所を再度確認する必要があるな。<br> → \"We need to confirm that place again.\" (More formal)</li>\n</ul>",
+      "videoId": "b677d9b9-8e95-447b-ad75-7d17cc78ad88",
+      "userId": "d9690c1f-5766-4d50-a206-11313c77787f",
+      "Video": {
+        "id": "b677d9b9-8e95-447b-ad75-7d17cc78ad88",
+        "url": null,
+        "createdAt": "2025-02-16T09:05:55.011Z",
+        "updatedAt": "2025-02-16T09:05:55.011Z",
+        "wordId": null
+      }
+    }
   ]
 }
