@@ -52,7 +52,7 @@ function displayBackSideData(word) {
 
     const video = document.createElement("video")
     console.log(word)
-    video.src = word.data.Video.url
+    video.src = word.data.Video ? word.data.Video.url : (word.data.video ?? '')
     //video.src = 'https://drive.google.com/uc?export=download&id=11ca1x_2lQqdJJy6qX7lDWKHMoJjpZ0gR'
     video.controls = true
     video.autoplay = true

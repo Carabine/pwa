@@ -84,13 +84,16 @@ async function fetchDataFromServer() {
     try {
         // const response = await client.get(domain + '/words')
         // const { data } = response;
-        const data = await fetchAndDecode('./data2.json')
-        console.log(data)
-        //const res = await fetch('data.json')
-        //const data = await res.json()
-        //console.log(JSON.stringify(data.words))
-        const changedData = data.data.map(d => ({...d, url: d.url, word: d.kanji, meaning: d.translation, translatedSentence: d.sentenceTranslation}))
-        localStorage.setItem('words', JSON.stringify(changedData));
+        const [data1, data2] = await Promise.all([
+            fetchAndDecode('./data.json'),
+            fetchAndDecode('./data2.json')
+        ])
+
+        const words1 = (data1.words ?? []).map(d => ({...d, translatedSentence: d.translatedSentence}))
+        const words2 = (data2.data ?? []).map(d => ({...d, url: d.url, word: d.kanji, meaning: d.translation, translatedSentence: d.sentenceTranslation}))
+
+        const allWords = [...words1, ...words2]
+        localStorage.setItem('words', JSON.stringify(allWords));
         // Display the fetched data
         onLoad()
     } catch (error) {
