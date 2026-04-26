@@ -195,24 +195,22 @@ function randomInteger(min, max) {
 }
 
 const onLoad = () => {
-    console.log(localStorage.getItem('wordsPool'))
     const words = JSON.parse(localStorage.getItem('words') ?? "[]")
     progress = JSON.parse(localStorage.getItem('progress') ?? "[]")
 
-    const freshWordsCount = Number(localStorage.getItem("freshWordsCount"))
+    // const freshWordsCount = Number(localStorage.getItem("freshWordsCount"))
     const temp = []
-    const freshWords = words.slice(words.length - freshWordsCount, words.length)
-    console.log(freshWords,words.length, words.length - freshWordsCount, freshWordsCount)
-    const learnedWords = shuffle(words.slice(0, words.length - freshWordsCount))
-    const slicedWords = [
-        ...freshWords,
-        ...learnedWords.slice(0, Math.round(learnedWords.length * 30 / 100)  )
-    ]
+    // const freshWords = words.slice(words.length - freshWordsCount, words.length)
+    // const learnedWords = shuffle(words.slice(0, words.length - freshWordsCount))
+    // const slicedWords = [
+    //     ...freshWords,
+    //     ...learnedWords.slice(0, Math.round(learnedWords.length * 30 / 100))
+    // ]
 
-    for(let i = 0; i < slicedWords.length; i++) {
+    for(let i = 0; i < words.length; i++) {
 
             temp.push({
-                data: slicedWords[i],
+                data: words[i],
                 showAt: removeTimeFromDate(new Date()),
                 period: 0,
                 timesToShow: 2,
@@ -238,14 +236,14 @@ const onLoad = () => {
 window.addEventListener('load', async() => {
     await fetchDataFromServer()
 
-    localStorage.setItem('freshWordsCount', 999)
-
-    let freshWordsCount = Number(localStorage.getItem("freshWordsCount") ?? "0")
-    if(!freshWordsCount) {
-        const words = JSON.parse(localStorage.getItem('words') ?? "[]")
-        freshWordsCount = words.length
-        localStorage.setItem("freshWordsCount", freshWordsCount.toString())
-    }
+    // localStorage.setItem('freshWordsCount', 999)
+    //
+    // let freshWordsCount = Number(localStorage.getItem("freshWordsCount") ?? "0")
+    // if(!freshWordsCount) {
+    //     const words = JSON.parse(localStorage.getItem('words') ?? "[]")
+    //     freshWordsCount = words.length
+    //     localStorage.setItem("freshWordsCount", freshWordsCount.toString())
+    // }
 
     onLoad()
 });
