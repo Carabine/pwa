@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Animei — Watch</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../css/app.css" rel="stylesheet">
+    <link href="../css/watch.css" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+    <header class="header">
+        <div class="header__left">
+            <button class="icon-btn menu-btn" aria-label="Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="header__logo">Animei</div>
+        <div class="header__right">
+            <div class="profile-wrap">
+                <button class="icon-btn profile-btn" aria-label="Profile">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </button>
+                <div class="profile-menu" id="profile-menu">
+                    <a href="#" id="logout-btn">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="watch-page">
+        <div id="upload-area" class="upload-area">
+            <div class="upload-box">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <p>Drop a video file here or click to select</p>
+                <p class="upload-hint">Supported: mp4, mkv, webm</p>
+                <input type="file" id="video-input" accept="video/*" hidden>
+            </div>
+            <div class="upload-url">
+                <span class="upload-url__or">or paste a video URL</span>
+                <div class="upload-url__row">
+                    <input type="text" id="url-input" class="upload-url__input" placeholder="https://...">
+                    <button id="url-btn" class="btn btn--primary btn--sm">Load</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="watch-area" class="watch-area hidden">
+            <div class="watch-left">
+                <div class="player-wrap" id="player-wrap">
+                    <video id="player"></video>
+                    <div id="live-subs" class="live-subs hidden">
+                        <div id="live-jp" class="live-subs__jp"></div>
+                        <div id="live-en" class="live-subs__en"></div>
+                        <div id="live-ru" class="live-subs__ru"></div>
+                    </div>
+                    <div id="play-icon" class="play-icon hidden">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </div>
+                    <div id="pause-icon" class="pause-icon hidden">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                    </div>
+                </div>
+
+                <div class="player-controls">
+                    <input type="range" id="seek-bar" class="pc-seek" min="0" max="100" step="0.1" value="0">
+                    <div class="pc-row">
+                        <button id="play-btn" class="pc-btn pc-btn--play" title="Space">
+                            <svg id="icon-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                            <svg id="icon-pause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="hidden"><rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/></svg>
+                        </button>
+                        <button id="prev-seg-btn" class="pc-btn" title="Shift+Left">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="19 20 9 12 19 4"/><line x1="5" y1="4" x2="5" y2="20"/></svg>
+                        </button>
+                        <button id="back-btn" class="pc-btn" title="Left">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                        <button id="forward-btn" class="pc-btn" title="Right">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                        <button id="next-seg-btn" class="pc-btn" title="Shift+Right">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="5 4 15 12 5 20"/><line x1="19" y1="4" x2="19" y2="20"/></svg>
+                        </button>
+                        <div class="pc-sep"></div>
+                        <button id="replay-seg-btn" class="pc-btn" title="R">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        </button>
+                        <button id="loop-btn" class="pc-btn" title="L">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                        </button>
+                        <div class="pc-time" id="pc-time">0:00 / 0:00</div>
+                        <div class="pc-spacer"></div>
+                        <select id="speed-select" class="pc-speed" title="[ / ]">
+                            <option value="0.5">0.5x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1" selected>1x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="2">2x</option>
+                        </select>
+                        <div class="pc-volume-wrap">
+                            <button id="mute-btn" class="pc-btn" title="M">
+                                <svg id="icon-vol" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                                <svg id="icon-mute" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                            </button>
+                            <input type="range" id="volume-bar" class="pc-volume" min="0" max="1" step="0.05" value="1">
+                        </div>
+                        <button id="fullscreen-btn" class="pc-btn" title="F">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="status-bar" class="status-bar hidden">
+                    <div class="status-text" id="status-text">Loading model...</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+                <button id="transcribe-btn" class="btn btn--primary" hidden></button>
+            </div>
+
+            <div class="watch-right">
+                <div class="subs-header">
+                    <h3>Subtitles</h3>
+                    <span id="subs-count" class="subs-count"></span>
+                </div>
+                <div id="subs-panel" class="subs-panel">
+                    <p class="subs-empty">Transcribe the video to see subtitles here</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="save-modal" class="modal-overlay hidden">
+            <div class="modal save-modal">
+                <h3 id="save-modal-title" class="save-modal__title"></h3>
+                <div class="form-group">
+                    <label>Word (kanji)</label>
+                    <input type="text" id="save-word">
+                </div>
+                <div class="form-group">
+                    <label>Reading (kana)</label>
+                    <input type="text" id="save-kana">
+                </div>
+                <div class="form-group">
+                    <label>Romaji</label>
+                    <input type="text" id="save-romaji">
+                </div>
+                <div class="form-group">
+                    <label>Meaning</label>
+                    <input type="text" id="save-meaning">
+                </div>
+                <div class="form-group">
+                    <label>Sentence</label>
+                    <input type="text" id="save-sentence" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Translation</label>
+                    <input type="text" id="save-translation">
+                </div>
+                <div class="save-modal__actions">
+                    <button id="save-cancel" class="btn btn--ghost">Cancel</button>
+                    <button id="save-confirm" class="btn btn--success">Save to Dictionary</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar__brand">Animei</div>
+        <a href="../index.html">Home</a>
+        <a href="./watch.html" class="active">Watch</a>
+        <a href="./words.html">Dictionary</a>
+        <a href="./feedback.html">Feedback</a>
+    </nav>
+    <div class="overlay" id="overlay"></div>
+</div>
+
+<script src="../libs/axios/axios.min.js"></script>
+<script src="../libs/snackbar/snackbar.js"></script>
+<script src="../js/axiosClient.js"></script>
+<script src="../js/app.js"></script>
+<script src="../libs/hls/hls.min.js"></script>
+<script src="../js/watch.js"></script>
+</body>
+</html>

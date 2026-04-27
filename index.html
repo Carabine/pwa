@@ -5,74 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Animei</title>
     <link rel="manifest" href="manifest.json">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-    <link href="./css/reset.css" rel='stylesheet' type="text/css">
-    <link href="./css/styles.css" rel="stylesheet"  type="text/css">
-    <link href="./css/style2.css" rel='stylesheet' type="text/css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="./css/app.css" rel="stylesheet">
 </head>
 <body>
-<div class="app bg-dark flex">
-    <div class="flex flex-col p-0 text-white bg-dark flex-1">
-        <header class="d-flex justify-content-between items-center py-2 px-2">
-            <div class="w-25">
-                <i class="bi bi-list fs-3 cursor-pointer menu-btn"></i>
-            </div>
-            <h2>Animei</h2>
-            <div class="w-25 d-flex justify-content-end profile-container">
-                <i id="profile-button" class="bi bi-person-circle profile-button"></i>
-                <div id="profile-menu" class="profile-menu hidden">
-                    <a href="#" id="logout-btn">
-                        Logout
-                    </a>
-                </div>
-            </div>
-        </header>
-        <main class="main d-flex align-items-center flex-1 position-relative">
-            <div class="words-count">
-                <span class="green"> 0 </span>
-                <span class="red"> 0 </span>
-                <span class="blue"> 0 </span>
-            </div>
-
-            <div class="front-side"></div>
-            <div class="back-side"></div>
-
-            <div class="buttons">
-
-            </div>
-
-            <div id="open-modal-btn" class="hint-btn cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="30" height="30" viewBox="0 0 50 50">
-                    <path fill="#ADD8E6" d="M25,2C12.297,2,2,12.297,2,25s10.297,23,23,23s23-10.297,23-23S37.703,2,25,2z M25,11c1.657,0,3,1.343,3,3s-1.343,3-3,3 s-3-1.343-3-3S23.343,11,25,11z M29,38h-2h-4h-2v-2h2V23h-2v-2h2h4v2v13h2V38z"></path>
-                </svg>
-            </div>
-
-            <div id="modal-overlay" class="hidden">
-                <div id="modal">
-                    <div id="modal-content">
-
-                    </div>
-                    <button id="close-modal-btn" class="mt-2">Close</button>
-                </div>
-            </div>
-        </main>
-        <div id="sidebar" class="sidebar">
-            <a href="index2.html">Study</a>
-            <a href="./words.html">Dictionary</a>
-            <a href="./feedback.html">Feedback</a>
+<div class="app">
+    <header class="header">
+        <div class="header__left">
+            <button class="icon-btn menu-btn" aria-label="Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
         </div>
-        <div id="overlay" class="overlay"></div>
+        <div class="header__logo">Animei</div>
+        <div class="header__right">
+            <div class="profile-wrap">
+                <button class="icon-btn profile-btn" aria-label="Profile">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </button>
+                <div class="profile-menu" id="profile-menu">
+                    <a href="#" id="logout-btn">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="hub">
+        <a href="./pages/study.html" class="hub-card">
+            <div class="hub-card__icon hub-card__icon--study">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <div class="hub-card__info">
+                Study
+                <span class="hub-card__subtitle">Daily spaced repetition</span>
+            </div>
+        </a>
+        <a href="./pages/custom-study.html" class="hub-card">
+            <div class="hub-card__icon hub-card__icon--custom">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <div class="hub-card__info">
+                Custom Study
+                <span class="hub-card__subtitle">Review all words</span>
+            </div>
+        </a>
+        <a href="./pages/watch.html" class="hub-card">
+            <div class="hub-card__icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </div>
+            <div class="hub-card__info">
+                Watch
+                <span class="hub-card__subtitle">Learn from anime videos</span>
+            </div>
+        </a>
     </div>
 
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar__brand">Animei</div>
+        <a href="./index.html" class="active">Home</a>
+        <a href="./pages/watch.html">Watch</a>
+        <a href="./pages/words.html">Dictionary</a>
+        <a href="./pages/feedback.html">Feedback</a>
+    </nav>
+    <div class="overlay" id="overlay"></div>
 </div>
-    <script src="./libs/axios/axios.min.js"></script>
-    <script src="./libs/snackbar/snackbar.js"></script>
-    <script src="./js/axiosClient.js"></script>
-    <script src="./js/app.js"></script>
-    <script src="./js/custom-study.js"></script>
+
+<script src="./libs/axios/axios.min.js"></script>
+<script src="./libs/snackbar/snackbar.js"></script>
+<script src="./js/axiosClient.js"></script>
+<script src="./js/app.js"></script>
 </body>
 </html>

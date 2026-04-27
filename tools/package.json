@@ -1,0 +1,10 @@
+{
+  "name": "animei-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tools for parsing anime subtitles into study data",
+  "dependencies": {
+    "kuromoji": "^0.1.2",
+    "wanakana": "^5.3.1"
+  }
+}

@@ -1,153 +1,128 @@
+// ========== Service Worker ==========
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js')
-            .then(() => console.log('Service Worker registered'))
-            .catch((err) => console.error('Service Worker failed:', err));
+            .then(() => console.log('SW registered'))
+            .catch(err => console.log('SW registration failed:', err));
     });
 }
+
+// ========== PWA Install ==========
 
 let deferredPrompt;
 
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-
-    const installButton = document.getElementById('install-button');
-    installButton.style.display = 'block';
-
-    installButton.addEventListener('click', () => {
-        deferredPrompt.prompt();
-
-        deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('User accepted the install prompt');
-            } else {
-                console.log('User dismissed the install prompt');
-            }
-            deferredPrompt = null;
-        });
-    });
 });
 
-
-const emitLocalStorageEvent = (key, oldValue, newValue) => {
-    window.dispatchEvent(new CustomEvent('localStorageChanged', {
-        detail: { key, oldValue, newValue }
-    }));
-};
-
-const originalSetItem = localStorage.setItem;
-localStorage.setItem = function (key, value) {
-    const oldValue = localStorage.getItem(key);
-    originalSetItem.apply(this, [key, value]);
-    emitLocalStorageEvent(key, oldValue, value);
-};
-
-const originalRemoveItem = localStorage.removeItem;
-localStorage.removeItem = function (key) {
-    const oldValue = localStorage.getItem(key);
-    originalRemoveItem.apply(this, [key]);
-    emitLocalStorageEvent(key, oldValue, null);
-};
-
-window.addEventListener('localStorageChanged', (event) => {
-    const { key, oldValue, newValue } = event.detail;
-    console.log(`LocalStorage changed: ${key}, Old: ${oldValue}, New: ${newValue}`);
-    if(key === accessTokenKey) {
-        checkAuth()
-    }
-});
+// ========== Data Fetching ==========
 
 async function fetchAndDecode(url) {
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
+    const response = await fetch(url);
+    const data = await response.json();
 
-        const decodeHTML = (str) => {
-            const textarea = document.createElement("textarea");
-            textarea.innerHTML = str;
-            return textarea.value;
-        };
+    const decodeHTML = (str) => {
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = str;
+        return textarea.value;
+    };
 
-        const decodedData = JSON.parse(JSON.stringify(data), (_, value) =>
-            typeof value === "string" ? decodeHTML(value) : value
-        );
+    return JSON.parse(JSON.stringify(data), (_, value) =>
+        typeof value === 'string' ? decodeHTML(value) : value
+    );
+}
 
-        console.log(decodedData);
-        return decodedData;
-    } catch (error) {
-        console.error("Error fetching JSON:", error);
-    }
+function dataPath(file) {
+    const inPages = window.location.pathname.includes('/pages/');
+    return (inPages ? '../' : './') + 'data/' + file;
 }
 
 async function fetchDataFromServer() {
     try {
-        // const response = await client.get(domain + '/words')
-        // const { data } = response;
         const [data1, data2] = await Promise.all([
-            fetchAndDecode('./data.json'),
-            fetchAndDecode('./data2.json')
-        ])
+            fetchAndDecode(dataPath('data.json')),
+            fetchAndDecode(dataPath('data2.json'))
+        ]);
 
-        const words1 = (data1.words ?? []).map(d => ({...d, translatedSentence: d.translatedSentence}))
-        const words2 = (data2.data ?? []).map(d => ({...d, url: d.url, word: d.kanji, meaning: d.translation, translatedSentence: d.sentenceTranslation}))
+        const words1 = (data1.words ?? []).map(d => ({
+            ...d,
+            translatedSentence: d.translatedSentence
+        }));
 
-        const allWords = [...words1, ...words2]
+        const words2 = (data2.data ?? []).map(d => ({
+            ...d,
+            word: d.kanji,
+            meaning: d.translation,
+            translatedSentence: d.sentenceTranslation
+        }));
+
+        const allWords = [...words1, ...words2];
         localStorage.setItem('words', JSON.stringify(allWords));
-        // Display the fetched data
-        onLoad()
+
+        if (typeof onLoad === 'function') {
+            onLoad();
+        }
     } catch (error) {
         console.error('Error fetching data:', error);
     }
 }
 
+// ========== Shuffle ==========
+
 function shuffle(array) {
     let currentIndex = array.length;
-
-    while (currentIndex != 0) {
-
-        let randomIndex = Math.floor(Math.random() * currentIndex);
+    while (currentIndex !== 0) {
+        const randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
-
-        [array[currentIndex], array[randomIndex]] = [
-            array[randomIndex], array[currentIndex]];
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
     }
-    return array
+    return array;
 }
 
-window.addEventListener('DOMContentLoaded', function (evt) {
-    checkAuth()
+// ========== UI: Sidebar ==========
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
 
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
     const menuBtn = document.querySelector('.menu-btn');
-    const logoutBtn = document.querySelector('#logout-btn');
-    const profileButton = document.getElementById("profile-button");
-    const dropdownMenu = document.getElementById("profile-menu");
 
-    function openSidebar() {
-        sidebar?.classList.add('active-sidebar');
-        overlay?.classList.add('active');
+    if (menuBtn && sidebar && overlay) {
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.add('open');
+            overlay.classList.add('open');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('open');
+        });
     }
 
-    function closeSidebar() {
-        sidebar?.classList.remove('active-sidebar');
-        overlay?.classList.remove('active');
+    // Profile dropdown
+    const profileBtn = document.querySelector('.profile-btn');
+    const profileMenu = document.getElementById('profile-menu');
+
+    if (profileBtn && profileMenu) {
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileMenu.classList.toggle('open');
+        });
+
+        document.addEventListener('click', () => {
+            profileMenu.classList.remove('open');
+        });
     }
 
-    menuBtn?.addEventListener('click', openSidebar);
-    overlay?.addEventListener('click', closeSidebar);
-    logoutBtn?.addEventListener('click', logout);
-
-    profileButton?.addEventListener("click", function (event) {
-        dropdownMenu.classList.toggle("hidden");
-
-        event.stopPropagation();
-    });
-
-    window.addEventListener("click", function (event) {
-        if (!profileButton?.contains(event.target) && !dropdownMenu?.contains(event.target)) {
-            dropdownMenu.classList.add("hidden");
-        }
-    });
-})
+    // Logout
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            logout();
+        });
+    }
+});

@@ -1,249 +1,187 @@
+// ========== Modal ==========
+
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('modal-overlay');
     const openModalBtn = document.getElementById('open-modal-btn');
     const closeModalBtn = document.getElementById('close-modal-btn');
 
-    openModalBtn.addEventListener('click', () => {
-        modal.classList.remove('hidden');
-    });
-
-    closeModalBtn.addEventListener('click', () => {
-        modal.classList.add('hidden');
-    });
-
-    modal.addEventListener('click', (event) => {
-        if (event.target === modal) {
-            modal.classList.add('hidden');
-        }
+    openModalBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
     });
 });
+
+// ========== Display ==========
 
 function displayFrontSideData(word) {
     const cardBackSide = document.querySelector('.back-side');
     const cardFrontSide = document.querySelector('.front-side');
 
-    cardBackSide.innerHTML = ''
-    cardFrontSide.innerHTML = ''
+    cardBackSide.innerHTML = '';
+    cardFrontSide.innerHTML = '';
 
-    const wordEl = document.createElement("div")
-    wordEl.classList.add("word")
-    wordEl.innerText = word.data?.word ?? ''
-
+    const wordEl = document.createElement('div');
+    wordEl.classList.add('word');
+    wordEl.innerText = word.data?.word ?? '';
     cardFrontSide.appendChild(wordEl);
 
-    const showBtn = document.createElement("button")
-    showBtn.classList.add('show-btn')
-    showBtn.innerHTML = 'Show answer'
+    const showBtn = document.createElement('button');
+    showBtn.classList.add('show-btn');
+    showBtn.innerHTML = 'Show answer';
+    showBtn.addEventListener('click', () => displayBackSideData(word));
 
-    showBtn.addEventListener("click", () => displayBackSideData(word))
-
-    document.querySelector(".buttons").innerHTML = ''
-
-    document.querySelector(".buttons").appendChild(showBtn)
-
-    document.querySelector('.hint-btn').classList.add("hidden")
+    document.querySelector('.buttons').innerHTML = '';
+    document.querySelector('.buttons').appendChild(showBtn);
+    document.querySelector('.hint-btn').classList.add('hidden');
 }
 
 function displayBackSideData(word) {
-    console.log(123)
     const cardBackSide = document.querySelector('.back-side');
-    // Clear previous data
-    // Display new data
 
-    const video = document.createElement("video")
-    console.log(word)
-    video.src = word.data.Video ? word.data.Video.url : (word.data.video ?? '')
-    //video.src = 'https://drive.google.com/uc?export=download&id=11ca1x_2lQqdJJy6qX7lDWKHMoJjpZ0gR'
-    video.controls = true
-    video.autoplay = true
-    //video.height = 300
-    video.width = 500
+    const videoSrc = word.data.Video ? word.data.Video.url : (word.data.video ?? '');
 
-    // var startTime = word.data.videoStart;
-    // var endTime = word.data.videoEnd;
-    //
-    // video.currentTime = startTime;
-    //
-    // video.addEventListener('timeupdate', function() {
-    //     if (video.currentTime >= endTime) {
-    //         video.pause();
-    //         video.currentTime = startTime;
-    //     }
-    // }, false);
+    if (videoSrc) {
+        const video = document.createElement('video');
+        video.src = videoSrc;
+        video.controls = true;
+        video.autoplay = true;
+        video.style.maxWidth = '100%';
+        cardBackSide.appendChild(video);
+    }
 
-    const hiraganaEl = document.createElement("div")
-    hiraganaEl.classList.add("hiragana")
-    hiraganaEl.innerText = word.data.kana
-
-    const sentenceEl = document.createElement("div")
-    sentenceEl.classList.add("sentence")
-    sentenceEl.innerText = word.data.sentence
-
-    const translatedSentenceEl = document.createElement("div")
-    translatedSentenceEl.classList.add("translatedSentence")
-    translatedSentenceEl.innerText = word.data.translatedSentence
-
-    const meaningEl = document.createElement("div")
-    meaningEl.classList.add("meaning")
-    meaningEl.innerText = word.data.meaning
-
-    cardBackSide.appendChild(video);
+    const meaningEl = document.createElement('div');
+    meaningEl.classList.add('meaning');
+    meaningEl.innerText = word.data.meaning ?? '';
     cardBackSide.appendChild(meaningEl);
+
+    const hiraganaEl = document.createElement('div');
+    hiraganaEl.classList.add('hiragana');
+    hiraganaEl.innerText = word.data.kana ?? '';
     cardBackSide.appendChild(hiraganaEl);
+
+    const sentenceEl = document.createElement('div');
+    sentenceEl.classList.add('sentence');
+    sentenceEl.innerText = word.data.sentence ?? '';
     cardBackSide.appendChild(sentenceEl);
+
+    const translatedSentenceEl = document.createElement('div');
+    translatedSentenceEl.classList.add('translatedSentence');
+    translatedSentenceEl.innerText = word.data.translatedSentence ?? '';
     cardBackSide.appendChild(translatedSentenceEl);
 
-    console.log(localStorage.getItem('words'))
-
-    const keepWordBtn = document.createElement("button")
-    keepWordBtn.innerHTML = "Bad"
-    keepWordBtn.classList.add('keep-word-btn')
-
-    const buryWordBtn = document.createElement("button")
-    buryWordBtn.innerHTML = "Good"
-    buryWordBtn.classList.add('bury-word-btn')
-
+    const keepWordBtn = document.createElement('button');
+    keepWordBtn.innerHTML = 'Bad';
+    keepWordBtn.classList.add('keep-word-btn');
     keepWordBtn.addEventListener('click', keepWord);
+
+    const buryWordBtn = document.createElement('button');
+    buryWordBtn.innerHTML = 'Good';
+    buryWordBtn.classList.add('bury-word-btn');
     buryWordBtn.addEventListener('click', buryWord);
 
-    document.querySelector(".buttons").innerHTML = ''
+    document.querySelector('.buttons').innerHTML = '';
+    document.querySelector('.buttons').appendChild(keepWordBtn);
+    document.querySelector('.buttons').appendChild(buryWordBtn);
 
-    document.querySelector(".buttons").appendChild(keepWordBtn)
-    document.querySelector(".buttons").appendChild(buryWordBtn)
-    if(word.data.hint) {
-        document.querySelector('.hint-btn').classList.remove("hidden")
-        document.querySelector('#modal-content').innerHTML = word.data.hint
+    if (word.data.hint) {
+        document.querySelector('.hint-btn').classList.remove('hidden');
+        document.querySelector('#modal-content').innerHTML = word.data.hint;
     }
 }
 
-const keepWord = () => {
-    const filteredTodayWords = todayWords.filter(w => w.data.id !== currentWord.data.id)
-    setTodayWords([...shuffle(filteredTodayWords), currentWord])
-    currentWord = todayWords[0]
-    console.log(todayWords)
-    displayFrontSideData(currentWord)
+// ========== Study Logic ==========
+
+let progress;
+let todayWords = [];
+let currentWord;
+
+function setTodayWords(words) {
+    todayWords = words;
+    updateWordCounts();
 }
 
-const calcNextDateToShow = (showAt, period) => {
-    if(period) {
-        return addDays(removeTimeFromDate(new Date()), period * 2)
-    } else {
-        return addDays(removeTimeFromDate(new Date()), 1)
-    }
+function updateWordCounts() {
+    document.querySelector('.words-count .green').innerHTML = todayWords.filter(w => w.timesToShow === 1).length;
+    document.querySelector('.words-count .red').innerHTML = todayWords.filter(w => w.timesToShow === 2).length;
 }
 
-const showNoWords = () => {
-    alert("NO WORDS")
+function saveWord(word) {
+    setProgress(progress.map(p => p.data.id !== word.data.id ? p : word));
 }
 
-const buryWord = () => {
-    currentWord.timesToShow--
-    if(currentWord.timesToShow < 1) {
-        console.log(todayWords, 1)
-        setTodayWords(todayWords.filter(w => w.data?.id !== currentWord.data.id))
-        currentWord.showAt = calcNextDateToShow(currentWord.showAt, currentWord.period)
-        if(todayWords.length < 0) return showNoWords()
-    } else {
-        console.log(todayWords, 2)
-        setTodayWords(todayWords.filter(w => w.data?.id !== currentWord.data.id))
-        setTodayWords([...shuffle(todayWords), currentWord])
-    }
-    if(!todayWords.length) {
-        onLoad()
-    }
-    currentWord = todayWords[0]
-    saveWord(currentWord)
-    displayFrontSideData(currentWord)
-}
-
-let progress
-let todayWords = []
-let currentWord
-
-const setTodayWords = (words) => {
-    todayWords = words
-    todaysWordsOnChange()
-}
-
-const todaysWordsOnChange = () => {
-    document.querySelector('.words-count .green').innerHTML = todayWords.filter(w => w.timesToShow === 1).length
-    document.querySelector('.words-count .red').innerHTML = todayWords.filter(w => w.timesToShow === 2).length
-}
-
-const saveWord = (word) => {
-    setProgress(progress.map(p => p.data.id !== word.data.id ? p : word))
-}
-
-const setProgress = (data) => {
-    progress = data
+function setProgress(data) {
+    progress = data;
 }
 
 function removeTimeFromDate(date) {
-    return new Date(date.setHours(0,0,0,0));
+    return new Date(date.setHours(0, 0, 0, 0));
 }
 
 function addDays(date, days) {
-    console.log(date, days)
-    var result = new Date(date);
+    const result = new Date(date);
     result.setDate(result.getDate() + days);
-    console.log(result)
     return result;
 }
 
-function randomInteger(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-const onLoad = () => {
-    const words = JSON.parse(localStorage.getItem('words') ?? "[]")
-    progress = JSON.parse(localStorage.getItem('progress') ?? "[]")
-
-    // const freshWordsCount = Number(localStorage.getItem("freshWordsCount"))
-    const temp = []
-    // const freshWords = words.slice(words.length - freshWordsCount, words.length)
-    // const learnedWords = shuffle(words.slice(0, words.length - freshWordsCount))
-    // const slicedWords = [
-    //     ...freshWords,
-    //     ...learnedWords.slice(0, Math.round(learnedWords.length * 30 / 100))
-    // ]
-
-    for(let i = 0; i < words.length; i++) {
-
-            temp.push({
-                data: words[i],
-                showAt: removeTimeFromDate(new Date()),
-                period: 0,
-                timesToShow: 2,
-            })
-
-    }
-
-    setProgress(temp)
-
-    setTodayWords(progress)
-
-    setTodayWords(shuffle(todayWords))
-
-    currentWord = todayWords[0]
-    if(!currentWord) {
-        console.log("no words", todayWords)
-        return
-    }
+function keepWord() {
+    const filtered = todayWords.filter(w => w.data.id !== currentWord.data.id);
+    setTodayWords([...shuffle(filtered), currentWord]);
+    currentWord = todayWords[0];
     displayFrontSideData(currentWord);
-    console.log(localStorage.getItem('words'))
 }
 
-window.addEventListener('load', async() => {
-    await fetchDataFromServer()
+function calcNextDateToShow(showAt, period) {
+    if (period) {
+        return addDays(removeTimeFromDate(new Date()), period * 2);
+    }
+    return addDays(removeTimeFromDate(new Date()), 1);
+}
 
-    // localStorage.setItem('freshWordsCount', 999)
-    //
-    // let freshWordsCount = Number(localStorage.getItem("freshWordsCount") ?? "0")
-    // if(!freshWordsCount) {
-    //     const words = JSON.parse(localStorage.getItem('words') ?? "[]")
-    //     freshWordsCount = words.length
-    //     localStorage.setItem("freshWordsCount", freshWordsCount.toString())
-    // }
+function buryWord() {
+    currentWord.timesToShow--;
+    if (currentWord.timesToShow < 1) {
+        setTodayWords(todayWords.filter(w => w.data?.id !== currentWord.data.id));
+        currentWord.showAt = calcNextDateToShow(currentWord.showAt, currentWord.period);
+    } else {
+        setTodayWords(todayWords.filter(w => w.data?.id !== currentWord.data.id));
+        setTodayWords([...shuffle(todayWords), currentWord]);
+    }
+    if (!todayWords.length) {
+        onLoad();
+        return;
+    }
+    currentWord = todayWords[0];
+    saveWord(currentWord);
+    displayFrontSideData(currentWord);
+}
 
-    onLoad()
+// ========== Init ==========
+
+function onLoad() {
+    const words = JSON.parse(localStorage.getItem('words') ?? '[]');
+    progress = JSON.parse(localStorage.getItem('progress') ?? '[]');
+
+    const temp = [];
+    for (let i = 0; i < words.length; i++) {
+        temp.push({
+            data: words[i],
+            showAt: removeTimeFromDate(new Date()),
+            period: 0,
+            timesToShow: 2,
+        });
+    }
+
+    setProgress(temp);
+    setTodayWords(progress);
+    setTodayWords(shuffle(todayWords));
+
+    currentWord = todayWords[0];
+    if (!currentWord) return;
+    displayFrontSideData(currentWord);
+}
+
+window.addEventListener('load', async () => {
+    await fetchDataFromServer();
+    onLoad();
 });

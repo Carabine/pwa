@@ -1,46 +1,41 @@
-const CACHE_NAME = 'my-pwa-cache-v1';
+const CACHE_NAME = 'animei-cache-v4';
 const urlsToCache = [
     '/',
     '/index.html',
+    '/pages/study.html',
+    '/pages/custom-study.html',
+    '/pages/watch.html',
+    '/pages/words.html',
+    '/pages/login.html',
+    '/pages/feedback.html',
+    '/css/app.css',
+    '/css/watch.css',
     '/js/app.js',
+    '/js/watch.js',
+    '/js/axiosClient.js',
+    '/data/data.json',
+    '/data/data2.json',
     '/manifest.json',
-    '/icons/icon-192x192.png',
-    '/icons/icon-512x512.png'
 ];
 
-// Установка Service Worker
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('Opened cache');
-                return cache.addAll(urlsToCache);
-            })
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
     );
 });
 
-// Обслуживание запросов из кеша
 self.addEventListener('fetch', (event) => {
     event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                return response || fetch(event.request);
-            })
+        caches.match(event.request).then((response) => response || fetch(event.request))
     );
 });
 
-// Активация Service Worker и очистка старого кеша
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('Deleting old cache:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
+        caches.keys().then((names) =>
+            Promise.all(
+                names.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
+            )
+        )
     );
 });

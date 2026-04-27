@@ -1,95 +1,89 @@
-const loadWords = async () => {
+async function loadWords() {
     const wordsListEl = document.querySelector('.words-list');
-    wordsListEl.innerHTML = 'Loading...'
+    wordsListEl.innerHTML = '<p style="color: var(--text-muted)">Loading...</p>';
 
-    const data = await fetchAndDecode('./data2.json')
+    const data = await fetchAndDecode(dataPath('data2.json'));
+    wordsListEl.innerHTML = '';
 
-   // const { data: { data } } = await client.get(`${domain}/words`)
-
-    wordsListEl.innerHTML = ''
-
-    for(const wordData of data) {
-        const wordEl = document.createElement("div")
+    for (const wordData of data.data) {
+        const wordEl = document.createElement('div');
 
         wordEl.innerHTML = `
-           <div class="word-read-content border rounded-3 mt-2 p-2 position-relative flex flex-col">
-             <div id="delete-btn" class="position-absolute top-0 end-0 mt-2 mr-2 text-danger cursor-pointer">X</div>
-             <p>Word: ${wordData.kanji}</p>
-             <p>Meaning: ${wordData.translation}</p>
-             <p>Sentence: ${wordData.sentence}</p>
-             <div class="flex justify-content-end">
-               <button type="button" class="btn btn-primary ml-auto edit-btn" style="width: 100px">Edit</button>
-             </div>                    
-           </div>
-           <div class="word-edit-content hidden border rounded-3 mt-2 p-2 position-relative flex flex-col">
-            <div id="delete-btn" class="position-absolute top-0 end-0 mt-2 mr-2 text-danger cursor-pointer">X</div>
-            <div class="form-group">
-              <label for="kanji">Word</label>
-              <input type="text" id="kanji" class="form-control" style="height: 30px" placeholder="Word" value="${wordData.kanji}">
+            <div class="word-card word-read-content">
+                <button class="word-card__delete" title="Delete">&times;</button>
+                <div class="word-card__kanji">${wordData.kanji ?? ''}</div>
+                <div class="word-card__meaning">${wordData.translation ?? ''}</div>
+                <div class="word-card__sentence">${wordData.sentence ?? ''}</div>
+                <div class="word-card__actions">
+                    <button class="btn btn--ghost edit-btn">Edit</button>
+                </div>
             </div>
-            <div class="form-group">
-              <label for="kana">Reading</label>
-              <input type="text" id="kana" class="form-control" style="height: 30px" placeholder="Reading" value="${wordData.kana}">
+            <div class="word-card word-edit-content hidden">
+                <div class="word-edit">
+                    <div class="form-group">
+                        <label>Word</label>
+                        <input type="text" class="edit-kanji" value="${wordData.kanji ?? ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Reading</label>
+                        <input type="text" class="edit-kana" value="${wordData.kana ?? ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Meaning</label>
+                        <input type="text" class="edit-translation" value="${wordData.translation ?? ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Sentence</label>
+                        <input type="text" class="edit-sentence" value="${wordData.sentence ?? ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Sentence Translation</label>
+                        <input type="text" class="edit-sentenceTranslation" value="${wordData.sentenceTranslation ?? ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Hint</label>
+                        <textarea class="edit-hint">${wordData.hint ?? ''}</textarea>
+                    </div>
+                    <div class="word-edit__actions">
+                        <button class="btn btn--danger cancel-btn">Cancel</button>
+                        <button class="btn btn--success save-btn">Save</button>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-              <label for="translation">Meaning</label>
-              <input type="text" id="translation" class="form-control" style="height: 30px" placeholder="Meaning" value="${wordData.translation}">
-            </div>
-            <div class="form-group">
-              <label for="sentence">Sentence</label>
-              <input type="text" id="sentence" class="form-control" style="height: 30px" placeholder="Sentence" value="${wordData.sentence}">
-            </div>
-            <div class="form-group">
-              <label for="sentenceTranslation">Sentence translation</label>
-              <input type="text" id="sentenceTranslation" class="form-control" style="height: 30px" placeholder="Sentence translation" value="${wordData.sentenceTranslation}">
-            </div>
-            <div class="form-group">
-              <label for="hint">Hint</label>
-               <textarea class="form-control" id="hint" placeholder="Hint">${wordData.hint}</textarea>            
-            </div>
+        `;
 
-            <div class="flex justify-content-end mt-2 gap-2">
-              <button type="button" class="btn btn-danger ml-auto cancel-btn" style="width: 100px">Cancel</button>
-              <button type="button" class="btn btn-success ml-auto save-btn" style="width: 100px">Save</button>
-            </div>
-          </div>
-        `
+        wordEl.querySelector('.word-card__delete').addEventListener('click', async () => {
+            await client.delete(domain + '/words/' + wordData.id);
+            loadWords();
+        });
 
-        wordEl.querySelector("#delete-btn")?.addEventListener('click', async () => {
-            await client.delete(domain + '/words/' + wordData.id)
-            loadWords()
-        })
+        wordEl.querySelector('.edit-btn').addEventListener('click', () => {
+            wordEl.querySelector('.word-edit-content').classList.remove('hidden');
+            wordEl.querySelector('.word-read-content').classList.add('hidden');
+        });
 
-        wordEl.querySelector(".edit-btn")?.addEventListener('click', async () => {
-            wordEl.querySelector(".word-edit-content").classList.remove('hidden')
-            wordEl.querySelector(".word-read-content").classList.add('hidden')
-        })
+        wordEl.querySelector('.cancel-btn').addEventListener('click', () => {
+            wordEl.querySelector('.word-edit-content').classList.add('hidden');
+            wordEl.querySelector('.word-read-content').classList.remove('hidden');
+        });
 
-        wordEl.querySelector(".cancel-btn")?.addEventListener('click', async () => {
-            wordEl.querySelector(".word-edit-content").classList.add('hidden')
-            wordEl.querySelector(".word-read-content").classList.remove('hidden')
-        })
-
-        wordEl.querySelector(".save-btn")?.addEventListener('click', async () => {
+        wordEl.querySelector('.save-btn').addEventListener('click', async () => {
             await client.patch(domain + '/words/' + wordData.id, {
-                kanji: wordEl.querySelector("#kanji")?.value ?? '',
-                kana: wordEl.querySelector("#kana")?.value ?? '',
-                translation: wordEl.querySelector("#translation")?.value ?? '',
-                sentence: wordEl.querySelector("#sentence")?.value ?? '',
-                sentenceTranslation: wordEl.querySelector("#sentence-translation")?.value ?? '',
-                hint: wordEl.querySelector("#hint")?.value ?? ''
-            })
-            loadWords()
-            showSnackbar('Success', {
-                duration: 4000,
-                type: 'success'
+                kanji: wordEl.querySelector('.edit-kanji').value,
+                kana: wordEl.querySelector('.edit-kana').value,
+                translation: wordEl.querySelector('.edit-translation').value,
+                sentence: wordEl.querySelector('.edit-sentence').value,
+                sentenceTranslation: wordEl.querySelector('.edit-sentenceTranslation').value,
+                hint: wordEl.querySelector('.edit-hint').value
             });
-        })
+            loadWords();
+            showSnackbar('Saved successfully', { duration: 3000, type: 'success' });
+        });
 
-        wordsListEl.append(wordEl)
+        wordsListEl.appendChild(wordEl);
     }
 }
 
-window.addEventListener('DOMContentLoaded', async function (evt) {
-    loadWords()
+window.addEventListener('DOMContentLoaded', () => {
+    loadWords();
 });

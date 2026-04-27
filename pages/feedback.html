@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Animei - Feedback</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+    <header class="header">
+        <div class="header__left">
+            <button class="icon-btn menu-btn" aria-label="Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="header__logo">Animei</div>
+        <div class="header__right">
+            <div class="profile-wrap">
+                <button class="icon-btn profile-btn" aria-label="Profile">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </button>
+                <div class="profile-menu" id="profile-menu">
+                    <a href="#" id="logout-btn">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="feedback">
+        <h2 class="feedback__title">Feedback</h2>
+        <p>Help us make learning Japanese even better. Share your thoughts, suggestions, or questions!</p>
+        <p>Join our Telegram group and let us know what you think:</p>
+        <p><a href="https://t.me/animei_jp" target="_blank">t.me/animei_jp</a></p>
+        <p>Thank you for helping!</p>
+    </div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar__brand">Animei</div>
+        <a href="../index.html">Home</a>
+        <a href="./watch.html">Watch</a>
+        <a href="./words.html">Dictionary</a>
+        <a href="./feedback.html" class="active">Feedback</a>
+    </nav>
+    <div class="overlay" id="overlay"></div>
+</div>
+
+<script src="../libs/axios/axios.min.js"></script>
+<script src="../libs/snackbar/snackbar.js"></script>
+<script src="../js/axiosClient.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

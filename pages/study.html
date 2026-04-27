@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Animei</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../css/app.css" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+    <header class="header">
+        <div class="header__left">
+            <button class="icon-btn menu-btn" aria-label="Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="header__logo">Animei</div>
+        <div class="header__right">
+            <div class="profile-wrap">
+                <button class="icon-btn profile-btn" aria-label="Profile">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </button>
+                <div class="profile-menu" id="profile-menu">
+                    <a href="#" id="logout-btn">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="back-btn">
+            <a href="../index.html">&larr; Back</a>
+        </div>
+        <div class="words-count">
+            <span class="green">0</span>
+            <span class="red">0</span>
+            <span class="blue">0</span>
+        </div>
+
+        <div class="card-area">
+            <div class="front-side"></div>
+            <div class="back-side"></div>
+            <div class="buttons"></div>
+        </div>
+
+        <button class="refresh-btn">Refresh</button>
+
+        <div id="open-modal-btn" class="hint-btn hidden cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
+                <path fill="currentColor" d="M25,2C12.297,2,2,12.297,2,25s10.297,23,23,23s23-10.297,23-23S37.703,2,25,2z M25,11c1.657,0,3,1.343,3,3s-1.343,3-3,3s-3-1.343-3-3S23.343,11,25,11z M29,38h-2h-4h-2v-2h2V23h-2v-2h2h4v2v13h2V38z"/>
+            </svg>
+        </div>
+
+        <div id="modal-overlay" class="modal-overlay hidden">
+            <div class="modal">
+                <div id="modal-content"></div>
+                <button id="close-modal-btn">Close</button>
+            </div>
+        </div>
+    </main>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar__brand">Animei</div>
+        <a href="../index.html">Home</a>
+        <a href="./watch.html">Watch</a>
+        <a href="./words.html">Dictionary</a>
+        <a href="./feedback.html">Feedback</a>
+    </nav>
+    <div class="overlay" id="overlay"></div>
+</div>
+
+<script src="../libs/axios/axios.min.js"></script>
+<script src="../libs/snackbar/snackbar.js"></script>
+<script src="../js/axiosClient.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/study.js"></script>
+</body>
+</html>
