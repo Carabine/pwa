@@ -178,6 +178,16 @@
     transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
 }
 
+/* Карточки словаря — одного размера: фиксируем минимальную высоту и
+   раскладываем содержимое колонкой, чтобы кнопки действий всегда были у
+   нижнего края. Короткие карточки дотягиваются до этой высоты, длинные —
+   ограничиваются (см. .word-card__sentence), и сетка перестаёт быть «рваной». */
+.word-read-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+}
+
 .word-read-content:hover {
     border-color: var(--primary);
     transform: translateY(-2px);
@@ -225,6 +235,10 @@
     line-height: 1.5;
     padding-left: 10px;
     border-left: 2px solid var(--border);
+    /* Ограничиваем длинный пример, иначе карточки получаются разной высоты.
+       Полный текст доступен по «Изменить». */
+    max-height: 78px;
+    overflow: hidden;
 }
 
 .word-card__sentence-tr {
@@ -251,7 +265,10 @@
 .word-card__actions {
     display: flex;
     gap: 8px;
-    margin-top: 12px;
+    /* auto — прижимает кнопки к низу карточки (высота у всех одинаковая),
+       padding-top держит отступ от контента, когда его мало. */
+    margin-top: auto;
+    padding-top: 12px;
     justify-content: flex-end;
 }
 
@@ -261,6 +278,11 @@
     padding-top: 12px;
     border-top: 1px solid var(--border);
     font-size: 13px;
+    /* Разбор бывает длинным — держим его в разумной высоте со своим скроллом,
+       чтобы раскрытая карточка не растягивалась на пол-экрана. */
+    max-height: 42vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .word-card__explain-out.hidden {
