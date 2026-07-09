@@ -1,16 +1,31 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое. Показывается в футере сайдбара
 // (см. ниже), чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v47';
+const APP_VERSION = 'v48';
 
 // ========== Service Worker ==========
 
 if ('serviceWorker' in navigator) {
+    // Когда новый SW берёт управление (после skipWaiting + clients.claim) —
+    // один раз перезагружаем страницу, чтобы свежие CSS/JS применились сразу,
+    // без ручного перезапуска приложения. Флаг защищает от цикла перезагрузок.
+    let swReloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (swReloading) return;
+        swReloading = true;
+        window.location.reload();
+    });
+
     window.addEventListener('load', () => {
         // updateViaCache: 'none' — браузер не берёт сам скрипт SW из HTTP-кеша
         // при проверке обновлений, поэтому новая версия SW находится сразу.
         navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' })
-            .then(() => console.log('SW registered'))
+            .then((reg) => {
+                console.log('SW registered');
+                // Принудительно проверяем обновление при каждом запуске —
+                // не ждём периодической проверки браузера.
+                reg.update();
+            })
             .catch(err => console.log('SW registration failed:', err));
     });
 }
