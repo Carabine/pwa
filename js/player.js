@@ -43,6 +43,10 @@ const state = {
     popupContext: null,
     followCue: true,       // список сам едет за текущей репликой; сбрасываем, когда листают вручную
     manualSubs: null,      // выбранный вручную файл сабов { path, name } — не пересчитываем по номеру серии
+    shortFormChibi: new Set(), // индексы групп-серий, определённых как короткометражки (чиби/PV)
+    showExtras: false,     // показывать ли скрытые «доп. материалы» (чиби и т.п.)
+    epLenCache: {},        // длительность серии по её id (сек) — чтобы не зондировать повторно
+    autoSyncKey: null,     // для какой серии уже пытались автосинк субтитров
 };
 
 // Кэш ИИ-разборов на время сессии: повторный клик по той же реплике мгновенный
@@ -161,7 +165,11 @@ async function loadEpisodes(media, restoreSaved) {
         } else {
             state.seasonIndex = 0;
         }
+        // Новая дорожка — сбрасываем прошлый детект чиби и показ доп. материалов.
+        state.shortFormChibi = new Set();
+        state.showExtras = false;
         populateEpisodes(restoreSaved);
+        detectShortFormChibi();   // асинхронно: зондируем длины и прячем чиби/PV
     } catch (err) {
         console.error(err);
         episodeSelect.innerHTML = '<option>' + window.t('player.episodesError') + '</option>';
@@ -205,6 +213,12 @@ function populateEpisodes(restoreSaved, keepCurrent) {
         const labels = seasonLabels(state.episodeGroups);
         let flatIndex = 0;
         state.episodeGroups.forEach((group, gi) => {
+            // Короткометражки (чиби/PV) прячем, но flatIndex держим сплошным —
+            // значения опций должны совпадать с индексами в state.episodes.
+            if (!state.showExtras && state.shortFormChibi.has(gi)) {
+                flatIndex += group.length;
+                return;
+            }
             const og = document.createElement('optgroup');
             og.label = labels[gi];
             group.forEach((ep) => {
@@ -264,10 +278,11 @@ function seasonLabels(groups) {
     });
 }
 
-function fillSeasonSelect(labels, selectedIndex) {
+function fillSeasonSelect(labels, selectedIndex, skipSet) {
     seasonGroup.hidden = false;
     seasonSelect.innerHTML = '';
     labels.forEach((label, i) => {
+        if (skipSet && skipSet.has(i)) return;   // прячем чиби-сезоны
         const opt = document.createElement('option');
         opt.value = i;
         opt.textContent = label;
@@ -287,11 +302,90 @@ function renderSeasons() {
     }
     if (state.episodeGroups.length >= 2) {
         state.seasonMode = 'groups';
-        fillSeasonSelect(seasonLabels(state.episodeGroups), state.seasonIndex);
+        const skip = state.showExtras ? null : state.shortFormChibi;
+        fillSeasonSelect(seasonLabels(state.episodeGroups), state.seasonIndex, skip);
         return;
     }
     state.seasonMode = 'single';
     seasonGroup.hidden = true;
+}
+
+// ---- Детект короткометражек (чиби/PV) по длине серии ----
+// Kodik подмешивает к сезону мусорные короткометражки (у «Атаки титанов» это
+// 9 чиби-серий после 24 настоящих). Отличаем их по длительности: настоящая
+// серия ~24 мин, чиби — 2–5 мин. Прячем такие группы (с кнопкой «показать»).
+
+async function probeEpisodeSeconds(ep) {
+    if (!ep || ep.id == null || ep.hash == null) return 0;
+    if (state.epLenCache[ep.id] != null) return state.epLenCache[ep.id];
+    try {
+        const { data: res } = await client.get('catalog/episode-length', {
+            params: { type: 'seria', id: ep.id, hash: ep.hash },
+            timeout: 20000,
+        });
+        const s = Number(res?.data?.seconds) || 0;
+        state.epLenCache[ep.id] = s;
+        return s;
+    } catch {
+        return 0;
+    }
+}
+
+async function detectShortFormChibi() {
+    const groups = state.episodeGroups;
+    if (!groups || groups.length < 2 || groups.length > 8) { renderExtrasToggle(); return; }
+
+    // Зондируем длину первой серии каждой группы (репрезентативно).
+    const lens = await Promise.all(groups.map((g) => probeEpisodeSeconds(g[0])));
+    const maxLen = Math.max(0, ...lens);
+    if (maxLen <= 0) { renderExtrasToggle(); return; }
+
+    const chibi = new Set();
+    groups.forEach((g, gi) => {
+        const len = lens[gi];
+        // Короткая (< половины самой длинной) и короче 10 минут — считаем чиби/PV.
+        if (len > 0 && len < 0.5 * maxLen && len < 600) chibi.add(gi);
+    });
+    // Никогда не прячем всё — если под фильтр попали все группы, отменяем.
+    if (chibi.size >= groups.length) { renderExtrasToggle(); return; }
+
+    state.shortFormChibi = chibi;
+    if (chibi.size) {
+        // Перерисуем сезоны/серии, не трогая текущее видео (keepCurrent).
+        renderSeasons();
+        populateEpisodes(false, true);
+        if (window.animeiTrack) window.animeiTrack('chibi_hidden', (titleRu || titleRomaji || '') + ' ×' + chibi.size);
+    }
+    renderExtrasToggle();
+}
+
+function setExtrasLabel(btn) {
+    if (btn) btn.textContent = state.showExtras ? window.t('player.hideExtras') : window.t('player.showExtras');
+}
+
+function renderExtrasToggle() {
+    const controls = document.getElementById('player-controls');
+    let group = document.getElementById('extras-group');
+    const need = state.shortFormChibi && state.shortFormChibi.size > 0;
+    if (!need) { if (group) group.remove(); return; }
+    if (!group) {
+        group = document.createElement('div');
+        group.id = 'extras-group';
+        group.className = 'control-group';
+        const btn = document.createElement('button');
+        btn.id = 'extras-toggle';
+        btn.type = 'button';
+        btn.className = 'chip-btn';
+        btn.addEventListener('click', () => {
+            state.showExtras = !state.showExtras;
+            renderSeasons();
+            populateEpisodes(false, true);
+            setExtrasLabel(btn);
+        });
+        group.appendChild(btn);
+        controls.appendChild(group);
+    }
+    setExtrasLabel(group.querySelector('#extras-toggle'));
 }
 
 // Переход на другой сезон-тайтл франшизы — перезагружаем плеер с его id
@@ -334,6 +428,7 @@ async function selectEpisode(index) {
         const hlsUrl = apiOrigin() + res.data.hls;
         state.currentVideoUrl = hlsUrl;
         attachVideo(hlsUrl);
+        maybeAutoSync();   // видео готово — пробуем автосинк (ждёт ещё и субтитры)
     } catch (err) {
         console.error(err);
         videoLoading.textContent = t('player.streamError');
@@ -423,6 +518,7 @@ async function loadSubtitles(episodeNumber = 1) {
         updateOffsetLabel();
         renderTranscript();
         updateNowCue(state.activeCueIndex);
+        maybeAutoSync();   // субтитры готовы — пробуем автосинк (ждёт ещё и видео)
 
         // Одноразовая подсказка новичку: сабы из архива часто чуть съезжают,
         // а кнопка «Сейчас!» неочевидна
@@ -457,6 +553,46 @@ async function loadSubtitles(episodeNumber = 1) {
 
 function offsetStorageKey() {
     return 'animei:subsOffset:' + shikimoriId + ':s' + state.seasonIndex + ':' + episodeSelect.value;
+}
+
+// Автосинхронизация субтитров. Если пользователь не задавал сдвиг вручную, просим
+// бэкенд сопоставить речь в аудио (silencedetect) с таймингами реплик и, если
+// сдвиг найден уверенно, применяем его. Один раз на серию; ждём, пока готовы И
+// субтитры, И видеопоток (вызывается из обоих мест).
+async function maybeAutoSync() {
+    if (window.AnimeiSettings && window.AnimeiSettings.get('autoSyncSubs') === false) return;
+    const key = offsetStorageKey();
+    if (state.autoSyncKey === key) return;                       // уже пробовали для этой серии
+    if (!state.cues.length || !state.currentVideoUrl) return;    // ждём вторую половину данных
+    // Любой сохранённый сдвиг (в т.ч. ручной «0») означает, что пользователь уже
+    // решил сам — не перебиваем и не зацикливаемся на переприменении автосинка.
+    if (localStorage.getItem(key) !== null) { state.autoSyncKey = key; return; }
+    state.autoSyncKey = key;
+
+    const cueStarts = state.cues
+        .map((c) => c.start)
+        .filter((s) => Number.isFinite(s) && s >= 0 && s < 190)
+        .slice(0, 150);
+    if (cueStarts.length < 5) return;
+
+    try {
+        const { data: res } = await client.post('subtitles/align', {
+            videoUrl: state.currentVideoUrl,
+            cues: cueStarts,
+        }, { timeout: 90000 });
+        const { offset, confidence } = res.data || {};
+        // За время запроса серия могла смениться или пользователь мог тронуть сдвиг
+        // (любое действие со сдвигом пишет ключ в localStorage) — тогда не трогаем.
+        if (offsetStorageKey() !== key || localStorage.getItem(key) !== null) return;
+        if (Number.isFinite(offset) && confidence >= 0.6 && Math.abs(offset) >= 0.3) {
+            state.offset = offset;
+            updateOffsetLabel();
+            renderTranscript();
+            updateNowCue(state.activeCueIndex);
+            showSnackbar(t('subs.autoSynced'), { duration: 3500 });
+            if (window.animeiTrack) window.animeiTrack('autosync', offset.toFixed(1) + ' · ' + confidence.toFixed(2));
+        }
+    } catch { /* автосинк — не критично, остаются ручные «Сейчас!»/«Сдвиг» */ }
 }
 
 function formatTime(sec) {

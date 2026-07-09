@@ -256,6 +256,11 @@ const I18N = {
         'clip.reset': 'Сброс',
         'clip.reset.title': 'Вернуть исходную длину',
         'clip.saved': 'Длина сохранена',
+
+        'subs.autoSynced': 'Субтитры синхронизированы автоматически',
+        'player.showExtras': 'Показать доп. материалы',
+        'player.hideExtras': 'Скрыть доп. материалы',
+        'settings.autoSync': 'Автосинхронизация субтитров',
     },
 
     uk: {
@@ -512,6 +517,11 @@ const I18N = {
         'clip.reset': 'Скинути',
         'clip.reset.title': 'Повернути початкову довжину',
         'clip.saved': 'Довжину збережено',
+
+        'subs.autoSynced': 'Субтитри синхронізовано автоматично',
+        'player.showExtras': 'Показати дод. матеріали',
+        'player.hideExtras': 'Сховати дод. матеріали',
+        'settings.autoSync': 'Автосинхронізація субтитрів',
     },
 
     en: {
@@ -768,6 +778,11 @@ const I18N = {
         'clip.reset': 'Reset',
         'clip.reset.title': 'Reset to original length',
         'clip.saved': 'Length saved',
+
+        'subs.autoSynced': 'Subtitles synced automatically',
+        'player.showExtras': 'Show extras',
+        'player.hideExtras': 'Hide extras',
+        'settings.autoSync': 'Auto-sync subtitles',
     },
 };
 

@@ -12,6 +12,7 @@ html, body {
 .header__logo {
     flex: 1;
     justify-content: center;
+    min-width: 0;
 }
 
 .catalog {

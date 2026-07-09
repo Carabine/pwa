@@ -44,6 +44,7 @@
     }
     initToggle('set-playerRomaji', 'playerRomaji');
     initToggle('set-playerTranslation', 'playerTranslation');
+    initToggle('set-autoSyncSubs', 'autoSyncSubs');
     initToggle('set-autopause', 'autopause');
     initToggle('set-loopClips', 'loopClips');
 
