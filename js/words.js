@@ -92,8 +92,11 @@ async function runWordExplain(wordData, btn, out) {
     if (cached) { renderExplainInto(out, cached); btn.hidden = true; return; }
 
     btn.disabled = true;
-    const label = btn.textContent;
-    btn.textContent = t('words.explaining');
+    // Меняем только текстовую подпись, чтобы иконка ИИ в кнопке не пропадала.
+    const labelEl = btn.querySelector('.btn-label') || btn;
+    const label = labelEl.textContent;
+    labelEl.textContent = t('words.explaining');
+    if (window.animeiTrack) window.animeiTrack('explain', 'dictionary');
 
     try {
         const { data: res } = await client.get('explain', { params: { sentence }, timeout: 60000 });
@@ -106,7 +109,7 @@ async function runWordExplain(wordData, btn, out) {
         const limited = err.response?.data?.reason === 'limited' || err.response?.status === 429;
         showSnackbar(limited ? t('popup.explainLimited') : t('words.explainError'), { duration: 3500, type: 'error' });
         btn.disabled = false;
-        btn.textContent = label;
+        labelEl.textContent = label;
     }
 }
 
@@ -179,7 +182,7 @@ function renderWords() {
                 ${wordData.sentence ? `<div class="word-card__explain-out hidden"></div>` : ''}
                 <div class="word-card__actions">
                     <button class="btn btn--ghost edit-btn">${t('words.edit')}</button>
-                    ${wordData.sentence ? `<button class="btn btn--ghost word-card__explain" ${aiAvailable ? '' : 'hidden'}>${t('words.explain')}</button>` : ''}
+                    ${wordData.sentence ? `<button class="btn btn--ghost word-card__explain has-ai-icon" ${aiAvailable ? '' : 'hidden'}><svg class="ai-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 2 9.15 6.15 5 8l4.15 1.85L11 14l1.85-4.15L17 8l-4.15-1.85L11 2Zm7.5 9-1.1 2.4-2.4 1.1 2.4 1.1 1.1 2.4 1.1-2.4 2.4-1.1-2.4-1.1L18.5 11Z"/></svg><span class="btn-label">${t('words.explain')}</span></button>` : ''}
                 </div>
             </div>
             <div class="word-card word-edit-content hidden">

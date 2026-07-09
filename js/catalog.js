@@ -133,6 +133,7 @@ async function search(query) {
         if (query !== lastQuery) return;
 
         const items = res.data || [];
+        if (window.animeiTrack) window.animeiTrack('search', query + ' → ' + items.length);
         if (!items.length) {
             resultsEl.innerHTML = '';
             showStatus('catalog.empty');

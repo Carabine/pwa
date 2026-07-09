@@ -30,9 +30,10 @@ const state = {
     cues: [],
     activeCueIndex: -1,
     offset: 0,
-    autoPause: false,
+    // Стартовые значения берём из глобальных настроек (js/settings.js).
+    autoPause: !!(window.AnimeiSettings && window.AnimeiSettings.get('autopause')),
     autoPauseAt: null,
-    showRu: true,
+    showRu: window.AnimeiSettings ? window.AnimeiSettings.get('playerTranslation') !== false : true,
     furigana: localStorage.getItem('animei:furigana') !== 'off',
     romaji: localStorage.getItem('animei:romaji') === 'on',
     aiAvailable: false,
@@ -54,6 +55,12 @@ if (titleRu) {
     document.title = titleRu + ' — Animei';
 }
 
+// Размер субтитров из глобальных настроек (js/settings.js) — влияет на строку
+// под видео и на список субтитров (см. player.css [data-subsize]).
+if (window.AnimeiSettings) {
+    document.documentElement.setAttribute('data-subsize', window.AnimeiSettings.get('subSize') || 'md');
+}
+
 // ---------- Загрузка тайтла ----------
 
 async function init() {
@@ -69,10 +76,12 @@ async function init() {
         const { data: res } = await client.get('catalog/anime/' + shikimoriId);
         const info = res.data;
 
-        // Субтитровые дорожки — это оригинальная японская озвучка, их наверх.
-        // Среди них по умолчанию Crunchyroll — у них самое стабильное качество
+        // Дорожки с оригинальной японской озвучкой (субтитры) — наверх.
+        // Kodik не всегда помечает их type='subtitles' (у «Тетради смерти»
+        // японская дорожка так и терялась), поэтому распознаём ещё и по названию.
         state.translations = [...info.translations].sort((a, b) => {
-            if (a.type !== b.type) return a.type === 'subtitles' ? -1 : 1;
+            const aJp = isJpTrack(a), bJp = isJpTrack(b);
+            if (aJp !== bJp) return aJp ? -1 : 1;
             const aCr = /crunchyroll/i.test(a.title) ? 0 : 1;
             const bCr = /crunchyroll/i.test(b.title) ? 0 : 1;
             if (aCr !== bCr) return aCr - bCr;
@@ -92,13 +101,21 @@ async function init() {
     }
 }
 
+// Оригинальная японская дорожка (озвучка + сабы). Kodik помечает такие
+// type='subtitles', но не всегда — подстраховываемся по названию дорожки.
+function isJpTrack(tr) {
+    if (!tr) return false;
+    if (tr.type === 'subtitles') return true;
+    return /субтитр|subtitle|\bsub\b|ориг(инал)?|япон|japanese/i.test(tr.title || '');
+}
+
 function renderTranslations() {
     translationSelect.innerHTML = '';
-    state.translations.forEach((t, i) => {
+    state.translations.forEach((tr, i) => {
         const opt = document.createElement('option');
         opt.value = i;
-        const label = t.type === 'subtitles' ? '🇯🇵 ' + window.t('player.jpAudio') + ' · ' : '🎙 ';
-        opt.textContent = label + t.title;
+        const label = isJpTrack(tr) ? '🇯🇵 ' + window.t('player.jpAudio') + ' · ' : '🎙 ';
+        opt.textContent = label + tr.title;
         translationSelect.appendChild(opt);
     });
 }
@@ -106,6 +123,7 @@ function renderTranslations() {
 async function selectTranslation(index) {
     const t = state.translations[index];
     translationSelect.value = index;
+    if (window.animeiTrack) window.animeiTrack('voiceover', (isJpTrack(t) ? '🇯🇵 ' : '') + (t.title || ''));
     // Новая дорожка — свои сезоны/серии; сброс запомненного сезона обязателен
     await loadEpisodes({ mediaType: t.mediaType, mediaId: t.mediaId, mediaHash: t.mediaHash }, true);
 }
@@ -177,12 +195,34 @@ function populateEpisodes(restoreSaved, keepCurrent) {
         : state.rawEpisodes;
 
     episodeSelect.innerHTML = '';
-    state.episodes.forEach((ep, i) => {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = ep.title || (window.t('controls.episode') + ' ' + ep.number);
-        episodeSelect.appendChild(opt);
-    });
+
+    // Если показываем плоский список (режим franchise/single), а внутри него
+    // несколько блоков со сбросом нумерации (у «Атаки титанов» это 1–24, затем
+    // снова 1–9), раскладываем их по <optgroup> с подписями сезонов/частей —
+    // иначе выглядит как один список с внезапным сбросом на 1.
+    const useOptgroups = state.seasonMode !== 'groups' && state.episodeGroups.length > 1;
+    if (useOptgroups) {
+        const labels = seasonLabels(state.episodeGroups);
+        let flatIndex = 0;
+        state.episodeGroups.forEach((group, gi) => {
+            const og = document.createElement('optgroup');
+            og.label = labels[gi];
+            group.forEach((ep) => {
+                const opt = document.createElement('option');
+                opt.value = flatIndex++;   // индекс в плоском state.episodes
+                opt.textContent = ep.title || (window.t('controls.episode') + ' ' + ep.number);
+                og.appendChild(opt);
+            });
+            episodeSelect.appendChild(og);
+        });
+    } else {
+        state.episodes.forEach((ep, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = ep.title || (window.t('controls.episode') + ' ' + ep.number);
+            episodeSelect.appendChild(opt);
+        });
+    }
 
     // Перестроили список, но серия та же (пришла франшиза) — не трогаем видео
     if (keepCurrent) {
@@ -798,6 +838,11 @@ document.getElementById('romaji-toggle').addEventListener('click', () => {
     applyRomajiPref();
 });
 
+// Стартовое состояние переключателей из глобальных настроек (перевод, авто-пауза).
+ruToggle.classList.toggle('chip-btn--active', state.showRu);
+transcriptList.classList.toggle('hide-ru', !state.showRu);
+autopauseBtn.classList.toggle('chip-btn--active', state.autoPause);
+
 // ---------- Хоткеи ----------
 
 document.addEventListener('keydown', (e) => {
@@ -853,6 +898,8 @@ const popupSentence = document.getElementById('popup-sentence');
 const popupSave = document.getElementById('popup-save');
 const popupExplain = document.getElementById('popup-explain');
 const popupExplainBtn = document.getElementById('popup-explain-btn');
+// Меняем только текстовую подпись, чтобы иконка ИИ в кнопке не пропадала.
+const popupExplainLabel = popupExplainBtn.querySelector('.btn-label') || popupExplainBtn;
 
 // Узнаём один раз, настроен ли на сервере ИИ; если нет — кнопки разбора не будет
 client.get('explain/status')
@@ -881,7 +928,7 @@ async function openWordPopup(tok, cue, event) {
     popupExplain.innerHTML = '';
     popupExplainBtn.hidden = !state.aiAvailable;
     popupExplainBtn.disabled = false;
-    popupExplainBtn.textContent = t('popup.explain');
+    popupExplainLabel.textContent = t('popup.explain');
 
     popup.hidden = false;
     positionPopup(event);
@@ -1029,7 +1076,8 @@ popupExplainBtn.addEventListener('click', async () => {
     }
 
     popupExplainBtn.disabled = true;
-    popupExplainBtn.textContent = t('popup.explaining');
+    popupExplainLabel.textContent = t('popup.explaining');
+    if (window.animeiTrack) window.animeiTrack('explain', 'player');
 
     try {
         const { data: res } = await client.get('explain', {
@@ -1048,7 +1096,7 @@ popupExplainBtn.addEventListener('click', async () => {
         const limited = err.response?.data?.reason === 'limited' || err.response?.status === 429;
         showSnackbar(limited ? t('popup.explainLimited') : t('popup.explainError'), { duration: 3500, type: 'error' });
         popupExplainBtn.disabled = false;
-        popupExplainBtn.textContent = t('popup.explain');
+        popupExplainLabel.textContent = t('popup.explain');
     }
 });
 

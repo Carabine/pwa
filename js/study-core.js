@@ -131,8 +131,10 @@
         const cached = studyExplainCache.get(sentence);
         if (cached) { studyRenderExplain(modal.body, cached); modal.open(); return; }
         btn.disabled = true;
-        const label = btn.textContent;
-        btn.textContent = t('words.explaining');
+        // Меняем только текстовую подпись, чтобы иконка ИИ в кнопке не терялась.
+        const labelEl = btn.querySelector('.btn-label') || btn;
+        const label = labelEl.textContent;
+        labelEl.textContent = t('words.explaining');
         try {
             const { data: res } = await client.get('explain', { params: { sentence }, timeout: 60000 });
             const data = res.data.explanation;
@@ -146,9 +148,59 @@
         } finally {
             // Кнопку не убираем — разбор можно открыть снова (из кэша, мгновенно).
             btn.disabled = false;
-            btn.textContent = label;
+            labelEl.textContent = label;
         }
     }
+
+    // ---- Настройки обучения (см. js/settings.js) ---------------------------
+    function studyPref(key) {
+        return window.AnimeiSettings ? window.AnimeiSettings.get(key) : undefined;
+    }
+
+    // Иконка ИИ (спарклы) для кнопки «ИИ-разбор предложения».
+    const AI_ICON = '<svg class="ai-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 2 9.15 6.15 5 8l4.15 1.85L11 14l1.85-4.15L17 8l-4.15-1.85L11 2Zm7.5 9-1.1 2.4-2.4 1.1 2.4 1.1 1.1 2.4 1.1-2.4 2.4-1.1-2.4-1.1L18.5 11Z"/></svg>';
+
+    const GEAR_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+
+    // Ромадзи предложения: тянем токены с бэкенда (/analyze, MeCab) и переводим
+    // их кану в ромадзи. Кэш на сессию, чтобы не дёргать сеть повторно.
+    const sentenceRomajiCache = new Map();
+    async function fetchSentenceRomaji(sentence) {
+        if (!sentence) return '';
+        if (sentenceRomajiCache.has(sentence)) return sentenceRomajiCache.get(sentence);
+        if (typeof client === 'undefined' || typeof window.kanaToRomaji !== 'function') return '';
+        try {
+            const { data: res } = await client.post('analyze', { text: [sentence] }, { timeout: 20000 });
+            const tokens = res?.data?.[0] || [];
+            const romaji = tokens
+                .map((tk) => window.kanaToRomaji(tk.kana || tk.surface || ''))
+                .filter(Boolean)
+                .join(' ')
+                .replace(/\s+([,.])/g, '$1')
+                .trim();
+            sentenceRomajiCache.set(sentence, romaji);
+            return romaji;
+        } catch {
+            return '';
+        }
+    }
+
+    // Слова, сохранённые с лендинга (animei:guestWords с fromLanding). Приводим
+    // к виду карточки обучения; самые свежие — первыми. Наружу для beginner-study.
+    function landingWordsForStudy() {
+        let raw = [];
+        try { raw = JSON.parse(localStorage.getItem('animei:guestWords') || '[]'); } catch { raw = []; }
+        return raw
+            .filter((w) => w && w.fromLanding)
+            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+            .map((w) => ({
+                ...w,
+                word: w.kanji,
+                meaning: w.translation,
+                translatedSentence: w.sentenceTranslation,
+            }));
+    }
+    window.landingWordsForStudy = landingWordsForStudy;
 
     // ---- Date helpers (day granularity) ------------------------------------
     function todayStart() {
@@ -306,6 +358,7 @@
         // есть кнопка «В коллекцию».
         const deck = Array.isArray(config.deck) ? config.deck : null;
         const collectable = !!config.collectable;
+        const ordered = !!config.ordered;   // не перемешивать колоду (онбординг)
         const savedKanji = new Set(); // что уже добавили в коллекцию за сессию
 
         const els = {
@@ -338,8 +391,10 @@
 
         function buildDeck() {
             if (deck) {
-                // Готовая колода: проходим один раз, как cram.
-                return shuffle(deck.map(w => buildItem(w, true)));
+                // Готовая колода: проходим один раз, как cram. При ordered
+                // (онбординг с лендинга) порядок сохраняем — сохранённое слово первым.
+                const items = deck.map(w => buildItem(w, true));
+                return ordered ? items : shuffle(items);
             }
 
             const words = JSON.parse(localStorage.getItem('words') ?? '[]')
@@ -353,19 +408,26 @@
             const today = dayKey(todayStart());
             const due = [];
             const fresh = [];
+            const landing = [];   // слова с лендинга — показываем первыми
 
             for (const word of words) {
                 const s = schedule[word.id];
                 if (!s) {
-                    fresh.push(word);              // never studied
+                    if (word.fromLanding) landing.push(word);
+                    else fresh.push(word);         // never studied
                 } else if (s.due <= today) {
                     due.push(buildItem(word, false)); // review is due
                 }
             }
 
+            // Слова, сохранённые с лендинга, идут первыми (самое свежее — первым),
+            // чтобы пользователь сразу увидел то, что только что добавил.
+            landing.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            const landingItems = landing.map(w => buildItem(w, true));
+
             // Introduce a limited number of new words per day.
             const newItems = shuffle(fresh).slice(0, NEW_PER_DAY).map(w => buildItem(w, true));
-            return shuffle([...due, ...newItems]);
+            return [...landingItems, ...shuffle([...due, ...newItems])];
         }
 
         // ---- Re-queue a card so it comes back later, not immediately --------
@@ -488,6 +550,106 @@
             els.back.appendChild(el);
         }
 
+        // Транскрипция слова с учётом настройки studyTranscription:
+        // kana (по умолчанию) / romaji / both / none.
+        function renderTranscription(w) {
+            const mode = studyPref('studyTranscription') || 'kana';
+            if (mode === 'none') return;
+            const kana = w.kana || '';
+            const romaji = (w.romaji && String(w.romaji).trim())
+                ? String(w.romaji).trim()
+                : (typeof window.kanaToRomaji === 'function' ? window.kanaToRomaji(kana) : '');
+            const lines = [];
+            if (mode === 'romaji') { if (romaji) lines.push(romaji); }
+            else if (mode === 'both') { if (kana) lines.push(kana); if (romaji) lines.push(romaji); }
+            else { if (kana) lines.push(kana); } // kana
+            for (const text of lines) addLine('hiragana', text);
+        }
+
+        // Панель настроек обучения (шестерёнка в углу карточки). Меняет настройки
+        // через AnimeiSettings и перерисовывает текущую карточку сразу.
+        function reapplyCard() {
+            if (!current) return;
+            if (els.back.classList.contains('back-side--visible')) renderBack();
+            else renderFront();
+        }
+
+        function mountStudySettings() {
+            const main = document.querySelector('.main.study');
+            if (!main || !window.AnimeiSettings || main.querySelector('.study-settings-btn')) return;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'study-settings-btn';
+            btn.setAttribute('aria-label', t('study.settings.open'));
+            btn.innerHTML = GEAR_ICON;
+
+            const panel = document.createElement('div');
+            panel.className = 'study-settings-panel';
+            panel.hidden = true;
+
+            const title = document.createElement('div');
+            title.className = 'study-set-title';
+            title.textContent = t('study.settings.title');
+            panel.appendChild(title);
+
+            // Сегмент «транскрипция слова»
+            const trRow = document.createElement('div');
+            trRow.className = 'study-set-row';
+            const trLabel = document.createElement('span');
+            trLabel.textContent = t('study.transcription');
+            const seg = document.createElement('div');
+            seg.className = 'seg';
+            [['kana', t('study.transcription.kana')], ['romaji', t('study.transcription.romaji')],
+             ['both', t('study.transcription.both')], ['none', t('study.transcription.none')]]
+                .forEach(([val, label]) => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.textContent = label;
+                    b.dataset.val = val;
+                    b.classList.toggle('is-active', String(studyPref('studyTranscription')) === val);
+                    b.addEventListener('click', () => {
+                        window.AnimeiSettings.set('studyTranscription', val);
+                        seg.querySelectorAll('button').forEach((x) => x.classList.remove('is-active'));
+                        b.classList.add('is-active');
+                        reapplyCard();
+                    });
+                    seg.appendChild(b);
+                });
+            trRow.append(trLabel, seg);
+            panel.appendChild(trRow);
+
+            // Тумблеры
+            function toggleRow(key, label) {
+                const row = document.createElement('label');
+                row.className = 'study-set-row study-set-toggle';
+                const span = document.createElement('span');
+                span.textContent = label;
+                const inp = document.createElement('input');
+                inp.type = 'checkbox';
+                inp.checked = !!studyPref(key);
+                inp.addEventListener('change', () => {
+                    window.AnimeiSettings.set(key, inp.checked);
+                    reapplyCard();
+                });
+                row.append(span, inp);
+                return row;
+            }
+            panel.appendChild(toggleRow('studySentenceRomaji', t('study.sentenceRomaji')));
+            panel.appendChild(toggleRow('studyAutoplayClip', t('study.autoplayClip')));
+
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                panel.hidden = !panel.hidden;
+            });
+            document.addEventListener('click', (e) => {
+                if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) panel.hidden = true;
+            });
+
+            main.appendChild(btn);
+            main.appendChild(panel);
+        }
+
         // Кнопка озвучки: без видео с оригинальным звуком голос синтеза —
         // лучший способ услышать слово ещё раз.
         function addSpeakButton(target, text) {
@@ -506,7 +668,7 @@
 
         // Свой мини-плеер вместо нативных браузерных контролов: короткий клип
         // сам зациклен, поэтому нужны только Play/Pause по центру и кнопка звука.
-        function makeClipVideo(src) {
+        function makeClipVideo(src, w) {
             const ICONS = {
                 play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72c0 .8.87 1.3 1.55.88l10.8-6.86a1.04 1.04 0 0 0 0-1.76L9.55 4.26A1.04 1.04 0 0 0 8 5.14z"/></svg>',
                 volume: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.3 5.7a9 9 0 0 1 0 12.6"/></svg>',
@@ -518,11 +680,18 @@
 
             const video = document.createElement('video');
             video.src = src;
-            video.autoplay = true;
-            // Проигрываем клип один раз и останавливаемся — без зацикливания.
+            // Стартом/остановкой управляем вручную (нужно окно [tStart..tEnd]).
+            video.autoplay = false;
             video.loop = false;
             video.playsInline = true;
             wrap.appendChild(video);
+
+            // Окно воспроизведения внутри клипа. Клип режется с запасом ±2с,
+            // а играем только реальное слово — эти границы можно двигать ±1с.
+            let tStart = Number.isFinite(Number(w && w.trimStart)) ? Math.max(0, Number(w.trimStart)) : 0;
+            let tEnd = Number.isFinite(Number(w && w.trimEnd)) ? Number(w.trimEnd) : null;
+            const autoPlay = studyPref('studyAutoplayClip') !== false;
+            const loopClip = !!studyPref('loopClips');
 
             const playBtn = document.createElement('button');
             playBtn.type = 'button';
@@ -538,14 +707,36 @@
             muteBtn.innerHTML = ICONS.volume;
             wrap.appendChild(muteBtn);
 
-            const toggle = () => { video.paused ? video.play().catch(() => {}) : video.pause(); };
+            const toggle = () => {
+                if (video.paused) {
+                    // Доиграли до конца окна — начинаем сначала окна, не с конца клипа.
+                    if (tEnd != null && video.currentTime >= tEnd - 0.05) video.currentTime = tStart;
+                    video.play().catch(() => {});
+                } else {
+                    video.pause();
+                }
+            };
             const sync = () => wrap.classList.toggle('is-paused', video.paused);
+
+            function startPlayback() {
+                if (tStart > 0) { try { video.currentTime = tStart; } catch { /* not seekable yet */ } }
+                if (autoPlay) video.play().catch(() => {});
+                sync();
+            }
+            if (video.readyState >= 1) startPlayback();
+            else video.addEventListener('loadedmetadata', startPlayback, { once: true });
+
+            // Держим воспроизведение в пределах окна [tStart, tEnd].
+            video.addEventListener('timeupdate', () => {
+                if (tEnd == null) return;
+                if (video.currentTime >= tEnd - 0.02) {
+                    if (loopClip) { video.currentTime = tStart; }
+                    else { video.pause(); }
+                }
+            });
 
             video.addEventListener('play', sync);
             video.addEventListener('pause', sync);
-            // Клип доиграл (loop выключен) — показываем кнопку Play, чтобы можно
-            // было пересмотреть. Событие 'pause' на естественном завершении не
-            // приходит, поэтому синхронизируем состояние отдельно по 'ended'.
             video.addEventListener('ended', sync);
             video.addEventListener('click', toggle);
             playBtn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
@@ -556,7 +747,90 @@
             });
             sync();
 
+            // ---- Редактор длины: ±1с к началу/концу ----------------------------
+            // Клип сохранён с запасом ±2с, поэтому границы можно и расширять.
+            if (w && w.id && typeof updateWord === 'function') {
+                const editor = buildTrimEditor(video, w, () => tStart, () => tEnd, (s, e) => {
+                    tStart = s; tEnd = e;
+                    try { video.currentTime = tStart; } catch { /* ignore */ }
+                    video.play().catch(() => {});
+                });
+                // Редактор кладём в отдельный элемент под видео (см. renderBack).
+                wrap._trimEditor = editor;
+            }
+
             return wrap;
+        }
+
+        // Панель «Длина аудио»: две группы кнопок (−1с/+1с) для начала и конца.
+        function buildTrimEditor(video, w, getStart, getEnd, apply) {
+            const box = document.createElement('div');
+            box.className = 'clip-trim';
+
+            function clampSave(newStart, newEnd) {
+                const dur = video.duration && Number.isFinite(video.duration) ? video.duration : (newEnd ?? 0) + 2;
+                let s = Math.max(0, newStart);
+                let e = newEnd == null ? null : newEnd;
+                if (e != null) {
+                    e = Math.min(dur, e);
+                    s = Math.min(s, e - 0.3);
+                    e = Math.max(e, s + 0.3);
+                }
+                s = Math.max(0, s);
+                apply(s, e);
+                w.trimStart = s;
+                w.trimEnd = e;
+                persistTrim(w.id, s, e);
+                showSnackbar(t('clip.saved'), { duration: 1200 });
+            }
+
+            function group(labelKey, onMinus, onPlus) {
+                const g = document.createElement('div');
+                g.className = 'clip-trim__group';
+                const lbl = document.createElement('span');
+                lbl.className = 'clip-trim__label';
+                lbl.textContent = t(labelKey);
+                const minus = document.createElement('button');
+                minus.type = 'button';
+                minus.className = 'clip-trim__btn';
+                minus.textContent = '−1с';
+                minus.title = t('clip.earlier.title');
+                minus.addEventListener('click', (ev) => { ev.stopPropagation(); onMinus(); });
+                const plus = document.createElement('button');
+                plus.type = 'button';
+                plus.className = 'clip-trim__btn';
+                plus.textContent = '+1с';
+                plus.title = t('clip.later.title');
+                plus.addEventListener('click', (ev) => { ev.stopPropagation(); onPlus(); });
+                g.append(lbl, minus, plus);
+                return g;
+            }
+
+            const startGroup = group('clip.start',
+                () => clampSave(getStart() - 1, getEnd()),
+                () => clampSave(getStart() + 1, getEnd()));
+            const endGroup = group('clip.end',
+                () => { const e = getEnd() == null ? (video.duration || 0) : getEnd(); clampSave(getStart(), e - 1); },
+                () => { const e = getEnd() == null ? (video.duration || 0) : getEnd(); clampSave(getStart(), e + 1); });
+
+            box.append(startGroup, endGroup);
+            return box;
+        }
+
+        // Сохраняем окно клипа: у вошедшего — PATCH на сервер, у гостя — в
+        // guestWords; плюс обновляем кэш words в localStorage, чтобы пережило
+        // перезагрузку страницы.
+        function persistTrim(id, s, e) {
+            try { updateWord(id, { trimStart: s, trimEnd: e }); } catch { /* не критично */ }
+            try {
+                const words = JSON.parse(localStorage.getItem('words') || '[]');
+                const idx = words.findIndex((x) => x && x.id === id);
+                if (idx >= 0) {
+                    words[idx].trimStart = s;
+                    words[idx].trimEnd = e;
+                    localStorage.setItem('words', JSON.stringify(words));
+                }
+            } catch { /* не критично */ }
         }
 
         function renderBack() {
@@ -566,7 +840,9 @@
 
             const src = videoSrcOf(w);
             if (src) {
-                els.back.appendChild(makeClipVideo(src));
+                const clip = makeClipVideo(src, w);
+                els.back.appendChild(clip);
+                if (clip._trimEditor) els.back.appendChild(clip._trimEditor);
             } else if (typeof getClipUrl === 'function' && w.id) {
                 // Клип гостя лежит в IndexedDB — тянем асинхронно и ставим сверху,
                 // если карточка ещё та же самая.
@@ -574,7 +850,9 @@
                 getClipUrl(wid).then((url) => {
                     if (!url || !current || current.word.id !== wid) return;
                     if (!els.back.classList.contains('back-side--visible')) return;
-                    els.back.insertBefore(makeClipVideo(url), els.back.firstChild);
+                    const clip = makeClipVideo(url, w);
+                    els.back.insertBefore(clip, els.back.firstChild);
+                    if (clip._trimEditor) clip.after(clip._trimEditor);
                 });
             }
             if (w.audio) {
@@ -587,27 +865,38 @@
 
             addLine('meaning', w.meaning ?? w.translation ?? '');
 
-            const kanaLine = document.createElement('div');
-            kanaLine.className = 'hiragana';
-            kanaLine.textContent = w.kana ?? '';
-            if (kanaLine.textContent) els.back.appendChild(kanaLine);
+            // Транскрипция слова: хирагана / ромадзи / обе / скрыть (настройка).
+            renderTranscription(w);
 
             const sentenceLine = document.createElement('div');
             sentenceLine.className = 'sentence';
             sentenceLine.textContent = w.sentence ?? '';
             if (sentenceLine.textContent) els.back.appendChild(sentenceLine);
 
+            // Ромадзи предложения (настройка) — подгружаем асинхронно.
+            if (w.sentence && studyPref('studySentenceRomaji')) {
+                const roLine = document.createElement('div');
+                roLine.className = 'sentence-romaji';
+                els.back.appendChild(roLine);
+                const wid = current && current.word.id;
+                fetchSentenceRomaji(w.sentence).then((ro) => {
+                    if (!ro || !current || current.word.id !== wid) return;
+                    if (!els.back.classList.contains('back-side--visible')) return;
+                    roLine.textContent = ro;
+                });
+            }
+
             addLine('translatedSentence', w.translatedSentence ?? w.sentenceTranslation ?? '');
 
-            // ИИ-разбор предложения — по кнопке (если у слова есть предложение и ИИ
-            // включён). Результат открывается в модалке (studyRunExplain), а не
-            // растягивает саму карточку.
+            // ИИ-разбор предложения — по кнопке с иконкой ИИ (если у слова есть
+            // предложение и ИИ включён). Результат открывается в модалке.
             if (studyAiAvailable && w.sentence) {
-                const explainBtn = makeButton(
-                    t('words.explain'),
-                    'card-explain-btn',
-                    () => studyRunExplain(w.sentence, explainBtn),
-                );
+                const explainBtn = document.createElement('button');
+                explainBtn.type = 'button';
+                explainBtn.className = 'card-explain-btn has-ai-icon';
+                explainBtn.innerHTML = AI_ICON + '<span class="btn-label"></span>';
+                explainBtn.querySelector('.btn-label').textContent = t('words.explain');
+                explainBtn.addEventListener('click', () => studyRunExplain(w.sentence, explainBtn));
                 els.back.appendChild(explainBtn);
             }
 
@@ -794,14 +1083,9 @@
             });
         }
 
-        function wireRefresh() {
-            const btn = document.querySelector('.refresh-btn');
-            if (btn) btn.addEventListener('click', restart);
-        }
-
         // ---- Bootstrap -----------------------------------------------------
         wireModal();
-        wireRefresh();
+        mountStudySettings();
         document.addEventListener('keydown', onKey);
 
         window.addEventListener('load', async () => {

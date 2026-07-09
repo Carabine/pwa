@@ -962,6 +962,44 @@ html, body {
     cursor: default;
 }
 
+/* Кнопка разбора с иконкой ИИ: держим на всю ширину и центрируем иконку+текст */
+.word-popup__explain-btn.has-ai-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.word-popup__explain-btn .ai-icon {
+    width: 15px;
+    height: 15px;
+    color: var(--primary-hover);
+}
+
+/* Шапка плеера: слева теперь две кнопки (меню + назад), поэтому фиксированную
+   ширину снимаем, а заголовок центрируем сам по себе. */
+.player-app .header__left {
+    width: auto;
+    gap: 2px;
+}
+
+.player-app .header__logo {
+    flex: 1;
+    justify-content: center;
+}
+
+/* Размер субтитров из настроек (data-subsize на <html>): sm / md(по умолч.) / lg.
+   Влияет и на строку под видео (now-cue), и на список субтитров (cue). */
+:root[data-subsize="sm"] .now-cue__jp { font-size: 13px; }
+:root[data-subsize="sm"] .now-cue__ru { font-size: 11px; }
+:root[data-subsize="sm"] .cue__jp { font-size: 14px; }
+:root[data-subsize="sm"] .cue__ru { font-size: 11px; }
+
+:root[data-subsize="lg"] .now-cue__jp { font-size: 19px; }
+:root[data-subsize="lg"] .now-cue__ru { font-size: 14px; }
+:root[data-subsize="lg"] .cue__jp { font-size: 19px; }
+:root[data-subsize="lg"] .cue__ru { font-size: 14px; }
+
 .word-popup__save {
     margin-top: 10px;
     width: 100%;
@@ -1099,8 +1137,8 @@ html, body {
        раскладка под ним «прыгала». Теперь высота постоянна для короткой и для
        длинной реплики; редкий избыток обрезается (полный текст есть в списке). */
     .now-cue {
-        height: 104px;
-        padding: 8px 12px 6px;
+        height: 82px;
+        padding: 6px 12px 5px;
         margin-top: 0;
         overflow: hidden;
     }
@@ -1108,8 +1146,8 @@ html, body {
     /* Перевод мельче японского и с плотной строкой — чтобы в блок влезали
        2 строки японского + 2 строки перевода без обрезки. */
     .now-cue__ru {
-        font-size: 10.5px;
-        line-height: 1.35;
+        font-size: 9.5px;
+        line-height: 1.3;
     }
 
     /* Держим блок на месте даже до загрузки субтитров (в полноэкранном режиме
@@ -1131,34 +1169,54 @@ html, body {
         margin-left: 1px;
     }
 
-    /* Контролы под палец: кнопки крупнее */
+    /* Нижняя панель контролов на телефоне занимала слишком много кадра
+       (почти 2/5 видео) — делаем её компактной. */
+    .player-ui__bottom {
+        padding: 12px 10px 7px;
+    }
+
+    .player-ui__row {
+        gap: 4px;
+        margin-top: 4px;
+    }
+
     .player-ui__btn {
-        width: 42px;
-        height: 42px;
+        width: 34px;
+        height: 34px;
     }
 
     .player-ui__btn svg {
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
     }
 
-    /* Полоса перемотки заметнее и легче попасть */
+    .player-ui__time {
+        font-size: 11px;
+    }
+
+    .player-ui__speed {
+        min-width: 40px;
+        height: 26px;
+        font-size: 12px;
+    }
+
+    /* Полоса перемотки: тонкая, но по ней всё ещё легко попасть */
     .player-ui__seek {
-        height: 22px;
+        height: 16px;
     }
 
     .player-ui__seek::before,
     .player-ui__seek-buffered,
     .player-ui__seek-fill {
-        height: 5px;
+        height: 4px;
     }
 
     /* На тач-экране нет hover — ползунок позиции показываем всегда */
     .player-ui__seek-knob {
         transform: translateY(-50%) scale(1);
-        width: 16px;
-        height: 16px;
-        right: -8px;
+        width: 13px;
+        height: 13px;
+        right: -6.5px;
     }
 
     /* Слайдер громкости раскрыть на тач нельзя (он по hover) — прячем,
@@ -1167,10 +1225,10 @@ html, body {
         display: none;
     }
 
-    /* Японские субтитры покрупнее (легче попасть по слову), но строки плотнее */
+    /* Строка японских субтитров под видео — компактная (по просьбе: ещё мельче) */
     .now-cue__jp {
-        font-size: 16px;
-        line-height: 1.5;
+        font-size: 14px;
+        line-height: 1.4;
     }
 
     .cue__jp {

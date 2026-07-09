@@ -2,6 +2,18 @@ html, body {
     overflow: auto;
 }
 
+/* Слева в шапке теперь две кнопки (меню + назад) — снимаем фиксированную ширину
+   и центрируем заголовок сам по себе. */
+.header__left {
+    width: auto;
+    gap: 2px;
+}
+
+.header__logo {
+    flex: 1;
+    justify-content: center;
+}
+
 .catalog {
     width: 100%;
     max-width: 1180px;

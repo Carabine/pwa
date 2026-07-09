@@ -125,23 +125,6 @@
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
-.refresh-btn {
-    position: absolute;
-    bottom: 16px;
-    right: 20px;
-    background: var(--card);
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-    padding: 8px 16px;
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-}
-
-.refresh-btn:hover {
-    background: var(--border);
-    color: var(--text);
-}
-
 /* ========== HINT ========== */
 
 .hint-btn {

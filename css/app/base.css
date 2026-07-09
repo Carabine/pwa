@@ -22,6 +22,32 @@
     --font: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
 }
 
+/* Светлая тема — переопределяем палитру. Компоненты используют переменные,
+   поэтому смена значений разворачивает весь интерфейс без правок разметки.
+   Ставится атрибутом data-theme="light" на <html> (см. js/settings.js). */
+:root[data-theme="light"] {
+    --bg: #f4f5fa;
+    --surface: #ffffff;
+    --card: #ffffff;
+    --border: #e3e7f0;
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --success: #059669;
+    --success-hover: #10b981;
+    --danger: #e11d48;
+    --danger-hover: #f43f5e;
+    --warning: #d97706;
+    --text: #1e293b;
+    --text-muted: #475569;
+    --text-dim: #64748b;
+    --shadow: 0 4px 24px rgba(30, 34, 60, 0.10);
+    --shadow-sm: 0 2px 8px rgba(30, 34, 60, 0.08);
+}
+
+:root[data-theme="light"] body {
+    color-scheme: light;
+}
+
 *, *::before, *::after {
     margin: 0;
     padding: 0;

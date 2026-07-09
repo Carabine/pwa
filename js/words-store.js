@@ -46,15 +46,23 @@ function normalizeWord(payload) {
     };
 }
 
+// Запас с каждой стороны клипа: режем шире реального слова, чтобы потом можно
+// было «добавить» секунды к началу/концу (см. редактор длины в study-core).
+const CLIP_MARGIN = 2;
+
 // Попросить сервер нарезать клип из HLS и вернуть его как blob (для гостя).
-// Ошибки не пробрасываем — без клипа слово всё равно сохранится.
-async function requestClip(data) {
-    const duration = Number(data.videoEnd) - Number(data.videoStart);
-    if (!data.videoUrl || !(duration > 0)) return null;
+// С pad=true режем с запасом ±CLIP_MARGIN секунд. Ошибки не пробрасываем —
+// без клипа слово всё равно сохранится.
+async function requestClip(data, pad) {
+    const wordDur = Number(data.videoEnd) - Number(data.videoStart);
+    if (!data.videoUrl || !(wordDur > 0)) return null;
+    const lead = pad ? Math.min(CLIP_MARGIN, Number(data.videoStart)) : 0;
+    const start = Math.max(0, Number(data.videoStart) - lead);
+    const duration = Math.min(wordDur + lead + (pad ? CLIP_MARGIN : 0), 30);
     try {
         const { data: blob } = await client.post('words/clip', {
             url: data.videoUrl,
-            start: data.videoStart,
+            start,
             duration,
         }, { responseType: 'blob' });
         return blob instanceof Blob && blob.size ? blob : null;
@@ -73,7 +81,16 @@ async function saveWord(payload) {
         const { data: res } = await client.post('words', data);
         return res?.data ?? res;
     }
-    const word = { id: makeLocalId(), ...data };
+    // Клип режем с запасом ±CLIP_MARGIN, а окно воспроизведения (trimStart/End)
+    // указывает на само слово внутри клипа — его границы можно двигать ±1с.
+    const wordDur = Number(data.videoEnd) - Number(data.videoStart);
+    const lead = wordDur > 0 ? Math.min(CLIP_MARGIN, Number(data.videoStart)) : 0;
+    const word = {
+        id: makeLocalId(),
+        ...data,
+        trimStart: wordDur > 0 ? lead : null,
+        trimEnd: wordDur > 0 ? lead + wordDur : null,
+    };
     const words = getGuestWords();
     words.push(word);
     setGuestWords(words);
@@ -81,7 +98,7 @@ async function saveWord(payload) {
     // У гостя клип хранится в браузере. Ждём его, чтобы видео было готово
     // к первому показу карточки, но неудача клипа не ломает сохранение слова.
     if (typeof putClip === 'function') {
-        const blob = await requestClip(data);
+        const blob = await requestClip(data, true);
         if (blob) await putClip(word.id, blob);
     }
     return word;
@@ -125,7 +142,12 @@ async function syncGuestWordsToAccount() {
         try {
             // videoUrl гостя (ссылка на HLS) уже протухла — сервер не переклипует,
             // поэтому заливаем сам сохранённый в браузере blob отдельным запросом.
-            const { data: res } = await client.post('words', normalizeWord({ ...payload, videoUrl: '' }));
+            // trimStart/trimEnd передаём явно, чтобы окно клипа не сбросилось.
+            const { data: res } = await client.post('words', {
+                ...normalizeWord({ ...payload, videoUrl: '' }),
+                ...(Number.isFinite(w.trimStart) ? { trimStart: w.trimStart } : {}),
+                ...(Number.isFinite(w.trimEnd) ? { trimEnd: w.trimEnd } : {}),
+            });
             const saved = res?.data ?? res;
 
             if (saved?.id && typeof getClip === 'function') {

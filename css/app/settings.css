@@ -1,0 +1,156 @@
+/* ========== SETTINGS PAGE ========== */
+
+.settings-page {
+    max-width: 640px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.settings-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.settings-title {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.settings-back {
+    font-size: 14px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.settings-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: var(--shadow-sm);
+}
+
+.settings-card__title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.settings-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Внутри настроек label — обычный текст, а не капс-подпись из base.css */
+.settings-row > label,
+.settings-toggle {
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 14px;
+    color: var(--text);
+    margin: 0;
+    font-weight: 400;
+}
+
+.settings-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+}
+
+/* Чекбоксы и ползунки в base.css растянуты на 100% — здесь возвращаем им размер */
+.settings-toggle input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.settings-select {
+    width: auto;
+    min-width: 150px;
+}
+
+.settings-range {
+    width: 180px;
+    accent-color: var(--primary);
+}
+
+/* Сегментированный переключатель (тема, размер субтитров) */
+.seg {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+    flex-wrap: wrap;
+}
+
+.seg button {
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.seg button.is-active {
+    background: var(--primary);
+    color: #fff;
+}
+
+.account-email {
+    font-size: 14px;
+}
+
+.account-email b {
+    color: var(--text);
+}
+
+.account-guest {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+#password-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+}
+
+#password-block .btn {
+    align-self: flex-start;
+}
+
+@media (max-width: 480px) {
+    .settings-range { width: 130px; }
+    .settings-page { padding: 14px 12px 50px; }
+}

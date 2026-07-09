@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое. Показывается в футере сайдбара
 // (см. ниже), чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v53';
+const APP_VERSION = 'v54';
 
 // ========== Service Worker ==========
 
@@ -117,6 +117,20 @@ document.addEventListener('DOMContentLoaded', () => {
         ver.textContent = APP_VERSION;
     }
 
+    // Ссылка «Настройки» в сайдбаре — единый источник, не дублируем в каждой
+    // HTML-странице. Вставляем перед ссылкой «На сайт» (её добавляет i18n.js).
+    if (sidebar && !sidebar.querySelector('.sidebar__settings')) {
+        const a = document.createElement('a');
+        a.className = 'sidebar__settings';
+        const inPages = window.location.pathname.includes('/pages/');
+        a.href = (inPages ? './' : './pages/') + 'settings.html';
+        a.setAttribute('data-i18n', 'nav.settings');
+        a.textContent = (typeof t === 'function') ? t('nav.settings') : 'Settings';
+        const siteLink = sidebar.querySelector('.sidebar__site');
+        if (siteLink) sidebar.insertBefore(a, siteLink);
+        else sidebar.appendChild(a);
+    }
+
     if (menuBtn && sidebar && overlay) {
         menuBtn.addEventListener('click', () => {
             sidebar.classList.add('open');
@@ -184,15 +198,21 @@ function renderAuthState() {
 
     const isInPages = window.location.pathname.includes('/pages/');
     const loginUrl = isInPages ? './login.html' : './pages/login.html';
+    const settingsUrl = isInPages ? './settings.html' : './pages/settings.html';
 
     if (typeof isLoggedIn === 'function' && isLoggedIn()) {
         const email = localStorage.getItem('animei:email');
+        // Экранируем почту — она попадает в innerHTML (защита от порчи localStorage).
+        const safeEmail = email ? email.replace(/[&<>"']/g, (c) =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])) : '';
         menu.innerHTML =
-            (email ? `<span class="profile-menu__email">${email}</span>` : '') +
+            (safeEmail ? `<span class="profile-menu__email">${safeEmail}</span>` : '') +
+            `<a href="${settingsUrl}" data-i18n="nav.account">Account settings</a>` +
             '<a href="#" id="logout-btn" data-i18n="nav.logout">Log out</a>';
     } else {
         menu.innerHTML =
-            `<a href="${loginUrl}" id="login-link" data-i18n="nav.login">Log in</a>`;
+            `<a href="${loginUrl}" id="login-link" data-i18n="nav.login">Log in</a>` +
+            `<a href="${settingsUrl}" data-i18n="nav.settings">Settings</a>`;
     }
 
     // Если на странице подключён i18n — переведём только что вставленные пункты.
