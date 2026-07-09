@@ -14,6 +14,8 @@ const svg = readFileSync(svgPath);
 const targets = [
     ['pwa/img/icons/32x32.png', 32],
     ['pwa/img/icons/128x128.png', 128],
+    ['pwa/img/icons/180x180.png', 180],   // apple-touch-icon (iOS)
+    ['pwa/img/icons/192x192.png', 192],   // стандартный maskable-размер
     ['pwa/img/icons/256x256.png', 256],
     ['pwa/img/icons/512x512.png', 512],
     ['pwa/img/icon.png', 512],
