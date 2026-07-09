@@ -84,14 +84,14 @@
 }
 
 .hub-card__badge {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.1px;
     text-transform: uppercase;
     color: var(--danger-hover);
     background: rgba(244, 63, 94, 0.14);
     border-radius: 999px;
-    padding: 2px 8px;
+    padding: 2px 7px;
     white-space: nowrap;
     flex-shrink: 0;
 }
@@ -123,7 +123,7 @@
     }
 
     .hub-card__badge {
-        font-size: 10px;
-        padding: 2px 7px;
+        font-size: 8.5px;
+        padding: 2px 6px;
     }
 }
