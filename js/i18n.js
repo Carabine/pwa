@@ -256,6 +256,7 @@ const I18N = {
         'clip.reset': 'Сброс',
         'clip.reset.title': 'Вернуть исходную длину',
         'clip.saved': 'Длина сохранена',
+        'clip.edit.title': 'Видео-фрагмент',
 
         'subs.autoSynced': 'Субтитры синхронизированы автоматически',
         'player.showExtras': 'Показать доп. материалы',
@@ -517,6 +518,7 @@ const I18N = {
         'clip.reset': 'Скинути',
         'clip.reset.title': 'Повернути початкову довжину',
         'clip.saved': 'Довжину збережено',
+        'clip.edit.title': 'Відеофрагмент',
 
         'subs.autoSynced': 'Субтитри синхронізовано автоматично',
         'player.showExtras': 'Показати дод. матеріали',
@@ -778,6 +780,7 @@ const I18N = {
         'clip.reset': 'Reset',
         'clip.reset.title': 'Reset to original length',
         'clip.saved': 'Length saved',
+        'clip.edit.title': 'Video clip',
 
         'subs.autoSynced': 'Subtitles synced automatically',
         'player.showExtras': 'Show extras',

@@ -50,6 +50,21 @@
     justify-content: flex-end;
 }
 
+/* Главная: логотип прижат к левому краю (сразу за кнопкой меню), профиль — справа.
+   Обычная шапка держит лого по центру через space-between; здесь переопределяем. */
+.header--flush-left {
+    justify-content: flex-start;
+    gap: 10px;
+}
+
+.header--flush-left .header__left {
+    width: auto;
+}
+
+.header--flush-left .header__right {
+    margin-left: auto;
+}
+
 .icon-btn {
     width: 36px;
     height: 36px;

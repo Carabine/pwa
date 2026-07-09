@@ -92,6 +92,38 @@ audio {
     height: 18px;
 }
 
+/* ---------- Правка видео-фрагмента при редактировании карточки ---------- */
+/* Собирается в js/clip-trim.js: заголовок + мини-плеер (.clip-player) + кнопки
+   ±1с (.clip-trim). Если у слова нет клипа — контейнер пустой и скрыт. */
+.clip-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.clip-edit:empty {
+    display: none;
+}
+
+.clip-edit__title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* В форме редактирования держим превью компактным, чтобы не распирало карточку */
+.clip-edit .clip-player {
+    max-width: 320px;
+    margin-bottom: 4px;
+}
+
+.clip-edit .clip-trim {
+    margin: 0 0 4px;
+    justify-content: flex-start;
+}
+
 /* ========== BACK BUTTON ========== */
 
 .back-btn {

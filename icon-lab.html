@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animei — иконка, итерация 4 (вокруг варианта 8)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { color-scheme: dark; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: #0a0a0f;
+            color: #e7e7ee;
+            font-family: 'Inter', system-ui, sans-serif;
+            padding: 28px 16px 64px;
+        }
+        h1 { font-size: 22px; font-weight: 800; margin: 0 0 6px; text-align: center; }
+        .sub { text-align: center; color: #9aa; font-size: 13px; margin: 0 auto 28px; max-width: 560px; line-height: 1.5; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 18px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #141420;
+            border: 1px solid #24243a;
+            border-radius: 18px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .card.base { border-color: #7c5cf0; }
+        .big { width: 120px; height: 120px; border-radius: 27%; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+        .big svg { display: block; width: 100%; height: 100%; }
+        .shapes { display: flex; gap: 14px; align-items: center; }
+        .shape { width: 56px; height: 56px; overflow: hidden; }
+        .shape svg { display: block; width: 100%; height: 100%; }
+        .circle { border-radius: 50%; }
+        .squircle { border-radius: 30%; }
+        .name { font-weight: 600; font-size: 15px; margin-top: 2px; text-align: center; }
+        .desc { color: #9aa; font-size: 12px; text-align: center; line-height: 1.45; }
+    </style>
+</head>
+<body>
+    <h1>Иконка — итерация 4: вокруг варианта 8</h1>
+    <p class="sub">Тебе понравился вариант 8 — плоская белая あ на сливово-фиолетовом. В рамке слева его точная база, дальше 9 близких доработок: оттенок сливы, деликатная глубина (градиент/блик), вес и размер знака. Скажи номер — доведём до финала.</p>
+    <div class="grid" id="grid"></div>
+
+    <script>
+    // Вокруг варианта 8 = глубокая слива #6D3AC0, плоская белая あ, вес 700, кегль 300.
+    const A = (fill, extra) =>
+        `${extra || ''}<rect width="512" height="512" fill="${fill}"/>` +
+        `<text x="256" y="366" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-weight="700" font-size="300" fill="#fff">あ</text>`;
+
+    const V = [
+        {
+            base: true,
+            name: '0. База · вариант 8',
+            desc: 'Та самая глубокая слива #6D3AC0 — для сравнения с доработками ниже.',
+            svg: A('#6D3AC0')
+        },
+        {
+            name: '1. Слива глубже · 700',
+            desc: 'Чуть темнее и «дороже», выше контраст с белой あ.',
+            svg: A('#5E2FB0')
+        },
+        {
+            name: '2. Слива теплее',
+            desc: 'Сдвиг в тёплую пурпурно-магентовую сторону — сочнее и живее.',
+            svg: A('#7A34C6')
+        },
+        {
+            name: '3. Мягкая глубина · градиент',
+            desc: 'Один вертикальный градиент той же сливы — объём без пестроты.',
+            svg: A('url(#GID)', `<defs><linearGradient id="GID" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8352d8"/><stop offset="1" stop-color="#5a2fb0"/></linearGradient></defs>`)
+        },
+        {
+            name: '4. Слива с верхним бликом',
+            desc: 'Радиальный блик сверху — деликатный «премиальный» объём, знак не трогаем.',
+            svg: A('url(#GID)', `<defs><radialGradient id="GID" cx="0.5" cy="0.28" r="0.95"><stop offset="0" stop-color="#8a58dc"/><stop offset="1" stop-color="#5f30b2"/></radialGradient></defs>`)
+        },
+        {
+            name: '5. Лёгкая あ · вес 500',
+            desc: 'Тонкий вес при крупном кегле — элегантный, графичный леттеринг.',
+            svg: `<rect width="512" height="512" fill="#6D3AC0"/><text x="256" y="365" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-weight="500" font-size="312" fill="#f7f4ff">あ</text>`
+        },
+        {
+            name: '6. Плотная あ · вес 900',
+            desc: 'Жирный вес — уверенная, брутально-премиальная масса на сливе.',
+            svg: `<rect width="512" height="512" fill="#6D3AC0"/><text x="256" y="358" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-weight="900" font-size="290" fill="#fff">あ</text>`
+        },
+        {
+            name: '7. Ягодный пурпур',
+            desc: 'Более розово-ягодный оттенок — свежее и заметнее, но из той же семьи.',
+            svg: A('#8A2FB0')
+        },
+        {
+            name: '8. Слива → индиго',
+            desc: 'Диагональный переход из сливы в индиго — мост к прежнему фиолету бренда.',
+            svg: A('url(#GID)', `<defs><linearGradient id="GID" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7B3AD0"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs>`)
+        },
+        {
+            name: '9. Катакана ア · слива',
+            desc: 'Та же база, но угловатая ア — строже и техничнее, для сравнения с あ.',
+            svg: `<rect width="512" height="512" fill="#6D3AC0"/><text x="256" y="366" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-weight="700" font-size="310" fill="#fff">ア</text>`
+        },
+    ];
+
+    function svgEl(inner, uid) {
+        const body = inner.replaceAll('GID', 'g-' + uid);
+        return `<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+    }
+
+    const grid = document.getElementById('grid');
+    V.forEach((v, i) => {
+        const card = document.createElement('div');
+        card.className = 'card' + (v.base ? ' base' : '');
+        card.innerHTML =
+            `<div class="big">${svgEl(v.svg, i + 'a')}</div>
+             <div class="shapes">
+                 <div class="shape circle">${svgEl(v.svg, i + 'b')}</div>
+                 <div class="shape squircle">${svgEl(v.svg, i + 'c')}</div>
+             </div>
+             <div class="name">${v.name}</div>
+             <div class="desc">${v.desc}</div>`;
+        grid.appendChild(card);
+    });
+    </script>
+</body>
+</html>

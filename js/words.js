@@ -228,6 +228,13 @@ function renderWords() {
         wordEl.querySelector('.edit-btn').addEventListener('click', () => {
             wordEl.querySelector('.word-edit-content').classList.remove('hidden');
             wordEl.querySelector('.word-read-content').classList.add('hidden');
+            // Правка видео-фрагмента (перенесено из обучения): мини-плеер клипа
+            // и кнопки ±1с к началу/концу. Монтируем один раз, лениво по открытию.
+            const editBox = wordEl.querySelector('.word-edit');
+            if (window.AnimeiClipTrim && editBox && !editBox.querySelector('.clip-edit')) {
+                const editor = window.AnimeiClipTrim.buildForWord(wordData);
+                editBox.insertBefore(editor, editBox.querySelector('.word-edit__actions'));
+            }
         });
 
         const explainBtn = wordEl.querySelector('.word-card__explain');

@@ -28,6 +28,7 @@ const urlsToCache = [
     './js/watch.js',
     './js/axiosClient.js',
     './js/words-store.js',
+    './js/clip-trim.js',
     './js/stats.js',
     './img/logo.svg',
     './manifest.json',

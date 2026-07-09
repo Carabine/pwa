@@ -747,90 +747,9 @@
             });
             sync();
 
-            // ---- Редактор длины: ±1с к началу/концу ----------------------------
-            // Клип сохранён с запасом ±2с, поэтому границы можно и расширять.
-            if (w && w.id && typeof updateWord === 'function') {
-                const editor = buildTrimEditor(video, w, () => tStart, () => tEnd, (s, e) => {
-                    tStart = s; tEnd = e;
-                    try { video.currentTime = tStart; } catch { /* ignore */ }
-                    video.play().catch(() => {});
-                });
-                // Редактор кладём в отдельный элемент под видео (см. renderBack).
-                wrap._trimEditor = editor;
-            }
-
+            // Правку окна клипа (±1с к началу/концу) перенесли в редактирование
+            // карточки в словаре (js/clip-trim.js) — в обучении её больше нет.
             return wrap;
-        }
-
-        // Панель «Длина аудио»: две группы кнопок (−1с/+1с) для начала и конца.
-        function buildTrimEditor(video, w, getStart, getEnd, apply) {
-            const box = document.createElement('div');
-            box.className = 'clip-trim';
-
-            function clampSave(newStart, newEnd) {
-                const dur = video.duration && Number.isFinite(video.duration) ? video.duration : (newEnd ?? 0) + 2;
-                let s = Math.max(0, newStart);
-                let e = newEnd == null ? null : newEnd;
-                if (e != null) {
-                    e = Math.min(dur, e);
-                    s = Math.min(s, e - 0.3);
-                    e = Math.max(e, s + 0.3);
-                }
-                s = Math.max(0, s);
-                apply(s, e);
-                w.trimStart = s;
-                w.trimEnd = e;
-                persistTrim(w.id, s, e);
-                showSnackbar(t('clip.saved'), { duration: 1200 });
-            }
-
-            function group(labelKey, onMinus, onPlus) {
-                const g = document.createElement('div');
-                g.className = 'clip-trim__group';
-                const lbl = document.createElement('span');
-                lbl.className = 'clip-trim__label';
-                lbl.textContent = t(labelKey);
-                const minus = document.createElement('button');
-                minus.type = 'button';
-                minus.className = 'clip-trim__btn';
-                minus.textContent = '−1с';
-                minus.title = t('clip.earlier.title');
-                minus.addEventListener('click', (ev) => { ev.stopPropagation(); onMinus(); });
-                const plus = document.createElement('button');
-                plus.type = 'button';
-                plus.className = 'clip-trim__btn';
-                plus.textContent = '+1с';
-                plus.title = t('clip.later.title');
-                plus.addEventListener('click', (ev) => { ev.stopPropagation(); onPlus(); });
-                g.append(lbl, minus, plus);
-                return g;
-            }
-
-            const startGroup = group('clip.start',
-                () => clampSave(getStart() - 1, getEnd()),
-                () => clampSave(getStart() + 1, getEnd()));
-            const endGroup = group('clip.end',
-                () => { const e = getEnd() == null ? (video.duration || 0) : getEnd(); clampSave(getStart(), e - 1); },
-                () => { const e = getEnd() == null ? (video.duration || 0) : getEnd(); clampSave(getStart(), e + 1); });
-
-            box.append(startGroup, endGroup);
-            return box;
-        }
-
-        // Сохраняем окно клипа: у вошедшего — PATCH на сервер, у гостя — в
-        // guestWords; плюс обновляем кэш words в localStorage, чтобы пережило
-        // перезагрузку страницы.
-        function persistTrim(id, s, e) {
-            try { updateWord(id, { trimStart: s, trimEnd: e }); } catch { /* не критично */ }
-            try {
-                const words = JSON.parse(localStorage.getItem('words') || '[]');
-                const idx = words.findIndex((x) => x && x.id === id);
-                if (idx >= 0) {
-                    words[idx].trimStart = s;
-                    words[idx].trimEnd = e;
-                    localStorage.setItem('words', JSON.stringify(words));
-                }
-            } catch { /* не критично */ }
         }
 
         function renderBack() {
@@ -842,7 +761,6 @@
             if (src) {
                 const clip = makeClipVideo(src, w);
                 els.back.appendChild(clip);
-                if (clip._trimEditor) els.back.appendChild(clip._trimEditor);
             } else if (typeof getClipUrl === 'function' && w.id) {
                 // Клип гостя лежит в IndexedDB — тянем асинхронно и ставим сверху,
                 // если карточка ещё та же самая.
@@ -852,7 +770,6 @@
                     if (!els.back.classList.contains('back-side--visible')) return;
                     const clip = makeClipVideo(url, w);
                     els.back.insertBefore(clip, els.back.firstChild);
-                    if (clip._trimEditor) clip.after(clip._trimEditor);
                 });
             }
             if (w.audio) {
