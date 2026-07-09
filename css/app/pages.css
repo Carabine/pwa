@@ -359,6 +359,57 @@
     margin-top: 4px;
 }
 
+/* ========== DICTIONARY — MOBILE ========== */
+@media (max-width: 560px) {
+    .dictionary {
+        padding: 16px 14px;
+    }
+
+    .dictionary__title {
+        font-size: 19px;
+        margin-bottom: 14px;
+    }
+
+    .words-toolbar {
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    /* Поиск занимает всю строку целиком */
+    .words-filter {
+        flex-basis: 100%;
+        min-width: 0;
+    }
+
+    /* Кнопки действий — на всю ширину, поровну делят строку */
+    .words-toolbar__actions {
+        width: 100%;
+    }
+
+    .words-toolbar__actions .btn {
+        flex: 1;
+        padding: 10px 12px;
+        letter-spacing: 0.3px;
+    }
+
+    /* Одна колонка карточек — без минимальной шир, которая давала
+       горизонтальный скролл на узких экранах. */
+    .words-list {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .word-card {
+        padding: 14px 14px 12px;
+    }
+
+    /* В одну колонку выравнивание высоты не нужно — короткие карточки
+       больше не растягиваются пустотой. */
+    .word-read-content {
+        min-height: 0;
+    }
+}
+
 /* ========== FEEDBACK PAGE ========== */
 
 .feedback {
