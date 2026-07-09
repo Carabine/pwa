@@ -2,7 +2,9 @@
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
+        // updateViaCache: 'none' — браузер не берёт сам скрипт SW из HTTP-кеша
+        // при проверке обновлений, поэтому новая версия SW находится сразу.
+        navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' })
             .then(() => console.log('SW registered'))
             .catch(err => console.log('SW registration failed:', err));
     });

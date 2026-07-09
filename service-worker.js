@@ -1,6 +1,6 @@
 // Пути относительные — SW живёт в /app/, поэтому './' указывает на /app/.
 // ВАЖНО: меняй номер версии при каждом деплое — иначе старый кеш не сбросится.
-const CACHE_NAME = 'animei-cache-v45';
+const CACHE_NAME = 'animei-cache-v46';
 const urlsToCache = [
     './',
     './index.html',
@@ -47,8 +47,19 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     if (request.method !== 'GET') return;
 
+    // cache: 'no-cache' — всегда спрашиваем сервер (ревалидация по ETag), а не
+    // берём ресурс из HTTP-кеша браузера. Иначе «сеть в первую очередь» по факту
+    // отдавала старый CSS/JS из HTTP-кеша, и правки не доезжали до установленного
+    // приложения (в инкогнито HTTP-кеша нет — там обновлялось сразу).
+    // Навигационные запросы (mode 'navigate') пересоздавать нельзя — Request
+    // конструктор для них бросает исключение, поэтому их не трогаем.
+    const sameOrigin = new URL(request.url).origin === self.location.origin;
+    const networkRequest = (sameOrigin && request.mode !== 'navigate')
+        ? new Request(request, { cache: 'no-cache' })
+        : request;
+
     event.respondWith(
-        fetch(request)
+        fetch(networkRequest)
             .then((response) => {
                 // Обновляем офлайн-копию только для своих ресурсов.
                 if (response.ok && new URL(request.url).origin === self.location.origin) {
