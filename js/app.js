@@ -1,3 +1,8 @@
+// Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
+// service-worker.js при каждом деплое. Показывается в футере сайдбара
+// (см. ниже), чтобы визуально валидировать, что деплой доехал.
+const APP_VERSION = 'v47';
+
 // ========== Service Worker ==========
 
 if ('serviceWorker' in navigator) {
@@ -80,6 +85,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
     const menuBtn = document.querySelector('.menu-btn');
+
+    // Версия в футере сайдбара — маркер того, какой деплой сейчас в приложении.
+    if (sidebar && !sidebar.querySelector('.sidebar__version')) {
+        const ver = document.createElement('div');
+        ver.className = 'sidebar__version';
+        ver.textContent = APP_VERSION;
+        sidebar.appendChild(ver);
+    }
 
     if (menuBtn && sidebar && overlay) {
         menuBtn.addEventListener('click', () => {
