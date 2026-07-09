@@ -85,9 +85,51 @@
         }
     }
 
-    async function studyRunExplain(sentence, btn, out) {
+    // Модалка ИИ-разбора: один оверлей на всё приложение, переиспользуем его.
+    // Раньше разбор раскрывался прямо в карточке и ломал её вёрстку/скролл —
+    // теперь показываем в отдельном окне со своим скроллом.
+    let explainModal = null;
+    function getExplainModal() {
+        if (explainModal) return explainModal;
+        const overlay = document.createElement('div');
+        overlay.className = 'explain-modal';
+        overlay.hidden = true;
+        overlay.innerHTML =
+            '<div class="explain-modal__dialog" role="dialog" aria-modal="true">' +
+                '<div class="explain-modal__head">' +
+                    '<span class="explain-modal__title"></span>' +
+                    '<button class="explain-modal__close" type="button" aria-label="Закрыть">✕</button>' +
+                '</div>' +
+                '<div class="explain-modal__body"></div>' +
+            '</div>';
+        overlay.querySelector('.explain-modal__title').textContent = t('words.explain');
+        document.body.appendChild(overlay);
+
+        const body = overlay.querySelector('.explain-modal__body');
+        const onKey = (e) => { if (e.key === 'Escape') close(); };
+        function close() {
+            overlay.hidden = true;
+            document.removeEventListener('keydown', onKey);
+        }
+        // Клик по затемнённому фону (но не по диалогу) — закрыть.
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+        overlay.querySelector('.explain-modal__close').addEventListener('click', close);
+
+        explainModal = {
+            body,
+            open() {
+                overlay.hidden = false;
+                body.scrollTop = 0;
+                document.addEventListener('keydown', onKey);
+            },
+        };
+        return explainModal;
+    }
+
+    async function studyRunExplain(sentence, btn) {
+        const modal = getExplainModal();
         const cached = studyExplainCache.get(sentence);
-        if (cached) { studyRenderExplain(out, cached); btn.remove(); return; }
+        if (cached) { studyRenderExplain(modal.body, cached); modal.open(); return; }
         btn.disabled = true;
         const label = btn.textContent;
         btn.textContent = t('words.explaining');
@@ -95,12 +137,14 @@
             const { data: res } = await client.get('explain', { params: { sentence }, timeout: 60000 });
             const data = res.data.explanation;
             studyExplainCache.set(sentence, data);
-            studyRenderExplain(out, data);
-            btn.remove();
+            studyRenderExplain(modal.body, data);
+            modal.open();
         } catch (err) {
             console.error(err);
             const limited = err.response?.data?.reason === 'limited' || err.response?.status === 429;
             showSnackbar(limited ? t('popup.explainLimited') : t('words.explainError'), { duration: 3500, type: 'error' });
+        } finally {
+            // Кнопку не убираем — разбор можно открыть снова (из кэша, мгновенно).
             btn.disabled = false;
             btn.textContent = label;
         }
@@ -555,17 +599,16 @@
 
             addLine('translatedSentence', w.translatedSentence ?? w.sentenceTranslation ?? '');
 
-            // ИИ-разбор предложения — по кнопке (если у слова есть предложение и ИИ включён)
+            // ИИ-разбор предложения — по кнопке (если у слова есть предложение и ИИ
+            // включён). Результат открывается в модалке (studyRunExplain), а не
+            // растягивает саму карточку.
             if (studyAiAvailable && w.sentence) {
-                const explainOut = document.createElement('div');
-                explainOut.className = 'card-explain-out hidden';
                 const explainBtn = makeButton(
                     t('words.explain'),
                     'card-explain-btn',
-                    () => studyRunExplain(w.sentence, explainBtn, explainOut),
+                    () => studyRunExplain(w.sentence, explainBtn),
                 );
                 els.back.appendChild(explainBtn);
-                els.back.appendChild(explainOut);
             }
 
             if (w.anime) addLine('card-anime', t('starter.fromAnime') + ' ' + w.anime);
