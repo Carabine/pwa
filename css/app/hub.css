@@ -1,0 +1,129 @@
+/* ========== HUB PAGE ========== */
+
+.hub {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 40px 20px;
+}
+
+.hub-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 600;
+    transition: all 0.25s ease;
+    text-decoration: none;
+}
+
+.hub-card:hover {
+    background: var(--surface);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+    color: var(--text);
+}
+
+.hub-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.hub-card__icon--study {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+.hub-card__icon--custom {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--primary-hover);
+}
+
+.hub-card__icon--beginner {
+    background: rgba(255, 107, 157, 0.15);
+    color: #ff6b9d;
+}
+
+.hub-card__info {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Карточка «Каталог» — главный вход для пополнения словаря, выделяем её */
+.hub-card--accent {
+    border-color: rgba(244, 63, 94, 0.45);
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.08), var(--card) 60%);
+}
+
+.hub-card--accent:hover {
+    border-color: var(--danger);
+    box-shadow: 0 8px 24px rgba(244, 63, 94, 0.18);
+}
+
+.hub-card__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hub-card__badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    color: var(--danger-hover);
+    background: rgba(244, 63, 94, 0.14);
+    border-radius: 999px;
+    padding: 2px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.hub-card__subtitle {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+/* Живой счётчик на карточке «Учёба»: сколько ждёт сегодня + серия дней */
+.hub-card__progress {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--success);
+    margin-top: 4px;
+}
+
+.hub-card__progress--clear {
+    color: var(--text-dim);
+}
+
+/* На узких экранах «Каталог аниме» + бейдж «словарь» не помещались в одну строку:
+   уменьшаем бейдж и разрешаем ему перенос на вторую строку при нехватке места. */
+@media (max-width: 480px) {
+    .hub-card__label {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .hub-card__badge {
+        font-size: 10px;
+        padding: 2px 7px;
+    }
+}

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Статистика Animei</title>
+<style>
+    :root {
+        --bg: #0f1115;
+        --card: #1a1d24;
+        --card2: #21252e;
+        --text: #e8eaed;
+        --muted: #9aa0a6;
+        --accent: #7c9cff;
+        --accent2: #3a4668;
+        --border: #2a2e37;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        padding: 24px 16px 48px;
+    }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+
+    .periods { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .periods button {
+        background: var(--card); color: var(--text); border: 1px solid var(--border);
+        padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    }
+    .periods button.active { background: var(--accent); border-color: var(--accent); color: #0f1115; font-weight: 600; }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .card .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .card .value { font-size: 28px; font-weight: 700; }
+
+    .section-title { font-size: 15px; margin: 0 0 12px; color: var(--text); }
+
+    .chart { display: flex; align-items: flex-end; gap: 3px; height: 180px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-width: 16px; flex: 1; height: 100%; }
+    .bar { width: 70%; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 2px; transition: height .2s; }
+    .bar.empty { background: var(--accent2); }
+    .bar-date { color: var(--muted); font-size: 9px; margin-top: 6px; white-space: nowrap; transform: rotate(-60deg); transform-origin: center; height: 28px; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 28px; background: var(--card); border-radius: 12px; overflow: hidden; }
+    th, td { text-align: left; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 500; background: var(--card2); }
+    td.num, th.num { text-align: right; }
+    tr:last-child td { border-bottom: none; }
+
+    .msg { color: var(--muted); padding: 40px 0; text-align: center; }
+
+    .visitor { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+    .visitor__head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; flex-wrap: wrap; }
+    .visitor__head:hover { background: var(--card2); }
+    .visitor__ip { font-weight: 600; font-size: 14px; font-family: ui-monospace, monospace; }
+    .visitor__meta { color: var(--muted); font-size: 12px; }
+    .chip { background: var(--accent2); color: #cdd6f4; font-size: 11px; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+    .visitor__spacer { flex: 1; }
+    .visitor__caret { color: var(--muted); font-size: 12px; }
+    .visitor__body { display: none; padding: 4px 14px 14px; border-top: 1px solid var(--border); }
+    .visitor.open .visitor__body { display: block; }
+    .tl { list-style: none; margin: 8px 0 0; padding: 0; }
+    .tl li { display: flex; gap: 10px; padding: 5px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
+    .tl li:last-child { border-bottom: none; }
+    .tl__time { color: var(--muted); white-space: nowrap; min-width: 118px; }
+    .tl__act { color: var(--text); }
+    .tl__tag { display: inline-block; min-width: 92px; color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Статистика Animei</h1>
+    <div class="sub" id="sub">Загрузка…</div>
+
+    <div class="periods">
+        <button data-days="7">7 дней</button>
+        <button data-days="30" class="active">30 дней</button>
+        <button data-days="90">90 дней</button>
+    </div>
+
+    <div class="cards" id="cards"></div>
+
+    <h2 class="section-title">Открытия по дням</h2>
+    <div class="chart" id="chart"></div>
+
+    <h2 class="section-title" style="margin-top:28px">Топ страниц</h2>
+    <div id="pages"></div>
+
+    <h2 class="section-title" style="margin-top:28px">Посетители по IP</h2>
+    <div class="sub" id="visitors-sub"></div>
+    <div id="visitors"></div>
+</div>
+
+<script>
+    // Тот же хост, что и приложение (nginx проксирует /api на бэкенд).
+    var apiBase = ['localhost', '127.0.0.1', ''].includes(location.hostname)
+        ? 'http://localhost:3005'
+        : location.origin;
+
+    var currentDays = 30;
+
+    function fmt(n) { return (n ?? 0).toLocaleString('ru-RU'); }
+
+    function card(label, value) {
+        return '<div class="card"><div class="label">' + label + '</div><div class="value">' + fmt(value) + '</div></div>';
+    }
+
+    function render(data) {
+        document.getElementById('sub').textContent =
+            'За ' + data.days + ' дн. · обновлено ' + new Date().toLocaleString('ru-RU');
+
+        document.getElementById('cards').innerHTML =
+            card('Всего открытий', data.totalHits) +
+            card('Уникальных посетителей', data.totalVisitors) +
+            card('Сегодня открытий', data.today.hits) +
+            card('Сегодня посетителей', data.today.visitors);
+
+        // График по дням
+        var max = Math.max(1, ...data.perDay.map(function (d) { return d.hits; }));
+        document.getElementById('chart').innerHTML = data.perDay.map(function (d) {
+            var h = Math.round((d.hits / max) * 100);
+            var cls = d.hits === 0 ? 'bar empty' : 'bar';
+            var label = d.date.slice(5); // ММ-ДД
+            return '<div class="bar-col" title="' + d.date + ': ' + d.hits + ' открытий, ' + d.visitors + ' посетителей">' +
+                   '<div class="' + cls + '" style="height:' + h + '%"></div>' +
+                   '<div class="bar-date">' + label + '</div></div>';
+        }).join('');
+
+        // Топ страниц
+        if (!data.topPages.length) {
+            document.getElementById('pages').innerHTML = '<div class="msg">Пока нет данных</div>';
+        } else {
+            var rows = data.topPages.map(function (p) {
+                return '<tr><td>' + p.page + '</td><td class="num">' + fmt(p.hits) +
+                       '</td><td class="num">' + fmt(p.visitors) + '</td></tr>';
+            }).join('');
+            document.getElementById('pages').innerHTML =
+                '<table><thead><tr><th>Страница</th><th class="num">Открытия</th><th class="num">Посетители</th></tr></thead><tbody>' +
+                rows + '</tbody></table>';
+        }
+    }
+
+    // Человеческие названия действий и страниц для таймлайна.
+    var EVENT_LABELS = { page: 'открыл', save_word: 'сохранил слово', play: 'смотрел', study: 'учил' };
+    var PAGE_LABELS = {
+        'app/index': 'главная', 'app/catalog': 'каталог', 'app/player': 'плеер',
+        'app/watch': 'свой файл', 'app/words': 'словарь', 'app/study': 'повторение',
+        'app/custom-study': 'своя учёба', 'app/login': 'вход', 'app/feedback': 'отзыв', 'app/stats': 'статистика'
+    };
+    var STUDY_LABELS = { srs: 'повторение', cram: 'зубрёжка' };
+
+    function esc(s) {
+        return String(s).replace(/[&<>"]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+    }
+
+    function actionText(item) {
+        var verb = EVENT_LABELS[item.event] || item.event;
+        var detail = item.page;
+        if (item.event === 'page') detail = PAGE_LABELS[item.page] || item.page;
+        else if (item.event === 'study') detail = STUDY_LABELS[item.page] || item.page;
+        return { verb: verb, detail: detail };
+    }
+
+    function fmtTime(iso) {
+        var d = new Date(iso);
+        return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderVisitors(data) {
+        document.getElementById('visitors-sub').textContent =
+            data.count + ' уникальных IP за ' + data.days + ' дн.';
+
+        if (!data.visitors.length) {
+            document.getElementById('visitors').innerHTML = '<div class="msg">Пока нет данных</div>';
+            return;
+        }
+
+        document.getElementById('visitors').innerHTML = data.visitors.map(function (v, i) {
+            var summary = v.events.map(function (e) {
+                return '<span class="chip">' + (EVENT_LABELS[e.event] || e.event) + ': ' + e.count + '</span>';
+            }).join(' ');
+
+            var timeline = v.timeline.map(function (item) {
+                var a = actionText(item);
+                return '<li><span class="tl__time">' + fmtTime(item.at) + '</span>' +
+                    '<span class="tl__tag">' + esc(a.verb) + '</span>' +
+                    '<span class="tl__act">' + esc(a.detail) + '</span></li>';
+            }).join('');
+
+            return '<div class="visitor" data-i="' + i + '">' +
+                '<div class="visitor__head" onclick="this.parentNode.classList.toggle(\'open\')">' +
+                '<span class="visitor__ip">' + esc(v.ip) + '</span>' +
+                '<span class="visitor__meta">' + v.hits + ' действий · ' + v.visitors + ' устр. · ' +
+                fmtTime(v.firstSeen) + ' → ' + fmtTime(v.lastSeen) + '</span>' +
+                '<span class="visitor__spacer"></span>' + summary +
+                '<span class="visitor__caret">▾</span></div>' +
+                '<div class="visitor__body"><ul class="tl">' + timeline + '</ul></div></div>';
+        }).join('');
+    }
+
+    function load(days) {
+        currentDays = days;
+        document.querySelectorAll('.periods button').forEach(function (b) {
+            b.classList.toggle('active', Number(b.dataset.days) === days);
+        });
+        document.getElementById('sub').textContent = 'Загрузка…';
+
+        fetch(apiBase + '/api/v1/stats/summary?days=' + days)
+            .then(function (r) { return r.json(); })
+            .then(render)
+            .catch(function () {
+                document.getElementById('sub').textContent = 'Не удалось загрузить статистику';
+            });
+
+        fetch(apiBase + '/api/v1/stats/visitors?days=' + days)
+            .then(function (r) { return r.json(); })
+            .then(renderVisitors)
+            .catch(function () {
+                document.getElementById('visitors').innerHTML = '<div class="msg">Не удалось загрузить посетителей</div>';
+            });
+    }
+
+    document.querySelectorAll('.periods button').forEach(function (b) {
+        b.addEventListener('click', function () { load(Number(b.dataset.days)); });
+    });
+
+    load(30);
+</script>
+</body>
+</html>

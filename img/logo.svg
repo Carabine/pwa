@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="an-bg" x1="40" y1="24" x2="472" y2="488" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff5c94"/>
+      <stop offset="0.5" stop-color="#b95ce0"/>
+      <stop offset="1" stop-color="#8b3ff0"/>
+    </linearGradient>
+    <linearGradient id="an-gloss" x1="0" y1="16" x2="0" y2="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="an-glow" cx="188" cy="150" r="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- squircle badge -->
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#an-bg)"/>
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#an-glow)"/>
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#an-gloss)"/>
+  <rect x="17.5" y="17.5" width="477" height="477" rx="114.5" fill="none" stroke="#ffffff" stroke-opacity="0.28" stroke-width="3"/>
+
+  <!-- kanji 憧 (akogare — "longing", смысл бренда) -->
+  <text x="256" y="366" text-anchor="middle"
+        font-family="Yu Gothic, 'Yu Gothic UI', 'MS Gothic', 'Noto Sans JP', sans-serif"
+        font-weight="700" font-size="316" fill="#ffffff">憧</text>
+</svg>

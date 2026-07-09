@@ -1,4 +1,7 @@
-const API_BASE = window.ANIMEI_API || "http://localhost:3005/api/v1";
+const API_BASE = window.ANIMEI_API
+  || (['localhost', '127.0.0.1', ''].includes(window.location.hostname)
+    ? 'http://localhost:3005/api/v1'
+    : window.location.origin + '/api/v1');
 
 let segments = [];
 
@@ -45,7 +48,7 @@ const playIcon = document.getElementById("play-icon");
 const pauseIcon = document.getElementById("pause-icon");
 
 const saveModal = document.getElementById("save-modal");
-const saveWord = document.getElementById("save-word");
+const saveWordInput = document.getElementById("save-word");
 const saveKana = document.getElementById("save-kana");
 const saveRomaji = document.getElementById("save-romaji");
 const saveMeaning = document.getElementById("save-meaning");
@@ -99,7 +102,7 @@ function loadVideoFile(file) {
 }
 
 function isExternalPlayerUrl(url) {
-  return /kodikplayer\.com|kodik\.(info|cc|biz)|gencit\.info|opravar\.online|werberk\.pro/.test(url);
+  return /gencit\.info|opravar\.online|werberk\.pro/.test(url);
 }
 
 function loadVideoUrl(url) {
@@ -109,9 +112,7 @@ function loadVideoUrl(url) {
   if (isExternalPlayerUrl(url)) {
     player.poster = "";
     player.removeAttribute("src");
-    playerWrap.classList.add("kodik-pending");
   } else {
-    playerWrap.classList.remove("kodik-pending");
     player.src = url;
   }
 
@@ -122,20 +123,23 @@ function loadVideoUrl(url) {
 
 // ========== TRANSCRIPTION VIA SERVER ==========
 
+const STEP_PROGRESS = { download: 10, audio: 30, transcribe: 50, tokenize: 75, translate: 90 };
+
 async function transcribe() {
   transcribeBtn.disabled = true;
-  statusBar.classList.remove("hidden");
+  statusBar.classList.add("hidden");
+
+  showLoading("Подготовка...");
+  setLoadingStep("download");
+  setLoadingProgress(5);
 
   try {
     let result;
 
     if (currentVideoUrl) {
-      setStatus("Sending URL to server...");
-      setProgress(10);
       result = await transcribeByUrl(currentVideoUrl);
     } else if (currentVideoFile) {
-      setStatus("Uploading video to server...");
-      setProgress(10);
+      loadingStatus.textContent = "Загрузка файла...";
       result = await transcribeByFile(currentVideoFile);
     } else {
       throw new Error("No video loaded");
@@ -145,16 +149,32 @@ async function transcribe() {
 
     if (result.meta?.videoUrl) {
       loadHlsVideo(result.meta.videoUrl);
-      playerWrap.classList.remove("kodik-pending");
+
     }
+
+    setLoadingProgress(100);
+    loadingStatus.textContent = `Готово — ${segments.length} сегментов`;
+    loadingSteps.querySelectorAll(".loading-step").forEach(s => {
+      s.classList.remove("active");
+      s.classList.add("done");
+    });
 
     renderSubtitles();
     liveSubsEl.classList.remove("hidden");
-    setStatus(`Done — ${segments.length} segments`);
-    setProgress(100);
-    setTimeout(() => statusBar.classList.add("hidden"), 2000);
+    setTimeout(() => hideLoading(), 800);
   } catch (err) {
-    setStatus("Error: " + err.message);
+    loadingStatus.textContent = "Ошибка: " + err.message;
+    loadingProgressFill.style.background = "#ef4444";
+    loadingOverlay.querySelector(".loading-spinner").style.display = "none";
+    const retryBtn = document.createElement("button");
+    retryBtn.className = "btn btn--ghost loading-retry";
+    retryBtn.textContent = "Назад";
+    retryBtn.addEventListener("click", () => {
+      hideLoading();
+      watchArea.classList.add("hidden");
+      uploadArea.classList.remove("hidden");
+    });
+    loadingOverlay.appendChild(retryBtn);
     console.error(err);
   } finally {
     transcribeBtn.disabled = false;
@@ -167,10 +187,62 @@ async function transcribeByUrl(url) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url }),
   });
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || `Server error ${res.status}`);
   }
+
+  const contentType = res.headers.get("content-type") || "";
+
+  if (contentType.includes("text/event-stream")) {
+    return new Promise((resolve, reject) => {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      function read() {
+        reader.read().then(({ done, value }) => {
+          if (done) {
+            reject(new Error("Stream ended without result"));
+            return;
+          }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const msg = JSON.parse(line.slice(6));
+            if (msg.type === "step") {
+              setLoadingStep(msg.step);
+              setLoadingProgress(STEP_PROGRESS[msg.step] || 50);
+              loadingStatus.textContent = msg.text;
+            } else if (msg.type === "progress") {
+              loadingStatus.textContent = msg.text;
+              if (msg.pct >= 0) {
+                const base = STEP_PROGRESS[msg.step] || 0;
+                const nextSteps = Object.values(STEP_PROGRESS);
+                const idx = nextSteps.indexOf(base);
+                const next = nextSteps[idx + 1] || 100;
+                const range = next - base;
+                setLoadingProgress(base + Math.round(range * msg.pct / 100));
+              }
+            } else if (msg.type === "done") {
+              resolve(msg.result);
+              return;
+            } else if (msg.type === "error") {
+              reject(new Error(msg.error));
+              return;
+            }
+          }
+          read();
+        }).catch(reject);
+      }
+      read();
+    });
+  }
+
   return res.json();
 }
 
@@ -426,6 +498,49 @@ function loadHlsVideo(url) {
   }
 }
 
+// ========== LOADING OVERLAY ==========
+
+const loadingOverlay = document.getElementById("loading-overlay");
+const loadingStatus = document.getElementById("loading-status");
+const loadingSteps = document.getElementById("loading-steps");
+const loadingProgressFill = document.getElementById("loading-progress-fill");
+
+function showLoading(text) {
+  loadingOverlay.classList.remove("hidden");
+  loadingStatus.textContent = text || "Подготовка...";
+  loadingProgressFill.style.width = "0%";
+  loadingProgressFill.style.background = "";
+  loadingOverlay.querySelector(".loading-spinner").style.display = "";
+  const retryBtn = loadingOverlay.querySelector(".loading-retry");
+  if (retryBtn) retryBtn.remove();
+  loadingSteps.querySelectorAll(".loading-step").forEach(s => {
+    s.classList.remove("active", "done");
+  });
+}
+
+function hideLoading() {
+  loadingOverlay.classList.add("hidden");
+}
+
+function setLoadingStep(stepName) {
+  const steps = loadingSteps.querySelectorAll(".loading-step");
+  let found = false;
+  steps.forEach(s => {
+    if (s.dataset.step === stepName) {
+      s.classList.add("active");
+      s.classList.remove("done");
+      found = true;
+    } else if (!found) {
+      s.classList.remove("active");
+      s.classList.add("done");
+    }
+  });
+}
+
+function setLoadingProgress(pct) {
+  loadingProgressFill.style.width = pct + "%";
+}
+
 // ========== UI HELPERS ==========
 
 function setStatus(text) { statusText.textContent = text; }
@@ -586,7 +701,7 @@ function isElementInView(el, container) {
 
 function openSaveModal(token, sentence, english) {
   saveModalTitle.textContent = token.baseForm;
-  saveWord.value = token.baseForm;
+  saveWordInput.value = token.baseForm;
   saveKana.value = token.kana;
   saveRomaji.value = "";
   saveMeaning.value = "";
@@ -604,26 +719,29 @@ saveModal.addEventListener("click", (e) => {
   if (e.target === saveModal) saveModal.classList.add("hidden");
 });
 
-document.getElementById("save-confirm").addEventListener("click", () => {
-  const word = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 10),
-    word: saveWord.value,
+document.getElementById("save-confirm").addEventListener("click", async () => {
+  // Серверная форма слова: вошёл — уйдёт в аккаунт, гость — сохранится локально.
+  const payload = {
+    kanji: saveWordInput.value,
     kana: saveKana.value,
     romaji: saveRomaji.value,
-    meaning: saveMeaning.value,
+    translation: saveMeaning.value,
     sentence: saveSentence.value,
-    translatedSentence: saveTranslation.value,
-    audio: "",
-    video: "",
+    sentenceTranslation: saveTranslation.value,
+    hint: "",
   };
 
-  const stored = JSON.parse(localStorage.getItem("words") || "[]");
-  stored.push(word);
-  localStorage.setItem("words", JSON.stringify(stored));
-
-  saveModal.classList.add("hidden");
-
-  if (typeof showSnackbar === "function") {
-    showSnackbar("Word saved to dictionary", { duration: 3000, type: "success" });
+  try {
+    await saveWord(payload);
+    if (window.animeiTrack) window.animeiTrack("save_word", payload.kanji);
+    saveModal.classList.add("hidden");
+    if (typeof showSnackbar === "function") {
+      showSnackbar("Word saved to dictionary", { duration: 3000, type: "success" });
+    }
+  } catch (err) {
+    console.error("Не удалось сохранить слово:", err);
+    if (typeof showSnackbar === "function") {
+      showSnackbar("Failed to save word", { duration: 3000, type: "error" });
+    }
   }
 });

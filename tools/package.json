@@ -5,6 +5,7 @@
   "description": "Tools for parsing anime subtitles into study data",
   "dependencies": {
     "kuromoji": "^0.1.2",
+    "sharp": "^0.35.3",
     "wanakana": "^5.3.1"
   }
 }

@@ -62,6 +62,20 @@
                         <div id="live-en" class="live-subs__en"></div>
                         <div id="live-ru" class="live-subs__ru"></div>
                     </div>
+                    <div id="loading-overlay" class="loading-overlay hidden">
+                        <div class="loading-spinner"></div>
+                        <div id="loading-status" class="loading-status">Подготовка...</div>
+                        <div class="loading-steps" id="loading-steps">
+                            <div class="loading-step" data-step="download">Скачивание видео</div>
+                            <div class="loading-step" data-step="audio">Извлечение аудио из потока</div>
+                            <div class="loading-step" data-step="transcribe">Транскрипция (Whisper)</div>
+                            <div class="loading-step" data-step="tokenize">Токенизация (MeCab)</div>
+                            <div class="loading-step" data-step="translate">Перевод (EN + RU)</div>
+                        </div>
+                        <div class="loading-progress">
+                            <div class="loading-progress__fill" id="loading-progress-fill"></div>
+                        </div>
+                    </div>
                     <div id="play-icon" class="play-icon hidden">
                         <svg width="64" height="64" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     </div>
@@ -176,19 +190,24 @@
 
     <nav class="sidebar" id="sidebar">
         <div class="sidebar__brand">Animei</div>
-        <a href="../index.html">Home</a>
-        <a href="./watch.html" class="active">Watch</a>
-        <a href="./words.html">Dictionary</a>
-        <a href="./feedback.html">Feedback</a>
+        <a href="../index.html" data-i18n="nav.home">Главная</a>
+        <a href="./catalog.html" data-i18n="nav.catalog">Каталог</a>
+        <a href="./watch.html" class="active" data-i18n="nav.watch">Своё видео</a>
+        <a href="./words.html" data-i18n="nav.dictionary">Словарь</a>
+        <a href="./feedback.html" data-i18n="nav.feedback">Обратная связь</a>
     </nav>
     <div class="overlay" id="overlay"></div>
 </div>
 
 <script src="../libs/axios/axios.min.js"></script>
 <script src="../libs/snackbar/snackbar.js"></script>
+<script src="../js/i18n.js"></script>
 <script src="../js/axiosClient.js"></script>
+<script src="../js/video-store.js"></script>
+<script src="../js/words-store.js"></script>
 <script src="../js/app.js"></script>
 <script src="../libs/hls/hls.min.js"></script>
 <script src="../js/watch.js"></script>
+<script src="../js/stats.js"></script>
 </body>
 </html>

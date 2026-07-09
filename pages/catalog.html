@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог — Animei</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../css/app.css" rel="stylesheet">
+    <link href="../css/catalog.css" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+    <header class="header">
+        <div class="header__left">
+            <a href="../index.html" class="icon-btn" aria-label="Home">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </a>
+        </div>
+        <div class="header__logo" data-i18n="catalog.title">Каталог</div>
+        <div class="header__right"></div>
+    </header>
+
+    <main class="catalog">
+        <div class="catalog__search">
+            <svg class="catalog__search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="search-input" type="text" data-i18n-placeholder="catalog.placeholder" placeholder="Название аниме — например, Фрирен или Naruto" autocomplete="off" autofocus>
+        </div>
+
+        <p class="catalog__hint" data-i18n="catalog.hint">Открой любое аниме и кликай по словам в субтитрах — они попадут в твой словарь и в карточки для изучения.</p>
+
+        <h2 id="heading" class="catalog__heading" data-i18n="catalog.popular">Популярное</h2>
+        <div id="results" class="catalog__grid"></div>
+        <div id="status" class="catalog__status" style="display:none"></div>
+    </main>
+</div>
+
+<script src="../libs/axios/axios.min.js"></script>
+<script src="../libs/snackbar/snackbar.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/axiosClient.js"></script>
+<script src="../js/catalog.js"></script>
+<script src="../js/stats.js"></script>
+</body>
+</html>

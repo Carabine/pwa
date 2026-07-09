@@ -1,0 +1,274 @@
+html, body {
+    overflow: auto;
+}
+
+.catalog {
+    width: 100%;
+    max-width: 1180px;
+    /* .catalog — flex-элемент внутри .app (flex-column). Без width:100% авто-поля
+       margin:0 auto отключают растягивание, и main съёживается по контенту —
+       на ПК сетка схлопывалась в одну колонку. */
+    margin: 0 auto;
+    padding: 28px 16px 64px;
+}
+
+/* ---------- Поиск ---------- */
+.catalog__search {
+    position: relative;
+    max-width: 620px;
+    margin: 12px auto 4px;
+}
+
+.catalog__search-icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    pointer-events: none;
+    transition: color var(--transition);
+}
+
+.catalog__search:focus-within .catalog__search-icon {
+    color: #a855f7;
+}
+
+.catalog__search input {
+    width: 100%;
+    padding: 16px 20px 16px 52px;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+.catalog__search input::placeholder {
+    color: var(--text-dim);
+}
+
+.catalog__search input:focus {
+    border-color: #a855f7;
+    background: var(--surface);
+    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.16);
+}
+
+/* Пояснение под поиском: что вообще делает каталог (пополнение словаря) */
+.catalog__hint {
+    max-width: 620px;
+    margin: 10px auto 4px;
+    padding: 10px 16px;
+    background: rgba(168, 85, 247, 0.08);
+    border: 1px solid rgba(168, 85, 247, 0.22);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* ---------- Подсказка / статус ---------- */
+.catalog__status {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 64px 20px;
+    font-size: 15px;
+    max-width: 440px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* ---------- Заголовок раздела ---------- */
+.catalog__heading {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 24px 4px 0;
+}
+
+/* ---------- Сетка ---------- */
+.catalog__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 22px 18px;
+    margin-top: 16px;
+}
+
+@media (max-width: 520px) {
+    .catalog__grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px 12px;
+    }
+}
+
+/* ---------- Карточка ---------- */
+.anime-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    aspect-ratio: 2 / 3;
+    background: var(--surface);
+    box-shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.5);
+    transition: transform var(--transition), box-shadow var(--transition);
+    animation: cardIn 0.4s ease both;
+}
+
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.anime-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 42px -12px rgba(168, 85, 247, 0.55);
+}
+
+.anime-card__poster {
+    position: absolute;
+    inset: 0;
+}
+
+.anime-card__poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.45s ease;
+}
+
+.anime-card:hover .anime-card__poster img {
+    transform: scale(1.07);
+}
+
+/* Затемнение снизу — чтобы название читалось поверх постера */
+.anime-card__shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, rgba(10, 10, 15, 0.55) 28%, rgba(10, 10, 15, 0) 56%);
+    transition: background var(--transition);
+}
+
+.anime-card:hover .anime-card__shade {
+    background: linear-gradient(to top, rgba(10, 10, 15, 0.96) 0%, rgba(20, 8, 30, 0.5) 45%, rgba(30, 10, 45, 0.25) 100%);
+}
+
+/* Рейтинг */
+.anime-card__score {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #ffd15c;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Тип (ТВ / Фильм / ONA ...) */
+.anime-card__kind {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    max-width: 62%;
+    background: rgba(168, 85, 247, 0.92);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
+}
+
+/* Кнопка play по наведению */
+.anime-card__play {
+    position: absolute;
+    top: 46%;
+    left: 50%;
+    width: 54px;
+    height: 54px;
+    transform: translate(-50%, -50%) scale(0.6);
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b9d, #a855f7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition), transform var(--transition);
+    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.55);
+    pointer-events: none;
+}
+
+.anime-card__play svg {
+    width: 22px;
+    height: 22px;
+    margin-left: 3px;
+    fill: #fff;
+}
+
+.anime-card:hover .anime-card__play {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Инфо снизу */
+.anime-card__info {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 12px 12px 13px;
+}
+
+.anime-card__title {
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #fff;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+}
+
+.anime-card__meta {
+    margin-top: 4px;
+    font-size: 11.5px;
+    color: rgba(226, 232, 240, 0.72);
+}
+
+/* ---------- Скелетоны при загрузке ---------- */
+.skeleton {
+    position: relative;
+    border-radius: 16px;
+    aspect-ratio: 2 / 3;
+    background: var(--card);
+    overflow: hidden;
+}
+
+.skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+    animation: shimmer 1.3s infinite;
+}
+
+@keyframes shimmer {
+    100% { transform: translateX(100%); }
+}

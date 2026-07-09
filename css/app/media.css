@@ -1,0 +1,112 @@
+/* ========== VIDEO ========== */
+
+video {
+    max-width: 100%;
+    border-radius: var(--radius-sm);
+    margin-bottom: 12px;
+}
+
+audio {
+    display: none;
+}
+
+/* ---------- Мини-плеер клипа в карточке слова ---------- */
+
+.clip-player {
+    position: relative;
+    width: 100%;
+    margin-bottom: 12px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: #000;
+    line-height: 0;
+}
+
+.clip-player video {
+    width: 100%;
+    display: block;
+    margin: 0;
+    border-radius: 0;
+    cursor: pointer;
+}
+
+.clip-player__play {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--grad, linear-gradient(120deg, #ff6b9d, #a855f7));
+    color: #fff;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px -6px rgba(168, 85, 247, 0.6);
+    transition: transform 0.15s ease;
+    z-index: 2;
+}
+
+.clip-player__play svg {
+    width: 24px;
+    height: 24px;
+    margin-left: 3px;
+}
+
+.clip-player__play:hover {
+    transform: translate(-50%, -50%) scale(1.08);
+}
+
+/* Кнопка Play видна только на паузе */
+.clip-player.is-paused .clip-player__play {
+    display: flex;
+}
+
+.clip-player__mute {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(10, 10, 16, 0.55);
+    color: #fff;
+    opacity: 0.85;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: opacity 0.15s ease, background 0.15s ease;
+    z-index: 2;
+}
+
+.clip-player__mute:hover {
+    opacity: 1;
+    background: rgba(10, 10, 16, 0.75);
+}
+
+.clip-player__mute svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* ========== BACK BUTTON ========== */
+
+.back-btn {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+}
+
+.back-btn a {
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    transition: color var(--transition);
+}
+
+.back-btn a:hover {
+    color: var(--text);
+}

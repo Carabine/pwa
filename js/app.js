@@ -2,7 +2,7 @@
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register('./service-worker.js')
             .then(() => console.log('SW registered'))
             .catch(err => console.log('SW registration failed:', err));
     });
@@ -41,31 +41,20 @@ function dataPath(file) {
 
 async function fetchDataFromServer() {
     try {
-        const [data1, data2] = await Promise.all([
-            fetchAndDecode(dataPath('data.json')),
-            fetchAndDecode(dataPath('data2.json'))
-        ]);
+        // Вошёл — слова с сервера; гость — из локального хранилища.
+        const raw = await fetchWords();
 
-        const words1 = (data1.words ?? []).map(d => ({
-            ...d,
-            translatedSentence: d.translatedSentence
-        }));
-
-        const words2 = (data2.data ?? []).map(d => ({
+        const allWords = raw.map(d => ({
             ...d,
             word: d.kanji,
             meaning: d.translation,
             translatedSentence: d.sentenceTranslation
         }));
 
-        const allWords = [...words1, ...words2];
         localStorage.setItem('words', JSON.stringify(allWords));
-
-        if (typeof onLoad === 'function') {
-            onLoad();
-        }
     } catch (error) {
         console.error('Error fetching data:', error);
+        localStorage.setItem('words', '[]');
     }
 }
 
@@ -117,12 +106,66 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Logout
+    // Профиль: показываем «Войти» гостю и почту + «Выйти» вошедшему.
+    renderAuthState();
+
+    // На главной — живой счётчик учёбы на карточке «Учёба».
+    renderHomeProgress();
+});
+
+// «Сегодня: 5 к повторению · 3 новых · 🔥 4 дня подряд» — чтобы было видно,
+// зачем заходить каждый день. Работает только на главной (там есть элемент).
+async function renderHomeProgress() {
+    const el = document.getElementById('study-progress');
+    if (!el || typeof srsSummary !== 'function') return;
+
+    try {
+        await fetchDataFromServer();
+        if (typeof mergeServerSchedule === 'function') mergeServerSchedule();
+        const s = srsSummary();
+        if (!s.total) return; // слов ещё нет — нечего показывать
+
+        if (s.due + s.fresh === 0) {
+            el.textContent = t('home.allClear');
+            el.classList.add('hub-card__progress--clear');
+        } else {
+            const parts = [];
+            if (s.due) parts.push(s.due + ' ' + t('home.due'));
+            if (s.fresh) parts.push(s.fresh + ' ' + t('home.new'));
+            let text = t('home.today') + ' ' + parts.join(' · ');
+            if (s.streak > 1) text += ' · 🔥 ' + tStreak(s.streak);
+            el.textContent = text;
+        }
+        el.hidden = false;
+    } catch { /* не вышло посчитать — карточка просто без счётчика */ }
+}
+
+function renderAuthState() {
+    const menu = document.getElementById('profile-menu');
+    if (!menu) return;
+
+    const isInPages = window.location.pathname.includes('/pages/');
+    const loginUrl = isInPages ? './login.html' : './pages/login.html';
+
+    if (typeof isLoggedIn === 'function' && isLoggedIn()) {
+        const email = localStorage.getItem('animei:email');
+        menu.innerHTML =
+            (email ? `<span class="profile-menu__email">${email}</span>` : '') +
+            '<a href="#" id="logout-btn" data-i18n="nav.logout">Log out</a>';
+    } else {
+        menu.innerHTML =
+            `<a href="${loginUrl}" id="login-link" data-i18n="nav.login">Log in</a>`;
+    }
+
+    // Если на странице подключён i18n — переведём только что вставленные пункты.
+    if (typeof applyI18n === 'function') applyI18n();
+
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
             logout();
+            window.location.reload();
         });
     }
-});
+}

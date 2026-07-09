@@ -1,5 +1,8 @@
-const domain = 'https://animei.space';
-// const domain = 'http://localhost:3005';
+// Локально ходим на локальный бэкенд, на проде — на тот же хост,
+// с которого открыта страница (nginx проксирует /api на бэкенд)
+const domain = ['localhost', '127.0.0.1', ''].includes(window.location.hostname)
+    ? 'http://localhost:3005'
+    : window.location.origin;
 const refreshTokenKey = 'animei:refreshToken';
 const accessTokenKey = 'animei:accessToken';
 
@@ -113,6 +116,7 @@ function setRefreshedTokens(tokens) {
 function logout() {
     storageRemove(refreshTokenKey);
     storageRemove(accessTokenKey);
+    storageRemove('animei:email');
 }
 
 function sleep(ms) {
@@ -139,18 +143,18 @@ const client = createAxiosClient({
 
 // ========== Auth Check ==========
 
+// Вход в аккаунт опциональный: приложение работает и без него.
+// Единственное, что делаем, — уводим уже вошедшего пользователя со страницы
+// входа на главную. Никого никуда насильно не редиректим.
 function checkAuth() {
     const accessToken = getCurrentAccessToken();
     const isInPages = window.location.pathname.includes('/pages/');
     const homeUrl = isInPages ? '../index.html' : './index.html';
-    const loginUrl = isInPages ? './login.html' : './pages/login.html';
-    if (true) {
-        if (window.location.href.includes('login.html')) {
-            window.location.href = homeUrl;
-        }
-    } else {
-        if (!window.location.href.includes('login.html')) {
-            window.location.href = loginUrl;
-        }
+    if (accessToken && window.location.href.includes('login.html')) {
+        window.location.href = homeUrl;
     }
+}
+
+function isLoggedIn() {
+    return !!getCurrentAccessToken();
 }

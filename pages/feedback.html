@@ -32,26 +32,31 @@
     </header>
 
     <div class="feedback">
-        <h2 class="feedback__title">Feedback</h2>
-        <p>Help us make learning Japanese even better. Share your thoughts, suggestions, or questions!</p>
-        <p>Join our Telegram group and let us know what you think:</p>
-        <p><a href="https://t.me/animei_jp" target="_blank">t.me/animei_jp</a></p>
-        <p>Thank you for helping!</p>
+        <h2 class="feedback__title" data-i18n="feedback.title">Обратная связь</h2>
+        <p data-i18n="feedback.text">Помоги сделать изучение японского ещё лучше — поделись мыслями, идеями или проблемами.</p>
+        <p><span data-i18n="feedback.telegram">Напиши нам в Telegram:</span>
+            <a href="https://t.me/animei_jp" target="_blank" rel="noopener">t.me/animei_jp</a></p>
+        <p data-i18n="feedback.thanks">Спасибо, что помогаешь!</p>
     </div>
 
     <nav class="sidebar" id="sidebar">
         <div class="sidebar__brand">Animei</div>
-        <a href="../index.html">Home</a>
-        <a href="./watch.html">Watch</a>
-        <a href="./words.html">Dictionary</a>
-        <a href="./feedback.html" class="active">Feedback</a>
+        <a href="../index.html" data-i18n="nav.home">Главная</a>
+        <a href="./catalog.html" data-i18n="nav.catalog">Каталог</a>
+        <a href="./watch.html" data-i18n="nav.watch">Своё видео</a>
+        <a href="./words.html" data-i18n="nav.dictionary">Словарь</a>
+        <a href="./feedback.html" class="active" data-i18n="nav.feedback">Обратная связь</a>
     </nav>
     <div class="overlay" id="overlay"></div>
 </div>
 
 <script src="../libs/axios/axios.min.js"></script>
 <script src="../libs/snackbar/snackbar.js"></script>
+<script src="../js/i18n.js"></script>
 <script src="../js/axiosClient.js"></script>
+<script src="../js/video-store.js"></script>
+<script src="../js/words-store.js"></script>
 <script src="../js/app.js"></script>
+<script src="../js/stats.js"></script>
 </body>
 </html>

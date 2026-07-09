@@ -1,0 +1,367 @@
+/* ========== LOGIN PAGE ========== */
+
+.login-form {
+    width: 100%;
+    max-width: 380px;
+    padding: 40px 32px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.login-form__title {
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.login-form__subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 28px;
+}
+
+.login-form__toggle {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    background: none;
+    color: var(--primary-hover);
+    font-size: 14px;
+    text-align: center;
+}
+
+.login-form__toggle:hover {
+    color: var(--text);
+}
+
+.login-form__note {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-top: 20px;
+}
+
+.login-form__back {
+    display: block;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 12px;
+}
+
+.profile-menu__email {
+    display: block;
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+/* ========== DICTIONARY PAGE ========== */
+
+.dictionary {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 20px;
+    overflow-y: auto;
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+}
+
+.dictionary__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+/* Счётчик слов в коллекции */
+.dictionary__count {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-hover);
+    background: rgba(99, 102, 241, 0.14);
+    border-radius: 999px;
+    padding: 2px 11px;
+    min-width: 26px;
+    text-align: center;
+}
+
+.words-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Поле поиска по словарю */
+.words-filter {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 220px;
+}
+
+.words-filter svg {
+    position: absolute;
+    left: 14px;
+    color: var(--text-dim);
+    pointer-events: none;
+}
+
+.words-filter input {
+    padding-left: 40px;
+    border-radius: 999px;
+}
+
+.words-toolbar__actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.words-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    padding-bottom: 24px;
+    align-content: start;
+}
+
+.words-empty,
+.words-nothing {
+    grid-column: 1 / -1;
+}
+
+.words-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 24px;
+    background: var(--card);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    max-width: 480px;
+}
+
+.words-nothing {
+    color: var(--text-dim);
+    text-align: center;
+    padding: 32px 0;
+}
+
+.word-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 16px 14px;
+    position: relative;
+    transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.word-read-content:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.word-card__head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding-right: 20px;   /* место под крестик удаления */
+}
+
+.word-card__kanji {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.word-card__kana {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.word-card__clip {
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+.word-card__meaning {
+    color: var(--primary-hover);
+    font-size: 14.5px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.word-card__sentence {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    line-height: 1.5;
+    padding-left: 10px;
+    border-left: 2px solid var(--border);
+}
+
+.word-card__sentence-tr {
+    display: block;
+    margin-top: 2px;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-style: italic;
+    font-family: var(--font);
+}
+
+/* Пометка «из какого аниме» / подсказка */
+.word-card__tag {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px 10px;
+}
+
+.word-card__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: flex-end;
+}
+
+/* ИИ-разбор предложения внутри карточки слова */
+.word-card__explain-out {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+}
+
+.word-card__explain-out.hidden {
+    display: none;
+}
+
+.word-card__explain-out .explain__section {
+    margin-bottom: 10px;
+}
+
+.word-card__explain-out .explain__section:last-child {
+    margin-bottom: 0;
+}
+
+.word-card__explain-out .explain__title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+}
+
+.word-card__explain-out .explain__translation {
+    font-size: 13.5px;
+}
+
+.word-card__explain-out .explain__part {
+    margin-bottom: 6px;
+}
+
+.word-card__explain-out .explain__jp {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 600;
+}
+
+.word-card__explain-out .explain__reading {
+    color: var(--primary-hover);
+    font-size: 12px;
+}
+
+.word-card__explain-out .explain__meaning {
+    color: var(--text-muted);
+}
+
+.word-card__delete {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    opacity: 0.5;
+    transition: opacity var(--transition);
+    background: none;
+    border: none;
+    line-height: 1;
+}
+
+.word-card__delete:hover {
+    opacity: 1;
+}
+
+.word-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.word-edit__actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+/* ========== FEEDBACK PAGE ========== */
+
+.feedback {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 40px 24px;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.feedback__title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.feedback p {
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    line-height: 1.7;
+}
+
+.feedback a {
+    color: var(--primary-hover);
+    font-weight: 600;
+}

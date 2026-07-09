@@ -20,29 +20,36 @@
 
     <main class="main">
         <div class="login-form">
-            <h2 class="login-form__title">Welcome back</h2>
-            <p class="login-form__subtitle">Sign in to continue learning</p>
-            <form>
+            <h2 class="login-form__title" id="auth-title">Welcome back</h2>
+            <p class="login-form__subtitle" id="auth-subtitle">Sign in to continue learning</p>
+            <form id="auth-form">
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" placeholder="your@email.com">
+                    <label for="email" data-i18n="auth.email">Email</label>
+                    <input type="email" id="email" placeholder="your@email.com" autocomplete="email">
                 </div>
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Enter password">
+                    <label for="password" data-i18n="auth.password">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
                 </div>
-                <button type="button" id="submit-btn" class="btn btn--primary btn--block" style="margin-top: 8px;">
+                <button type="submit" id="submit-btn" class="btn btn--primary btn--block" style="margin-top: 8px;">
                     Sign In
                 </button>
             </form>
+            <button type="button" id="toggle-mode" class="login-form__toggle">No account? Create one</button>
+            <p class="login-form__note" id="optional-note" data-i18n="auth.optional">Signing in is optional</p>
+            <a href="../index.html" class="login-form__back" data-i18n="auth.back">← Back to the app</a>
         </div>
     </main>
 </div>
 
 <script src="../libs/axios/axios.min.js"></script>
 <script src="../libs/snackbar/snackbar.js"></script>
+<script src="../js/i18n.js"></script>
 <script src="../js/axiosClient.js"></script>
+<script src="../js/video-store.js"></script>
+<script src="../js/words-store.js"></script>
 <script src="../js/app.js"></script>
 <script src="../js/login.js"></script>
+<script src="../js/stats.js"></script>
 </body>
 </html>

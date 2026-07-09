@@ -1,32 +1,63 @@
-const CACHE_NAME = 'animei-cache-v4';
+// Пути относительные — SW живёт в /app/, поэтому './' указывает на /app/.
+// ВАЖНО: меняй номер версии при каждом деплое — иначе старый кеш не сбросится.
+const CACHE_NAME = 'animei-cache-v33';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/pages/study.html',
-    '/pages/custom-study.html',
-    '/pages/watch.html',
-    '/pages/words.html',
-    '/pages/login.html',
-    '/pages/feedback.html',
-    '/css/app.css',
-    '/css/watch.css',
-    '/js/app.js',
-    '/js/watch.js',
-    '/js/axiosClient.js',
-    '/data/data.json',
-    '/data/data2.json',
-    '/manifest.json',
+    './',
+    './index.html',
+    './pages/study.html',
+    './pages/custom-study.html',
+    './pages/beginner.html',
+    './pages/watch.html',
+    './pages/words.html',
+    './pages/login.html',
+    './pages/feedback.html',
+    './css/app.css',
+    './css/watch.css',
+    './js/app.js',
+    './js/video-store.js',
+    './js/study-core.js',
+    './js/study.js',
+    './js/custom-study.js',
+    './js/starter-deck.js',
+    './js/beginner-study.js',
+    './js/player-ui.js',
+    './js/watch.js',
+    './js/axiosClient.js',
+    './js/words-store.js',
+    './js/stats.js',
+    './img/logo.svg',
+    './manifest.json',
 ];
 
 self.addEventListener('install', (event) => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
     );
 });
 
+// Стратегия «сеть в первую очередь» для нашего кода и страниц: пока есть
+// интернет, пользователь всегда получает свежую версию, а закешированная копия —
+// только запасной вариант в офлайне. Так исправления доезжают сразу после
+// деплоя, без ручного сброса кеша у каждого пользователя.
+//
+// SW живёт в /app/, поэтому перехватывает только запросы к приложению;
+// вызовы к /api/... сюда не попадают. Кешируем лишь свои GET-запросы.
 self.addEventListener('fetch', (event) => {
+    const { request } = event;
+    if (request.method !== 'GET') return;
+
     event.respondWith(
-        caches.match(event.request).then((response) => response || fetch(event.request))
+        fetch(request)
+            .then((response) => {
+                // Обновляем офлайн-копию только для своих ресурсов.
+                if (response.ok && new URL(request.url).origin === self.location.origin) {
+                    const copy = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
+                }
+                return response;
+            })
+            .catch(() => caches.match(request))
     );
 });
 
@@ -36,6 +67,6 @@ self.addEventListener('activate', (event) => {
             Promise.all(
                 names.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
             )
-        )
+        ).then(() => self.clients.claim())
     );
 });

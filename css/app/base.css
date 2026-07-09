@@ -1,0 +1,102 @@
+:root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a26;
+    --border: #2a2a3a;
+    --primary: #6366f1;
+    --primary-hover: #818cf8;
+    --success: #10b981;
+    --success-hover: #34d399;
+    --danger: #f43f5e;
+    --danger-hover: #fb7185;
+    --warning: #f59e0b;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+    --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --transition: 0.2s ease;
+    --font: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+}
+
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+}
+
+a {
+    color: var(--primary-hover);
+    text-decoration: none;
+    transition: color var(--transition);
+}
+
+a:hover {
+    color: var(--text);
+}
+
+button {
+    font-family: var(--font);
+    cursor: pointer;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: all var(--transition);
+}
+
+input, textarea {
+    font-family: var(--font);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 10px 14px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color var(--transition);
+    width: 100%;
+}
+
+input:focus, textarea:focus {
+    border-color: var(--primary);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    display: block;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ========== APP LAYOUT ========== */
+
+.app {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+}
