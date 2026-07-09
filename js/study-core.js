@@ -475,7 +475,8 @@
             const video = document.createElement('video');
             video.src = src;
             video.autoplay = true;
-            video.loop = true;
+            // Проигрываем клип один раз и останавливаемся — без зацикливания.
+            video.loop = false;
             video.playsInline = true;
             wrap.appendChild(video);
 
@@ -498,6 +499,10 @@
 
             video.addEventListener('play', sync);
             video.addEventListener('pause', sync);
+            // Клип доиграл (loop выключен) — показываем кнопку Play, чтобы можно
+            // было пересмотреть. Событие 'pause' на естественном завершении не
+            // приходит, поэтому синхронизируем состояние отдельно по 'ended'.
+            video.addEventListener('ended', sync);
             video.addEventListener('click', toggle);
             playBtn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
             muteBtn.addEventListener('click', (e) => {
