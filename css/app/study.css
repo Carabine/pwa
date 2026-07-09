@@ -4,6 +4,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* safe center, а не center: при высокой карточке (напр. с ИИ-разбором)
+       обычный center уводит верх карточки за границу контейнера, и до него
+       нельзя долистать — браузер обрезает переполнение сверху. safe center
+       в этом случае прижимает содержимое к верху и даёт нормально прокрутить. */
+    justify-content: safe center;
     gap: 18px;
 }
 
@@ -259,6 +264,12 @@
     padding-top: 14px;
     border-top: 1px solid var(--border);
     font-size: 13px;
+    /* Разбор бывает длинным — держим его в разумной высоте со своим скроллом,
+       чтобы карточка не разрасталась на весь экран. overscroll-behavior не даёт
+       прокрутке «протекать» на страницу под ним. */
+    max-height: 46vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .card-explain-out.hidden {
