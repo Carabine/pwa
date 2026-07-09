@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое. Показывается в футере сайдбара
 // (см. ниже), чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v50';
+const APP_VERSION = 'v51';
 
 // ========== Service Worker ==========
 
@@ -102,15 +102,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuBtn = document.querySelector('.menu-btn');
 
     // Версия в сайдбаре — маркер того, какой деплой сейчас в приложении.
-    // Ставим сразу под шапкой: так она всегда на виду, а не за нижней кромкой
-    // экрана телефона (где раньше пряталась под системной полосой).
-    if (sidebar && !sidebar.querySelector('.sidebar__version')) {
-        const ver = document.createElement('div');
-        ver.className = 'sidebar__version';
+    // Элемент захардкожен в HTML сразу под шапкой (гарантированно виден даже
+    // при старом app.js); здесь только обновляем его текст из APP_VERSION —
+    // единого источника. Если элемента нет (старый HTML) — создаём.
+    if (sidebar) {
+        let ver = sidebar.querySelector('.sidebar__version');
+        if (!ver) {
+            ver = document.createElement('div');
+            ver.className = 'sidebar__version';
+            const brand = sidebar.querySelector('.sidebar__brand');
+            if (brand) brand.insertAdjacentElement('afterend', ver);
+            else sidebar.appendChild(ver);
+        }
         ver.textContent = APP_VERSION;
-        const brand = sidebar.querySelector('.sidebar__brand');
-        if (brand) brand.insertAdjacentElement('afterend', ver);
-        else sidebar.appendChild(ver);
     }
 
     if (menuBtn && sidebar && overlay) {
