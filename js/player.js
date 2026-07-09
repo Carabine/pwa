@@ -1099,10 +1099,20 @@ popupSave.addEventListener('click', async () => {
 
     try {
         const dict = ctx.dict;
-        // Не больше двух значений — иначе перевод в карточке слишком длинный
-        const translation = dict
-            ? dict.senses.flatMap(s => s.definitions).slice(0, 2).join('; ')
-            : '';
+        // Для карточки берём самые «очевидные» значения. jisho иногда ставит первым
+        // формальный вариант со скобочным уточнением (у 戦う это «to make war (on)»,
+        // а простое «to fight» — в хвосте). Поэтому сначала берём определения БЕЗ
+        // скобок (обычно это чистое ядро смысла), сохраняя порядок jisho, и лишь
+        // затем — уточнённые (со снятыми скобками). Не больше двух — иначе длинно.
+        // Реверсить весь список нельзя: для большинства слов порядок jisho верный.
+        let translation = '';
+        if (dict) {
+            const all = dict.senses.flatMap(s => s.definitions);
+            const clean = all.filter(d => !/\(/.test(d));
+            const qualified = all.filter(d => /\(/.test(d)).map(d => d.replace(/\s*\([^)]*\)/g, '').trim());
+            const ordered = [...new Set([...clean, ...qualified].filter(Boolean))];
+            translation = ordered.slice(0, 2).join('; ');
+        }
 
         await saveWord({
             kanji: ctx.tok.base,
