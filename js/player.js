@@ -120,7 +120,18 @@ async function loadEpisodes(media, restoreSaved) {
     try {
         const { data: res } = await client.get('catalog/episodes', { params: media });
 
-        state.rawEpisodes = res.data.episodes || [];
+        // Каталог/Kodik иногда отдаёт один и тот же список серий дважды (у «Финала»
+        // это 1–12, а затем те же 1–12 с теми же id) — в селекте это выглядело как
+        // задвоение. Убираем точные дубли по id (или по номеру+названию, если id
+        // нет). Настоящие разные сезоны этим не затронуты: у них id различаются, и
+        // splitIntoSeasons по-прежнему делит их по сбросу нумерации.
+        const seenEp = new Set();
+        state.rawEpisodes = (res.data.episodes || []).filter((e) => {
+            const key = e.id != null ? 'id:' + e.id : 'nt:' + e.number + '|' + (e.title || '');
+            if (seenEp.has(key)) return false;
+            seenEp.add(key);
+            return true;
+        });
         state.episodeGroups = splitIntoSeasons(state.rawEpisodes);
         renderSeasons();   // задаёт state.seasonMode и наполняет дропдаун сезонов
 
