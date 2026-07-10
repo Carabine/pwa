@@ -29,6 +29,7 @@ const state = {
     seasonIndex: 0,
     provider: 'kodik',     // источник текущей дорожки: 'kodik' | 'megaplay'
     megaMal: null,         // MAL id для MegaPlay-дорожки (оригинальное аудио)
+    megaIntro: null,       // { start, end } интро потока MegaPlay — помогает автосинку
     cues: [],
     activeCueIndex: -1,
     offset: 0,
@@ -454,6 +455,7 @@ async function selectEpisode(index) {
                 params: { mal: state.megaMal, ep: ep.number, type: 'sub' },
             });
             state.qualities = {};
+            state.megaIntro = res.data.intro || null;
             state.pendingSeek = null;
             state.currentVideoUrl = apiOrigin() + res.data.hls;
             attachVideo(state.currentVideoUrl);
@@ -743,15 +745,20 @@ async function maybeAutoSync() {
 
     const cueStarts = state.cues
         .map((c) => c.start)
-        .filter((s) => Number.isFinite(s) && s >= 0 && s < 190)
-        .slice(0, 150);
+        .filter((s) => Number.isFinite(s) && s >= 0 && s < 280)
+        .slice(0, 200);
     if (cueStarts.length < 5) return;
+
+    // Для MegaPlay передаём конец интро — субтитры из архива обычно без него,
+    // и весь диалог смещён примерно на его длину (у автосинка иначе не тот диапазон).
+    const introEnd = (state.provider === 'megaplay' && state.megaIntro) ? state.megaIntro.end : 0;
 
     try {
         const { data: res } = await client.post('subtitles/align', {
             videoUrl: state.currentVideoUrl,
             cues: cueStarts,
-        }, { timeout: 90000 });
+            introEnd,
+        }, { timeout: 130000 });
         const { offset, confidence } = res.data || {};
         // За время запроса серия могла смениться или пользователь мог тронуть сдвиг
         // (любое действие со сдвигом пишет ключ в localStorage) — тогда не трогаем.
@@ -759,6 +766,7 @@ async function maybeAutoSync() {
         if (Number.isFinite(offset) && confidence >= 0.6 && Math.abs(offset) >= 0.3) {
             state.offset = offset;
             updateOffsetLabel();
+            saveOffset();
             renderTranscript();
             updateNowCue(state.activeCueIndex);
             showSnackbar(t('subs.autoSynced'), { duration: 3500 });
@@ -1091,13 +1099,20 @@ const offsetValue = document.getElementById('offset-value');
 
 function updateOffsetLabel() {
     offsetValue.textContent = (state.offset >= 0 ? '+' : '') + state.offset.toFixed(1) + 's';
-    localStorage.setItem(offsetStorageKey(), String(state.offset));
     state.activeCueIndex = -2; // перерисовать оверлей
 }
 
-document.getElementById('offset-minus').addEventListener('click', () => { state.offset -= 0.5; updateOffsetLabel(); });
-document.getElementById('offset-plus').addEventListener('click', () => { state.offset += 0.5; updateOffsetLabel(); });
-document.getElementById('offset-zero').addEventListener('click', () => { state.offset = 0; updateOffsetLabel(); });
+// Сдвиг сохраняем ТОЛЬКО когда его реально меняют (кнопки/«Сейчас!»/автосинк).
+// Раньше запись шла прямо в updateOffsetLabel, и при простом показе загруженного
+// значения в ключ попадал «0» — а автосинк, увидев «сдвиг уже задан», сразу
+// выходил и никогда не подгонял субтитры.
+function saveOffset() {
+    localStorage.setItem(offsetStorageKey(), String(state.offset));
+}
+
+document.getElementById('offset-minus').addEventListener('click', () => { state.offset -= 0.5; updateOffsetLabel(); saveOffset(); });
+document.getElementById('offset-plus').addEventListener('click', () => { state.offset += 0.5; updateOffsetLabel(); saveOffset(); });
+document.getElementById('offset-zero').addEventListener('click', () => { state.offset = 0; updateOffsetLabel(); saveOffset(); });
 
 // «Сейчас!» — текущая или ближайшая следующая реплика должна звучать в этот момент
 document.getElementById('offset-sync').addEventListener('click', () => {
@@ -1106,6 +1121,7 @@ document.getElementById('offset-sync').addEventListener('click', () => {
     let target = state.cues.find(c => c.start + state.offset >= t) || state.cues[state.cues.length - 1];
     state.offset = t - target.start;
     updateOffsetLabel();
+    saveOffset();
     showSnackbar(t('subs.synced'), { duration: 2500 });
 });
 
