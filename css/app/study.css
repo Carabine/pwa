@@ -87,16 +87,32 @@
     justify-content: center;
     width: 100%;
     max-width: 600px;
-    min-height: 300px;
-    /* Не сжимать карточку ниже её контента: как flex-элемент в колонке .main она
-       по умолчанию ужималась, и при высоком контенте (клип + перевод + кнопки)
-       он вылезал за верх/низ карточки. Теперь карточка растёт под контент. */
-    flex-shrink: 0;
-    padding: 32px 24px;
+    /* Карточка занимает доступную высоту, но не больше: min-height (не auto) даёт
+       ей ужиматься ниже контента, а внутри ужимается только видеоклип (см. ниже),
+       текст и кнопки остаются на месте. Так карточка целиком влезает в экран без
+       прокрутки — вместо этого подстраивается размер клипа. */
+    flex: 0 1 auto;
+    min-height: 260px;
+    overflow: hidden;
+    padding: 24px 24px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
+}
+
+/* Карточка с видеоклипом растягивается на доступную высоту, чтобы внутри было
+   куда поместить клип (он заполняет остаток и масштабируется). Карточки без
+   клипа (лицо/готовые колоды) остаются компактными по контенту. */
+.card-area:has(.clip-player) {
+    flex: 1 1 auto;
+}
+
+/* Счётчики, прогресс и кнопки оценки не сжимаем — ужимается только карточка. */
+.study-stats,
+.study-progress,
+.buttons {
+    flex-shrink: 0;
 }
 
 .front-side {
@@ -105,6 +121,7 @@
     justify-content: center;
     width: 100%;
     padding-bottom: 20px;
+    flex-shrink: 0;
 }
 
 /* separator line only appears once the answer is revealed */
@@ -125,6 +142,50 @@
 
 .back-side--visible {
     display: flex;
+    /* Занимает остаток карточки; min-height:0 нужен, чтобы дать ужаться клипу. */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Внутри оборота ужимается только медиа-слот (видеоклип) — остальное фиксировано. */
+.back-side--visible > * {
+    flex-shrink: 0;
+}
+
+.back-media {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+}
+
+/* Медиа-слот растягивается на свободное место только когда есть клип (иначе на
+   карточках без клипа он бы оставлял пустоту). */
+.back-side--visible:has(.clip-player) .back-media {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* Клип заполняет медиа-слот и масштабируется под него (letterbox), а не тянет
+   карточку вниз. object-fit: contain сохраняет пропорции. */
+.card-area .clip-player {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+}
+
+.card-area .clip-player video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    object-fit: contain;
+}
+
+.back-media .study-audio {
+    flex-shrink: 0;
 }
 
 @keyframes card-reveal {
