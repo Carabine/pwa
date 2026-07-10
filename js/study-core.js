@@ -162,6 +162,9 @@
 
     const GEAR_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 
+    // Карандаш — ненавязчивая кнопка правки карточки в углу карточки.
+    const PENCIL_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+
     // Ромадзи предложения: тянем токены с бэкенда (/analyze, MeCab) и переводим
     // их кану в ромадзи. Кэш на сессию, чтобы не дёргать сеть повторно.
     const sentenceRomajiCache = new Map();
@@ -572,6 +575,41 @@
             if (!current) return;
             if (els.back.classList.contains('back-side--visible')) renderBack();
             else renderFront();
+        }
+
+        // Ненавязчивая правка карточки прямо в обучении: маленький карандаш в углу
+        // карточки открывает ту же модалку, что и в словаре (общий модуль
+        // AnimeiWordEdit). После сохранения пересобираем производные поля (их читает
+        // карточка) и перерисовываем текущую сторону, чтобы правка была видна сразу.
+        let cardEditBtn = null;
+        function mountCardEdit() {
+            const cardArea = document.querySelector('.card-area');
+            if (!cardArea || !window.AnimeiWordEdit || cardArea.querySelector('.card-edit-btn')) return;
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'card-edit-btn';
+            btn.hidden = true;
+            btn.setAttribute('aria-label', t('study.editCard'));
+            btn.title = t('study.editCard');
+            btn.innerHTML = PENCIL_ICON;
+            btn.addEventListener('click', () => {
+                if (!current || !current.word || !current.word.id) return;
+                window.AnimeiWordEdit.open(current.word, () => {
+                    const w = current.word;
+                    // Карточка читает производные поля — держим их в синхроне с правкой.
+                    w.word = w.kanji;
+                    w.meaning = w.translation;
+                    w.translatedSentence = w.sentenceTranslation;
+                    reapplyCard();
+                });
+            });
+            cardArea.appendChild(btn);
+            cardEditBtn = btn;
+        }
+        // Карандаш виден только на реальной (сохранённой) карточке — не на экранах
+        // «всё пройдено» / пустой колоды.
+        function refreshEditBtn() {
+            if (cardEditBtn) cardEditBtn.hidden = !(current && current.word && current.word.id);
         }
 
         function mountStudySettings() {
@@ -1000,6 +1038,7 @@
 
         function render() {
             renderStats();
+            refreshEditBtn();
             if (!current) {
                 renderDone();
                 return;
@@ -1021,6 +1060,7 @@
         function onKey(e) {
             if (!current) return;                       // let buttons work normally on the done screen
             if (e.target.matches('input, textarea')) return;
+            if (document.querySelector('.word-modal')) return;   // идёт правка карточки — не мешаем
             const back = els.back.classList.contains('back-side--visible');
             if (e.code === 'Space' || e.code === 'Enter') {
                 e.preventDefault();
@@ -1048,6 +1088,7 @@
         // ---- Bootstrap -----------------------------------------------------
         wireModal();
         mountStudySettings();
+        mountCardEdit();
         document.addEventListener('keydown', onKey);
 
         window.addEventListener('load', async () => {

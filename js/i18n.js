@@ -254,6 +254,7 @@ const I18N = {
 
         'study.settings.title': 'Настройки обучения',
         'study.settings.open': 'Настройки обучения',
+        'study.editCard': 'Редактировать карточку',
         'study.transcription': 'Транскрипция слова',
         'study.transcription.kana': 'Хирагана',
         'study.transcription.romaji': 'Ромадзи',
@@ -534,6 +535,7 @@ const I18N = {
 
         'study.settings.title': 'Налаштування навчання',
         'study.settings.open': 'Налаштування навчання',
+        'study.editCard': 'Редагувати картку',
         'study.transcription': 'Транскрипція слова',
         'study.transcription.kana': 'Хіраґана',
         'study.transcription.romaji': 'Ромадзі',
@@ -814,6 +816,7 @@ const I18N = {
 
         'study.settings.title': 'Study settings',
         'study.settings.open': 'Study settings',
+        'study.editCard': 'Edit card',
         'study.transcription': 'Word transcription',
         'study.transcription.kana': 'Hiragana',
         'study.transcription.romaji': 'Romaji',

@@ -86,6 +86,7 @@
 
 /* ---- The card ---- */
 .card-area {
+    position: relative;   /* контекст для угловой кнопки правки (.card-edit-btn) */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -111,6 +112,36 @@
    клипа (лицо/готовые колоды) остаются компактными по контенту. */
 .card-area:has(.clip-player) {
     flex: 1 1 auto;
+}
+
+/* Ненавязчивая правка карточки: полупрозрачный карандаш в верхнем правом углу
+   карточки, наливается цветом при наведении. Не мешает контенту (по центру). */
+.card-edit-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    opacity: 0.4;
+    cursor: pointer;
+    transition: opacity var(--transition), background var(--transition), color var(--transition);
+    z-index: 5;
+}
+
+/* display:flex перебивает атрибут hidden — прячем явно, когда карточки нет. */
+.card-edit-btn[hidden] { display: none; }
+
+.card-edit-btn:hover {
+    opacity: 1;
+    background: var(--surface);
+    color: var(--text);
 }
 
 /* Счётчики, прогресс и кнопки оценки не сжимаем — ужимается только карточка. */
