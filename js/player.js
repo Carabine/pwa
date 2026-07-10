@@ -69,6 +69,7 @@ const state = {
     showExtras: false,     // показывать ли скрытые «доп. материалы» (чиби и т.п.)
     epLenCache: {},        // длительность серии по её id (сек) — чтобы не зондировать повторно
     autoSyncKey: null,     // для какой серии уже пытались автосинк субтитров
+    syncPromise: null,     // промис текущего автосинка — сохранение клипа его ждёт
 };
 
 // Кэш ИИ-разборов на время сессии: повторный клик по той же реплике мгновенный
@@ -477,7 +478,7 @@ async function selectEpisode(index) {
             state.currentVideoUrl = apiOrigin() + res.data.hls;
             attachVideo(state.currentVideoUrl);
             updateQualityUI();
-            maybeAutoSync();
+            state.syncPromise = maybeAutoSync();
         } catch (err) {
             console.error(err);
             videoLoading.textContent = t('player.streamError');
@@ -499,7 +500,7 @@ async function selectEpisode(index) {
         state.currentVideoUrl = hlsUrl;
         attachVideo(hlsUrl);
         updateQualityUI();
-        maybeAutoSync();   // видео готово — пробуем автосинк (ждёт ещё и субтитры)
+        state.syncPromise = maybeAutoSync();   // видео готово — пробуем автосинк (ждёт ещё и субтитры)
     } catch (err) {
         console.error(err);
         videoLoading.textContent = t('player.streamError');
@@ -700,7 +701,7 @@ async function loadSubtitles(episodeNumber = 1) {
         updateOffsetLabel();
         renderTranscript();
         updateNowCue(state.activeCueIndex);
-        maybeAutoSync();   // субтитры готовы — пробуем автосинк (ждёт ещё и видео)
+        state.syncPromise = maybeAutoSync();   // субтитры готовы — пробуем автосинк (ждёт ещё и видео)
 
         // Одноразовая подсказка новичку: сабы из архива часто чуть съезжают,
         // а кнопка «Сейчас!» неочевидна
@@ -1496,6 +1497,13 @@ popupSave.addEventListener('click', async () => {
     // Вход не требуется: гость — слово сохранится локально, вошедший — в аккаунт.
     popupSave.disabled = true;
     popupSave.textContent = t('popup.saving');
+
+    // Клип режем по СИНХРОНИЗИРОВАННОМУ времени (cue.start + сдвиг). Автосинк
+    // субтитров считается асинхронно и может занять несколько секунд — если он
+    // ещё не закончил, ждём его, иначе фрагмент вырежется по несмещённым таймингам
+    // и не совпадёт с репликой. Обычно к моменту сохранения синк уже готов —
+    // тогда ожидание мгновенное.
+    try { await state.syncPromise; } catch { /* автосинк не критичен */ }
 
     try {
         const dict = ctx.dict;

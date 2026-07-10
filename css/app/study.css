@@ -9,7 +9,7 @@
        вылезал за её верх и низ, налезая на счётчики и кнопки. С flex-start
        + .card-area{flex-shrink:0} карточка растёт под контент, а .main скроллится. */
     justify-content: flex-start;
-    gap: 14px;
+    gap: 10px;
     /* Резервируем верхнюю полосу под «← Назад» (слева) и шестерёнку (справа) —
        они позиционированы absolute, и без этого отступа налезали на счётчики. */
     padding-top: 54px;
@@ -32,29 +32,31 @@
     justify-content: center;
 }
 
+/* Счётчики намеренно компактные: жертвуем их размером ради видео — освободившаяся
+   по высоте полоса уходит карточке (flex:1), и клип на обороте растёт. */
 .stat {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 76px;
-    padding: 8px 14px;
+    min-width: 64px;
+    padding: 5px 12px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    line-height: 1.2;
+    line-height: 1.15;
 }
 
 .stat b {
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 700;
 }
 
 .stat small {
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.5px;
     color: var(--text-dim);
-    margin-top: 2px;
+    margin-top: 1px;
 }
 
 .stat--new b   { color: var(--primary-hover); }
@@ -64,7 +66,7 @@
 /* ---- Progress bar ---- */
 .study-progress {
     width: 100%;
-    max-width: 600px;
+    max-width: 680px;
     height: 6px;
     background: var(--card);
     border-radius: 999px;
@@ -86,7 +88,7 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    max-width: 600px;
+    max-width: 680px;
     /* Карточка занимает доступную высоту, но не больше: min-height (не auto) даёт
        ей ужиматься ниже контента, а внутри ужимается только видеоклип (см. ниже),
        текст и кнопки остаются на месте. Так карточка целиком влезает в экран без
