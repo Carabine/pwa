@@ -130,7 +130,9 @@
 
     function updateVolumeUi() {
         muteBtn.innerHTML = volumeIcon();
-        volumeSlider.value = video.muted ? 0 : video.volume;
+        const v = video.muted ? 0 : video.volume;
+        volumeSlider.value = v;
+        volumeSlider.style.setProperty('--vol', (v * 100) + '%'); // заливка дорожки (webkit)
     }
 
     volumeSlider.addEventListener('input', () => {

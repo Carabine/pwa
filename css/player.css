@@ -273,14 +273,59 @@ html, body {
     display: block;
 }
 
+/* Свой ползунок громкости: дорожка во всю ширину + заливка от 0 до бегунка и сам
+   бегунок доезжают до краёв (у нативного accent-color оставались поля по бокам —
+   казалось, что звук «не двигается на всю ширину»). Заливка webkit — через --vol
+   (ставит JS), у Firefox — ::-moz-range-progress. */
 .player-ui__vol-popup input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
     display: block;
-    width: 116px;
-    height: 20px;
+    width: 130px;
+    height: 16px;
     margin: 0;
-    accent-color: var(--pink);
+    background: transparent;
     cursor: pointer;
     vertical-align: middle;
+}
+
+.player-ui__vol-popup input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background:
+        linear-gradient(var(--pink), var(--pink)) 0 / var(--vol, 100%) 100% no-repeat,
+        rgba(255, 255, 255, 0.28);
+}
+
+.player-ui__vol-popup input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    margin-top: -5px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    border: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.player-ui__vol-popup input[type="range"]::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.player-ui__vol-popup input[type="range"]::-moz-range-progress {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--pink);
+}
+
+.player-ui__vol-popup input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    border: none;
 }
 
 .player-ui__time {
@@ -1167,6 +1212,48 @@ html, body {
     opacity: 0.6;
     cursor: default;
     transform: none;
+}
+
+/* ---------- Десктоп: плеер во весь экран без прокрутки страницы ----------
+   .app.player-app — flex-колонка на всю высоту (шапка сверху), раскладка
+   занимает остаток. Видео тянется по доступной высоте (object-fit: contain),
+   низ (счётчики/настройки/подсказки) фиксирован, список субтитров скроллится
+   внутри — сама страница не прокручивается. */
+@media (min-width: 901px) {
+    .player-app {
+        overflow: hidden;
+    }
+
+    .player-layout {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        align-items: stretch;
+        grid-template-rows: minmax(0, 1fr);
+    }
+
+    .player-main {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        gap: 8px;
+    }
+
+    .video-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        aspect-ratio: auto;   /* заполняем доступную высоту, видео вписываем contain'ом */
+    }
+
+    /* Всё под видео — фиксированной высоты, ужимается только видео. */
+    .player-main > :not(.video-wrap) {
+        flex-shrink: 0;
+    }
+
+    .transcript {
+        height: auto;
+        min-height: 0;
+    }
 }
 
 /* ---------- Мобильная раскладка ---------- */
