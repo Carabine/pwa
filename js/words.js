@@ -227,8 +227,8 @@ function buildAudioControl(wordData) {
     removeBtn.hidden = true;
 
     async function refresh() {
-        if (typeof getAudioUrl !== 'function') return;
-        const url = await getAudioUrl(wordData.id);
+        if (typeof getWordAudioUrl !== 'function') return;
+        const url = await getWordAudioUrl(wordData);
         if (url) {
             player.src = url;
             player.hidden = false;
@@ -241,16 +241,21 @@ function buildAudioControl(wordData) {
     }
 
     async function store(blob) {
-        if (!blob || !blob.size || typeof putAudio !== 'function') {
+        if (!blob || !blob.size || typeof setWordAudio !== 'function') {
             showSnackbar(t('words.audioError'), { duration: 3000, type: 'error' });
             return;
         }
-        if (await putAudio(wordData.id, blob)) {
-            await refresh();
-            showSnackbar(t('words.audioSaved'), { duration: 2000, type: 'success' });
-        } else {
-            showSnackbar(t('words.audioError'), { duration: 3000, type: 'error' });
+        try {
+            const url = await setWordAudio(wordData, blob);
+            if (url) {
+                await refresh();
+                showSnackbar(t('words.audioSaved'), { duration: 2000, type: 'success' });
+                return;
+            }
+        } catch (err) {
+            console.error('Не удалось сохранить звук:', err);
         }
+        showSnackbar(t('words.audioError'), { duration: 3000, type: 'error' });
     }
 
     uploadBtn.addEventListener('click', () => fileInput.click());
@@ -288,7 +293,7 @@ function buildAudioControl(wordData) {
     });
 
     removeBtn.addEventListener('click', async () => {
-        if (typeof deleteAudio === 'function') await deleteAudio(wordData.id);
+        if (typeof clearWordAudio === 'function') await clearWordAudio(wordData);
         await refresh();
     });
 

@@ -806,10 +806,14 @@
                 });
             }
 
-            // Свой звук карточки (добавляется в словаре) — отдельным плеером.
-            if (typeof getAudioUrl === 'function' && w.id) {
+            // Свой звук карточки (добавляется в словаре): у вошедшего — с сервера
+            // (w.audio), у гостя — из IndexedDB. getWordAudioUrl прячет это отличие.
+            if (w.id) {
                 const wid = w.id;
-                getAudioUrl(wid).then((url) => {
+                const audioUrlP = typeof getWordAudioUrl === 'function'
+                    ? getWordAudioUrl(w)
+                    : Promise.resolve(w.audio || '');
+                audioUrlP.then((url) => {
                     if (!url || !current || current.word.id !== wid) return;
                     if (!els.back.classList.contains('back-side--visible')) return;
                     const audio = document.createElement('audio');
@@ -819,13 +823,6 @@
                     audio.volume = 0.9;
                     mediaSlot.appendChild(audio);
                 });
-            } else if (w.audio) {
-                const audio = document.createElement('audio');
-                audio.src = w.audio;
-                audio.controls = true;
-                audio.className = 'study-audio';
-                audio.volume = 0.4;
-                mediaSlot.appendChild(audio);
             }
 
             addLine('meaning', w.meaning ?? w.translation ?? '');

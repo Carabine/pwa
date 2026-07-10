@@ -137,6 +137,53 @@ async function updateWord(id, patch) {
     setGuestWords(getGuestWords().map((w) => (w.id === id ? { ...w, ...patch } : w)));
 }
 
+// ---------- Свой звук карточки ----------
+// У вошедшего звук хранится на сервере (Word.audio) и доступен с любого
+// устройства; у гостя — в браузере (IndexedDB, video-store.js). Возвращает URL
+// для проигрывания (или '').
+function audioBlobExt(blob) {
+    const t = (blob && blob.type) || '';
+    if (t.includes('mp4') || t.includes('m4a') || t.includes('aac')) return 'm4a';
+    if (t.includes('mpeg') || t.includes('mp3')) return 'mp3';
+    if (t.includes('ogg')) return 'ogg';
+    if (t.includes('wav')) return 'wav';
+    return 'webm';
+}
+
+async function setWordAudio(word, blob) {
+    if (!blob || !blob.size) return '';
+    if (isSignedIn()) {
+        const form = new FormData();
+        form.append('audio', blob, 'audio.' + audioBlobExt(blob));
+        // Content-Type: undefined — чтобы браузер сам выставил multipart с boundary.
+        const { data: res } = await client.post(`words/${word.id}/audio`, form, {
+            headers: { 'Content-Type': undefined },
+        });
+        word.audio = (res && res.data && res.data.url) || '';
+        return word.audio;
+    }
+    if (typeof putAudio === 'function' && await putAudio(word.id, blob)) {
+        return typeof getAudioUrl === 'function' ? await getAudioUrl(word.id) : '';
+    }
+    return '';
+}
+
+async function clearWordAudio(word) {
+    if (isSignedIn()) {
+        try { await client.delete(`words/${word.id}/audio`); }
+        catch (err) { console.warn('Не удалось удалить звук:', err); }
+        word.audio = '';
+        return;
+    }
+    if (typeof deleteAudio === 'function') await deleteAudio(word.id);
+}
+
+async function getWordAudioUrl(word) {
+    if (word && word.audio) return word.audio;
+    if (word && word.id && typeof getAudioUrl === 'function') return await getAudioUrl(word.id);
+    return '';
+}
+
 // Перенести локальные слова гостя в только что вошедший аккаунт.
 // Вызывать сразу после успешного входа/регистрации (токены уже сохранены).
 async function syncGuestWordsToAccount() {
@@ -170,7 +217,19 @@ async function syncGuestWordsToAccount() {
                     });
                 }
             }
+            // Свой звук гостя тоже переносим в аккаунт.
+            if (saved?.id && typeof getAudio === 'function') {
+                const audioBlob = await getAudio(id);
+                if (audioBlob) {
+                    const form = new FormData();
+                    form.append('audio', audioBlob, 'audio.' + audioBlobExt(audioBlob));
+                    await client.post(`words/${saved.id}/audio`, form, {
+                        headers: { 'Content-Type': undefined },
+                    }).catch(() => {});
+                }
+            }
             if (typeof deleteClip === 'function') await deleteClip(id);
+            if (typeof deleteAudio === 'function') await deleteAudio(id);
         } catch (err) {
             console.error('Не удалось перенести слово в аккаунт:', err);
         }
