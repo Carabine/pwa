@@ -27,6 +27,8 @@ const state = {
     franchiseSeasons: [],  // другие тайтлы-сезоны франшизы (каждый сезон — свой тайтл)
     seasonMode: 'single',  // 'franchise' | 'groups' | 'single'
     seasonIndex: 0,
+    provider: 'kodik',     // источник текущей дорожки: 'kodik' | 'megaplay'
+    megaMal: null,         // MAL id для MegaPlay-дорожки (оригинальное аудио)
     cues: [],
     activeCueIndex: -1,
     offset: 0,
@@ -130,9 +132,27 @@ function renderTranslations() {
 async function selectTranslation(index) {
     const t = state.translations[index];
     translationSelect.value = index;
+    state.provider = t.provider || 'kodik';
     if (window.animeiTrack) window.animeiTrack('voiceover', (isJpTrack(t) ? '🇯🇵 ' : '') + (t.title || ''));
     // Новая дорожка — свои сезоны/серии; сброс запомненного сезона обязателен
-    await loadEpisodes({ mediaType: t.mediaType, mediaId: t.mediaId, mediaHash: t.mediaHash }, true);
+    if (state.provider === 'megaplay') {
+        await loadMegaplayEpisodes(t, true);
+    } else {
+        await loadEpisodes({ mediaType: t.mediaType, mediaId: t.mediaId, mediaHash: t.mediaHash }, true);
+    }
+}
+
+// MegaPlay-дорожка (оригинальное аудио): своего списка серий нет — рисуем 1..N
+// по числу серий тайтла с Shikimori. Без Kodik-машинерии сезонов/чиби.
+async function loadMegaplayEpisodes(t, restoreSaved) {
+    state.megaMal = t.malId;
+    const n = Math.max(1, t.episodeCount || 12);
+    state.rawEpisodes = Array.from({ length: n }, (_, i) => ({ number: i + 1 }));
+    state.episodeGroups = [state.rawEpisodes];
+    state.shortFormChibi = new Set();
+    state.showExtras = false;
+    renderSeasons();          // одна группа + (обычно) нет франшизы -> сезоны скрыты
+    populateEpisodes(restoreSaved);   // заполняет дропдаун серий и запускает серию
 }
 
 // Загрузка списка серий выбранной дорожки. Kodik часто отдаёт все сезоны одним
@@ -425,6 +445,26 @@ async function selectEpisode(index) {
 
     // Сабы под номер серии
     loadSubtitles(ep.number);
+
+    // MegaPlay — оригинальная японская дорожка: свой эндпоинт, без выбора качества
+    // (в мастер-плейлисте свои варианты, hls.js выберет сам).
+    if (state.provider === 'megaplay') {
+        try {
+            const { data: res } = await client.get('catalog/megaplay-stream', {
+                params: { mal: state.megaMal, ep: ep.number, type: 'sub' },
+            });
+            state.qualities = {};
+            state.pendingSeek = null;
+            state.currentVideoUrl = apiOrigin() + res.data.hls;
+            attachVideo(state.currentVideoUrl);
+            updateQualityUI();
+            maybeAutoSync();
+        } catch (err) {
+            console.error(err);
+            videoLoading.textContent = t('player.streamError');
+        }
+        return;
+    }
 
     try {
         const { data: res } = await client.get('catalog/stream', {
