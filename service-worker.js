@@ -1,6 +1,6 @@
 // Пути относительные — SW живёт в /app/, поэтому './' указывает на /app/.
 // ВАЖНО: меняй номер версии при каждом деплое — иначе старый кеш не сбросится.
-const CACHE_NAME = 'animei-cache-v0.0.61';
+const CACHE_NAME = 'animei-cache-v0.0.62';
 const urlsToCache = [
     './',
     './index.html',
@@ -12,10 +12,8 @@ const urlsToCache = [
     './pages/login.html',
     './pages/feedback.html',
     './pages/settings.html',
-    './pages/news.html',
     './css/app.css',
     './css/watch.css',
-    './css/news.css',
     './js/settings.js',
     './js/romaji.js',
     './js/settings-page.js',
@@ -32,8 +30,6 @@ const urlsToCache = [
     './js/words-store.js',
     './js/clip-trim.js',
     './js/stats.js',
-    './js/news.js',
-    './js/speech.js',
     './img/logo.svg',
     './manifest.json',
 ];
