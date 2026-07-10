@@ -10,6 +10,9 @@
     position: relative;
     z-index: 100;
     min-height: 56px;
+    /* Шапка — статичная полоса сверху: не сжимается и не уезжает со скроллом
+       (скроллится только .main ниже). */
+    flex-shrink: 0;
 }
 
 .header__logo {
@@ -97,10 +100,11 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow);
-    min-width: 160px;
+    min-width: 232px;
     z-index: 200;
     overflow: hidden;
     display: none;
+    padding: 6px;
 }
 
 .profile-menu.open {
@@ -108,8 +112,11 @@
 }
 
 .profile-menu a {
-    display: block;
-    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 12px;
+    border-radius: var(--radius-xs);
     color: var(--text);
     font-size: 14px;
     transition: background var(--transition);
@@ -117,6 +124,30 @@
 
 .profile-menu a:hover {
     background: var(--border);
+}
+
+.profile-menu a .nav-icon {
+    color: var(--text-muted);
+}
+
+/* Почта вошедшего — заголовок меню, не кликается */
+.profile-menu__email {
+    display: block;
+    padding: 8px 12px 6px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Иконки пунктов меню (сайдбар + профиль) */
+.nav-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
 }
 
 /* ========== SIDEBAR ========== */
@@ -222,6 +253,10 @@
 
 .main {
     flex: 1;
+    /* min-height:0 обязателен во flex-колонке, иначе .main разрастается под
+       контент, шапку выдавливает вверх за экран, а внутренний скролл не работает
+       (это и был баг на «Настройках»: шапка уезжала со страницей). */
+    min-height: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
