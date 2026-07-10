@@ -715,7 +715,16 @@ async function loadSubtitles(episodeNumber = 1) {
 }
 
 function offsetStorageKey() {
-    return 'animei:subsOffset:' + shikimoriId + ':s' + state.seasonIndex + ':' + episodeSelect.value;
+    // Сдвиг субтитров зависит от ТАЙМИНГА ИСТОЧНИКА: у разных дорожек (русский
+    // дубляж Kodik, оригинальная озвучка MegaPlay) своё смещение относительно
+    // одних и тех же субтитров. Раньше ключ был только по серии — и сдвиг,
+    // подобранный под дубляж, ошибочно применялся к оригиналу (субтитры «уезжали»).
+    // Теперь ключ включает выбранный перевод и номер серии.
+    const tr = state.translations[parseInt(translationSelect.value, 10)] || {};
+    const ep = state.episodes[parseInt(episodeSelect.value, 10)];
+    const epNum = ep && ep.number != null ? ep.number : episodeSelect.value;
+    const src = tr.id || tr.provider || 'k';
+    return 'animei:subsOffset:' + shikimoriId + ':' + src + ':s' + state.seasonIndex + ':ep' + epNum;
 }
 
 // Автосинхронизация субтитров. Если пользователь не задавал сдвиг вручную, просим
