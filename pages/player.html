@@ -16,11 +16,10 @@
 <div class="app player-app">
     <header class="header">
         <div class="header__left">
-            <button class="icon-btn menu-btn" aria-label="Menu">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-            </button>
-            <a href="./catalog.html" class="icon-btn" aria-label="Каталог">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+            <!-- Плеер — «детальная» страница: слева только «назад» в каталог,
+                 без гамбургера (иначе две кнопки навигации рядом). -->
+            <a href="./catalog.html" class="icon-btn" aria-label="Каталог" data-i18n-aria="nav.catalog">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
             </a>
         </div>
         <!-- Название тайтла в шапке не показываем — вкладка (document.title) его хранит -->
@@ -179,7 +178,7 @@
 
     <nav class="sidebar" id="sidebar">
         <div class="sidebar__brand">Animei</div>
-        <div class="sidebar__version">v0.0.57</div>
+        <div class="sidebar__version">v0.0.58</div>
         <a href="../index.html" data-i18n="nav.home">Главная</a>
         <a href="./catalog.html" data-i18n="nav.catalog">Каталог</a>
         <a href="./news.html" data-i18n="nav.news">Новости</a>

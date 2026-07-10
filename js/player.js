@@ -513,10 +513,12 @@ function pickQuality() {
 function updateQualityUI() {
     const btn = document.getElementById('ctrl-quality');
     if (!btn) return;
+    const wrap = btn.closest('.player-ui__quality-wrap') || btn;
     const keys = qualityKeys();
-    if (keys.length <= 1) { btn.hidden = true; return; }
+    const show = keys.length > 1;
+    wrap.style.display = show ? '' : 'none';
+    if (!show) return;
     const cur = currentQualityKey();
-    btn.hidden = false;
     btn.textContent = cur + 'p';
     btn.classList.toggle('is-custom', cur !== keys[0]);
 }
@@ -535,14 +537,52 @@ function switchQuality(key) {
     updateQualityUI();
 }
 
+// Нормальный селектор качества: кнопка с текущим качеством открывает список
+// (720p / 480p / 360p) над собой — выбираешь нужное, а не циклишь по кругу.
 (function setupQualityControl() {
     const btn = document.getElementById('ctrl-quality');
     if (!btn) return;
-    btn.addEventListener('click', () => {
-        const keys = qualityKeys();
-        if (keys.length <= 1) return;
-        const i = keys.indexOf(currentQualityKey());
-        switchQuality(keys[(i + 1) % keys.length]);
+    btn.hidden = false; // видимостью управляет обёртка (updateQualityUI)
+
+    const wrap = document.createElement('div');
+    wrap.className = 'player-ui__quality-wrap';
+    wrap.style.display = 'none';
+    btn.parentNode.insertBefore(wrap, btn);
+    wrap.appendChild(btn);
+
+    const menu = document.createElement('div');
+    menu.className = 'player-ui__quality-menu';
+    wrap.appendChild(menu);
+
+    const closeMenu = () => wrap.classList.remove('is-open');
+
+    function buildMenu() {
+        menu.innerHTML = '';
+        const cur = currentQualityKey();
+        qualityKeys().forEach((k) => {
+            const opt = document.createElement('button');
+            opt.type = 'button';
+            opt.className = 'player-ui__quality-opt' + (k === cur ? ' is-active' : '');
+            opt.textContent = k + 'p';
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeMenu();
+                if (k !== currentQualityKey()) switchQuality(k);
+            });
+            menu.appendChild(opt);
+        });
+    }
+
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (qualityKeys().length <= 1) return;
+        if (wrap.classList.contains('is-open')) { closeMenu(); return; }
+        buildMenu();
+        wrap.classList.add('is-open');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!wrap.contains(e.target)) closeMenu();
     });
 })();
 

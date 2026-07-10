@@ -239,13 +239,20 @@ html, body {
 .player-ui__vol input[type="range"] {
     width: 0;
     opacity: 0;
+    height: 24px;
     accent-color: var(--pink);
     cursor: pointer;
+    vertical-align: middle;
     transition: width 0.2s ease, opacity 0.2s ease;
 }
 
+/* Раскрываем не только по hover, но и на focus/active — иначе при перетаскивании
+   курсор уходил с полоски, :hover пропадал, ползунок схлопывался и «застревал»
+   (жалоба: на ~20% звук как будто выключался и дальше не двигался). */
 .player-ui__vol:hover input[type="range"],
-.player-ui__vol input[type="range"]:focus-visible {
+.player-ui__vol:focus-within input[type="range"],
+.player-ui__vol input[type="range"]:focus,
+.player-ui__vol input[type="range"]:active {
     width: 72px;
     opacity: 1;
 }
@@ -306,6 +313,58 @@ html, body {
 .player-ui__quality.is-custom {
     background: var(--grad);
     border-color: transparent;
+    color: #fff;
+}
+
+/* Всплывающее меню выбора качества (открывается над кнопкой) */
+.player-ui__quality-wrap {
+    position: relative;
+    flex-shrink: 0;
+    display: inline-flex;
+}
+
+.player-ui__quality-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    min-width: 104px;
+    background: rgba(18, 18, 28, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 10px;
+    padding: 5px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: none;
+    z-index: 30;
+}
+
+.player-ui__quality-wrap.is-open .player-ui__quality-menu {
+    display: block;
+}
+
+.player-ui__quality-opt {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 11px;
+    border-radius: 6px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.player-ui__quality-opt:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.player-ui__quality-opt.is-active {
+    background: var(--grad);
     color: #fff;
 }
 
@@ -447,15 +506,37 @@ html, body {
 }
 
 .control-group select {
-    background: var(--surface);
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: var(--surface);
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: var(--radius-xs);
-    padding: 7px 10px;
+    /* padding-right под кастомный шеврон, чтобы текст к нему не прилипал */
+    padding: 7px 34px 7px 11px;
     font-family: var(--font);
     font-size: 13.5px;
     max-width: 260px;
     outline: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 11px center;
+    transition: border-color var(--transition);
+}
+
+.control-group select:hover {
+    border-color: var(--text-dim);
+}
+
+.control-group select:focus {
+    border-color: var(--primary);
+}
+
+.control-group select option {
+    background: var(--surface);
+    color: var(--text);
 }
 
 .offset-buttons {
