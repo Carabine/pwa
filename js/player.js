@@ -108,8 +108,16 @@ async function init() {
         state.translations = [...info.translations].sort((a, b) => {
             const aJp = isJpTrack(a), bJp = isJpTrack(b);
             if (aJp !== bJp) return aJp ? -1 : 1;
-            const aCr = /crunchyroll/i.test(a.title) ? 0 : 1;
-            const bCr = /crunchyroll/i.test(b.title) ? 0 : 1;
+            // MegaPlay — ЗАПАСНОЙ оригинал: он для тайтлов, где у Kodik нет своей
+            // японской дорожки (напр. «Тетрадь смерти»). Если у Kodik есть родная
+            // сабная дорожка (Crunchyroll «Субтитры»), она приоритетнее и идёт по
+            // умолчанию — её субтитры совпадают с видео (MegaPlay — другой монтаж,
+            // из-за чего сабы «уезжали»).
+            const aMp = a.provider === 'megaplay' ? 1 : 0;
+            const bMp = b.provider === 'megaplay' ? 1 : 0;
+            if (aMp !== bMp) return aMp - bMp;
+            const aCr = /crunchyroll|субтитр/i.test(a.title) ? 0 : 1;
+            const bCr = /crunchyroll|субтитр/i.test(b.title) ? 0 : 1;
             if (aCr !== bCr) return aCr - bCr;
             return a.title.localeCompare(b.title);
         });
@@ -761,10 +769,12 @@ async function maybeAutoSync() {
     if (localStorage.getItem(key) !== null) { state.autoSyncKey = key; return; }
     state.autoSyncKey = key;
 
+    // Отдаём реплики шире (до 340с) — бэкенд анализирует более длинное окно, чтобы
+    // у тайтлов с медленным началом было за что зацепиться (см. sync.service.js).
     const cueStarts = state.cues
         .map((c) => c.start)
-        .filter((s) => Number.isFinite(s) && s >= 0 && s < 280)
-        .slice(0, 200);
+        .filter((s) => Number.isFinite(s) && s >= 0 && s < 340)
+        .slice(0, 260);
     if (cueStarts.length < 5) return;
 
     // Для MegaPlay передаём конец интро — субтитры из архива обычно без него,
@@ -777,11 +787,17 @@ async function maybeAutoSync() {
             cues: cueStarts,
             introEnd,
         }, { timeout: 130000 });
-        const { offset, confidence } = res.data || {};
+        const { offset, confidence, matched } = res.data || {};
         // За время запроса серия могла смениться или пользователь мог тронуть сдвиг
         // (любое действие со сдвигом пишет ключ в localStorage) — тогда не трогаем.
         if (offsetStorageKey() !== key || localStorage.getItem(key) !== null) return;
-        if (Number.isFinite(offset) && confidence >= 0.6 && Math.abs(offset) >= 0.3) {
+        // Применяем: либо высокая уверенность, либо средняя, но с реальной опорой
+        // (много совпадений) и НЕБОЛЬШИМ сдвигом — маленький сдвиг почти незаметен
+        // даже при неточности, а «зависший» рассинхрон раздражает сильнее. Большие
+        // сдвиги (интро MegaPlay) по-прежнему требуют высокой уверенности.
+        const strong = confidence >= 0.6;
+        const okModerate = confidence >= 0.4 && (matched || 0) >= 12 && Math.abs(offset) <= 20;
+        if (Number.isFinite(offset) && (strong || okModerate) && Math.abs(offset) >= 0.3) {
             state.offset = offset;
             updateOffsetLabel();
             saveOffset();
