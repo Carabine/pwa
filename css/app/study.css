@@ -68,7 +68,7 @@
 /* ---- Progress bar ---- */
 .study-progress {
     width: 100%;
-    max-width: 680px;
+    max-width: 600px;
     height: 6px;
     background: var(--card);
     border-radius: 999px;
@@ -90,7 +90,7 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    max-width: 680px;
+    max-width: 600px;
     /* Карточка занимает доступную высоту, но не больше: min-height (не auto) даёт
        ей ужиматься ниже контента, а внутри ужимается только видеоклип (см. ниже),
        текст и кнопки остаются на месте. Так карточка целиком влезает в экран без
