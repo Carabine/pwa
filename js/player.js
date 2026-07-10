@@ -965,7 +965,9 @@ function renderTranscript() {
 
         const time = document.createElement('div');
         time.className = 'cue__time';
-        time.textContent = formatTime(cue.start);
+        // Показываем время С УЧЁТОМ сдвига — иначе после автосинка (напр. +85с у
+        // оригинальной дорожки) тайм-коды реплик не совпадали с позицией видео.
+        time.textContent = formatTime(Math.max(0, cue.start + state.offset));
         div.appendChild(time);
 
         const jp = document.createElement('div');
@@ -1117,6 +1119,15 @@ const offsetValue = document.getElementById('offset-value');
 function updateOffsetLabel() {
     offsetValue.textContent = (state.offset >= 0 ? '+' : '') + state.offset.toFixed(1) + 's';
     state.activeCueIndex = -2; // перерисовать оверлей
+    updateTranscriptTimes();   // тайм-коды в транскрипте — с учётом нового сдвига
+}
+
+// Лёгкое обновление тайм-кодов в списке реплик (без полной перерисовки токенов).
+function updateTranscriptTimes() {
+    const times = transcriptList.querySelectorAll('.cue__time');
+    state.cues.forEach((cue, i) => {
+        if (times[i]) times[i].textContent = formatTime(Math.max(0, cue.start + state.offset));
+    });
 }
 
 // Сдвиг сохраняем ТОЛЬКО когда его реально меняют (кнопки/«Сейчас!»/автосинк).
