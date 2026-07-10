@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animei — цвет бренда</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { color-scheme: dark; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: #0a0a0f;
+            color: #e2e8f0;
+            font-family: 'Inter', system-ui, sans-serif;
+            padding: 30px 16px 72px;
+        }
+        h1 { font-size: 22px; font-weight: 700; margin: 0 0 6px; text-align: center; }
+        .sub { text-align: center; color: #94a3b8; font-size: 13px; margin: 0 auto 30px; max-width: 660px; line-height: 1.55; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1040px;
+            margin: 0 auto;
+        }
+        .group-label {
+            grid-column: 1 / -1;
+            font-size: 13px; font-weight: 700; color: #cbd5e1; letter-spacing: .4px;
+            text-transform: uppercase; margin: 14px 0 -6px; padding-left: 2px;
+        }
+        .group-label:first-child { margin-top: 0; }
+        .card {
+            background: #13131a;
+            border: 1px solid #2a2a3a;
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .card.base { border-color: #4a4a68; }
+
+        .head { display: flex; align-items: center; gap: 16px; }
+        .icon { width: 84px; height: 84px; border-radius: 24%; overflow: hidden; box-shadow: 0 8px 22px rgba(0,0,0,.45); flex-shrink: 0; }
+        .icon svg { display: block; width: 100%; height: 100%; }
+        .wordmark {
+            font-size: 28px; font-weight: 700; letter-spacing: -1px;
+            background: linear-gradient(135deg, var(--p), var(--ph));
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .headmeta { min-width: 0; }
+        .headmeta .cap { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: .5px; }
+
+        .mock { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+        .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .btn { background: var(--p); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; font-size: 13px; cursor: pointer; }
+        .link { color: var(--ph); font-weight: 600; font-size: 13px; }
+        .bar { height: 6px; background: #1a1a26; border-radius: 999px; overflow: hidden; }
+        .bar span { display: block; width: 64%; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--p), var(--ph)); }
+        .stat { display: inline-flex; flex-direction: column; align-items: center; background: #1a1a26; border: 1px solid #2a2a3a; border-radius: 8px; padding: 5px 12px; line-height: 1.15; }
+        .stat b { color: var(--ph); font-size: 18px; font-weight: 700; }
+        .stat small { color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
+        .chip { border: 1px solid var(--p); color: var(--ph); border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
+        .toggle { width: 36px; height: 21px; border-radius: 999px; background: var(--p); position: relative; }
+        .toggle::after { content:""; position:absolute; top:3px; left:18px; width:15px; height:15px; border-radius:50%; background:#fff; }
+
+        .meta { margin-top: 16px; padding-top: 14px; border-top: 1px solid #24243a; }
+        .name { font-weight: 600; font-size: 15px; }
+        .perception { color: #b8c2d0; font-size: 12.5px; font-style: italic; margin-top: 5px; line-height: 1.45; }
+        .hex { color: #64748b; font-size: 11.5px; font-variant-numeric: tabular-nums; margin-top: 6px; line-height: 1.6; }
+        .note { color: #f59e0b; font-size: 11px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Цвет бренда Animei — логотип + весь интерфейс</h1>
+    <p class="sub">Слева — настоящий логотип (иконка <b>あ</b>, favicon/иконка PWA), справа — надпись «Animei». Ниже — акценты интерфейса в той же палитре. В рамке — текущий бренд для сравнения. У каждого варианта: <b>иконка</b> (глубокий тон) + <b>--primary / --primary-hover</b> (светлее) и курсивом — <b>как его воспримет пользователь</b>. Скажи название — перекрашу иконку (favicon/PWA) и акцент по всему сайту.</p>
+    <div class="grid" id="grid"></div>
+
+    <script>
+    const icon = (bg) => `<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" fill="${bg}"/><text x="256" y="366" text-anchor="middle" font-family="'Noto Sans JP',sans-serif" font-weight="700" font-size="300" fill="#fff">あ</text></svg>`;
+
+    // ic — фон иконки-логотипа (глубокий); p/ph — --primary / --primary-hover (акцент).
+    const V = [
+        { group: 'Сейчас', base: true, name: 'Текущий · Индиго', ic: '#6D3AC0', p: '#6366f1', ph: '#818cf8', perception: 'Ночная концентрация и техно-стиль без лишнего крика' },
+
+        { group: 'Синие и бирюзовые', name: 'Синий (королевский)', ic: '#1d4ed8', p: '#3b82f6', ph: '#93c5fd', perception: 'Серьёзный и основательный, сразу веришь в качество курса' },
+        { name: 'Кобальт', ic: '#1e3a8a', p: '#2563eb', ph: '#60a5fa', perception: 'Затягивает в тихую вечернюю сосредоточенность, хочется заниматься дольше' },
+        { name: 'Небо', ic: '#0369a1', p: '#0ea5e9', ph: '#7dd3fc', perception: 'Ясный и лёгкий, учёба ощущается необременительной и приятной' },
+        { name: 'Циан', ic: '#0e7490', p: '#06b6d4', ph: '#67e8f9', perception: 'Цифровой, дерзкий, по-молодёжному яркий — цепляет с первого взгляда' },
+        { name: 'Барвинок', ic: '#4f46e5', p: '#7c8cf8', ph: '#b4bcfb', perception: 'Мечтательный полутон, мягко уводит в аниме-настроение и загадку' },
+        { name: 'Дискорд (Blurple)', ic: '#4046c9', p: '#5865f2', ph: '#8f96f8', perception: 'Знакомый дискорд-вайб — будто в своей тусовке единомышленников' },
+        { name: 'Стальной', ic: '#1e40af', p: '#4f7cc4', ph: '#93b4e8', perception: 'Сдержанный и взрослый, выглядит как продуманный рабочий инструмент' },
+        { name: 'Бирюза', ic: '#0f766e', p: '#14b8a6', ph: '#5eead4', perception: 'Бодрит и подталкивает к прогрессу, хочется возвращаться каждый день' },
+
+        { group: 'Зелёные', name: 'Изумруд', ic: '#047857', p: '#10b981', ph: '#6ee7b7', perception: 'Ровный рост и ясность, чувствуешь, как знания укладываются в голове', note: 'Близко к цвету «успех».' },
+        { name: 'Лайм', ic: '#4d7c0f', p: '#84cc16', ph: '#bef264', perception: 'Азартный электрический заряд, тянет открыть приложение прямо сейчас' },
+
+        { group: 'Тёплые', name: 'Янтарь', ic: '#b45309', p: '#f59e0b', ph: '#fcd34d', perception: 'Тёплый вечерний уют, мягко удерживает внимание серию за серией', note: 'Близко к цвету «предупреждение».' },
+        { name: 'Мандарин', ic: '#c2410c', p: '#f97316', ph: '#fdba74', perception: 'Живое движение вперёд, будто жмёшь «следующая серия»' },
+        { name: 'Коралл', ic: '#be123c', p: '#fb7185', ph: '#fda4af', perception: 'Приветливый и лёгкий, снимает страх ошибиться в новых словах' },
+
+        { group: 'Розовые и фиолетовые', name: 'Роза', ic: '#be185d', p: '#ec4899', ph: '#f9a8d4', perception: 'Нежный старт, как первый урок с любимым тайтлом' },
+        { name: 'Фуксия', ic: '#a21caf', p: '#d946ef', ph: '#f0abfc', perception: 'Неоновый дерзкий импульс, пульсирует молодостью и драйвом' },
+        { name: 'Фиалка', ic: '#6d28d9', p: '#8b5cf6', ph: '#c4b5fd', perception: 'Загадочно и уютно, манит глубже в ночное аниме' },
+        { name: 'Слива', ic: '#5b21b6', p: '#7c3aed', ph: '#a78bfa', perception: 'Насыщенная взрослая серьёзность, ощущение настоящей вдумчивой учёбы' },
+    ];
+
+    const grid = document.getElementById('grid');
+    V.forEach((v) => {
+        if (v.group) {
+            const g = document.createElement('div');
+            g.className = 'group-label';
+            g.textContent = v.group;
+            grid.appendChild(g);
+        }
+        const card = document.createElement('div');
+        card.className = 'card' + (v.base ? ' base' : '');
+        card.style.setProperty('--p', v.p);
+        card.style.setProperty('--ph', v.ph);
+        card.innerHTML = `
+            <div class="head">
+                <div class="icon">${icon(v.ic)}</div>
+                <div class="headmeta">
+                    <div class="cap">логотип · надпись</div>
+                    <div class="wordmark">Animei</div>
+                </div>
+            </div>
+            <div class="mock">
+                <div class="row">
+                    <button class="btn">Начать</button>
+                    <span class="link">Подробнее</span>
+                    <span class="chip">Оригинал</span>
+                </div>
+                <div class="bar"><span></span></div>
+                <div class="row">
+                    <div class="stat"><b>12</b><small>Новые</small></div>
+                    <div class="stat"><b>5</b><small>Учу</small></div>
+                    <span class="toggle"></span>
+                </div>
+            </div>
+            <div class="meta">
+                <div class="name">${v.name}</div>
+                ${v.perception ? `<div class="perception">${v.perception}</div>` : ''}
+                <div class="hex">иконка ${v.ic} &nbsp;·&nbsp; --primary ${v.p} &nbsp;·&nbsp; --primary-hover ${v.ph}</div>
+                ${v.note ? `<div class="note">⚠ ${v.note}</div>` : ''}
+            </div>`;
+        grid.appendChild(card);
+    });
+    </script>
+</body>
+</html>
