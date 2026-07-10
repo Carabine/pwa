@@ -43,7 +43,7 @@ html, body {
 }
 
 .catalog__search:focus-within .catalog__search-icon {
-    color: #a855f7;
+    color: #4f46e5;
 }
 
 .catalog__search input {
@@ -64,9 +64,9 @@ html, body {
 }
 
 .catalog__search input:focus {
-    border-color: #a855f7;
+    border-color: #4f46e5;
     background: var(--surface);
-    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.16);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.16);
 }
 
 /* Пояснение под поиском: что вообще делает каталог (пополнение словаря) */
@@ -74,8 +74,8 @@ html, body {
     max-width: 620px;
     margin: 10px auto 4px;
     padding: 10px 16px;
-    background: rgba(168, 85, 247, 0.08);
-    border: 1px solid rgba(168, 85, 247, 0.22);
+    background: rgba(79, 70, 229, 0.08);
+    border: 1px solid rgba(79, 70, 229, 0.22);
     border-radius: var(--radius-sm);
     color: var(--text-muted);
     font-size: 13px;
@@ -137,7 +137,7 @@ html, body {
 
 .anime-card:hover {
     transform: translateY(-6px);
-    box-shadow: 0 18px 42px -12px rgba(168, 85, 247, 0.55);
+    box-shadow: 0 18px 42px -12px rgba(79, 70, 229, 0.55);
 }
 
 .anime-card__poster {
@@ -194,7 +194,7 @@ html, body {
     top: 10px;
     left: 10px;
     max-width: 62%;
-    background: rgba(168, 85, 247, 0.92);
+    background: rgba(79, 70, 229, 0.92);
     color: #fff;
     font-size: 11px;
     font-weight: 600;
@@ -203,7 +203,7 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
 }
 
 /* Кнопка play по наведению */
@@ -215,13 +215,13 @@ html, body {
     height: 54px;
     transform: translate(-50%, -50%) scale(0.6);
     border-radius: 50%;
-    background: linear-gradient(135deg, #ff6b9d, #a855f7);
+    background: linear-gradient(135deg, #7c8cf8, #4f46e5);
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
     transition: opacity var(--transition), transform var(--transition);
-    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.55);
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.55);
     pointer-events: none;
 }
 

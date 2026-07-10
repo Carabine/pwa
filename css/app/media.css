@@ -86,12 +86,12 @@ audio {
     width: 54px;
     height: 54px;
     border-radius: 50%;
-    background: var(--grad, linear-gradient(120deg, #ff6b9d, #a855f7));
+    background: var(--grad, linear-gradient(120deg, #7c8cf8, #4f46e5));
     color: #fff;
     display: none;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 24px -6px rgba(168, 85, 247, 0.6);
+    box-shadow: 0 8px 24px -6px rgba(79, 70, 229, 0.6);
     transition: transform 0.15s ease;
     z-index: 2;
 }
