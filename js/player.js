@@ -39,6 +39,8 @@ const state = {
     aiAvailable: false,
     knownWords: new Set(),
     hls: null,
+    qualities: {},         // { '720': '/proxy/hls?url=…', '480': …, '360': … } — по одному плейлисту на качество
+    pendingSeek: null,     // { time, playing } — восстановить позицию после смены качества
     currentVideoUrl: '',   // адрес текущего HLS-потока — уходит в слово, чтобы сервер нарезал клип
     popupContext: null,
     followCue: true,       // список сам едет за текущей репликой; сбрасываем, когда листают вручную
@@ -424,9 +426,15 @@ async function selectEpisode(index) {
             params: { type: 'seria', id: ep.id, hash: ep.hash },
         });
 
-        const hlsUrl = apiOrigin() + res.data.hls;
+        // Kodik отдаёт по ссылке на каждое качество (360/480/720). По умолчанию
+        // берём лучшее или запомненный пользователем выбор; сменить можно кнопкой.
+        state.qualities = res.data.qualities || {};
+        const chosen = pickQuality();
+        const hlsUrl = apiOrigin() + (chosen.url || res.data.hls);
+        state.pendingSeek = null;   // новая серия — с начала
         state.currentVideoUrl = hlsUrl;
         attachVideo(hlsUrl);
+        updateQualityUI();
         maybeAutoSync();   // видео готово — пробуем автосинк (ждёт ещё и субтитры)
     } catch (err) {
         console.error(err);
@@ -450,7 +458,7 @@ function attachVideo(hlsUrl) {
         state.hls.attachMedia(video);
         state.hls.on(Hls.Events.MANIFEST_PARSED, () => {
             videoLoading.style.display = 'none';
-            video.play().catch(() => {});
+            resumeAfterAttach();
         });
         state.hls.on(Hls.Events.ERROR, (_, data) => {
             if (data.fatal) {
@@ -462,13 +470,81 @@ function attachVideo(hlsUrl) {
         video.src = hlsUrl;
         video.addEventListener('loadedmetadata', () => {
             videoLoading.style.display = 'none';
-            video.play().catch(() => {});
+            resumeAfterAttach();
         }, { once: true });
     } else {
         videoLoading.textContent = t('player.noHls');
     }
     // Стандартные кнопки браузера не включаем — управление своё (player-ui.js)
 }
+
+// После загрузки потока: если это была смена качества — вернуть позицию и
+// прежнее состояние воспроизведения; иначе просто запустить с начала.
+function resumeAfterAttach() {
+    const seek = state.pendingSeek;
+    state.pendingSeek = null;
+    if (seek) {
+        try { if (seek.time > 0) video.currentTime = seek.time; } catch { /* поток короче — игнор */ }
+        if (seek.playing) video.play().catch(() => {});
+    } else {
+        video.play().catch(() => {});
+    }
+}
+
+// ---------- Качество видео ----------
+
+// Ключи качеств от высокого к низкому: '720' | '480' | '360' …
+function qualityKeys() {
+    return Object.keys(state.qualities).sort((a, b) => Number(b) - Number(a));
+}
+
+function currentQualityKey() {
+    const keys = qualityKeys();
+    if (!keys.length) return null;
+    const pref = localStorage.getItem('animei:quality');
+    return (pref && state.qualities[pref]) ? pref : keys[0];
+}
+
+function pickQuality() {
+    const key = currentQualityKey();
+    return key ? { key, url: state.qualities[key] } : { key: null, url: '' };
+}
+
+function updateQualityUI() {
+    const btn = document.getElementById('ctrl-quality');
+    if (!btn) return;
+    const keys = qualityKeys();
+    if (keys.length <= 1) { btn.hidden = true; return; }
+    const cur = currentQualityKey();
+    btn.hidden = false;
+    btn.textContent = cur + 'p';
+    btn.classList.toggle('is-custom', cur !== keys[0]);
+}
+
+// Смена качества на лету: запоминаем позицию/состояние и перегружаем поток
+// с URL нужного качества (у Kodik это отдельный плейлист на каждое качество,
+// поэтому переключаем источник, а не уровень внутри hls.js).
+function switchQuality(key) {
+    if (!state.qualities[key]) return;
+    localStorage.setItem('animei:quality', key);
+    state.pendingSeek = { time: video.currentTime, playing: !video.paused };
+    videoLoading.style.display = 'flex';
+    videoLoading.textContent = t('player.videoLoading');
+    state.currentVideoUrl = apiOrigin() + state.qualities[key];
+    attachVideo(state.currentVideoUrl);
+    updateQualityUI();
+}
+
+(function setupQualityControl() {
+    const btn = document.getElementById('ctrl-quality');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+        const keys = qualityKeys();
+        if (keys.length <= 1) return;
+        const i = keys.indexOf(currentQualityKey());
+        switchQuality(keys[(i + 1) % keys.length]);
+    });
+})();
 
 // ---------- Субтитры ----------
 
