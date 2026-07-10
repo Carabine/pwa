@@ -7,6 +7,23 @@ const shikimoriId = params.get('id');
 const titleRu = params.get('title') || '';
 const titleRomaji = params.get('name') || titleRu;
 
+// Разовая чистка: до фикса (v0.0.68) при каждой загрузке серии в ключ сдвига
+// субтитров писался «0», и автосинк, увидев «сдвиг уже задан», не запускался.
+// У кого это залипло — убираем нулевые сдвиги один раз, чтобы автосинк отработал
+// заново. Ненулевые (ручные/подобранные) не трогаем.
+(function clearStaleZeroOffsets() {
+    try {
+        if (localStorage.getItem('animei:offsetZeroCleared')) return;
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('animei:subsOffset:') && localStorage.getItem(k) === '0') {
+                localStorage.removeItem(k);
+            }
+        }
+        localStorage.setItem('animei:offsetZeroCleared', '1');
+    } catch { /* localStorage может быть недоступен */ }
+})();
+
 const video = document.getElementById('video');
 const videoLoading = document.getElementById('video-loading');
 const translationSelect = document.getElementById('translation-select');
