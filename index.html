@@ -29,6 +29,9 @@
         @keyframes splash-in{to{opacity:1}}
         @keyframes splash-slide{0%{transform:translateX(-130%)}100%{transform:translateX(360%)}}
         @media (prefers-reduced-motion:reduce){.app-splash__glow,.app-splash__bar span,.app-splash__logo{animation:none}}
+        /* На ПК сплэш не нужен — он для запуска на телефоне / в установленном PWA.
+           На широких экранах приложение и так грузится мгновенно. */
+        @media (min-width: 700px){ .app-splash{ display: none !important; } }
     </style>
 </head>
 <body>
