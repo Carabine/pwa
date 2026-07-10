@@ -27,6 +27,11 @@
     transition: all var(--transition);
 }
 
+/* display:inline-flex перебивает атрибут hidden — скрытую кнопку прячем явно. */
+.btn[hidden] {
+    display: none;
+}
+
 .btn--primary {
     background: var(--primary);
     color: white;

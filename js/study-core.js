@@ -752,32 +752,80 @@
             return wrap;
         }
 
+        // Заглушка вместо пустоты, пока клип грузится (гость) или ещё режется на
+        // сервере (вошедший) — чтобы «пропавшее» видео читалось как «готовится».
+        function makeClipPending(msgKey, spinner = true) {
+            const box = document.createElement('div');
+            box.className = 'clip-pending';
+            if (spinner) {
+                const sp = document.createElement('span');
+                sp.className = 'clip-spinner';
+                box.appendChild(sp);
+            }
+            const txt = document.createElement('span');
+            txt.textContent = t(msgKey);
+            box.appendChild(txt);
+            return box;
+        }
+
         function renderBack() {
             const w = current.word;
             els.back.innerHTML = '';
             els.back.classList.add('back-side--visible');
 
+            // Медиа (видео/звук) держим в одном слоте сверху — асинхронная
+            // подгрузка не должна раскидывать их по карточке.
+            const mediaSlot = document.createElement('div');
+            mediaSlot.className = 'back-media';
+            els.back.appendChild(mediaSlot);
+
             const src = videoSrcOf(w);
+            const expectsClip = !!src || Number(w.videoEnd) > Number(w.videoStart);
             if (src) {
-                const clip = makeClipVideo(src, w);
-                els.back.appendChild(clip);
+                mediaSlot.appendChild(makeClipVideo(src, w));
             } else if (typeof getClipUrl === 'function' && w.id) {
-                // Клип гостя лежит в IndexedDB — тянем асинхронно и ставим сверху,
-                // если карточка ещё та же самая.
                 const wid = w.id;
+                const isGuest = typeof wid === 'string' && wid.startsWith('local-');
+                // Пока тянем из IndexedDB / ждём серверную нарезку — показываем статус.
+                let pending = null;
+                if (expectsClip) {
+                    pending = makeClipPending(isGuest ? 'clip.loading' : 'clip.preparing');
+                    mediaSlot.appendChild(pending);
+                }
                 getClipUrl(wid).then((url) => {
-                    if (!url || !current || current.word.id !== wid) return;
+                    if (!current || current.word.id !== wid) return;
                     if (!els.back.classList.contains('back-side--visible')) return;
-                    const clip = makeClipVideo(url, w);
-                    els.back.insertBefore(clip, els.back.firstChild);
+                    if (url) {
+                        if (pending) pending.remove();
+                        mediaSlot.insertBefore(makeClipVideo(url, w), mediaSlot.firstChild);
+                    } else if (pending && isGuest) {
+                        // У гостя клипа в браузере нет — значит нарезать не удалось.
+                        pending.replaceWith(makeClipPending('clip.unavailable', false));
+                    }
+                    // Вошедший: клипа ещё нет в IndexedDB — оставляем «готовится».
                 });
             }
-            if (w.audio) {
+
+            // Свой звук карточки (добавляется в словаре) — отдельным плеером.
+            if (typeof getAudioUrl === 'function' && w.id) {
+                const wid = w.id;
+                getAudioUrl(wid).then((url) => {
+                    if (!url || !current || current.word.id !== wid) return;
+                    if (!els.back.classList.contains('back-side--visible')) return;
+                    const audio = document.createElement('audio');
+                    audio.src = url;
+                    audio.controls = true;
+                    audio.className = 'study-audio';
+                    audio.volume = 0.9;
+                    mediaSlot.appendChild(audio);
+                });
+            } else if (w.audio) {
                 const audio = document.createElement('audio');
                 audio.src = w.audio;
                 audio.controls = true;
+                audio.className = 'study-audio';
                 audio.volume = 0.4;
-                els.back.appendChild(audio);
+                mediaSlot.appendChild(audio);
             }
 
             addLine('meaning', w.meaning ?? w.translation ?? '');

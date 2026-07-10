@@ -132,10 +132,33 @@
     }
 
     // Панель «Видео-фрагмент»: две группы кнопок (−1с/+1с) для начала и конца.
+    // Рядом с каждой подписью показываем текущее значение (в секундах) и длину
+    // окна — чтобы было видно, что именно правишь.
     function buildTrimEditor(clip, w) {
         const video = clip._video;
         const box = document.createElement('div');
         box.className = 'clip-trim';
+
+        // Секунды -> «2.5с» (без лишнего .0).
+        const fmt = (n) => (Number.isFinite(n) ? n.toFixed(1).replace(/\.0$/, '') : '—') + 'с';
+
+        let startVal = null, endVal = null, lenVal = null;
+
+        // Текущий конец окна: если tEnd не задан — берём длительность клипа.
+        function curEnd() {
+            const e = clip._getEnd();
+            if (e != null) return e;
+            return Number.isFinite(video.duration) ? video.duration : null;
+        }
+
+        // Обновить показанные значения из текущего окна клипа.
+        function refresh() {
+            const s = clip._getStart();
+            const e = curEnd();
+            if (startVal) startVal.textContent = fmt(s);
+            if (endVal) endVal.textContent = e == null ? '—' : fmt(e);
+            if (lenVal) lenVal.textContent = (e != null && Number.isFinite(s)) ? fmt(Math.max(0, e - s)) : '—';
+        }
 
         function clampSave(newStart, newEnd) {
             const dur = video.duration && Number.isFinite(video.duration) ? video.duration : (newEnd ?? 0) + 2;
@@ -151,6 +174,7 @@
             w.trimStart = s;
             w.trimEnd = e;
             persistTrim(w.id, s, e);
+            refresh();
             snack(tr('clip.saved'));
         }
 
@@ -160,6 +184,8 @@
             const lbl = document.createElement('span');
             lbl.className = 'clip-trim__label';
             lbl.textContent = tr(labelKey);
+            const val = document.createElement('span');
+            val.className = 'clip-trim__value';
             const minus = document.createElement('button');
             minus.type = 'button';
             minus.className = 'clip-trim__btn';
@@ -172,18 +198,34 @@
             plus.textContent = '+1с';
             plus.title = tr('clip.later.title');
             plus.addEventListener('click', (ev) => { ev.stopPropagation(); onPlus(); });
-            g.append(lbl, minus, plus);
-            return g;
+            g.append(lbl, val, minus, plus);
+            return { g, val };
         }
 
-        const startGroup = group('clip.start',
+        const start = group('clip.start',
             () => clampSave(clip._getStart() - 1, clip._getEnd()),
             () => clampSave(clip._getStart() + 1, clip._getEnd()));
-        const endGroup = group('clip.end',
-            () => { const e = clip._getEnd() == null ? (video.duration || 0) : clip._getEnd(); clampSave(clip._getStart(), e - 1); },
-            () => { const e = clip._getEnd() == null ? (video.duration || 0) : clip._getEnd(); clampSave(clip._getStart(), e + 1); });
+        startVal = start.val;
+        const end = group('clip.end',
+            () => { const e = curEnd() || 0; clampSave(clip._getStart(), e - 1); },
+            () => { const e = curEnd() || 0; clampSave(clip._getStart(), e + 1); });
+        endVal = end.val;
 
-        box.append(startGroup, endGroup);
+        // Итоговая длина окна — отдельной подписью справа.
+        const lenGroup = document.createElement('div');
+        lenGroup.className = 'clip-trim__group clip-trim__group--len';
+        const lenLbl = document.createElement('span');
+        lenLbl.className = 'clip-trim__label';
+        lenLbl.textContent = tr('clip.length');
+        lenVal = document.createElement('span');
+        lenVal.className = 'clip-trim__value';
+        lenGroup.append(lenLbl, lenVal);
+
+        box.append(start.g, end.g, lenGroup);
+
+        // Стартовые значения (длительность может подъехать позже — обновимся ещё раз).
+        refresh();
+        if (video.readyState < 1) video.addEventListener('loadedmetadata', refresh, { once: true });
         return box;
     }
 
@@ -194,7 +236,8 @@
         container.className = 'clip-edit';
 
         function mount(src) {
-            if (container.childElementCount) return; // уже смонтировали
+            container.innerHTML = '';
+            container.classList.remove('clip-edit--pending');
             const title = document.createElement('div');
             title.className = 'clip-edit__title';
             title.textContent = tr('clip.edit.title');
@@ -203,13 +246,41 @@
             container.append(title, clip, editor);
         }
 
+        // Заглушка вместо пустоты: «видео готовится / загружается».
+        function showPending(msgKey, spinner) {
+            container.innerHTML = '';
+            container.classList.add('clip-edit--pending');
+            const note = document.createElement('div');
+            note.className = 'clip-edit__pending';
+            if (spinner) {
+                const sp = document.createElement('span');
+                sp.className = 'clip-spinner';
+                note.appendChild(sp);
+            }
+            const txt = document.createElement('span');
+            txt.textContent = tr(msgKey);
+            note.appendChild(txt);
+            container.appendChild(note);
+        }
+
         const src = videoSrcOf(w);
         if (src) { mount(src); return container; }
 
-        // Клип гостя лежит в IndexedDB — тянем асинхронно.
-        if (w && w.id && Number(w.videoEnd) > Number(w.videoStart) && typeof getClipUrl === 'function') {
-            getClipUrl(w.id).then((url) => { if (url) mount(url); }).catch(() => {});
+        const expected = w && w.id && Number(w.videoEnd) > Number(w.videoStart);
+        if (!expected) return container;
+
+        const isGuest = typeof w.id === 'string' && w.id.startsWith('local-');
+        if (isGuest && typeof getClipUrl === 'function') {
+            // Клип гостя лежит в IndexedDB — тянем асинхронно, пока показываем спиннер.
+            showPending('clip.loading', true);
+            getClipUrl(w.id)
+                .then((url) => { url ? mount(url) : showPending('clip.unavailable', false); })
+                .catch(() => showPending('clip.unavailable', false));
+            return container;
         }
+
+        // Вошедший: клип режет сервер в фоне. Пока Video.url пуст — он ещё готовится.
+        showPending('clip.preparing', true);
         return container;
     }
 

@@ -97,9 +97,16 @@ async function saveWord(payload) {
 
     // У гостя клип хранится в браузере. Ждём его, чтобы видео было готово
     // к первому показу карточки, но неудача клипа не ломает сохранение слова.
-    if (typeof putClip === 'function') {
+    // Если клип ожидался, но не получился — мягко предупреждаем (слово-то есть).
+    if (typeof putClip === 'function' && wordDur > 0) {
         const blob = await requestClip(data, true);
-        if (blob) await putClip(word.id, blob);
+        const stored = blob ? await putClip(word.id, blob) : false;
+        if (!stored && typeof showSnackbar === 'function') {
+            showSnackbar(
+                typeof t === 'function' ? t('words.clipFailed') : 'Слово сохранено, но видео не удалось нарезать',
+                { duration: 3500, type: 'error' },
+            );
+        }
     }
     return word;
 }

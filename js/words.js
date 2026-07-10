@@ -8,6 +8,22 @@ function esc(s) {
 let allWords = [];       // все слова коллекции (кэш, чтобы фильтровать без перезагрузки)
 let wordsFilter = '';    // строка поиска (в нижнем регистре)
 
+// Пока сервер дорезает клип, слово помечено «готовится». Несколько раз тихо
+// перечитываем список, чтобы значок сам сменился на 🎬, когда клип появится.
+let clipRefreshLeft = 3;
+let clipRefreshScheduled = false;
+
+function scheduleClipRefresh() {
+    if (clipRefreshScheduled || clipRefreshLeft <= 0) return;
+    clipRefreshScheduled = true;
+    setTimeout(async () => {
+        clipRefreshScheduled = false;
+        clipRefreshLeft--;
+        try { allWords = await fetchWords(); } catch { /* оставим что было */ }
+        renderWords();
+    }, 8000);
+}
+
 // ИИ-разбор предложения прямо в карточке слова
 let aiAvailable = false;
 const explainCache = new Map();   // разбор по тексту предложения — на время сессии
@@ -140,6 +156,212 @@ function matchesFilter(w) {
         .some((f) => String(f ?? '').toLowerCase().includes(wordsFilter));
 }
 
+// Прямая ссылка на клип (у вошедшего — Video.url; старое поле video оставляем).
+function videoSrcOf(w) {
+    return w.Video ? w.Video.url : (w.video || '');
+}
+
+// Состояние клипа для значка в списке:
+//   ready   — есть готовое видео (или клип гостя в браузере),
+//   pending — видео ещё режется на сервере (Video есть, url пуст),
+//   none    — клипа нет.
+function clipBadge(w) {
+    if (videoSrcOf(w)) return 'ready';
+    const expected = Number(w.videoEnd) > Number(w.videoStart);
+    const isGuest = typeof w.id === 'string' && w.id.startsWith('local-');
+    if (isGuest && expected) return 'ready';          // клип гостя лежит в IndexedDB
+    if (w.Video && expected) return 'pending';        // сервер ещё готовит клип
+    return 'none';
+}
+
+// Одна строка формы (label + input/textarea). Значение ставим через .value —
+// безопасно к любому пользовательскому тексту.
+function editField(labelKey, value, cls, textarea) {
+    const g = document.createElement('div');
+    g.className = 'form-group';
+    const label = document.createElement('label');
+    label.textContent = t(labelKey);
+    const input = document.createElement(textarea ? 'textarea' : 'input');
+    if (!textarea) input.type = 'text';
+    input.className = cls;
+    input.value = value ?? '';
+    g.append(label, input);
+    return { g, input };
+}
+
+// Блок «Свой звук» карточки: загрузить аудиофайл или записать с микрофона.
+// Хранится в браузере (video-store.js: putAudio/getAudio) по id слова.
+function buildAudioControl(wordData) {
+    const box = document.createElement('div');
+    box.className = 'word-audio';
+
+    const title = document.createElement('div');
+    title.className = 'clip-edit__title';
+    title.textContent = t('words.audio');
+    box.appendChild(title);
+
+    const player = document.createElement('audio');
+    player.className = 'word-audio__player';
+    player.controls = true;
+    player.hidden = true;
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'audio/*';
+    fileInput.hidden = true;
+
+    const uploadBtn = document.createElement('button');
+    uploadBtn.type = 'button';
+    uploadBtn.className = 'btn btn--ghost';
+    uploadBtn.textContent = t('words.audioUpload');
+
+    const recordBtn = document.createElement('button');
+    recordBtn.type = 'button';
+    recordBtn.className = 'btn btn--ghost word-audio__record';
+    recordBtn.textContent = t('words.audioRecord');
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn--ghost word-audio__remove';
+    removeBtn.textContent = t('words.audioRemove');
+    removeBtn.hidden = true;
+
+    async function refresh() {
+        if (typeof getAudioUrl !== 'function') return;
+        const url = await getAudioUrl(wordData.id);
+        if (url) {
+            player.src = url;
+            player.hidden = false;
+            removeBtn.hidden = false;
+        } else {
+            player.hidden = true;
+            player.removeAttribute('src');
+            removeBtn.hidden = true;
+        }
+    }
+
+    async function store(blob) {
+        if (!blob || !blob.size || typeof putAudio !== 'function') {
+            showSnackbar(t('words.audioError'), { duration: 3000, type: 'error' });
+            return;
+        }
+        if (await putAudio(wordData.id, blob)) {
+            await refresh();
+            showSnackbar(t('words.audioSaved'), { duration: 2000, type: 'success' });
+        } else {
+            showSnackbar(t('words.audioError'), { duration: 3000, type: 'error' });
+        }
+    }
+
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+        const f = fileInput.files[0];
+        fileInput.value = '';
+        if (f) store(f);
+    });
+
+    // Запись с микрофона — только если браузер умеет MediaRecorder.
+    let recorder = null;
+    let chunks = [];
+    const canRecord = typeof MediaRecorder !== 'undefined'
+        && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+    if (!canRecord) recordBtn.hidden = true;
+    recordBtn.addEventListener('click', async () => {
+        if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            recorder = new MediaRecorder(stream);
+            chunks = [];
+            recorder.addEventListener('dataavailable', (e) => { if (e.data && e.data.size) chunks.push(e.data); });
+            recorder.addEventListener('stop', () => {
+                stream.getTracks().forEach((tr) => tr.stop());
+                recordBtn.classList.remove('is-recording');
+                recordBtn.textContent = t('words.audioRecord');
+                store(new Blob(chunks, { type: (chunks[0] && chunks[0].type) || 'audio/webm' }));
+            });
+            recorder.start();
+            recordBtn.classList.add('is-recording');
+            recordBtn.textContent = t('words.audioStop');
+        } catch {
+            showSnackbar(t('words.audioMicError'), { duration: 3000, type: 'error' });
+        }
+    });
+
+    removeBtn.addEventListener('click', async () => {
+        if (typeof deleteAudio === 'function') await deleteAudio(wordData.id);
+        await refresh();
+    });
+
+    const row = document.createElement('div');
+    row.className = 'word-audio__row';
+    row.append(uploadBtn, recordBtn, removeBtn);
+    box.append(row, player, fileInput);
+    refresh();
+    return box;
+}
+
+// Редактирование карточки слова — модальным окном. onSaved зовём после
+// успешного PATCH (перерисовать список). Правку видео-фрагмента и звука
+// монтируем внутрь: они сохраняются сами, отдельными действиями.
+function openWordEditModal(wordData, onSaved) {
+    const overlay = document.createElement('div');
+    overlay.className = 'word-modal';
+    overlay.innerHTML = `
+        <div class="word-modal__dialog" role="dialog" aria-modal="true" aria-label="${esc(t('words.edit'))}">
+            <div class="word-modal__head">
+                <span class="word-modal__title">${esc(t('words.edit'))}</span>
+                <button class="word-modal__close" type="button" aria-label="${esc(t('words.cancel'))}">&times;</button>
+            </div>
+            <div class="word-modal__body"><div class="word-edit"></div></div>
+            <div class="word-modal__foot">
+                <button class="btn btn--danger cancel-btn" type="button">${esc(t('words.cancel'))}</button>
+                <button class="btn btn--success save-btn" type="button">${esc(t('words.save'))}</button>
+            </div>
+        </div>`;
+
+    const wrap = overlay.querySelector('.word-edit');
+    const kanji = editField('words.word', wordData.kanji, 'edit-kanji');
+    const kana = editField('words.reading', wordData.kana, 'edit-kana');
+    const translation = editField('words.meaning', wordData.translation, 'edit-translation');
+    const sentence = editField('words.sentence', wordData.sentence, 'edit-sentence');
+    const sentenceTr = editField('words.sentenceTranslation', wordData.sentenceTranslation, 'edit-sentenceTranslation');
+    const hint = editField('words.hint', wordData.hint, 'edit-hint', true);
+    wrap.append(kanji.g, kana.g, translation.g, sentence.g, sentenceTr.g, hint.g);
+
+    // Видео-фрагмент (мини-плеер + правка начала/конца) и свой звук.
+    if (window.AnimeiClipTrim) wrap.appendChild(window.AnimeiClipTrim.buildForWord(wordData));
+    wrap.appendChild(buildAudioControl(wordData));
+
+    function close() {
+        overlay.remove();
+        document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(); });
+    overlay.querySelector('.word-modal__close').addEventListener('click', close);
+    overlay.querySelector('.cancel-btn').addEventListener('click', close);
+    overlay.querySelector('.save-btn').addEventListener('click', async () => {
+        const patch = {
+            kanji: kanji.input.value,
+            kana: kana.input.value,
+            translation: translation.input.value,
+            sentence: sentence.input.value,
+            sentenceTranslation: sentenceTr.input.value,
+            hint: hint.input.value,
+        };
+        await updateWord(wordData.id, patch);
+        Object.assign(wordData, patch);   // держим кэш свежим для фильтра/перерисовки
+        close();
+        if (onSaved) onSaved();
+        showSnackbar(t('words.savedSnack'), { duration: 3000, type: 'success' });
+    });
+
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
+    kanji.input.focus();
+}
+
 function renderWords() {
     const wordsListEl = document.querySelector('.words-list');
     updateCount(allWords.length);
@@ -164,7 +386,12 @@ function renderWords() {
 
     for (const wordData of words) {
         const wordEl = document.createElement('div');
-        const hasClip = !!wordData.video || Number(wordData.videoEnd) > Number(wordData.videoStart);
+        const badge = clipBadge(wordData);
+        const badgeHtml = badge === 'ready'
+            ? `<span class="word-card__clip" title="${esc(t('words.clip'))}">🎬</span>`
+            : badge === 'pending'
+                ? `<span class="word-card__clip word-card__clip--pending" title="${esc(t('words.videoPreparing'))}">⏳</span>`
+                : '';
 
         wordEl.innerHTML = `
             <div class="word-card word-read-content">
@@ -172,7 +399,7 @@ function renderWords() {
                 <div class="word-card__head">
                     <span class="word-card__kanji">${esc(wordData.kanji)}</span>
                     ${wordData.kana ? `<span class="word-card__kana">${esc(wordData.kana)}</span>` : ''}
-                    ${hasClip ? `<span class="word-card__clip" title="${esc(t('words.clip'))}">🎬</span>` : ''}
+                    ${badgeHtml}
                 </div>
                 ${wordData.translation ? `<div class="word-card__meaning">${esc(wordData.translation)}</div>` : ''}
                 ${wordData.sentence ? `<div class="word-card__sentence">${esc(wordData.sentence)}${
@@ -185,38 +412,6 @@ function renderWords() {
                     ${wordData.sentence ? `<button class="btn btn--ghost word-card__explain has-ai-icon" ${aiAvailable ? '' : 'hidden'}><svg class="ai-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 2 9.15 6.15 5 8l4.15 1.85L11 14l1.85-4.15L17 8l-4.15-1.85L11 2Zm7.5 9-1.1 2.4-2.4 1.1 2.4 1.1 1.1 2.4 1.1-2.4 2.4-1.1-2.4-1.1L18.5 11Z"/></svg><span class="btn-label">${t('words.explain')}</span></button>` : ''}
                 </div>
             </div>
-            <div class="word-card word-edit-content hidden">
-                <div class="word-edit">
-                    <div class="form-group">
-                        <label>${t('words.word')}</label>
-                        <input type="text" class="edit-kanji" value="${esc(wordData.kanji)}">
-                    </div>
-                    <div class="form-group">
-                        <label>${t('words.reading')}</label>
-                        <input type="text" class="edit-kana" value="${esc(wordData.kana)}">
-                    </div>
-                    <div class="form-group">
-                        <label>${t('words.meaning')}</label>
-                        <input type="text" class="edit-translation" value="${esc(wordData.translation)}">
-                    </div>
-                    <div class="form-group">
-                        <label>${t('words.sentence')}</label>
-                        <input type="text" class="edit-sentence" value="${esc(wordData.sentence)}">
-                    </div>
-                    <div class="form-group">
-                        <label>${t('words.sentenceTranslation')}</label>
-                        <input type="text" class="edit-sentenceTranslation" value="${esc(wordData.sentenceTranslation)}">
-                    </div>
-                    <div class="form-group">
-                        <label>${t('words.hint')}</label>
-                        <textarea class="edit-hint">${esc(wordData.hint)}</textarea>
-                    </div>
-                    <div class="word-edit__actions">
-                        <button class="btn btn--danger cancel-btn">${t('words.cancel')}</button>
-                        <button class="btn btn--success save-btn">${t('words.save')}</button>
-                    </div>
-                </div>
-            </div>
         `;
 
         wordEl.querySelector('.word-card__delete').addEventListener('click', async () => {
@@ -226,15 +421,7 @@ function renderWords() {
         });
 
         wordEl.querySelector('.edit-btn').addEventListener('click', () => {
-            wordEl.querySelector('.word-edit-content').classList.remove('hidden');
-            wordEl.querySelector('.word-read-content').classList.add('hidden');
-            // Правка видео-фрагмента (перенесено из обучения): мини-плеер клипа
-            // и кнопки ±1с к началу/концу. Монтируем один раз, лениво по открытию.
-            const editBox = wordEl.querySelector('.word-edit');
-            if (window.AnimeiClipTrim && editBox && !editBox.querySelector('.clip-edit')) {
-                const editor = window.AnimeiClipTrim.buildForWord(wordData);
-                editBox.insertBefore(editor, editBox.querySelector('.word-edit__actions'));
-            }
+            openWordEditModal(wordData, renderWords);
         });
 
         const explainBtn = wordEl.querySelector('.word-card__explain');
@@ -243,28 +430,11 @@ function renderWords() {
             explainBtn.addEventListener('click', () => runWordExplain(wordData, explainBtn, out));
         }
 
-        wordEl.querySelector('.cancel-btn').addEventListener('click', () => {
-            wordEl.querySelector('.word-edit-content').classList.add('hidden');
-            wordEl.querySelector('.word-read-content').classList.remove('hidden');
-        });
-
-        wordEl.querySelector('.save-btn').addEventListener('click', async () => {
-            const patch = {
-                kanji: wordEl.querySelector('.edit-kanji').value,
-                kana: wordEl.querySelector('.edit-kana').value,
-                translation: wordEl.querySelector('.edit-translation').value,
-                sentence: wordEl.querySelector('.edit-sentence').value,
-                sentenceTranslation: wordEl.querySelector('.edit-sentenceTranslation').value,
-                hint: wordEl.querySelector('.edit-hint').value,
-            };
-            await updateWord(wordData.id, patch);
-            Object.assign(wordData, patch);   // обновляем кэш, чтобы фильтр/перерисовка были свежими
-            renderWords();
-            showSnackbar(t('words.savedSnack'), { duration: 3000, type: 'success' });
-        });
-
         wordsListEl.appendChild(wordEl);
     }
+
+    // Есть слова с ещё не готовым клипом — тихо перепроверим их чуть позже.
+    if (words.some((w) => clipBadge(w) === 'pending')) scheduleClipRefresh();
 }
 
 // ---------- Экспорт и импорт ----------

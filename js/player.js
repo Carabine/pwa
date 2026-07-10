@@ -111,7 +111,9 @@ async function init() {
 function isJpTrack(tr) {
     if (!tr) return false;
     if (tr.type === 'subtitles') return true;
-    return /субтитр|subtitle|\bsub\b|ориг(инал)?|япон|japanese/i.test(tr.title || '');
+    // Kodik метит оригинал непоследовательно, поэтому ловим по названию как можно
+    // шире: сабы/субтитры, original/ориг, jp/jpn, японский, 日本語, オリジナル.
+    return /субтитр|саб|subtitle|\bsub\b|\bjp\b|\bjpn\b|ориг|original|япон|japanese|日本語|オリジナル/i.test(tr.title || '');
 }
 
 function renderTranslations() {
@@ -377,6 +379,9 @@ function renderExtrasToggle() {
         btn.id = 'extras-toggle';
         btn.type = 'button';
         btn.className = 'chip-btn';
+        // Поясняем, что это: короткие ролики (чиби/PV/анонсы), которые Kodik
+        // подмешивает к сезону. По умолчанию прячем — кнопка их возвращает в список.
+        btn.title = window.t('player.extras.title');
         btn.addEventListener('click', () => {
             state.showExtras = !state.showExtras;
             renderSeasons();

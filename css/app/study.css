@@ -289,6 +289,20 @@
     letter-spacing: 0.4px;
 }
 
+/* Текущее значение начала/конца/длины окна — рядом с подписью. */
+.clip-trim__value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 34px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Длина окна — отдельной группой, без кнопок, чуть притушена. */
+.clip-trim__group--len {
+    color: var(--text-muted);
+}
+
 .clip-trim__btn {
     background: var(--surface);
     border: 1px solid var(--border);

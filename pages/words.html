@@ -42,11 +42,11 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input type="text" id="words-filter" autocomplete="off" data-i18n-placeholder="words.filter" placeholder="Поиск по слову или переводу…">
             </label>
-            <!-- «Скачать слова» / «Загрузить из файла» временно скрыты по просьбе.
-                 Разметку и обработчики (words.js) оставляем — вернуть можно, убрав hidden. -->
-            <div class="words-toolbar__actions" hidden>
-                <button class="btn btn--ghost" id="export-btn" data-i18n="words.export" data-i18n-title="words.export.title" title="Файл подходит для Anki и как резервная копия">Скачать слова</button>
-                <button class="btn btn--ghost" id="import-btn" data-i18n="words.import">Загрузить из файла</button>
+            <!-- Обмен с Anki: экспорт словаря в TSV (Anki принимает без настройки)
+                 и импорт такого же файла обратно. Обработчики — в words.js. -->
+            <div class="words-toolbar__actions">
+                <button class="btn btn--ghost" id="export-btn" data-i18n="words.export" data-i18n-title="words.export.title" title="Файл подходит для Anki и как резервная копия">Экспорт в Anki</button>
+                <button class="btn btn--ghost" id="import-btn" data-i18n="words.import" data-i18n-title="words.import.title" title="Загрузить файл, экспортированный из Anki">Импорт из Anki</button>
                 <input type="file" id="import-file" accept=".txt,.tsv,.csv" hidden>
             </div>
         </div>
@@ -55,7 +55,7 @@
 
     <nav class="sidebar" id="sidebar">
         <div class="sidebar__brand">Animei</div>
-        <div class="sidebar__version">v0.0.58</div>
+        <div class="sidebar__version">v0.0.59</div>
         <a href="../index.html" data-i18n="nav.home">Главная</a>
         <a href="./catalog.html" data-i18n="nav.catalog">Каталог</a>
         <a href="./news.html" data-i18n="nav.news">Новости</a>

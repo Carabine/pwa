@@ -7,6 +7,9 @@
 
 const CLIP_DB = 'animei-media';
 const CLIP_STORE = 'clips';
+// Свой звук для карточки слова (пользователь загрузил или записал) — отдельное
+// хранилище, ключ = id слова. Версия БД поднята с 1 до 2, чтобы добавить его.
+const AUDIO_STORE = 'audios';
 
 function openClipDB() {
     return new Promise((resolve, reject) => {
@@ -14,10 +17,11 @@ function openClipDB() {
             reject(new Error('IndexedDB недоступен'));
             return;
         }
-        const req = indexedDB.open(CLIP_DB, 1);
+        const req = indexedDB.open(CLIP_DB, 2);
         req.onupgradeneeded = () => {
             const db = req.result;
             if (!db.objectStoreNames.contains(CLIP_STORE)) db.createObjectStore(CLIP_STORE);
+            if (!db.objectStoreNames.contains(AUDIO_STORE)) db.createObjectStore(AUDIO_STORE);
         };
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
@@ -69,6 +73,58 @@ async function deleteClip(id) {
         await new Promise((resolve, reject) => {
             const tx = db.transaction(CLIP_STORE, 'readwrite');
             tx.objectStore(CLIP_STORE).delete(id);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch { /* нечего удалять — и ладно */ }
+}
+
+// ---------- Свой звук карточки слова ----------
+// Тот же приём, что и с клипами: blob по ключу = id слова. Пока хранится только
+// в браузере (у гостя и у вошедшего одинаково — на сервере поля для звука нет),
+// поэтому между устройствами не переносится. Ошибки не пробрасываем.
+
+async function putAudio(id, blob) {
+    try {
+        const db = await openClipDB();
+        return await new Promise((resolve, reject) => {
+            const tx = db.transaction(AUDIO_STORE, 'readwrite');
+            tx.objectStore(AUDIO_STORE).put(blob, id);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (err) {
+        console.warn('Не удалось сохранить звук карточки:', err);
+        return false;
+    }
+}
+
+async function getAudio(id) {
+    try {
+        const db = await openClipDB();
+        return await new Promise((resolve, reject) => {
+            const tx = db.transaction(AUDIO_STORE, 'readonly');
+            const req = tx.objectStore(AUDIO_STORE).get(id);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => reject(req.error);
+        });
+    } catch {
+        return null;
+    }
+}
+
+// objectURL для <audio src> (или null). Живёт до перезагрузки страницы.
+async function getAudioUrl(id) {
+    const blob = await getAudio(id);
+    return blob ? URL.createObjectURL(blob) : null;
+}
+
+async function deleteAudio(id) {
+    try {
+        const db = await openClipDB();
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(AUDIO_STORE, 'readwrite');
+            tx.objectStore(AUDIO_STORE).delete(id);
             tx.oncomplete = () => resolve(true);
             tx.onerror = () => reject(tx.error);
         });

@@ -367,6 +367,139 @@
     margin-top: 4px;
 }
 
+/* «Готовится» — жёлтый значок вместо 🎬, пока клип ещё режется на сервере. */
+.word-card__clip--pending {
+    opacity: 0.9;
+    animation: word-clip-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes word-clip-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+/* ---------- Свой звук карточки ---------- */
+.word-audio {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.word-audio__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.word-audio__row .btn {
+    padding: 7px 12px;
+    font-size: 13px;
+}
+
+.word-audio__remove {
+    color: var(--danger);
+}
+
+/* Идёт запись — красная точка «пульсирует». */
+.word-audio__record.is-recording {
+    color: var(--danger);
+    border-color: var(--danger);
+    animation: word-clip-pulse 1s ease-in-out infinite;
+}
+
+/* ---------- Модалка редактирования карточки слова ---------- */
+.word-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 130;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(5, 5, 10, 0.66);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    animation: word-modal-fade 0.15s ease;
+}
+
+.word-modal__dialog {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 460px;
+    max-height: 88vh;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7);
+    overflow: hidden;
+    animation: word-modal-pop 0.18s ease;
+}
+
+.word-modal__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.word-modal__title {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.word-modal__close {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 18px;
+    line-height: 1;
+    transition: background var(--transition), color var(--transition);
+}
+
+.word-modal__close:hover {
+    background: var(--border);
+    color: var(--text);
+}
+
+/* Тело — единственная прокручиваемая область (форма + видео + звук). */
+.word-modal__body {
+    flex: 1;
+    min-height: 0;
+    padding: 16px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.word-modal__foot {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+@keyframes word-modal-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes word-modal-pop {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
 /* ========== DICTIONARY — MOBILE ========== */
 @media (max-width: 560px) {
     .dictionary {
