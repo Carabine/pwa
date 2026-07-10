@@ -231,30 +231,56 @@ html, body {
 }
 
 .player-ui__vol {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 2px;
+    flex-shrink: 0;
 }
 
-.player-ui__vol input[type="range"] {
-    width: 0;
-    opacity: 0;
-    height: 24px;
+/* Громкость — всплывающая панелька над кнопкой звука. Раньше ползунок
+   «выезжал» прямо в панель (менял ширину ряда с transition) и на перетаскивании
+   схлопывался, из-за чего звук «не до конца двигался». Плавающая панель имеет
+   фиксированную ширину, ничего не двигает и ползунок всегда доезжает до края. */
+.player-ui__vol-popup {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    display: none;
+    padding: 12px 14px;
+    background: rgba(18, 18, 28, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 12px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 30;
+}
+
+/* Невидимый «мостик» перекрывает зазор между кнопкой и панелькой,
+   чтобы курсор доезжал до ползунка, не теряя hover. */
+.player-ui__vol-popup::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    height: 8px;
+}
+
+.player-ui__vol:hover .player-ui__vol-popup,
+.player-ui__vol:focus-within .player-ui__vol-popup {
+    display: block;
+}
+
+.player-ui__vol-popup input[type="range"] {
+    display: block;
+    width: 116px;
+    height: 20px;
+    margin: 0;
     accent-color: var(--pink);
     cursor: pointer;
     vertical-align: middle;
-    transition: width 0.2s ease, opacity 0.2s ease;
-}
-
-/* Раскрываем не только по hover, но и на focus/active — иначе при перетаскивании
-   курсор уходил с полоски, :hover пропадал, ползунок схлопывался и «застревал»
-   (жалоба: на ~20% звук как будто выключался и дальше не двигался). */
-.player-ui__vol:hover input[type="range"],
-.player-ui__vol:focus-within input[type="range"],
-.player-ui__vol input[type="range"]:focus,
-.player-ui__vol input[type="range"]:active {
-    width: 72px;
-    opacity: 1;
 }
 
 .player-ui__time {
@@ -316,22 +342,26 @@ html, body {
     color: #fff;
 }
 
-/* Всплывающее меню выбора качества (открывается над кнопкой) */
-.player-ui__quality-wrap {
+/* Всплывающие меню выбора качества и скорости (открываются над кнопкой).
+   Одинаковый стиль, чтобы дропдауны плеера выглядели заедино. */
+.player-ui__quality-wrap,
+.player-ui__speed-wrap {
     position: relative;
     flex-shrink: 0;
     display: inline-flex;
 }
 
-.player-ui__quality-menu {
+.player-ui__quality-menu,
+.player-ui__speed-menu {
     position: absolute;
     bottom: calc(100% + 8px);
     right: 0;
-    min-width: 104px;
+    min-width: 112px;
     background: rgba(18, 18, 28, 0.96);
     border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 10px;
-    padding: 5px;
+    /* Радиус меню = радиус пункта (6px) + отступ контейнера (6px) → углы ровные */
+    border-radius: 12px;
+    padding: 6px;
     box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -339,17 +369,19 @@ html, body {
     z-index: 30;
 }
 
-.player-ui__quality-wrap.is-open .player-ui__quality-menu {
+.player-ui__quality-wrap.is-open .player-ui__quality-menu,
+.player-ui__speed-wrap.is-open .player-ui__speed-menu {
     display: block;
 }
 
-.player-ui__quality-opt {
+.player-ui__quality-opt,
+.player-ui__speed-opt {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 10px;
     width: 100%;
-    padding: 8px 11px;
+    padding: 10px 12px;
     border-radius: 6px;
     background: transparent;
     color: rgba(255, 255, 255, 0.9);
@@ -359,11 +391,13 @@ html, body {
     cursor: pointer;
 }
 
-.player-ui__quality-opt:hover {
+.player-ui__quality-opt:hover,
+.player-ui__speed-opt:hover {
     background: rgba(255, 255, 255, 0.12);
 }
 
-.player-ui__quality-opt.is-active {
+.player-ui__quality-opt.is-active,
+.player-ui__speed-opt.is-active {
     background: var(--grad);
     color: #fff;
 }
@@ -1344,8 +1378,8 @@ html, body {
 
     /* Слайдер громкости раскрыть на тач нельзя (он по hover) — прячем,
        остаётся понятная кнопка «звук вкл/выкл» */
-    .player-ui__vol input[type="range"] {
-        display: none;
+    .player-ui__vol-popup {
+        display: none !important;
     }
 
     /* Строка японских субтитров под видео — компактная (по просьбе: ещё мельче) */

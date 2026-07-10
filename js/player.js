@@ -582,6 +582,9 @@ function switchQuality(key) {
         e.stopPropagation();
         if (qualityKeys().length <= 1) return;
         if (wrap.classList.contains('is-open')) { closeMenu(); return; }
+        // Не держим два меню открытыми сразу (качество/скорость).
+        document.querySelectorAll('.player-ui__quality-wrap.is-open, .player-ui__speed-wrap.is-open')
+            .forEach((w) => { if (w !== wrap) w.classList.remove('is-open'); });
         buildMenu();
         wrap.classList.add('is-open');
     });

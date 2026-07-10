@@ -98,7 +98,9 @@
     top: calc(100% + 8px);
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    /* Радиус контейнера = радиус пункта (6px) + внутренний отступ (6px):
+       так подсветка пункта ложится в скруглённые углы ровно, без «кривизны». */
+    border-radius: var(--radius);
     box-shadow: var(--shadow);
     min-width: 232px;
     z-index: 200;
@@ -115,7 +117,7 @@
     display: flex;
     align-items: center;
     gap: 11px;
-    padding: 11px 12px;
+    padding: 10px 12px;
     border-radius: var(--radius-xs);
     color: var(--text);
     font-size: 14px;

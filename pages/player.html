@@ -56,7 +56,9 @@
                             <button class="player-ui__btn" id="ctrl-play" data-i18n-title="ui.play.title" title="Играть/пауза (Space)"></button>
                             <div class="player-ui__vol">
                                 <button class="player-ui__btn" id="ctrl-mute" data-i18n-title="ui.mute.title" title="Звук (M)"></button>
-                                <input type="range" id="ctrl-volume" min="0" max="1" step="0.05" value="1" aria-label="Громкость">
+                                <div class="player-ui__vol-popup">
+                                    <input type="range" id="ctrl-volume" min="0" max="1" step="0.01" value="1" aria-label="Громкость">
+                                </div>
                             </div>
                             <span class="player-ui__time" id="ctrl-time">0:00 / 0:00</span>
                             <div class="player-ui__spacer"></div>

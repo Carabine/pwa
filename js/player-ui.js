@@ -143,20 +143,75 @@
         video.muted = !video.muted;
     });
 
+    // После перетаскивания мышью ползунок остаётся в фокусе, и попап «залипал»
+    // открытым (он держится на :focus-within). Снимаем фокус, когда мышь ушла
+    // с блока громкости или отпустила ползунок — попап закрывается как ожидается.
+    // Клавиатуру не трогаем: mouseleave/pointerup срабатывают только от мыши.
+    const volGroup = volumeSlider.closest('.player-ui__vol');
+    if (volGroup) volGroup.addEventListener('mouseleave', () => volumeSlider.blur());
+    volumeSlider.addEventListener('pointerup', () => volumeSlider.blur());
+
     video.addEventListener('volumechange', updateVolumeUi);
 
     const savedVolume = parseFloat(localStorage.getItem(VOLUME_KEY));
     if (isFinite(savedVolume) && savedVolume >= 0 && savedVolume <= 1) video.volume = savedVolume;
 
     // ---------- Скорость ----------
+    // Меню выбора скорости над кнопкой — как у качества/звука, а не циклом по клику.
 
-    speedBtn.addEventListener('click', () => {
-        const i = SPEEDS.indexOf(video.playbackRate);
-        const next = SPEEDS[(i + 1) % SPEEDS.length] ?? 1;
-        video.playbackRate = next;
-        speedBtn.textContent = next + '×';
-        speedBtn.classList.toggle('is-custom', next !== 1);
-    });
+    (function setupSpeedControl() {
+        const speedWrap = document.createElement('div');
+        speedWrap.className = 'player-ui__speed-wrap';
+        speedBtn.parentNode.insertBefore(speedWrap, speedBtn);
+        speedWrap.appendChild(speedBtn);
+
+        const menu = document.createElement('div');
+        menu.className = 'player-ui__speed-menu';
+        speedWrap.appendChild(menu);
+
+        const fmtRate = (r) => (r === 1 ? '1' : String(r)) + '×';
+        const closeMenu = () => speedWrap.classList.remove('is-open');
+
+        function syncBtn() {
+            speedBtn.textContent = fmtRate(video.playbackRate);
+            speedBtn.classList.toggle('is-custom', video.playbackRate !== 1);
+        }
+
+        function buildMenu() {
+            menu.innerHTML = '';
+            const cur = video.playbackRate;
+            SPEEDS.forEach((r) => {
+                const opt = document.createElement('button');
+                opt.type = 'button';
+                opt.className = 'player-ui__speed-opt' + (r === cur ? ' is-active' : '');
+                opt.textContent = fmtRate(r);
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeMenu();
+                    video.playbackRate = r;
+                    syncBtn();
+                });
+                menu.appendChild(opt);
+            });
+        }
+
+        speedBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (speedWrap.classList.contains('is-open')) { closeMenu(); return; }
+            // Не держим два меню открытыми сразу (качество/скорость).
+            document.querySelectorAll('.player-ui__quality-wrap.is-open, .player-ui__speed-wrap.is-open')
+                .forEach((w) => { if (w !== speedWrap) w.classList.remove('is-open'); });
+            buildMenu();
+            speedWrap.classList.add('is-open');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!speedWrap.contains(e.target)) closeMenu();
+        });
+
+        video.addEventListener('ratechange', syncBtn);
+        syncBtn();
+    })();
 
     // ---------- Полный экран ----------
     // Разворачиваем не <video>, а всю обёртку: тогда наши панель, субтитры
