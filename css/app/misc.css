@@ -100,7 +100,8 @@ a[href$="watch.html"] {
     }
 }
 
-/* Переключатель языка в шапке */
+/* Переключатель языка в шапке. Отступ до соседей задаёт gap на .header__right —
+   свой margin тут не нужен (иначе двойной отступ и обрезка дропдауна). */
 .lang-select {
     background: var(--card);
     color: var(--text-muted);
@@ -109,9 +110,10 @@ a[href$="watch.html"] {
     padding: 5px 8px;
     font-family: var(--font);
     font-size: 12px;
+    line-height: 1;
     outline: none;
     cursor: pointer;
-    margin-right: 8px;
+    flex-shrink: 0;
 }
 
 .lang-select:hover {

@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.83';
+const APP_VERSION = 'v0.0.84';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -177,9 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
     addSidebarIcons();
 
     if (menuBtn && sidebar && overlay) {
+        // Кнопка меню переключает .open. На телефоне это выезжающая шторка (с
+        // затемняющим оверлеем), на десктопе — та же .open раскрывает постоянную
+        // рейку из «только иконки» в «иконки + подписи» (оверлей там скрыт CSS,
+        // поэтому его класс ни на что не влияет). Toggle, а не add — чтобы на
+        // десктопе повторное нажатие сворачивало рейку обратно.
         menuBtn.addEventListener('click', () => {
-            sidebar.classList.add('open');
-            overlay.classList.add('open');
+            const open = sidebar.classList.toggle('open');
+            overlay.classList.toggle('open', open);
         });
 
         overlay.addEventListener('click', () => {

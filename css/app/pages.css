@@ -280,61 +280,6 @@
     min-width: 0;
 }
 
-/* ИИ-разбор предложения внутри карточки слова */
-.word-card__explain-out {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-    font-size: 13px;
-    /* Разбор бывает длинным — держим его в разумной высоте со своим скроллом,
-       чтобы раскрытая карточка не растягивалась на пол-экрана. */
-    max-height: 42vh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-}
-
-.word-card__explain-out.hidden {
-    display: none;
-}
-
-.word-card__explain-out .explain__section {
-    margin-bottom: 10px;
-}
-
-.word-card__explain-out .explain__section:last-child {
-    margin-bottom: 0;
-}
-
-.word-card__explain-out .explain__title {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: var(--text-dim);
-    margin-bottom: 4px;
-}
-
-.word-card__explain-out .explain__translation {
-    font-size: 13.5px;
-}
-
-.word-card__explain-out .explain__part {
-    margin-bottom: 6px;
-}
-
-.word-card__explain-out .explain__jp {
-    font-family: 'Noto Sans JP', sans-serif;
-    font-weight: 600;
-}
-
-.word-card__explain-out .explain__reading {
-    color: var(--primary-hover);
-    font-size: 12px;
-}
-
-.word-card__explain-out .explain__meaning {
-    color: var(--text-muted);
-}
-
 .word-card__delete {
     position: absolute;
     top: 12px;

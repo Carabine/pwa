@@ -44,13 +44,20 @@
 }
 
 .header__left, .header__right {
-    width: 48px;
     display: flex;
     align-items: center;
 }
 
+.header__left {
+    width: 48px;
+}
+
+/* Правый блок шапки держит переключатель языка + кнопку профиля. Ширину не
+   фиксируем (иначе дропдаун языка обрезается/наезжает) — блок растёт по
+   содержимому, а gap задаёт единый ровный отступ между его элементами. */
 .header__right {
     justify-content: flex-end;
+    gap: 8px;
 }
 
 /* Главная: логотип прижат к левому краю (сразу за кнопкой меню), профиль — справа.
@@ -152,7 +159,13 @@
     flex-shrink: 0;
 }
 
-/* ========== SIDEBAR ========== */
+/* ========== SIDEBAR ==========
+   Две раскладки:
+   • Телефон (по умолчанию, ниже) — выезжающая слева шторка: спрятана за экраном,
+     кнопка меню + оверлей открывают её (.open), поверх контента.
+   • Десктоп (@media min-width:901px, дальше) — постоянная левая рейка: свёрнута
+     = только иконки, раскрыта (.open) = иконки + подписи; контент .app сдвигается
+     на ширину рейки, оверлей не затемняет. */
 
 .sidebar {
     position: fixed;
@@ -205,8 +218,12 @@
 }
 
 .sidebar a.active {
-    color: var(--primary-hover);
-    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary);
+    background: rgba(124, 140, 248, 0.14);
+}
+
+.sidebar a.active .nav-icon {
+    color: var(--primary);
 }
 
 /* «На сайт Animei» — выход из приложения на лендинг; отделяем чертой сверху */
@@ -249,6 +266,91 @@
 .overlay.open {
     opacity: 1;
     pointer-events: auto;
+}
+
+/* ========== DESKTOP: постоянная левая рейка ==========
+   На широких экранах сайдбар — не шторка, а всегда видимая колонка слева.
+   Свёрнута — только иконки (ширина --rail-w); .open раскрывает подписи
+   (ширина --rail-open-w). Контент .app сдвигается на текущую ширину рейки. */
+@media (min-width: 901px) {
+    /* Сдвигаем всё приложение вправо на ширину рейки. :has() ловит раскрытое
+       состояние и увеличивает отступ — контент едет вместе с рейкой. Отступ
+       даём только страницам с рейкой (:has(.sidebar)) — на login без сайдбара
+       пустой провал слева не появляется. */
+    .app:has(.sidebar) {
+        padding-left: var(--rail-w);
+        transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .app:has(.sidebar.open) {
+        padding-left: var(--rail-open-w);
+    }
+
+    /* Рейка всегда на экране (без translateX), ниже шапки по z-index, чтобы
+       выпадашки шапки/профиля были поверх. Ширина плавно меняется по .open. */
+    .sidebar {
+        transform: none;
+        width: var(--rail-w);
+        z-index: 90;
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-x: hidden;
+    }
+
+    .sidebar.open {
+        transform: none;
+        width: var(--rail-open-w);
+    }
+
+    /* Свёрнуто: прячем все текстовые подписи, показываем только иконки по центру.
+       Пункты меню (.nav-label — из iconifyLink), бренд и версия скрываются. */
+    .sidebar:not(.open) .nav-label,
+    .sidebar:not(.open) .sidebar__brand,
+    .sidebar:not(.open) .sidebar__version {
+        opacity: 0;
+        visibility: hidden;
+        white-space: nowrap;
+    }
+
+    .sidebar:not(.open) .sidebar__brand,
+    .sidebar:not(.open) .sidebar__version {
+        height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin: 0;
+        border: 0;
+        overflow: hidden;
+    }
+
+    /* Версия свёрнутой рейки всё равно прижата к низу через margin-top:auto на
+       .sidebar__version (order:1). При height:0 это ломается — держим распорку. */
+    .sidebar:not(.open)::before {
+        content: "";
+        order: 1;
+        margin-top: auto;
+    }
+
+    /* Иконки-ссылки в свёрнутом виде — по центру рейки, ровные квадраты. */
+    .sidebar:not(.open) a {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+        gap: 0;
+    }
+
+    .sidebar .nav-label {
+        transition: opacity 0.2s ease;
+    }
+
+    /* Подписи появляются только когда рейка достаточно широкая — иначе они
+       моргают/переносятся во время анимации раскрытия. */
+    .sidebar.open .nav-label {
+        opacity: 1;
+    }
+
+    /* На десктопе оверлей не нужен — рейка не перекрывает контент, а раздвигает. */
+    .overlay {
+        display: none;
+    }
 }
 
 /* ========== MAIN CONTENT ========== */
