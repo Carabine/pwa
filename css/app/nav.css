@@ -304,9 +304,15 @@
         height: calc(100% - var(--header-h));
         width: var(--rail-w);
         z-index: 90;
-        padding-top: 8px;
+        padding-top: 0;
         transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         overflow-x: hidden;
+    }
+
+    /* Бургер по центру над колонкой иконок рейки: у шапки левый отступ 16px
+       (36px кнопка → центр 34px = центр рейки), чтобы ☰ и иконки стояли в столбик. */
+    .header {
+        padding-left: 16px;
     }
 
     .sidebar.open {
