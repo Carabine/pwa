@@ -303,9 +303,13 @@
         width: var(--rail-open-w);
     }
 
-    /* Свёрнуто: прячем все текстовые подписи, показываем только иконки по центру.
-       Пункты меню (.nav-label — из iconifyLink), бренд и версия скрываются. */
-    .sidebar:not(.open) .nav-label,
+    /* Свёрнуто: подписи пунктов УБИРАЕМ ИЗ ПОТОКА (display:none). Иначе
+       visibility:hidden оставляет их ширину, ссылка = иконка + подпись шире 68px,
+       и при justify-content:center иконку сдвигает влево и режет overflow-x. */
+    .sidebar:not(.open) .nav-label {
+        display: none;
+    }
+
     .sidebar:not(.open) .sidebar__brand,
     .sidebar:not(.open) .sidebar__version {
         opacity: 0;
