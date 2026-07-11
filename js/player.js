@@ -867,6 +867,8 @@ function applyFuriganaPref() {
     btn.classList.toggle('chip-btn--active', state.furigana);
     transcriptList.classList.toggle('no-furigana', !state.furigana);
     nowCue.classList.toggle('no-furigana', !state.furigana);
+    // В оверлее чтение над словом задаётся текстом (ромадзи/кана) — перерисуем.
+    if (typeof updateNowCue === 'function') updateNowCue(state.activeCueIndex);
 }
 
 // ---------- Ромадзи ----------
@@ -945,6 +947,8 @@ function applyRomajiPref() {
     btn.classList.toggle('chip-btn--active', state.romaji);
     transcriptList.classList.toggle('show-romaji', state.romaji);
     nowCue.classList.toggle('show-romaji', state.romaji);
+    // В оверлее чтение над словом (ромадзи/кана) задаётся текстом — перерисуем.
+    if (typeof updateNowCue === 'function') updateNowCue(state.activeCueIndex);
 }
 
 function buildTokensHtml(cue) {
@@ -987,20 +991,22 @@ function buildWordCells(cue) {
         const cell = document.createElement('span');
         cell.className = 'ncw';
 
-        // Ромадзи над словом. Для знаков препинания ромадзи пустой — тогда строку
-        // сверху не добавляем, чтобы столбики стояли ровно по нижнему краю.
-        const romaji = kanaToRomaji(tok.reading || tok.surface);
-        if (romaji) {
+        // Над словом — ОДНО чтение: ромадзи (по умолчанию) ЛИБО хирагана, не оба.
+        // Ромадзи в приоритете; выключишь ромадзи — сверху будет кана (фуригана).
+        let reading = '';
+        if (state.romaji) reading = kanaToRomaji(tok.reading || tok.surface);
+        else if (state.furigana) reading = readingKana(tok);
+        if (reading && reading !== tok.surface) {
             const rm = document.createElement('span');
-            rm.className = 'ncw__romaji';
-            rm.textContent = romaji;
+            rm.className = 'ncw__read';
+            rm.textContent = reading;
             cell.appendChild(rm);
         }
 
-        // Само слово (кандзи + фуригана) — с теми же классами .tok, что и в списке,
-        // чтобы работали существующие стили и клик по изучаемому слову.
+        // Само слово — без внутренней фуриганы (чтение теперь одной строкой сверху).
+        // Классы .tok сохраняем, чтобы работали стили и клик по изучаемому слову.
         const jp = document.createElement('span');
-        appendWithFurigana(jp, tok.surface, tok.reading);
+        jp.textContent = tok.surface;
         jp.className = 'ncw__jp tok';
         if (tok.learnable) {
             jp.classList.add('tok--learnable');
@@ -1015,6 +1021,14 @@ function buildWordCells(cue) {
         cell.appendChild(jp);
         return cell;
     });
+}
+
+// Кана-чтение слова для показа над ним — только если в слове есть кандзи (у
+// чисто-канного слова чтение совпадает с ним самим, дублировать не нужно).
+function readingKana(tok) {
+    if (!tok.reading || tok.reading === tok.surface) return '';
+    if (!KANJI_RE.test(tok.surface)) return '';
+    return tok.reading;
 }
 
 function renderTranscript() {

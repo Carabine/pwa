@@ -97,11 +97,10 @@
     box-shadow: var(--shadow);
 }
 
-/* Карточка с видеоклипом на ПК растягивается на доступную высоту — под клип, а он
-   масштабируется под остаток (см. ниже). Так экран учёбы влезает целиком, без
-   прокрутки вниз. Карточки без клипа остаются компактными по контенту. */
+/* Карточка с видеоклипом обнимает контент (не растягивается на всю высоту) —
+   чтобы не быть «слишком большой»; размер задаёт само видео (ограничено по высоте). */
 .card-area:has(.clip-player) {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
 }
 
 /* Ненавязчивая правка карточки: полупрозрачный карандаш в верхнем правом углу
@@ -189,33 +188,35 @@
 /* Медиа-слот растягивается на свободное место только когда есть клип (иначе на
    карточках без клипа он бы оставлял пустоту). */
 .back-side--visible:has(.clip-player) .back-media {
-    flex: 1 1 auto;
-    min-height: 0;
-    justify-content: center;
-}
-
-/* На ПК клип занимает остаток высоты, а видео внутри масштабируется под него
-   (object-fit: contain — сохраняет 16:9 без искажений). Фон клипа — цвет карточки
-   (а НЕ чёрный): если по краям остаётся поле (когда остаток не ровно 16:9), оно
-   сливается с карточкой, и чёрных полос не видно. Так экран влезает без
-   прокрутки и без чёрной рамки. */
-.card-area .clip-player {
-    width: 100%;
-    max-width: 100%;
-    aspect-ratio: 16 / 9;
-    max-height: 100%;
-    margin: 0 auto;
     flex: 0 1 auto;
     min-height: 0;
-    background: var(--card);
+    justify-content: center;
+    align-items: center;   /* центрируем клип, который теперь по ширине видео */
+}
+
+/* Контейнер клипа ОБНИМАЕТ само видео (width:fit-content), а не задаёт свой
+   прямоугольник 16:9. Так по краям нет чёрных/пустых полос при любом соотношении
+   сторон исходника, а регулятор звука (absolute к .clip-player) всегда лежит в углу
+   самого кадра. Высота видео ограничена — карточка не «слишком большая» и без
+   прокрутки. */
+.card-area .clip-player {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+    flex: 0 0 auto;
+    min-height: 0;
+    background: #000;
+    line-height: 0;
 }
 
 .card-area .clip-player video {
-    position: static;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
     display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 40vh;
+    object-fit: contain;
     margin: 0;
 }
 
@@ -350,6 +351,62 @@
     text-align: center;
     letter-spacing: 0.2px;
     margin-top: -4px;
+}
+
+/* ---- Предложение пословно: ромадзи над каждым словом (как в плеере аниме) ---- */
+.sentence--cells {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 2px 7px;
+}
+
+.read-cell {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.18;
+}
+
+.read-cell__romaji {
+    font-size: 0.62em;
+    color: var(--primary-hover);
+    user-select: none;
+    margin-bottom: 1px;
+}
+
+/* ---- ИИ-разбор органично на самой фразе: клик по предложению + искорка ---- */
+.sentence--ai {
+    cursor: pointer;
+    transition: color var(--transition);
+}
+
+.sentence--ai:hover {
+    color: var(--text);
+}
+
+.sentence__spark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 5px;
+    color: var(--primary-hover);
+    vertical-align: middle;
+}
+
+.sentence__spark .ai-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.sentence__spark.is-loading {
+    animation: spark-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes spark-pulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
 }
 
 /* ---- Иконка ИИ в кнопках разбора ---- */
@@ -797,11 +854,17 @@
         flex: 0 0 auto;
     }
 
-    /* Видео 16:9 на всю ширину карточки — крупное и без чёрных полей. */
+    /* На телефоне то же правило: контейнер по размеру видео (без полос), крупно,
+       но с потолком высоты, чтобы низ карточки был виден. */
     .card-area .clip-player {
         flex: 0 0 auto;
-        aspect-ratio: 16 / 9;
+        width: fit-content;
+        max-width: 100%;
         min-height: 0;
+    }
+
+    .card-area .clip-player video {
+        max-height: 44vh;
     }
 
     .study-settings-btn {

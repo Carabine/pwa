@@ -23,7 +23,7 @@
         loopClips: false,              // зацикливать клипы слов в карточках
         // Режим обучения
         studyTranscription: 'kana',    // kana | romaji | both | none — транскрипция слова
-        studySentenceRomaji: false,    // ромадзи под предложением на обороте
+        studySentenceRomaji: true,     // ромадзи над каждым словом предложения (по умолч. вкл)
         studyAutoplayClip: true,       // автозапуск клипа на обороте карточки
     };
 

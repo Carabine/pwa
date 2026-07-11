@@ -551,7 +551,7 @@ html, body {
     line-height: 1.15;
 }
 
-.ncw__romaji {
+.ncw__read {
     font-size: 0.62em;
     color: var(--primary-hover);
     user-select: none;
@@ -949,11 +949,9 @@ html, body {
     display: block;
 }
 
-/* В ЦЕНТРАЛЬНОМ оверлее ромадзи — пословно (над каждым словом), подчиняется тому
-   же переключателю Rōmaji через класс .show-romaji на .now-cue. */
-.now-cue:not(.show-romaji) .ncw__romaji {
-    display: none;
-}
+/* В центральном оверлее над словом одно чтение (.ncw__read): ромадзи по умолчанию
+   или кана — задаётся ТЕКСТОМ в buildWordCells по state.romaji/state.furigana,
+   поэтому CSS-скрытия по .show-romaji тут больше нет. */
 
 /* ---------- Словарная карточка ---------- */
 

@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.89';
+const APP_VERSION = 'v0.0.90';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -259,6 +259,69 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchToggle = searchForm.querySelector('.header__search-toggle');
         const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
 
+        // Автокомплит: ищем прямо во время ввода и показываем результаты выпадающим
+        // списком под полем; клик по результату ведёт сразу в плеер. Enter (сабмит)
+        // остаётся как «показать все результаты» на странице каталога.
+        const acList = document.createElement('div');
+        acList.className = 'header__search-ac';
+        acList.hidden = true;
+        searchForm.appendChild(acList);
+
+        const playerHref = (anime) => {
+            const params = new URLSearchParams({
+                id: anime.shikimoriId,
+                title: anime.russian || anime.name,
+                name: anime.name,
+            });
+            return (inPages ? './' : './pages/') + 'player.html?' + params.toString();
+        };
+        const hideAc = () => { acList.hidden = true; };
+        const renderAc = (items) => {
+            acList.innerHTML = '';
+            const top = (items || []).slice(0, 6);
+            if (!top.length) { hideAc(); return; }
+            const lang = (typeof getLang === 'function') ? getLang() : 'ru';
+            top.forEach((anime) => {
+                const a = document.createElement('a');
+                a.className = 'header__search-ac-item';
+                a.href = playerHref(anime);
+                const kind = (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang]['kind.' + anime.kind]) || anime.kind || '';
+                a.innerHTML =
+                    (anime.posterPreview
+                        ? '<img src="' + anime.posterPreview + '" alt="" loading="lazy">'
+                        : '<span class="header__search-ac-noimg"></span>') +
+                    '<span class="header__search-ac-txt"><span class="header__search-ac-title"></span><span class="header__search-ac-meta"></span></span>';
+                a.querySelector('.header__search-ac-title').textContent = anime.russian || anime.name;
+                a.querySelector('.header__search-ac-meta').textContent = [anime.year, kind].filter(Boolean).join(' · ');
+                acList.appendChild(a);
+            });
+            acList.hidden = false;
+        };
+
+        let acTimer = null;
+        let acLastQ = '';
+        const runAc = async (q) => {
+            if (typeof client === 'undefined') return;   // нет axios на странице — только сабмит
+            try {
+                const { data: res } = await client.get('catalog/search', { params: { q } });
+                if (q !== acLastQ) return;                 // пришёл устаревший ответ
+                renderAc(res.data || []);
+            } catch { hideAc(); }
+        };
+
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                const q = searchInput.value.trim();
+                acLastQ = q;
+                clearTimeout(acTimer);
+                if (q.length < 2) { hideAc(); return; }
+                acTimer = setTimeout(() => runAc(q), 250);
+            });
+            searchInput.addEventListener('focus', () => {
+                if (acList.children.length && searchInput.value.trim().length >= 2) acList.hidden = false;
+            });
+        }
+
         // Пустой запрос не отправляем.
         searchForm.addEventListener('submit', (e) => {
             if (!searchInput || searchInput.value.trim() === '') e.preventDefault();
@@ -274,20 +337,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchForm.classList.toggle('is-open', open);
                 searchToggle.setAttribute('aria-expanded', String(open));
                 if (open && searchInput) searchInput.focus();
+                if (!open) hideAc();
             });
         }
 
-        // Клик вне формы и Escape — сворачиваем раскрытое поле (как у профиля).
+        // Клик вне формы и Escape — сворачиваем раскрытое поле и прячем автокомплит.
         document.addEventListener('click', (e) => {
             if (!searchForm.contains(e.target)) {
                 searchForm.classList.remove('is-open');
                 if (searchToggle) searchToggle.setAttribute('aria-expanded', 'false');
+                hideAc();
             }
         });
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 searchForm.classList.remove('is-open');
                 if (searchToggle) searchToggle.setAttribute('aria-expanded', 'false');
+                hideAc();
             }
         });
     }

@@ -126,15 +126,17 @@
         return explainModal;
     }
 
-    async function studyRunExplain(sentence, btn) {
+    // indicator — элемент, показывающий «идёт загрузка» (искорка у предложения).
+    // Может не иметь .btn-label — тогда просто крутим CSS-класс is-loading.
+    async function studyRunExplain(sentence, indicator) {
         const modal = getExplainModal();
         const cached = studyExplainCache.get(sentence);
         if (cached) { studyRenderExplain(modal.body, cached); modal.open(); return; }
-        btn.disabled = true;
-        // Меняем только текстовую подпись, чтобы иконка ИИ в кнопке не терялась.
-        const labelEl = btn.querySelector('.btn-label') || btn;
-        const label = labelEl.textContent;
-        labelEl.textContent = t('words.explaining');
+        if (indicator && indicator._busy) return;
+        if (indicator) { indicator._busy = true; indicator.classList.add('is-loading'); }
+        const labelEl = indicator && indicator.querySelector ? indicator.querySelector('.btn-label') : null;
+        let savedLabel;
+        if (labelEl) { savedLabel = labelEl.textContent; labelEl.textContent = t('words.explaining'); }
         try {
             const { data: res } = await client.get('explain', { params: { sentence }, timeout: 60000 });
             const data = res.data.explanation;
@@ -146,9 +148,8 @@
             const limited = err.response?.data?.reason === 'limited' || err.response?.status === 429;
             showSnackbar(limited ? t('popup.explainLimited') : t('words.explainError'), { duration: 3500, type: 'error' });
         } finally {
-            // Кнопку не убираем — разбор можно открыть снова (из кэша, мгновенно).
-            btn.disabled = false;
-            labelEl.textContent = label;
+            if (indicator) { indicator._busy = false; indicator.classList.remove('is-loading'); }
+            if (labelEl) labelEl.textContent = savedLabel;
         }
     }
 
@@ -186,6 +187,54 @@
         } catch {
             return '';
         }
+    }
+
+    // Токены предложения с бэкенда (/analyze, MeCab) — для пословной раскладки с
+    // ромадзи над каждым словом (как в плеере аниме). Кэш на сессию.
+    const sentenceTokensCache = new Map();
+    async function fetchSentenceTokens(sentence) {
+        if (!sentence) return [];
+        if (sentenceTokensCache.has(sentence)) return sentenceTokensCache.get(sentence);
+        if (typeof client === 'undefined') return [];
+        try {
+            const { data: res } = await client.post('analyze', { text: [sentence] }, { timeout: 20000 });
+            const tokens = res?.data?.[0] || [];
+            sentenceTokensCache.set(sentence, tokens);
+            return tokens;
+        } catch {
+            return [];
+        }
+    }
+
+    // Пословная раскладка предложения: над каждым словом — ромадзи его чтения.
+    // Токены /analyze (MeCab): чтение лежит в feature.reading КАТАКАНОЙ
+    // (kanaToRomaji сам приводит катакану к ромадзи). BOS/EOS пропускаем.
+    function buildReadingCells(tokens) {
+        return tokens
+            .filter((tk) => tk && tk.surface && tk.surface !== 'BOS' && tk.surface !== 'EOS')
+            .map((tk) => {
+                const surface = tk.surface;
+                const kana = (tk.feature && tk.feature.reading && tk.feature.reading !== '*')
+                    ? tk.feature.reading
+                    : (tk.kana || tk.reading || '');
+                const cell = document.createElement('span');
+                cell.className = 'read-cell';
+                const romaji = (kana && typeof window.kanaToRomaji === 'function')
+                    ? window.kanaToRomaji(kana)
+                    : '';
+                // Знаки препинания / чисто-канные без чтения — строку сверху не рисуем.
+                if (romaji && romaji !== surface) {
+                    const rm = document.createElement('span');
+                    rm.className = 'read-cell__romaji';
+                    rm.textContent = romaji;
+                    cell.appendChild(rm);
+                }
+                const jp = document.createElement('span');
+                jp.className = 'read-cell__jp';
+                jp.textContent = surface;
+                cell.appendChild(jp);
+                return cell;
+            });
     }
 
     // Слова, сохранённые с лендинга (animei:guestWords с fromLanding). Приводим
@@ -658,14 +707,15 @@
             panel.appendChild(trRow);
 
             // Тумблеры
-            function toggleRow(key, label) {
+            function toggleRow(key, label, defOn) {
                 const row = document.createElement('label');
                 row.className = 'study-set-row study-set-toggle';
                 const span = document.createElement('span');
                 span.textContent = label;
                 const inp = document.createElement('input');
                 inp.type = 'checkbox';
-                inp.checked = !!studyPref(key);
+                // defOn=true → включено по умолчанию (значение хранится только когда его меняли).
+                inp.checked = defOn ? studyPref(key) !== false : !!studyPref(key);
                 inp.addEventListener('change', () => {
                     window.AnimeiSettings.set(key, inp.checked);
                     reapplyCard();
@@ -673,8 +723,8 @@
                 row.append(span, inp);
                 return row;
             }
-            panel.appendChild(toggleRow('studySentenceRomaji', t('study.sentenceRomaji')));
-            panel.appendChild(toggleRow('studyAutoplayClip', t('study.autoplayClip')));
+            panel.appendChild(toggleRow('studySentenceRomaji', t('study.sentenceRomaji'), true));
+            panel.appendChild(toggleRow('studyAutoplayClip', t('study.autoplayClip'), true));
 
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -917,40 +967,44 @@
             // Транскрипция слова: хирагана / ромадзи / обе / скрыть (настройка).
             renderTranscription(w);
 
+            // Предложение. По умолчанию — пословно с ромадзи над каждым словом (как
+            // в плеере). ИИ-разбор интегрирован органично: сама фраза кликабельна и
+            // помечена искоркой ИИ — отдельной кнопки снизу больше нет.
             const sentenceLine = document.createElement('div');
             sentenceLine.className = 'sentence';
             sentenceLine.textContent = w.sentence ?? '';
-            if (sentenceLine.textContent) els.back.appendChild(sentenceLine);
+            if (w.sentence) {
+                els.back.appendChild(sentenceLine);
 
-            // Ромадзи предложения (настройка) — подгружаем асинхронно.
-            if (w.sentence && studyPref('studySentenceRomaji')) {
-                const roLine = document.createElement('div');
-                roLine.className = 'sentence-romaji';
-                els.back.appendChild(roLine);
                 const wid = current && current.word.id;
-                fetchSentenceRomaji(w.sentence).then((ro) => {
-                    if (!ro || !current || current.word.id !== wid) return;
-                    if (!els.back.classList.contains('back-side--visible')) return;
-                    roLine.textContent = ro;
-                });
+                const withRomaji = studyPref('studySentenceRomaji') !== false; // по умолчанию вкл
+                if (withRomaji) {
+                    fetchSentenceTokens(w.sentence).then((tokens) => {
+                        if (!tokens.length || !current || current.word.id !== wid) return;
+                        if (!els.back.classList.contains('back-side--visible')) return;
+                        // сохраняем искорку ИИ (если была добавлена ниже), заменяем только текст
+                        const spark = sentenceLine.querySelector('.sentence__spark');
+                        sentenceLine.textContent = '';
+                        sentenceLine.classList.add('sentence--cells');
+                        buildReadingCells(tokens).forEach((c) => sentenceLine.appendChild(c));
+                        if (spark) sentenceLine.appendChild(spark);
+                    });
+                }
+
+                if (studyAiAvailable) {
+                    sentenceLine.classList.add('sentence--ai');
+                    sentenceLine.title = t('words.explain');
+                    const spark = document.createElement('span');
+                    spark.className = 'sentence__spark';
+                    spark.setAttribute('role', 'button');
+                    spark.setAttribute('aria-label', t('words.explain'));
+                    spark.innerHTML = AI_ICON;
+                    sentenceLine.appendChild(spark);
+                    sentenceLine.addEventListener('click', () => studyRunExplain(w.sentence, spark));
+                }
             }
 
             addLine('translatedSentence', w.translatedSentence ?? w.sentenceTranslation ?? '');
-
-            // ИИ-разбор предложения — по кнопке с иконкой ИИ (если у слова есть
-            // предложение и ИИ включён). Результат открывается в модалке.
-            if (studyAiAvailable && w.sentence) {
-                const explainBtn = document.createElement('button');
-                explainBtn.type = 'button';
-                explainBtn.className = 'card-explain-btn has-ai-icon';
-                explainBtn.innerHTML = AI_ICON + '<span class="btn-label"></span>';
-                // Компактный чип: короткий видимый текст, полный — в подсказке/aria.
-                explainBtn.querySelector('.btn-label').textContent = t('words.explainShort');
-                explainBtn.title = t('words.explain');
-                explainBtn.setAttribute('aria-label', t('words.explain'));
-                explainBtn.addEventListener('click', () => studyRunExplain(w.sentence, explainBtn));
-                els.back.appendChild(explainBtn);
-            }
 
             if (w.anime) addLine('card-anime', t('starter.fromAnime') + ' ' + w.anime);
 

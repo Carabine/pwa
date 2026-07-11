@@ -476,3 +476,73 @@
         border-color: var(--primary);
     }
 }
+
+/* Выпадающий автокомплит под полем поиска (общий для десктопа и телефона). */
+.header__search-ac {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 6px;
+    z-index: 60;
+    max-height: min(70vh, 430px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.header__search-ac[hidden] { display: none; }
+
+.header__search-ac-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.header__search-ac-item:hover {
+    background: var(--surface);
+}
+
+.header__search-ac-item img,
+.header__search-ac-noimg {
+    width: 34px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    object-fit: cover;
+    background: var(--surface);
+}
+
+.header__search-ac-txt {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.header__search-ac-title {
+    font-size: 13.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.header__search-ac-meta {
+    font-size: 11.5px;
+    color: var(--text-dim);
+}
+
+@media (max-width: 767px) {
+    .header__search-ac {
+        left: auto;
+        right: 0;
+        width: min(80vw, 340px);
+    }
+}
