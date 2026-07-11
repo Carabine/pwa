@@ -55,7 +55,7 @@ const state = {
     autoPauseAt: null,
     showRu: window.AnimeiSettings ? window.AnimeiSettings.get('playerTranslation') !== false : true,
     furigana: localStorage.getItem('animei:furigana') !== 'off',
-    romaji: localStorage.getItem('animei:romaji') === 'on',
+    romaji: localStorage.getItem('animei:romaji') !== 'off',
     aiAvailable: false,
     knownWords: new Set(),
     hls: null,
@@ -972,6 +972,51 @@ function buildTokensHtml(cue) {
     });
 }
 
+// Пословная раскладка для ЦЕНТРАЛЬНОГО оверлея (в стиле lexirise): каждое слово —
+// отдельный столбик [ромадзи сверху][слово с фуриганой]. Перевод остаётся одной
+// строкой на всю реплику (ниже, отдельным элементом). Список субтитров это НЕ
+// затрагивает — он по-прежнему строится через buildTokensHtml.
+function buildWordCells(cue) {
+    if (!cue.tokens || !cue.tokens.length) {
+        const span = document.createElement('span');
+        span.textContent = cue.text;
+        return [span];
+    }
+
+    return cue.tokens.map((tok) => {
+        const cell = document.createElement('span');
+        cell.className = 'ncw';
+
+        // Ромадзи над словом. Для знаков препинания ромадзи пустой — тогда строку
+        // сверху не добавляем, чтобы столбики стояли ровно по нижнему краю.
+        const romaji = kanaToRomaji(tok.reading || tok.surface);
+        if (romaji) {
+            const rm = document.createElement('span');
+            rm.className = 'ncw__romaji';
+            rm.textContent = romaji;
+            cell.appendChild(rm);
+        }
+
+        // Само слово (кандзи + фуригана) — с теми же классами .tok, что и в списке,
+        // чтобы работали существующие стили и клик по изучаемому слову.
+        const jp = document.createElement('span');
+        appendWithFurigana(jp, tok.surface, tok.reading);
+        jp.className = 'ncw__jp tok';
+        if (tok.learnable) {
+            jp.classList.add('tok--learnable');
+            if (state.knownWords.has(tok.base) || state.knownWords.has(tok.surface)) {
+                jp.classList.add('tok--known');
+            }
+            jp.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openWordPopup(tok, cue, e);
+            });
+        }
+        cell.appendChild(jp);
+        return cell;
+    });
+}
+
 function renderTranscript() {
     transcriptList.querySelectorAll('.cue').forEach(el => el.remove());
 
@@ -1021,7 +1066,6 @@ function renderTranscript() {
 
 const nowCue = document.getElementById('now-cue');
 const nowCueJp = document.getElementById('now-cue-jp');
-const nowCueRomaji = document.getElementById('now-cue-romaji');
 const nowCueRu = document.getElementById('now-cue-ru');
 
 function updateNowCue(idx) {
@@ -1033,10 +1077,10 @@ function updateNowCue(idx) {
     nowCue.hidden = false;
     if (idx < 0) return; // между репликами оставляем последнюю строку, не мигаем
     const cue = state.cues[idx];
-    // Реплика под видео — те же кликабельные слова с фуриганой, что и в списке
+    // Реплика под видео — пословно: над каждым словом ромадзи, само слово с
+    // фуриганой, а перевод одной строкой ниже (см. buildWordCells).
     nowCueJp.innerHTML = '';
-    buildTokensHtml(cue).forEach(s => nowCueJp.appendChild(s));
-    nowCueRomaji.textContent = romajiForCue(cue);
+    buildWordCells(cue).forEach(s => nowCueJp.appendChild(s));
     nowCueRu.textContent = cue.translation || '';
     nowCueRu.style.display = (cue.translation && state.showRu) ? '' : 'none';
 }
@@ -1285,7 +1329,10 @@ async function openWordPopup(tok, cue, event) {
     state.popupContext = { tok, cue, dict: null, event };
 
     popupWord.textContent = tok.base;
-    popupReading.textContent = tok.reading || '';
+    // Показываем слово (tok.base) и чтение согласованно — от базовой формы:
+    // baseReading (かえる), а не поверхностное tok.reading (かえっ). Ниже, если
+    // найдётся словарная статья, чтение уточнится из неё.
+    popupReading.textContent = tok.baseReading || tok.reading || '';
     popupSentence.textContent = cue.text;
     popupBody.innerHTML = '<div class="dict-loading"></div>';
     popupBody.firstChild.textContent = t('popup.searching');
@@ -1540,7 +1587,14 @@ popupSave.addEventListener('click', async () => {
 
         await saveWord({
             kanji: ctx.tok.base,
-            kana: dict?.reading || ctx.tok.reading || '',
+            // Учим словарную форму (kanji = base), поэтому и чтение — от неё:
+            //   1) dict.reading — чтение словарной статьи для tok.base (帰る → かえる);
+            //   2) tok.baseReading — чтение базовой формы от бэкенда (для спряжённых
+            //      слов без словарной статьи), напр. かえる;
+            //   3) tok.reading — запасной вариант (чтение поверхностной формы).
+            // baseReading используется только если бэкенд его прислал, поэтому
+            // порядок деплоя фронта/бэка не важен — регрессии нет.
+            kana: dict?.reading || ctx.tok.baseReading || ctx.tok.reading || '',
             romaji: '',
             translation,
             sentence: ctx.cue.text,

@@ -103,11 +103,20 @@ a[href$="watch.html"] {
 /* Переключатель языка в шапке. Отступ до соседей задаёт gap на .header__right —
    свой margin тут не нужен (иначе двойной отступ и обрезка дропдауна). */
 .lang-select {
-    background: var(--card);
+    /* Свой шеврон вместо браузерного: у нативной стрелки нет отступа справа —
+       она липнет к краю. Кастомный шеврон ставим на те же 8px от края, что и
+       текст слева, поэтому визуально отступы симметричны. */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: var(--card);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
     color: var(--text-muted);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 5px 8px;
+    padding: 5px 24px 5px 10px;
     font-family: var(--font);
     font-size: 12px;
     line-height: 1;

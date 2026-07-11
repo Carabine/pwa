@@ -17,15 +17,6 @@
     padding-top: 12px;
 }
 
-/* «← Назад» — в левый верхний угол (media.css ставит его вправо, переопределяем),
-   чтобы не пересекался с шестерёнкой настроек справа. */
-.main.study .back-btn {
-    /* Выравниваем по вертикали с рядом счётчиков (они теперь в верхней строке). */
-    top: 21px;
-    left: 16px;
-    right: auto;
-}
-
 /* ---- Session stats (New / Learning / Review) ---- */
 .study-stats {
     display: flex;
@@ -93,23 +84,22 @@
     justify-content: center;
     width: 100%;
     max-width: 600px;
-    /* Карточка занимает доступную высоту, но не больше: min-height (не auto) даёт
-       ей ужиматься ниже контента, а внутри ужимается только видеоклип (см. ниже),
-       текст и кнопки остаются на месте. Так карточка целиком влезает в экран без
-       прокрутки — вместо этого подстраивается размер клипа. */
+    /* На ПК карточка занимает доступную высоту (не больше — без прокрутки), а
+       внутри под остаток подстраивается видеоклип. min-height держит компактную
+       карточку-вопрос. На телефоне (медиазапрос ниже) — по контенту. */
     flex: 0 1 auto;
-    min-height: 260px;
+    min-height: 240px;
     overflow: hidden;
-    padding: 24px 24px;
+    padding: 20px 22px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
 }
 
-/* Карточка с видеоклипом растягивается на доступную высоту, чтобы внутри было
-   куда поместить клип (он заполняет остаток и масштабируется). Карточки без
-   клипа (лицо/готовые колоды) остаются компактными по контенту. */
+/* Карточка с видеоклипом на ПК растягивается на доступную высоту — под клип, а он
+   масштабируется под остаток (см. ниже). Так экран учёбы влезает целиком, без
+   прокрутки вниз. Карточки без клипа остаются компактными по контенту. */
 .card-area:has(.clip-player) {
     flex: 1 1 auto;
 }
@@ -156,14 +146,14 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    padding-bottom: 20px;
+    padding-bottom: 14px;
     flex-shrink: 0;
 }
 
 /* separator line only appears once the answer is revealed */
 .card-area:has(.back-side--visible) .front-side {
     border-bottom: 1px solid var(--border);
-    margin-bottom: 20px;
+    margin-bottom: 14px;
 }
 
 .back-side {
@@ -201,23 +191,32 @@
 .back-side--visible:has(.clip-player) .back-media {
     flex: 1 1 auto;
     min-height: 0;
+    justify-content: center;
 }
 
-/* Клип заполняет медиа-слот и масштабируется под него (letterbox), а не тянет
-   карточку вниз. object-fit: contain сохраняет пропорции. */
+/* На ПК клип занимает остаток высоты, а видео внутри масштабируется под него
+   (object-fit: contain — сохраняет 16:9 без искажений). Фон клипа — цвет карточки
+   (а НЕ чёрный): если по краям остаётся поле (когда остаток не ровно 16:9), оно
+   сливается с карточкой, и чёрных полос не видно. Так экран влезает без
+   прокрутки и без чёрной рамки. */
 .card-area .clip-player {
-    flex: 1 1 auto;
-    min-height: 0;
     width: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 100%;
+    margin: 0 auto;
+    flex: 0 1 auto;
+    min-height: 0;
+    background: var(--card);
 }
 
 .card-area .clip-player video {
-    position: absolute;
-    inset: 0;
+    position: static;
     width: 100%;
     height: 100%;
-    margin: 0;
     object-fit: contain;
+    display: block;
+    margin: 0;
 }
 
 .back-media .study-audio {
@@ -265,7 +264,7 @@
 }
 
 .word {
-    font-size: 48px;
+    font-size: clamp(40px, 6vw, 52px);
     font-weight: 300;
     letter-spacing: -1px;
     text-align: center;
@@ -522,21 +521,22 @@
 
 /* ---- ИИ-разбор предложения на обороте карточки ---- */
 
+/* Компактная пилюля с лёгкой заливкой цветом акцента (ИИ) — не распирает карточку. */
 .card-explain-btn {
-    margin-top: 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    border-radius: var(--radius-sm);
-    padding: 10px 16px;
-    font-size: 13.5px;
+    margin-top: 10px;
+    padding: 6px 13px;
+    font-size: 12.5px;
     font-weight: 500;
+    border-radius: 999px;
+    background: rgba(124, 140, 248, 0.12);
+    border: 1px solid transparent;
+    color: var(--primary-hover);
     cursor: pointer;
-    transition: border-color var(--transition), color var(--transition);
+    transition: background var(--transition), color var(--transition);
 }
 
 .card-explain-btn:hover {
-    border-color: var(--primary);
+    background: rgba(124, 140, 248, 0.20);
     color: var(--text);
 }
 
@@ -737,7 +737,12 @@
 @media (max-width: 480px) {
     .main.study {
         gap: 10px;
-        padding: 46px 12px 24px;
+        /* Раньше сверху резервировали 46px под ссылку «Назад» (absolute) — её
+           убрали, отступ уменьшаем. Экран учёбы теперь может прокручиваться:
+           видео крупное и в приоритете, карточка растёт под контент, а .main
+           (overflow-y:auto) даёт прокрутку, если всё не влезло. */
+        padding: 14px 12px 24px;
+        justify-content: flex-start;
     }
 
     .study-stats {
@@ -764,14 +769,40 @@
         height: 5px;
     }
 
+    /* На телефоне — иначе, чем на ПК: карточка растёт под контент, а видео —
+       крупное 16:9 на всю ширину (в приоритете), лишнее прокручивает .main.
+       На ПК же карточка фиксирована по высоте и клип ужимается (без прокрутки). */
     .card-area {
         max-width: 100%;
-        min-height: 230px;
-        padding: 18px 14px;
+        min-height: 200px;
+        padding: 16px 14px;
+        overflow: visible;
     }
 
-    .main.study .back-btn { top: 10px; left: 12px; right: auto; }
-    .back-btn a { font-size: 13px; }
+    /* На телефоне слово крупное, но с потолком — чтобы длинные слова не распирали
+       и без того склонную к прокрутке карточку. */
+    .word {
+        font-size: 44px;
+    }
+
+    .card-area:has(.clip-player) {
+        flex: 0 0 auto;
+    }
+
+    .back-side--visible {
+        overflow: visible;
+    }
+
+    .back-side--visible:has(.clip-player) .back-media {
+        flex: 0 0 auto;
+    }
+
+    /* Видео 16:9 на всю ширину карточки — крупное и без чёрных полей. */
+    .card-area .clip-player {
+        flex: 0 0 auto;
+        aspect-ratio: 16 / 9;
+        min-height: 0;
+    }
 
     .study-settings-btn {
         top: 8px;

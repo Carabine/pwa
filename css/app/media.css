@@ -111,33 +111,117 @@ audio {
     display: flex;
 }
 
-.clip-player__mute {
+/* Регулятор звука клипа: кнопка (вкл/выкл) + ползунок громкости. Правый нижний
+   угол. Порядок в DOM — [ползунок][кнопка], поэтому ползунок выезжает слева от
+   кнопки; группа прижата к правому краю, поэтому растёт влево. */
+.clip-player__vol {
     position: absolute;
     right: 8px;
     bottom: 8px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    border-radius: 999px;
+    background: rgba(10, 10, 16, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
+    transition: background 0.15s ease;
+}
+
+.clip-player__vol:hover {
+    background: rgba(10, 10, 16, 0.75);
+}
+
+.clip-player__mute {
     width: 34px;
     height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: rgba(10, 10, 16, 0.55);
+    background: transparent;
     color: #fff;
-    opacity: 0.85;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    transition: opacity 0.15s ease, background 0.15s ease;
-    z-index: 2;
+    opacity: 0.9;
+    flex-shrink: 0;
+    transition: opacity 0.15s ease;
 }
 
 .clip-player__mute:hover {
     opacity: 1;
-    background: rgba(10, 10, 16, 0.75);
 }
 
 .clip-player__mute svg {
     width: 18px;
     height: 18px;
+}
+
+/* Ползунок свёрнут (ширина 0), выезжает по ховеру/фокусу группы. */
+.clip-player__vol-slider {
+    width: 0;
+    min-width: 0;      /* иначе браузер держит range шире нуля и свёрнутая «пилюля» не круглая */
+    opacity: 0;
+    height: 4px;
+    margin: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    cursor: pointer;
+    transition: width 0.18s ease, opacity 0.18s ease, margin 0.18s ease;
+}
+
+.clip-player__vol:hover .clip-player__vol-slider,
+.clip-player__vol:focus-within .clip-player__vol-slider {
+    width: 72px;
+    opacity: 1;
+    margin: 0 2px 0 12px;
+}
+
+/* На тач-экранах ховера нет — держим ползунок видимым всегда. */
+@media (hover: none) {
+    .clip-player__vol-slider {
+        width: 64px;
+        opacity: 1;
+        margin: 0 2px 0 12px;
+    }
+}
+
+/* Дорожка + заливка (webkit): --vol приходит из JS (updateVolUi). */
+.clip-player__vol-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background:
+        linear-gradient(var(--primary), var(--primary)) 0 / var(--vol, 100%) 100% no-repeat,
+        rgba(255, 255, 255, 0.32);
+}
+
+.clip-player__vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    margin-top: -4px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.clip-player__vol-slider::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.32);
+}
+
+.clip-player__vol-slider::-moz-range-progress {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--primary);
+}
+
+.clip-player__vol-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
 }
 
 /* ---------- Правка видео-фрагмента при редактировании карточки ---------- */
@@ -172,21 +256,3 @@ audio {
     justify-content: flex-start;
 }
 
-/* ========== BACK BUTTON ========== */
-
-.back-btn {
-    position: absolute;
-    top: 16px;
-    right: 20px;
-}
-
-.back-btn a {
-    color: var(--text-muted);
-    font-size: 14px;
-    font-weight: 500;
-    transition: color var(--transition);
-}
-
-.back-btn a:hover {
-    color: var(--text);
-}

@@ -1,35 +1,33 @@
 /* ========== SETTINGS PAGE ========== */
 
+/* .settings-page — это сам .main (скролл-контейнер на всю ширину контента). Он
+   НЕ ограничивает ширину: иначе он одновременно и скролл-область, и колонка, и
+   тогда сдвиг рейкой (margin-left) на десктопе ломал центрирование (колонка
+   прилипала влево), а на телефоне контент вылезал за экран. Ширину держит
+   вложенная .settings-inner. Здесь только центрируем её и задаём вертикальный
+   поток сверху. */
 .settings-page {
-    max-width: 640px;
+    align-items: center;          /* центрируем колонку по горизонтали */
+    justify-content: flex-start;  /* поток сверху вниз, не по центру по вертикали */
+    padding: 24px 16px 60px;
+    overflow-x: hidden;           /* страховка от горизонтального вылезания */
+}
+
+/* Колонка настроек фиксированной макс-ширины, по центру доступной области. */
+.settings-inner {
     width: 100%;
-    margin: 0 auto;
-    padding: 20px 16px 60px;
+    max-width: 640px;
     display: flex;
     flex-direction: column;
-    /* .main задаёт align-items/justify-content: center — из-за этого карточки
-       сжимались по контенту и «съезжали». Возвращаем нормальную колонку: карточки
-       на всю ширину, поток сверху вниз. */
-    align-items: stretch;
-    justify-content: flex-start;
     gap: 18px;
 }
 
-.settings-head {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
+/* Заголовок страницы (в теле, не в шапке). */
 .settings-title {
-    font-size: 22px;
-    font-weight: 600;
-}
-
-.settings-back {
-    font-size: 14px;
-    color: var(--text-muted);
-    white-space: nowrap;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    margin-bottom: 2px;
 }
 
 .settings-card {

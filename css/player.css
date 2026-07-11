@@ -533,6 +533,31 @@ html, body {
     line-height: 1.5;
 }
 
+/* Пословный оверлей (lexirise): слова в ряд с переносом, каждое — столбик
+   [ромадзи][слово]. Выравниваем по нижнему краю, чтобы пунктуация без ромадзи
+   не сбивала базовую линию. */
+#now-cue-jp {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 2px 8px;
+}
+
+.ncw {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.15;
+}
+
+.ncw__romaji {
+    font-size: 0.62em;
+    color: var(--primary-hover);
+    user-select: none;
+    margin-bottom: 1px;
+}
+
 .now-cue__ru {
     font-size: 12.5px;
     color: var(--text-muted);
@@ -911,30 +936,23 @@ html, body {
 
 /* ---------- Ромадзи ---------- */
 
-.cue__romaji,
-.now-cue__romaji {
+/* В СПИСКЕ субтитров ромадзи — отдельная строка, скрыта по умолчанию. */
+.cue__romaji {
     display: none;
     color: var(--primary-hover);
     letter-spacing: 0.02em;
-}
-
-.cue__romaji {
     font-size: 12px;
     margin-top: 2px;
 }
 
-.now-cue__romaji {
-    font-size: 13px;
-    margin-top: 3px;
-}
-
-.transcript__list.show-romaji .cue__romaji,
-.now-cue.show-romaji .now-cue__romaji {
+.transcript__list.show-romaji .cue__romaji {
     display: block;
 }
 
-.video-wrap.is-fs .now-cue.show-romaji .now-cue__romaji {
-    font-size: 15px;
+/* В ЦЕНТРАЛЬНОМ оверлее ромадзи — пословно (над каждым словом), подчиняется тому
+   же переключателю Rōmaji через класс .show-romaji на .now-cue. */
+.now-cue:not(.show-romaji) .ncw__romaji {
+    display: none;
 }
 
 /* ---------- Словарная карточка ---------- */
@@ -1375,13 +1393,13 @@ html, body {
         display: none;
     }
 
-    /* Текущая реплика под видео: ФИКСИРОВАННАЯ высота под 2 строки японского
-       (с фуриганой) + строку перевода. Именно height, а не min-height/auto —
-       иначе при переносе длинной реплики на вторую строку блок вырастал и вся
-       раскладка под ним «прыгала». Теперь высота постоянна для короткой и для
-       длинной реплики; редкий избыток обрезается (полный текст есть в списке). */
+    /* Текущая реплика под видео: пословный блок (ромадзи над каждым словом)
+       выше прежнего, поэтому фиксированную height заменяем на min-height + потолок.
+       Даём место под ~2 ряда слов (ромадзи+слово+фуригана) + строку перевода;
+       редкий избыток обрезается (полный текст есть в списке ниже). */
     .now-cue {
-        height: 82px;
+        min-height: 82px;
+        max-height: 140px;
         padding: 6px 12px 5px;
         margin-top: 0;
         overflow: hidden;

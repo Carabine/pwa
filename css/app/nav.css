@@ -43,6 +43,17 @@
     background-clip: text;
 }
 
+/* Логотип кликабелен (ведёт на главную, обработчик в app.js) — курсор-указатель
+   и лёгкое затухание при наведении, чтобы читалось как активный элемент. */
+.header__logo--link {
+    cursor: pointer;
+    transition: opacity var(--transition);
+}
+
+.header__logo--link:hover {
+    opacity: 0.85;
+}
+
 .header__left, .header__right {
     display: flex;
     align-items: center;
@@ -284,15 +295,18 @@
     .app:has(.sidebar) > .hub,
     .app:has(.sidebar) > .dictionary,
     .app:has(.sidebar) > .feedback {
-        margin-left: var(--rail-w);
-        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* padding, а не margin: так остаётся зазор под рейку, но margin:0 auto
+           внутри (.catalog и т.п.) продолжает центрировать контент. box-sizing
+           border-box глобально (base.css), поэтому ширину не распирает. */
+        padding-left: var(--rail-w);
+        transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .app:has(.sidebar.open) > main,
     .app:has(.sidebar.open) > .hub,
     .app:has(.sidebar.open) > .dictionary,
     .app:has(.sidebar.open) > .feedback {
-        margin-left: var(--rail-open-w);
+        padding-left: var(--rail-open-w);
     }
 
     /* Рейка всегда на экране (без translateX) и начинается ПОД шапкой
@@ -315,16 +329,36 @@
         padding-left: 16px;
     }
 
-    .sidebar.open {
+    /* Раскрытая рейка (клик по бургеру, .open) и «подсматривание» по ховеру
+       (.peek) используют одну ширину; отличие лишь в том, что .peek не двигает
+       контент (см. правила margin-left выше — они только для .open). */
+    .sidebar.open,
+    .sidebar.peek {
         transform: none;
         width: var(--rail-open-w);
     }
 
-    /* Свёрнуто: подписи пунктов УБИРАЕМ ИЗ ПОТОКА (display:none). Иначе
-       visibility:hidden оставляет их ширину, ссылка = иконка + подпись шире 68px,
-       и при justify-content:center иконку сдвигает влево и режет overflow-x. */
-    .sidebar:not(.open) .nav-label {
-        display: none;
+    /* Ховер-подсматривание: рейка временно наезжает поверх контента (контент не
+       сдвигаем), поэтому отделяем её тенью, чтобы читалась как всплывающая. */
+    .sidebar.peek {
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Подписи ВСЕГДА в потоке, но в свёрнутой рейке невидимы через opacity (не
+       display:none и не height/visibility-переключения). Так их появление/уход
+       анимируются вместе с шириной и рейка не «прыгает» содержимым при раскрытии.
+       Иконка стоит первой и слева (padding у ссылки неизменный в обоих
+       состояниях), поэтому подпись, вылезающая за 68px, просто обрезается
+       overflow-x:hidden и НЕ двигает иконку. */
+    .sidebar .nav-label {
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .sidebar.open .nav-label,
+    .sidebar.peek .nav-label {
+        opacity: 1;
     }
 
     /* Бренд в рейке не нужен — лого уже в шапке над ней (раскладка как на YouTube). */
@@ -332,44 +366,24 @@
         display: none;
     }
 
-    /* Версия: в раскрытой рейке видна внизу, в свёрнутой — прячется без следа. */
-    .sidebar:not(.open) .sidebar__version {
-        opacity: 0;
-        visibility: hidden;
-        height: 0;
-        padding-top: 0;
-        padding-bottom: 0;
-        margin: 0;
-        border: 0;
-        overflow: hidden;
+    /* Версия остаётся в потоке (сохраняет высоту, а margin-top:auto прижимает её
+       к низу колонки) — в свёрнутой рейке лишь скрыта по opacity, без reflow при
+       раскрытии. Текст шире рейки обрезается overflow-x:hidden. */
+    .sidebar .sidebar__version {
         white-space: nowrap;
-    }
-
-    /* Версия свёрнутой рейки всё равно прижата к низу через margin-top:auto на
-       .sidebar__version (order:1). При height:0 это ломается — держим распорку. */
-    .sidebar:not(.open)::before {
-        content: "";
-        order: 1;
-        margin-top: auto;
-    }
-
-    /* Иконки-ссылки в свёрнутом виде — по центру рейки, ровные квадраты. */
-    .sidebar:not(.open) a {
-        justify-content: center;
-        padding-left: 0;
-        padding-right: 0;
-        gap: 0;
-    }
-
-    .sidebar .nav-label {
+        opacity: 0;
         transition: opacity 0.2s ease;
     }
 
-    /* Подписи появляются только когда рейка достаточно широкая — иначе они
-       моргают/переносятся во время анимации раскрытия. */
-    .sidebar.open .nav-label {
+    .sidebar.open .sidebar__version,
+    .sidebar.peek .sidebar__version {
         opacity: 1;
     }
+
+    /* Иконки-ссылки: padding НЕ меняем между состояниями — иконка стоит на одном
+       и том же месте (слева, 24px), поэтому при раскрытии/сворачивании она не
+       «скачет» по горизонтали. В свёрнутой рейке (68px) иконка 18px при отступе
+       24px визуально по центру. */
 
     /* На десктопе оверлей не нужен — рейка не перекрывает контент, а раздвигает. */
     .overlay {
@@ -392,4 +406,73 @@
     padding: 20px;
     overflow-y: auto;
     position: relative;
+}
+
+/* ========== ПОИСК АНИМЕ В ШАПКЕ ========== */
+
+/* Форма поиска абсолютно центрирована в шапке (.header — position:relative),
+   независимо от разной ширины левого/правого блоков. */
+.header__search {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    z-index: 5;
+}
+
+/* Десктоп: показываем поле ввода, прячем кнопку-иконку. */
+@media (min-width: 768px) {
+    .header__search {
+        width: min(420px, 40vw);
+    }
+
+    .header__search-input {
+        width: 100%;
+        padding: 9px 16px;
+        border-radius: 999px;
+        background: var(--card);
+        border: 1.5px solid var(--border);
+        color: var(--text);
+        font: inherit;
+        outline: none;
+    }
+
+    .header__search-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(124, 140, 248, .16);
+    }
+
+    .header__search-toggle {
+        display: none;
+    }
+}
+
+/* Мобильные: свёрнуто — только иконка-лупа; по тапу поле выезжает от центра
+   влево (не наезжая на лого), над правым блоком. */
+@media (max-width: 767px) {
+    .header__search-input {
+        display: none;
+    }
+
+    .header__search.is-open .header__search-input {
+        display: block;
+        position: absolute;
+        left: auto;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: min(70vw, 320px);
+        padding: 9px 14px;
+        border-radius: 999px;
+        background: var(--card);
+        border: 1.5px solid var(--border);
+        color: var(--text);
+        font: inherit;
+        outline: none;
+    }
+
+    .header__search.is-open .header__search-input:focus {
+        border-color: var(--primary);
+    }
 }

@@ -710,6 +710,7 @@
             const ICONS = {
                 play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72c0 .8.87 1.3 1.55.88l10.8-6.86a1.04 1.04 0 0 0 0-1.76L9.55 4.26A1.04 1.04 0 0 0 8 5.14z"/></svg>',
                 volume: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.3 5.7a9 9 0 0 1 0 12.6"/></svg>',
+                volumeLow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>',
                 muted: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><line x1="15" y1="9" x2="21" y2="15"/><line x1="21" y1="9" x2="15" y2="15"/></svg>',
             };
 
@@ -738,12 +739,46 @@
             playBtn.innerHTML = ICONS.play;
             wrap.appendChild(playBtn);
 
+            // Регулятор звука: кнопка (клик — вкл/выкл звук) + ползунок громкости.
+            // На десктопе ползунок выезжает по ховеру, на тач-экране виден всегда
+            // (см. .clip-player__vol в media.css). Громкость общая с плеером —
+            // ключ animei:volume, поэтому уровень запоминается между карточками.
+            const volGroup = document.createElement('div');
+            volGroup.className = 'clip-player__vol';
+
+            const volSlider = document.createElement('input');
+            volSlider.type = 'range';
+            volSlider.className = 'clip-player__vol-slider';
+            volSlider.min = '0';
+            volSlider.max = '1';
+            volSlider.step = '0.05';
+            volSlider.setAttribute('aria-label', 'Volume');
+            volGroup.appendChild(volSlider);
+
             const muteBtn = document.createElement('button');
             muteBtn.type = 'button';
             muteBtn.className = 'clip-player__mute';
             muteBtn.setAttribute('aria-label', 'Sound');
             muteBtn.innerHTML = ICONS.volume;
-            wrap.appendChild(muteBtn);
+            volGroup.appendChild(muteBtn);
+
+            wrap.appendChild(volGroup);
+
+            // Стартовая громкость — из общего ключа (как в плеере), по умолчанию полная.
+            const VOLUME_KEY = 'animei:volume';
+            const savedVol = parseFloat(localStorage.getItem(VOLUME_KEY));
+            if (isFinite(savedVol) && savedVol >= 0 && savedVol <= 1) video.volume = savedVol;
+
+            const volIcon = () => {
+                if (video.muted || video.volume === 0) return ICONS.muted;
+                return video.volume < 0.5 ? ICONS.volumeLow : ICONS.volume;
+            };
+            const updateVolUi = () => {
+                muteBtn.innerHTML = volIcon();
+                const v = video.muted ? 0 : video.volume;
+                volSlider.value = String(v);
+                volSlider.style.setProperty('--vol', (v * 100) + '%'); // заливка дорожки
+            };
 
             const toggle = () => {
                 if (video.paused) {
@@ -778,11 +813,25 @@
             video.addEventListener('ended', sync);
             video.addEventListener('click', toggle);
             playBtn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+            volSlider.addEventListener('input', () => {
+                video.volume = parseFloat(volSlider.value);
+                video.muted = video.volume === 0;
+                localStorage.setItem(VOLUME_KEY, String(video.volume));
+            });
+            // Клик по регулятору не должен переключать воспроизведение видео.
+            volGroup.addEventListener('click', (e) => e.stopPropagation());
             muteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                video.muted = !video.muted;
-                muteBtn.innerHTML = video.muted ? ICONS.muted : ICONS.volume;
+                if (video.muted || video.volume === 0) {
+                    if (video.volume === 0) video.volume = 0.5; // с нуля — до слышимой
+                    video.muted = false;
+                } else {
+                    video.muted = true;
+                }
+                localStorage.setItem(VOLUME_KEY, String(video.volume));
             });
+            video.addEventListener('volumechange', updateVolUi);
+            updateVolUi();
             sync();
 
             // Правку окна клипа (±1с к началу/концу) перенесли в редактирование
@@ -895,7 +944,10 @@
                 explainBtn.type = 'button';
                 explainBtn.className = 'card-explain-btn has-ai-icon';
                 explainBtn.innerHTML = AI_ICON + '<span class="btn-label"></span>';
-                explainBtn.querySelector('.btn-label').textContent = t('words.explain');
+                // Компактный чип: короткий видимый текст, полный — в подсказке/aria.
+                explainBtn.querySelector('.btn-label').textContent = t('words.explainShort');
+                explainBtn.title = t('words.explain');
+                explainBtn.setAttribute('aria-label', t('words.explain'));
                 explainBtn.addEventListener('click', () => studyRunExplain(w.sentence, explainBtn));
                 els.back.appendChild(explainBtn);
             }

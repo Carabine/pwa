@@ -1,13 +1,13 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.84';
+const APP_VERSION = 'v0.0.89';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
 const NAV_ICONS = {
     'nav.home': '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/></svg>',
-    'nav.catalog': '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+    'nav.catalog': '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
     'nav.news': '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13v14a2 2 0 0 0 2 2H5a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1z"/><line x1="7" y1="9" x2="14" y2="9"/><line x1="7" y1="13" x2="14" y2="13"/><line x1="7" y1="17" x2="11" y2="17"/></svg>',
     'nav.watch': '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="10 9 16 12 10 15 10 9" fill="currentColor" stroke="none"/></svg>',
     'nav.dictionary': '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
@@ -193,6 +193,46 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Ховер-подсматривание рейки (десктоп): при наведении на бургер или саму рейку
+    // временно раскрываем её (.peek), НЕ сдвигая контент — рейка наезжает поверх.
+    // Небольшая задержка на уход курсора перекрывает «щель» между бургером в шапке
+    // и рейкой ниже, чтобы переход бургер→рейка не мигал. На тач/узких экранах
+    // класс .peek ни на что не влияет (CSS-правила только для min-width:768px).
+    if (menuBtn && sidebar) {
+        let peekTimer;
+        const canPeek = () => window.matchMedia('(hover: hover) and (min-width: 768px)').matches;
+        const peekOn = () => {
+            clearTimeout(peekTimer);
+            if (canPeek() && !sidebar.classList.contains('open')) sidebar.classList.add('peek');
+        };
+        const peekOff = () => {
+            clearTimeout(peekTimer);
+            peekTimer = setTimeout(() => sidebar.classList.remove('peek'), 140);
+        };
+        menuBtn.addEventListener('mouseenter', peekOn);
+        menuBtn.addEventListener('mouseleave', peekOff);
+        sidebar.addEventListener('mouseenter', peekOn);
+        sidebar.addEventListener('mouseleave', peekOff);
+    }
+
+    // Клик по логотипу «Animei» в шапке — на главную. Логотип одинаков на всех
+    // страницах (это div, а не ссылка), поэтому вешаем обработчик здесь и считаем
+    // относительный путь так же, как для ссылок «Настройки»/«Войти» ниже.
+    const headerLogo = document.querySelector('.header__logo');
+    if (headerLogo) {
+        const inPages = window.location.pathname.includes('/pages/');
+        const homeUrl = (inPages ? '../' : './') + 'index.html';
+        headerLogo.classList.add('header__logo--link');
+        headerLogo.setAttribute('role', 'link');
+        headerLogo.setAttribute('tabindex', '0');
+        headerLogo.setAttribute('aria-label', 'Animei');
+        const goHome = () => { window.location.href = homeUrl; };
+        headerLogo.addEventListener('click', goHome);
+        headerLogo.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goHome(); }
+        });
+    }
+
     // Profile dropdown
     const profileBtn = document.querySelector('.profile-btn');
     const profileMenu = document.getElementById('profile-menu');
@@ -205,6 +245,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.addEventListener('click', () => {
             profileMenu.classList.remove('open');
+        });
+    }
+
+    // Поиск аниме в шапке (общий для всех страниц). На десктопе — поле ввода,
+    // сабмит уходит нативным GET на catalog.html?q=…; на телефоне свёрнут до
+    // иконки-лупы, по тапу поле выезжает. Каталог читает ?q= и сразу ищет.
+    const searchForm = document.querySelector('.header__search');
+    if (searchForm) {
+        const inPages = window.location.pathname.includes('/pages/');
+        searchForm.action = (inPages ? './' : './pages/') + 'catalog.html';
+        const searchInput = searchForm.querySelector('.header__search-input');
+        const searchToggle = searchForm.querySelector('.header__search-toggle');
+        const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
+
+        // Пустой запрос не отправляем.
+        searchForm.addEventListener('submit', (e) => {
+            if (!searchInput || searchInput.value.trim() === '') e.preventDefault();
+        });
+
+        // Тап по лупе на телефоне раскрывает поле; повторный тап (когда уже
+        // раскрыто и пусто) — сворачивает.
+        if (searchToggle) {
+            searchToggle.addEventListener('click', (e) => {
+                if (!isMobile()) return;
+                e.stopPropagation();
+                const open = !searchForm.classList.contains('is-open');
+                searchForm.classList.toggle('is-open', open);
+                searchToggle.setAttribute('aria-expanded', String(open));
+                if (open && searchInput) searchInput.focus();
+            });
+        }
+
+        // Клик вне формы и Escape — сворачиваем раскрытое поле (как у профиля).
+        document.addEventListener('click', (e) => {
+            if (!searchForm.contains(e.target)) {
+                searchForm.classList.remove('is-open');
+                if (searchToggle) searchToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                searchForm.classList.remove('is-open');
+                if (searchToggle) searchToggle.setAttribute('aria-expanded', 'false');
+            }
         });
     }
 

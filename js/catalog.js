@@ -10,6 +10,9 @@ let debounceTimer = null;
 let lastQuery = '';
 let popularItems = null;   // кэш популярного, чтобы не грузить повторно
 
+// Запрос из поиска в шапке приходит как ?q=… — подставляем в поле и сразу ищем.
+const initialQ = (new URLSearchParams(location.search).get('q') || '').trim();
+
 function showStatus(key) {
     statusEl.textContent = t(key);
     statusEl.style.display = '';
@@ -147,4 +150,9 @@ async function search(query) {
     }
 }
 
-loadPopular();
+if (initialQ.length >= 2) {
+    searchInput.value = initialQ;
+    search(initialQ);
+} else {
+    loadPopular();
+}

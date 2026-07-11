@@ -19,16 +19,17 @@
 <div class="app player-app">
     <header class="header header--flush-left">
         <div class="header__left">
-            <!-- Плеер — «детальная» страница: слева только «назад» в каталог,
-                 без гамбургера (иначе две кнопки навигации рядом). -->
-            <a href="./catalog.html" class="icon-btn" aria-label="Каталог" data-i18n-aria="nav.catalog">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-            </a>
+            <!-- Единая навигация во всём приложении — бургер-меню (сайдбар), без
+                 отдельных «назад»-стрелок. -->
+            <button class="icon-btn menu-btn" aria-label="Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
         </div>
         <div class="header__logo">
             <img src="../favicon.svg" alt="" class="header__logo-mark">
             <span class="header__logo-text">Animei</span>
         </div>
+        <form class="header__search" role="search"><button type="button" class="icon-btn header__search-toggle" aria-label="Search" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><input class="header__search-input" name="q" type="search" autocomplete="off" data-i18n-placeholder="header.search" placeholder="Поиск аниме"></form>
         <div class="header__right">
             <div class="profile-wrap">
                 <button class="icon-btn profile-btn" aria-label="Profile">
@@ -77,7 +78,6 @@
 
             <div class="now-cue" id="now-cue" hidden>
                 <div class="now-cue__jp" id="now-cue-jp"></div>
-                <div class="now-cue__romaji" id="now-cue-romaji"></div>
                 <div class="now-cue__ru" id="now-cue-ru"></div>
             </div>
 
@@ -185,9 +185,9 @@
 
     <nav class="sidebar" id="sidebar">
         <div class="sidebar__brand">Animei</div>
-        <div class="sidebar__version">v0.0.84</div>
+        <div class="sidebar__version">v0.0.89</div>
         <a href="../index.html" data-i18n="nav.home">Главная</a>
-        <a href="./catalog.html" data-i18n="nav.catalog">Каталог</a>
+        <a href="./catalog.html" data-i18n="nav.catalog">Поиск</a>
         <a href="./watch.html" data-i18n="nav.watch">Своё видео</a>
         <a href="./words.html" data-i18n="nav.dictionary">Словарь</a>
         <a href="/news/" data-i18n="nav.news">JP News</a>
