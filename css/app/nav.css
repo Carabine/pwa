@@ -275,25 +275,36 @@
    Свёрнута — только иконки (ширина --rail-w); .open раскрывает подписи
    (ширина --rail-open-w). Контент .app сдвигается на текущую ширину рейки. */
 @media (min-width: 768px) {
-    /* Сдвигаем всё приложение вправо на ширину рейки. :has() ловит раскрытое
-       состояние и увеличивает отступ — контент едет вместе с рейкой. Отступ
-       даём только страницам с рейкой (:has(.sidebar)) — на login без сайдбара
-       пустой провал слева не появляется. */
-    .app:has(.sidebar) {
-        padding-left: var(--rail-w);
-        transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Раскладка как на YouTube: шапка на всю ширину сверху, рейка — ПОД ней слева.
+       Поэтому вправо сдвигаем не всю .app (иначе уедет и шапка), а только контент:
+       main / .hub (главная) / .dictionary (словарь) / .feedback. :has(.sidebar) —
+       чтобы на login без рейки контент не уезжал; .open расширяет отступ.
+       .word-popup (fixed, в плеере) намеренно не двигаем. */
+    .app:has(.sidebar) > main,
+    .app:has(.sidebar) > .hub,
+    .app:has(.sidebar) > .dictionary,
+    .app:has(.sidebar) > .feedback {
+        margin-left: var(--rail-w);
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .app:has(.sidebar.open) {
-        padding-left: var(--rail-open-w);
+    .app:has(.sidebar.open) > main,
+    .app:has(.sidebar.open) > .hub,
+    .app:has(.sidebar.open) > .dictionary,
+    .app:has(.sidebar.open) > .feedback {
+        margin-left: var(--rail-open-w);
     }
 
-    /* Рейка всегда на экране (без translateX), ниже шапки по z-index, чтобы
-       выпадашки шапки/профиля были поверх. Ширина плавно меняется по .open. */
+    /* Рейка всегда на экране (без translateX) и начинается ПОД шапкой
+       (top = высота шапки), высотой до низа окна — как на YouTube. Ниже шапки
+       по z-index, чтобы её выпадашки были поверх. Ширина плавно меняется по .open. */
     .sidebar {
         transform: none;
+        top: var(--header-h);
+        height: calc(100% - var(--header-h));
         width: var(--rail-w);
         z-index: 90;
+        padding-top: 8px;
         transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         overflow-x: hidden;
     }
@@ -310,21 +321,22 @@
         display: none;
     }
 
-    .sidebar:not(.open) .sidebar__brand,
+    /* Бренд в рейке не нужен — лого уже в шапке над ней (раскладка как на YouTube). */
+    .sidebar__brand {
+        display: none;
+    }
+
+    /* Версия: в раскрытой рейке видна внизу, в свёрнутой — прячется без следа. */
     .sidebar:not(.open) .sidebar__version {
         opacity: 0;
         visibility: hidden;
-        white-space: nowrap;
-    }
-
-    .sidebar:not(.open) .sidebar__brand,
-    .sidebar:not(.open) .sidebar__version {
         height: 0;
         padding-top: 0;
         padding-bottom: 0;
         margin: 0;
         border: 0;
         overflow: hidden;
+        white-space: nowrap;
     }
 
     /* Версия свёрнутой рейки всё равно прижата к низу через margin-top:auto на
