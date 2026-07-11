@@ -122,6 +122,26 @@
     }
 
     // ---------- Громкость ----------
+    // Клик по кнопке звука открывает панельку с ползунком — единый стиль и
+    // поведение с меню скорости/качества. Раньше панель выезжала по hover и
+    // капризничала при перетаскивании (уводишь курсор с тонкого ползунка — она
+    // закрывается, и звук «не доезжал» до края). Теперь: клик — открыть, тянуть
+    // сколько нужно, клик мимо — закрыть. Мьют — кнопкой в панельке и клавишей M.
+
+    const volGroup = muteBtn.closest('.player-ui__vol');
+    const volPopup = document.querySelector('.player-ui__vol-popup');
+
+    // Кнопка mute и проценты внутри панельки (ползунок уже есть в разметке).
+    const volMute = document.createElement('button');
+    volMute.type = 'button';
+    volMute.className = 'player-ui__vol-mute';
+    volMute.setAttribute('aria-label', 'Mute');
+    const volPct = document.createElement('span');
+    volPct.className = 'player-ui__vol-pct';
+    if (volPopup) {
+        volPopup.insertBefore(volMute, volumeSlider);
+        volPopup.appendChild(volPct);
+    }
 
     function volumeIcon() {
         if (video.muted || video.volume === 0) return ICONS.muted;
@@ -129,10 +149,13 @@
     }
 
     function updateVolumeUi() {
-        muteBtn.innerHTML = volumeIcon();
+        const icon = volumeIcon();
+        muteBtn.innerHTML = icon;
+        volMute.innerHTML = icon;
         const v = video.muted ? 0 : video.volume;
         volumeSlider.value = v;
         volumeSlider.style.setProperty('--vol', (v * 100) + '%'); // заливка дорожки (webkit)
+        volPct.textContent = Math.round(v * 100) + '%';
     }
 
     volumeSlider.addEventListener('input', () => {
@@ -141,17 +164,33 @@
         localStorage.setItem(VOLUME_KEY, String(video.volume));
     });
 
-    muteBtn.addEventListener('click', () => {
+    volMute.addEventListener('click', (e) => {
+        e.stopPropagation();
         video.muted = !video.muted;
     });
 
-    // После перетаскивания мышью ползунок остаётся в фокусе, и попап «залипал»
-    // открытым (он держится на :focus-within). Снимаем фокус, когда мышь ушла
-    // с блока громкости или отпустила ползунок — попап закрывается как ожидается.
-    // Клавиатуру не трогаем: mouseleave/pointerup срабатывают только от мыши.
-    const volGroup = volumeSlider.closest('.player-ui__vol');
-    if (volGroup) volGroup.addEventListener('mouseleave', () => volumeSlider.blur());
-    volumeSlider.addEventListener('pointerup', () => volumeSlider.blur());
+    const closeVol = () => { if (volGroup) volGroup.classList.remove('is-open'); };
+    const openVol = () => {
+        if (!volGroup) return;
+        // не держим несколько плеерных меню открытыми сразу
+        document.querySelectorAll('.player-ui__quality-wrap.is-open, .player-ui__speed-wrap.is-open')
+            .forEach((w) => w.classList.remove('is-open'));
+        volGroup.classList.add('is-open');
+    };
+
+    // На тач-раскладке панель громкости скрыта (см. CSS) — там кнопка просто
+    // мьютит, как раньше; ползунок звука на телефоне малополезен.
+    const isTouchLayout = () => window.matchMedia('(max-width: 900px)').matches;
+
+    muteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!volGroup || isTouchLayout()) { video.muted = !video.muted; return; }
+        volGroup.classList.contains('is-open') ? closeVol() : openVol();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (volGroup && !volGroup.contains(e.target)) closeVol();
+    });
 
     video.addEventListener('volumechange', updateVolumeUi);
 
@@ -200,8 +239,8 @@
         speedBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (speedWrap.classList.contains('is-open')) { closeMenu(); return; }
-            // Не держим два меню открытыми сразу (качество/скорость).
-            document.querySelectorAll('.player-ui__quality-wrap.is-open, .player-ui__speed-wrap.is-open')
+            // Не держим два меню открытыми сразу (качество/скорость/звук).
+            document.querySelectorAll('.player-ui__quality-wrap.is-open, .player-ui__speed-wrap.is-open, .player-ui__vol.is-open')
                 .forEach((w) => { if (w !== speedWrap) w.classList.remove('is-open'); });
             buildMenu();
             speedWrap.classList.add('is-open');

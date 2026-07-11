@@ -73,9 +73,22 @@
     .tl { list-style: none; margin: 8px 0 0; padding: 0; }
     .tl li { display: flex; gap: 10px; padding: 5px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
     .tl li:last-child { border-bottom: none; }
-    .tl__time { color: var(--muted); white-space: nowrap; min-width: 118px; }
-    .tl__act { color: var(--text); }
+    .tl__time { color: var(--muted); white-space: nowrap; min-width: 54px; }
+    .tl__act { color: var(--text); word-break: break-word; }
     .tl__tag { display: inline-block; min-width: 92px; color: var(--accent); }
+
+    /* Сессии посетителя: каждая — отдельный визит с путём (что куда нажимал). */
+    .session { border: 1px solid var(--border); border-radius: 10px; margin: 10px 0; overflow: hidden; }
+    .session__head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 8px 12px; background: var(--card2); font-size: 12px; }
+    .session__n { font-weight: 600; color: var(--text); }
+    .session__dev { font-family: ui-monospace, monospace; color: var(--muted); font-size: 11px; }
+    .session__time { color: var(--muted); }
+    .session__count { color: var(--accent); margin-left: auto; white-space: nowrap; }
+    .session .tl { margin: 0; padding: 4px 12px 8px; }
+    /* Стрелка-путь: краткий маршрут по страницам вверху сессии */
+    .session__path { padding: 8px 12px 0; font-size: 12px; color: var(--muted); line-height: 1.7; }
+    .session__path b { color: var(--text); font-weight: 500; }
+    .session__path .arr { color: var(--accent2); margin: 0 5px; }
 </style>
 </head>
 <body>
@@ -152,11 +165,18 @@
     }
 
     // Человеческие названия действий и страниц для таймлайна.
-    var EVENT_LABELS = { page: 'открыл', save_word: 'сохранил слово', play: 'смотрел', study: 'учил' };
+    var EVENT_LABELS = {
+        page: 'открыл', session: 'вошёл', save_word: 'сохранил слово', play: 'смотрел',
+        study: 'учил', search: 'искал', voiceover: 'озвучка', chibi_hidden: 'скрыл доп.',
+        autosync: 'автосинк', explain: 'разбор', onboarding: 'онбординг',
+        setting: 'настройка', password_change: 'сменил пароль'
+    };
     var PAGE_LABELS = {
         'app/index': 'главная', 'app/catalog': 'каталог', 'app/player': 'плеер',
         'app/watch': 'свой файл', 'app/words': 'словарь', 'app/study': 'повторение',
-        'app/custom-study': 'своя учёба', 'app/login': 'вход', 'app/feedback': 'отзыв', 'app/stats': 'статистика'
+        'app/custom-study': 'своя учёба', 'app/beginner': 'для новичка',
+        'app/settings': 'настройки', 'app/login': 'вход', 'app/feedback': 'отзыв',
+        'app/stats': 'статистика'
     };
     var STUDY_LABELS = { srs: 'повторение', cram: 'зубрёжка' };
 
@@ -179,6 +199,47 @@
         return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     }
 
+    function fmtHM(iso) {
+        return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function fmtDate(iso) {
+        return new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+    }
+
+    // Одна сессия = один визит: сверху краткий путь по страницам стрелками,
+    // ниже — полный хронологический список действий (что куда нажимал).
+    function renderSession(s, idx) {
+        var pages = (s.events || [])
+            .filter(function (e) { return e.event === 'page'; })
+            .map(function (e) { return '<b>' + esc(PAGE_LABELS[e.page] || e.page) + '</b>'; });
+        var path = pages.length
+            ? '<div class="session__path">' + pages.join('<span class="arr">→</span>') + '</div>'
+            : '';
+
+        var steps = (s.events || []).map(function (item) {
+            var a = actionText(item);
+            return '<li><span class="tl__time">' + fmtHM(item.at) + '</span>' +
+                '<span class="tl__tag">' + esc(a.verb) + '</span>' +
+                '<span class="tl__act">' + esc(a.detail) + '</span></li>';
+        }).join('');
+
+        // Показываем дату конца, только если сессия перешла на другой день
+        // (иначе — просто время конца; midnight-переход не теряет дату).
+        var sameDay = fmtDate(s.start) === fmtDate(s.end);
+        var range = fmtDate(s.start) + ' ' + fmtHM(s.start) + '–' +
+            (sameDay ? '' : fmtDate(s.end) + ' ') + fmtHM(s.end);
+
+        return '<div class="session">' +
+            '<div class="session__head">' +
+                '<span class="session__n">Сессия #' + (idx + 1) + '</span>' +
+                '<span class="session__dev">' + esc(String(s.visitorId || '—').slice(0, 8)) + '</span>' +
+                '<span class="session__time">' + range + '</span>' +
+                '<span class="session__count">' + (s.count || 0) + ' шаг.</span>' +
+            '</div>' + path +
+            '<ul class="tl">' + steps + '</ul></div>';
+    }
+
     function renderVisitors(data) {
         document.getElementById('visitors-sub').textContent =
             data.count + ' уникальных IP за ' + data.days + ' дн.';
@@ -193,21 +254,19 @@
                 return '<span class="chip">' + (EVENT_LABELS[e.event] || e.event) + ': ' + e.count + '</span>';
             }).join(' ');
 
-            var timeline = v.timeline.map(function (item) {
-                var a = actionText(item);
-                return '<li><span class="tl__time">' + fmtTime(item.at) + '</span>' +
-                    '<span class="tl__tag">' + esc(a.verb) + '</span>' +
-                    '<span class="tl__act">' + esc(a.detail) + '</span></li>';
-            }).join('');
+            var sessions = (v.sessions || []);
+            var body = sessions.length
+                ? sessions.map(function (s, si) { return renderSession(s, si); }).join('')
+                : '<div class="msg">Нет сессий</div>';
 
             return '<div class="visitor" data-i="' + i + '">' +
                 '<div class="visitor__head" onclick="this.parentNode.classList.toggle(\'open\')">' +
                 '<span class="visitor__ip">' + esc(v.ip) + '</span>' +
-                '<span class="visitor__meta">' + v.hits + ' действий · ' + v.visitors + ' устр. · ' +
-                fmtTime(v.firstSeen) + ' → ' + fmtTime(v.lastSeen) + '</span>' +
+                '<span class="visitor__meta">' + (v.sessionCount != null ? v.sessionCount : sessions.length) + ' сессий · ' + v.hits + ' действий · ' +
+                v.visitors + ' устр. · ' + fmtTime(v.firstSeen) + ' → ' + fmtTime(v.lastSeen) + '</span>' +
                 '<span class="visitor__spacer"></span>' + summary +
                 '<span class="visitor__caret">▾</span></div>' +
-                '<div class="visitor__body"><ul class="tl">' + timeline + '</ul></div></div>';
+                '<div class="visitor__body">' + body + '</div></div>';
         }).join('');
     }
 

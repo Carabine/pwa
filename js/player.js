@@ -431,9 +431,24 @@ function renderExtrasToggle() {
         btn.title = window.t('player.extras.title');
         btn.addEventListener('click', () => {
             state.showExtras = !state.showExtras;
+            // В режиме сезонов-групп короткие ролики лежат ОТДЕЛЬНЫМ сезоном, а не
+            // в текущем списке серий — поэтому раньше по нажатию «ничего не менялось»
+            // (менялся только скрытый пункт в дропдауне «Сезон»). Теперь при показе
+            // сразу переключаемся на первый открывшийся короткий сезон, а при
+            // скрытии — уходим с него на обычный, чтобы эффект кнопки был виден.
+            if (state.seasonMode === 'groups' && state.shortFormChibi.size) {
+                if (state.showExtras) {
+                    state.seasonIndex = Math.min(...state.shortFormChibi);
+                } else if (state.shortFormChibi.has(state.seasonIndex)) {
+                    const normal = state.episodeGroups.findIndex((_, i) => !state.shortFormChibi.has(i));
+                    state.seasonIndex = normal >= 0 ? normal : 0;
+                }
+                localStorage.setItem(seasonStorageKey(), String(state.seasonIndex));
+            }
             renderSeasons();
-            populateEpisodes(false, true);
+            populateEpisodes(false, true);   // keepCurrent: не трогаем текущее видео
             setExtrasLabel(btn);
+            showSnackbar(t(state.showExtras ? 'player.extras.shown' : 'player.extras.hidden'), { duration: 3200 });
         });
         group.appendChild(btn);
         controls.appendChild(group);
@@ -650,8 +665,8 @@ function switchQuality(key) {
         e.stopPropagation();
         if (qualityKeys().length <= 1) return;
         if (wrap.classList.contains('is-open')) { closeMenu(); return; }
-        // Не держим два меню открытыми сразу (качество/скорость).
-        document.querySelectorAll('.player-ui__quality-wrap.is-open, .player-ui__speed-wrap.is-open')
+        // Не держим два меню открытыми сразу (качество/скорость/звук).
+        document.querySelectorAll('.player-ui__quality-wrap.is-open, .player-ui__speed-wrap.is-open, .player-ui__vol.is-open')
             .forEach((w) => { if (w !== wrap) w.classList.remove('is-open'); });
         buildMenu();
         wrap.classList.add('is-open');
@@ -709,6 +724,9 @@ async function loadSubtitles(episodeNumber = 1) {
         updateOffsetLabel();
         renderTranscript();
         updateNowCue(state.activeCueIndex);
+        // Если серия пойдёт на автосинк — прячем тайм-коды сразу (ещё до готовности
+        // видео), чтобы не мелькнуло неверное время между загрузкой сабов и синком.
+        if (autoSyncEligible()) setSyncing(true);
         state.syncPromise = maybeAutoSync();   // субтитры готовы — пробуем автосинк (ждёт ещё и видео)
 
         // Одноразовая подсказка новичку: сабы из архива часто чуть съезжают,
@@ -755,18 +773,63 @@ function offsetStorageKey() {
     return 'animei:subsOffset:' + shikimoriId + ':' + src + ':s' + state.seasonIndex + ':ep' + epNum;
 }
 
+// ---------- Индикатор синхронизации субтитров ----------
+// Пока идёт автосинк, сдвиг ещё не применён — тайм-коды реплик могут быть
+// неверными. Прячем их и показываем баннер «синхронизируем…», чтобы не вводить
+// в заблуждение; раскрываем время, когда синк завершился (или заведомо не нужен).
+let syncSafetyTimer = null;
+
+function setSyncing(on) {
+    if (!transcriptList) return;
+    transcriptList.classList.toggle('is-syncing', on);
+    let banner = document.getElementById('subs-syncing');
+    if (on) {
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'subs-syncing';
+            banner.className = 'subs-syncing';
+            const spin = document.createElement('span');
+            spin.className = 'subs-syncing__spin';
+            const txt = document.createElement('span');
+            txt.textContent = t('subs.syncing');
+            banner.appendChild(spin);
+            banner.appendChild(txt);
+            transcriptList.insertBefore(banner, transcriptList.firstChild);
+        }
+        // Предохранитель: если поток так и не поднялся (ошибка стрима), не держим
+        // время скрытым вечно — показываем не дольше жизни запроса автосинка.
+        clearTimeout(syncSafetyTimer);
+        syncSafetyTimer = setTimeout(() => setSyncing(false), 140000);
+    } else {
+        clearTimeout(syncSafetyTimer);
+        if (banner) banner.remove();
+    }
+}
+
+// Будет ли автосинк вообще запущен для текущей серии — по тем же условиям, что и
+// maybeAutoSync, но без готовности видео (его дожидаемся). Нужно, чтобы спрятать
+// время сразу при отрисовке сабов, а не только в момент запроса.
+function autoSyncEligible() {
+    if (window.AnimeiSettings && window.AnimeiSettings.get('autoSyncSubs') === false) return false;
+    const key = offsetStorageKey();
+    if (state.autoSyncKey === key) return false;
+    if (localStorage.getItem(key) !== null) return false;
+    const starts = state.cues.filter((c) => Number.isFinite(c.start) && c.start >= 0 && c.start < 340);
+    return starts.length >= 5;
+}
+
 // Автосинхронизация субтитров. Если пользователь не задавал сдвиг вручную, просим
 // бэкенд сопоставить речь в аудио (silencedetect) с таймингами реплик и, если
 // сдвиг найден уверенно, применяем его. Один раз на серию; ждём, пока готовы И
 // субтитры, И видеопоток (вызывается из обоих мест).
 async function maybeAutoSync() {
-    if (window.AnimeiSettings && window.AnimeiSettings.get('autoSyncSubs') === false) return;
+    if (window.AnimeiSettings && window.AnimeiSettings.get('autoSyncSubs') === false) { setSyncing(false); return; }
     const key = offsetStorageKey();
     if (state.autoSyncKey === key) return;                       // уже пробовали для этой серии
-    if (!state.cues.length || !state.currentVideoUrl) return;    // ждём вторую половину данных
+    if (!state.cues.length || !state.currentVideoUrl) return;    // ждём вторую половину — время держим спрятанным
     // Любой сохранённый сдвиг (в т.ч. ручной «0») означает, что пользователь уже
     // решил сам — не перебиваем и не зацикливаемся на переприменении автосинка.
-    if (localStorage.getItem(key) !== null) { state.autoSyncKey = key; return; }
+    if (localStorage.getItem(key) !== null) { state.autoSyncKey = key; setSyncing(false); return; }
     state.autoSyncKey = key;
 
     // Отдаём реплики шире (до 340с) — бэкенд анализирует более длинное окно, чтобы
@@ -775,12 +838,15 @@ async function maybeAutoSync() {
         .map((c) => c.start)
         .filter((s) => Number.isFinite(s) && s >= 0 && s < 340)
         .slice(0, 260);
-    if (cueStarts.length < 5) return;
+    if (cueStarts.length < 5) { setSyncing(false); return; }
 
     // Для MegaPlay передаём конец интро — субтитры из архива обычно без него,
     // и весь диалог смещён примерно на его длину (у автосинка иначе не тот диапазон).
     const introEnd = (state.provider === 'megaplay' && state.megaIntro) ? state.megaIntro.end : 0;
 
+    // Показываем «синхронизируем…» и прячем тайм-коды на время запроса (может
+    // занять секунды: бэкенд декодирует до ~340с звука через ffmpeg silencedetect).
+    setSyncing(true);
     try {
         const { data: res } = await client.post('subtitles/align', {
             videoUrl: state.currentVideoUrl,
@@ -807,6 +873,12 @@ async function maybeAutoSync() {
             if (window.animeiTrack) window.animeiTrack('autosync', offset.toFixed(1) + ' · ' + confidence.toFixed(2));
         }
     } catch { /* автосинк — не критично, остаются ручные «Сейчас!»/«Сдвиг» */ }
+    finally {
+        // Раскрываем время только если серия та же. Иначе (пользователь успел
+        // переключить серию за время запроса) баннер/таймер уже принадлежат новой
+        // серии — не гасим их, чтобы у неё не мелькнуло неверное время.
+        if (offsetStorageKey() === key) setSyncing(false);
+    }
 }
 
 function formatTime(sec) {

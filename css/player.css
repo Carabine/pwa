@@ -237,19 +237,20 @@ html, body {
     flex-shrink: 0;
 }
 
-/* Громкость — всплывающая панелька над кнопкой звука. Раньше ползунок
-   «выезжал» прямо в панель (менял ширину ряда с transition) и на перетаскивании
-   схлопывался, из-за чего звук «не до конца двигался». Плавающая панель имеет
-   фиксированную ширину, ничего не двигает и ползунок всегда доезжает до края. */
+/* Громкость — всплывающая панелька над кнопкой звука, открывается по КЛИКУ
+   (единый стиль с меню скорости/качества). Внутри: кнопка mute, ползунок и
+   проценты в один ряд. Раньше панель держалась на hover/:focus-within и при
+   перетаскивании схлопывалась — звук «не доезжал»; теперь клик её фиксирует. */
 .player-ui__vol-popup {
     position: absolute;
-    /* Кнопка звука стоит у левого края панели — центрированная панелька (left:50%
-       + translateX(-50%)) вылезала за левую границу видео. Привязываем её левый
-       край к кнопке: панель уходит вправо, внутрь плеера, и не обрезается. */
+    /* Кнопка звука стоит у левого края панели — привязываем левый край панельки
+       к кнопке: она уходит вправо, внутрь плеера, и не обрезается. */
     left: 0;
     bottom: calc(100% + 8px);
     display: none;
-    padding: 12px 14px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
     background: rgba(18, 18, 28, 0.96);
     border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 12px;
@@ -259,20 +260,44 @@ html, body {
     z-index: 30;
 }
 
-/* Невидимый «мостик» перекрывает зазор между кнопкой и панелькой,
-   чтобы курсор доезжал до ползунка, не теряя hover. */
-.player-ui__vol-popup::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 100%;
-    height: 8px;
+.player-ui__vol.is-open .player-ui__vol-popup {
+    display: flex;
 }
 
-.player-ui__vol:hover .player-ui__vol-popup,
-.player-ui__vol:focus-within .player-ui__vol-popup {
-    display: block;
+/* Кнопка mute внутри панельки */
+.player-ui__vol-mute {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.92);
+    cursor: pointer;
+}
+
+.player-ui__vol-mute:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.player-ui__vol-mute svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Текущий уровень громкости, % */
+.player-ui__vol-pct {
+    flex-shrink: 0;
+    min-width: 34px;
+    text-align: right;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.85);
 }
 
 /* Свой ползунок громкости: дорожка во всю ширину + заливка от 0 до бегунка и сам
@@ -903,6 +928,42 @@ html, body {
     margin-bottom: 2px;
 }
 
+/* Пока идёт автосинк — тайм-коды могут быть неверными: прячем их (visibility,
+   чтобы строки не прыгали, когда время появится), а сверху висит баннер синка. */
+.transcript__list.is-syncing .cue__time {
+    visibility: hidden;
+}
+
+.subs-syncing {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 8px 12px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: rgba(124, 140, 248, 0.10);
+    border: 1px solid rgba(124, 140, 248, 0.28);
+    color: var(--text-muted);
+    font-size: 12.5px;
+    position: sticky;
+    top: 6px;
+    z-index: 2;
+}
+
+.subs-syncing__spin {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(124, 140, 248, 0.35);
+    border-top-color: var(--pink);
+    animation: subs-syncing-spin 0.8s linear infinite;
+}
+
+@keyframes subs-syncing-spin {
+    to { transform: rotate(360deg); }
+}
+
 .cue__jp {
     font-family: 'Noto Sans JP', sans-serif;
     font-size: 15px;
@@ -1255,10 +1316,19 @@ html, body {
         gap: 8px;
     }
 
+    /* Видео тянется по доступной ВЫСОТЕ и держит кадр 16:9, но по ширине НЕ
+       растягивается на всю колонку. Раньше здесь было aspect-ratio:auto + полная
+       ширина: на широком-невысоком окне колонка шире, чем нужно 16:9-кадру, и
+       видео (object-fit:contain) вписывалось с чёрными полосами по бокам. Теперь
+       обёртка сама 16:9 (ширина = высота×16/9), центрируется, полос нет; на
+       узком-высоком окне max-width ограничивает её шириной колонки. */
     .video-wrap {
         flex: 1 1 auto;
         min-height: 0;
-        aspect-ratio: auto;   /* заполняем доступную высоту, видео вписываем contain'ом */
+        aspect-ratio: 16 / 9;
+        width: auto;
+        max-width: 100%;
+        align-self: center;
     }
 
     /* Всё под видео — фиксированной высоты, ужимается только видео. */
