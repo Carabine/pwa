@@ -9,9 +9,11 @@ html, body {
     gap: 2px;
 }
 
+/* Логотип «Animei» прижат к левому краю (как на главной), а не по центру —
+   центрированного заголовка страницы больше нет. */
 .header__logo {
-    flex: 1;
-    justify-content: center;
+    flex: 0 0 auto;
+    justify-content: flex-start;
     min-width: 0;
 }
 
