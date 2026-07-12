@@ -1016,7 +1016,13 @@
                     spark.className = 'sentence__spark';
                     spark.setAttribute('role', 'button');
                     spark.setAttribute('aria-label', t('words.explain'));
+                    // Иконка + подпись «Разбор» — чтобы кнопка ИИ была заметной и
+                    // сразу понятной (не просто искорка).
+                    const sparkLabel = document.createElement('span');
+                    sparkLabel.className = 'sentence__spark-label';
+                    sparkLabel.textContent = t('words.explainShort');
                     spark.innerHTML = AI_ICON;
+                    spark.appendChild(sparkLabel);
                     sentenceLine.appendChild(spark);
                     sentenceLine.addEventListener('click', () => studyRunExplain(w.sentence, spark));
                 }

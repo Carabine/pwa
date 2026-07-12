@@ -54,13 +54,13 @@ const state = {
     autoPause: !!(window.AnimeiSettings && window.AnimeiSettings.get('autopause')),
     autoPauseAt: null,
     showRu: window.AnimeiSettings ? window.AnimeiSettings.get('playerTranslation') !== false : true,
-    // Чтение над словами — ОДИН режим: 'kana' | 'romaji' | 'off' (кана ЛИБО ромадзи,
-    // не оба). Мигрируем со старых раздельных ключей furigana/romaji.
+    // Чтение над словами — ОДИН режим: 'kana' ЛИБО 'romaji' (или/или, без «выкл»:
+    // чтение всегда сверху). Мигрируем со старых раздельных ключей furigana/romaji.
     readingMode: (function () {
         const saved = localStorage.getItem('animei:readingMode');
-        if (saved === 'kana' || saved === 'romaji' || saved === 'off') return saved;
+        if (saved === 'romaji') return 'romaji';
+        if (saved === 'kana') return 'kana';
         if (localStorage.getItem('animei:romaji') === 'on') return 'romaji';
-        if (localStorage.getItem('animei:furigana') === 'off') return 'off';
         return 'kana';
     })(),
     aiAvailable: false,
@@ -896,18 +896,17 @@ function appendWithFurigana(el, surface, reading) {
     }
 }
 
-// Один переключатель чтения над словами: кана ЛИБО ромадзи ЛИБО ничего.
+// Один переключатель чтения над словами: кана ЛИБО ромадзи (без «выкл»).
 // Применяется и к центральному оверлею (buildWordCells), и к списку субтитров
-// справа (строка чтения НАД репликой, снизу чтения нет).
+// справа — оба показывают чтение НАД каждым словом (пословно, как эталон).
 function applyReadingPref() {
     const btn = document.getElementById('reading-toggle');
     const mode = state.readingMode;
     if (btn) {
-        btn.classList.toggle('chip-btn--active', mode !== 'off');
+        btn.classList.add('chip-btn--active');   // всегда активна: кана/ромадзи
         btn.textContent = mode === 'romaji' ? 'Rōmaji' : 'あ';
     }
-    transcriptList.classList.toggle('show-reading', mode !== 'off');
-    // Перерисовываем список — строка чтения строится по текущему режиму.
+    // Перерисовываем список — чтение над словами строится по текущему режиму.
     if (typeof renderTranscript === 'function') renderTranscript();
     // renderTranscript пересобирает реплики — вернём подсветку текущей.
     if (state.activeCueIndex >= 0) {
@@ -988,46 +987,9 @@ function romajiForCue(cue) {
         .trim();
 }
 
-// Строка кана-чтения для реплики (для строки НАД репликой в списке субтитров).
-// Если в реплике нет кандзи — чтение совпадает с текстом, дублировать не нужно.
-function kanaForCue(cue) {
-    if (!cue.tokens || !cue.tokens.length) return '';
-    const surface = cue.tokens.map((tok) => tok.surface).join('');
-    const kana = cue.tokens.map((tok) => tok.reading || tok.surface).join('');
-    return kana === surface ? '' : kana;
-}
-
-function buildTokensHtml(cue) {
-    if (!cue.tokens || !cue.tokens.length) {
-        const span = document.createElement('span');
-        span.textContent = cue.text;
-        return [span];
-    }
-
-    return cue.tokens.map((tok) => {
-        const span = document.createElement('span');
-        // Само слово — без внутренней фуриганы: чтение идёт ОДНОЙ строкой над
-        // репликой (см. renderTranscript), как и в центральном оверлее.
-        span.textContent = tok.surface;
-        span.className = 'tok';
-        if (tok.learnable) {
-            span.classList.add('tok--learnable');
-            if (state.knownWords.has(tok.base) || state.knownWords.has(tok.surface)) {
-                span.classList.add('tok--known');
-            }
-            span.addEventListener('click', (e) => {
-                e.stopPropagation();
-                openWordPopup(tok, cue, e);
-            });
-        }
-        return span;
-    });
-}
-
-// Пословная раскладка для ЦЕНТРАЛЬНОГО оверлея (в стиле lexirise): каждое слово —
-// отдельный столбик [ромадзи сверху][слово с фуриганой]. Перевод остаётся одной
-// строкой на всю реплику (ниже, отдельным элементом). Список субтитров это НЕ
-// затрагивает — он по-прежнему строится через buildTokensHtml.
+// Пословная раскладка (в стиле lexirise): каждое слово — отдельный столбик
+// [чтение сверху][слово]. Одинаково строит и ЦЕНТРАЛЬНЫЙ оверлей под видео, и
+// СПИСОК субтитров справа (renderTranscript) — чтобы выглядели как эталон.
 function buildWordCells(cue) {
     if (!cue.tokens || !cue.tokens.length) {
         const span = document.createElement('span');
@@ -1093,21 +1055,11 @@ function renderTranscript() {
         time.textContent = formatTime(Math.max(0, cue.start + state.offset));
         div.appendChild(time);
 
-        // Чтение (кана ЛИБО ромадзи) — ОДНОЙ строкой НАД репликой; снизу чтения нет.
-        // Видимость строки — класс .show-reading на списке (см. applyReadingPref).
-        let reading = '';
-        if (state.readingMode === 'romaji') reading = romajiForCue(cue);
-        else if (state.readingMode === 'kana') reading = kanaForCue(cue);
-        if (reading) {
-            const rd = document.createElement('div');
-            rd.className = 'cue__reading';
-            rd.textContent = reading;
-            div.appendChild(rd);
-        }
-
+        // Реплика — ПОСЛОВНО, как эталон (полоска субтитров под видео): над каждым
+        // словом одно чтение (кана ИЛИ ромадзи), само слово ниже (см. buildWordCells).
         const jp = document.createElement('div');
         jp.className = 'cue__jp';
-        buildTokensHtml(cue).forEach(s => jp.appendChild(s));
+        buildWordCells(cue).forEach(s => jp.appendChild(s));
         div.appendChild(jp);
 
         if (cue.translation) {
@@ -1284,10 +1236,9 @@ ruToggle.addEventListener('click', () => {
 });
 
 // Чтение над словами — ОДИН переключатель: кана → ромадзи → выкл → кана.
-const READING_CYCLE = ['kana', 'romaji', 'off'];
+// Переключатель чтения: кана ⇄ ромадзи (или/или, без «выкл»).
 document.getElementById('reading-toggle').addEventListener('click', () => {
-    const i = READING_CYCLE.indexOf(state.readingMode);
-    state.readingMode = READING_CYCLE[(i + 1) % READING_CYCLE.length];
+    state.readingMode = state.readingMode === 'romaji' ? 'kana' : 'romaji';
     localStorage.setItem('animei:readingMode', state.readingMode);
     applyReadingPref();
 });
@@ -1869,14 +1820,16 @@ controlsToggle.addEventListener('click', () => {
 });
 // По умолчанию настройки видны (в т.ч. на телефоне); свернуть можно кнопкой
 
-// Блоки под видео по ширине совпадают с центрированным кадром 16:9 (десктоп):
-// следим за шириной .video-wrap и кладём её в --video-w — CSS ограничивает ею
-// now-cue/настройки/подсказки и центрирует их (см. player.css, min-width: 901px).
-(function matchBelowVideoWidth() {
+// Следим за шириной кадра 16:9 и кладём её в --video-w на .player-layout (десктоп):
+//  1) левую колонку грида сужаем ровно до видео и центрируем пару «видео+сабы»
+//     (см. player.css, min-width: 901px) — между ними больше нет большого отступа;
+//  2) блоки под видео (now-cue/настройки/подсказки) ограничиваем этой же шириной.
+(function matchVideoWidth() {
     const vw = document.querySelector('.video-wrap');
-    if (!playerMain || !vw || !window.ResizeObserver) return;
+    const layout = document.querySelector('.player-layout');
+    if (!layout || !vw || !window.ResizeObserver) return;
     const ro = new ResizeObserver(() => {
-        playerMain.style.setProperty('--video-w', Math.round(vw.getBoundingClientRect().width) + 'px');
+        layout.style.setProperty('--video-w', Math.round(vw.getBoundingClientRect().width) + 'px');
     });
     ro.observe(vw);
 })();

@@ -930,10 +930,17 @@ html, body {
     to { transform: rotate(360deg); }
 }
 
+/* Реплика в списке — ПОСЛОВНО, как эталон (#now-cue-jp): слова в ряд с переносом,
+   каждое — столбик [чтение][слово]. Выравниваем по нижнему краю, чтобы слова без
+   чтения (кана/пунктуация) держали базовую линию. */
 .cue__jp {
     font-family: 'Noto Sans JP', sans-serif;
     font-size: 15px;
-    line-height: 1.6;
+    line-height: 1.5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 2px 8px;
 }
 
 .cue__ru {
@@ -963,24 +970,9 @@ html, body {
 
 /* ---------- Ромадзи ---------- */
 
-/* В СПИСКЕ субтитров чтение (кана ЛИБО ромадзи) — отдельная строка НАД репликой,
-   скрыта по умолчанию, показывается классом .show-reading (см. applyReadingPref). */
-.cue__reading {
-    display: none;
-    color: var(--primary-hover);
-    letter-spacing: 0.02em;
-    font-size: 12px;
-    line-height: 1.4;
-    margin-bottom: 3px;
-    font-family: 'Noto Sans JP', sans-serif;
-}
-
-.transcript__list.show-reading .cue__reading {
-    display: block;
-}
-
-/* В центральном оверлее над словом одно чтение (.ncw__read): кана ЛИБО ромадзи —
-   задаётся ТЕКСТОМ в buildWordCells по state.readingMode, поэтому CSS-скрытий тут нет. */
+/* Над словом одно чтение (.ncw__read): кана ЛИБО ромадзи — задаётся ТЕКСТОМ в
+   buildWordCells по state.readingMode. И оверлей под видео, и список субтитров
+   справа строятся ОДИНАКОВО (пословно), поэтому CSS-скрытий по режиму тут нет. */
 
 /* ---------- Словарная карточка ---------- */
 
@@ -1275,6 +1267,11 @@ html, body {
         overflow: hidden;
         align-items: stretch;
         grid-template-rows: minmax(0, 1fr);
+        /* Левую колонку сужаем РОВНО до кадра (--video-w кладёт JS), а пару
+           «видео + список субтитров» центрируем — так между ними обычный отступ
+           (gap), а не пол-экрана пустоты. До готовности --video-w — как раньше. */
+        grid-template-columns: minmax(0, var(--video-w, 1fr)) 340px;
+        justify-content: center;
     }
 
     .player-main {
@@ -1554,10 +1551,5 @@ html, body {
     .cue__ru {
         font-size: 12px;
         margin-top: 1px;
-    }
-
-    .cue__reading {
-        font-size: 12px;
-        margin-bottom: 1px;
     }
 }
