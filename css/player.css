@@ -886,10 +886,35 @@ html, body {
     margin-bottom: 2px;
 }
 
-/* Пока идёт автосинк — тайм-коды могут быть неверными: прячем их (visibility,
-   чтобы строки не прыгали, когда время появится), а сверху висит баннер синка. */
+/* Пока идёт автосинк — тайм-коды ещё не подобраны (могут быть неверными). Вместо
+   времени показываем СКЕЛЕТОН — мерцающую плашку: текст прячем цветом (строки не
+   прыгают — высота сохраняется), а плашку рисуем в ::after. */
 .transcript__list.is-syncing .cue__time {
-    visibility: hidden;
+    color: transparent;
+    position: relative;
+    user-select: none;
+}
+
+.transcript__list.is-syncing .cue__time::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 9px;
+    border-radius: 999px;
+    background:
+        linear-gradient(90deg,
+            rgba(124, 140, 248, 0.10) 0%,
+            rgba(124, 140, 248, 0.28) 50%,
+            rgba(124, 140, 248, 0.10) 100%) 0 / 200% 100%;
+    animation: cue-time-skeleton 1.3s ease-in-out infinite;
+}
+
+@keyframes cue-time-skeleton {
+    0% { background-position: 150% 0; }
+    100% { background-position: -150% 0; }
 }
 
 /* Плавающая «пилюля» статуса автосинка — прикреплена к панели субтитров (не к
