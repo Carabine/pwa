@@ -253,9 +253,9 @@ html, body {
 
 .player-ui__vol:hover .player-ui__vol-popup,
 .player-ui__vol:focus-within .player-ui__vol-popup {
-    width: 92px;
+    width: 80px;
     opacity: 1;
-    margin: 0 6px 0 4px;
+    margin: 0 3px 0 2px;
 }
 
 /* Свой ползунок громкости: дорожка во всю ширину + заливка от 0 до бегунка и сам
@@ -266,7 +266,7 @@ html, body {
     -webkit-appearance: none;
     appearance: none;
     display: block;
-    width: 84px;
+    width: 78px;
     height: 16px;
     margin: 0;
     background: transparent;

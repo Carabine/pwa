@@ -174,7 +174,7 @@ audio {
 .clip-player__vol:focus-within .clip-player__vol-slider {
     width: 72px;
     opacity: 1;
-    margin: 0 2px 0 12px;
+    margin: 0 2px 0 8px;
 }
 
 /* На тач-экранах ховера нет — по умолчанию ползунок СКРЫТ (не перекрывает кадр),
@@ -190,7 +190,7 @@ audio {
         display: block;
         width: 64px;
         opacity: 1;
-        margin: 0 2px 0 12px;
+        margin: 0 2px 0 8px;
     }
 }
 
