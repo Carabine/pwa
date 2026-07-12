@@ -54,8 +54,15 @@ const state = {
     autoPause: !!(window.AnimeiSettings && window.AnimeiSettings.get('autopause')),
     autoPauseAt: null,
     showRu: window.AnimeiSettings ? window.AnimeiSettings.get('playerTranslation') !== false : true,
-    furigana: localStorage.getItem('animei:furigana') !== 'off',
-    romaji: localStorage.getItem('animei:romaji') !== 'off',
+    // Чтение над словами — ОДИН режим: 'kana' | 'romaji' | 'off' (кана ЛИБО ромадзи,
+    // не оба). Мигрируем со старых раздельных ключей furigana/romaji.
+    readingMode: (function () {
+        const saved = localStorage.getItem('animei:readingMode');
+        if (saved === 'kana' || saved === 'romaji' || saved === 'off') return saved;
+        if (localStorage.getItem('animei:romaji') === 'on') return 'romaji';
+        if (localStorage.getItem('animei:furigana') === 'off') return 'off';
+        return 'kana';
+    })(),
     aiAvailable: false,
     knownWords: new Set(),
     hls: null,
@@ -383,12 +390,12 @@ async function probeEpisodeSeconds(ep) {
 
 async function detectShortFormChibi() {
     const groups = state.episodeGroups;
-    if (!groups || groups.length < 2 || groups.length > 8) { renderExtrasToggle(); return; }
+    if (!groups || groups.length < 2 || groups.length > 8) return;
 
     // Зондируем длину первой серии каждой группы (репрезентативно).
     const lens = await Promise.all(groups.map((g) => probeEpisodeSeconds(g[0])));
     const maxLen = Math.max(0, ...lens);
-    if (maxLen <= 0) { renderExtrasToggle(); return; }
+    if (maxLen <= 0) return;
 
     const chibi = new Set();
     groups.forEach((g, gi) => {
@@ -397,7 +404,7 @@ async function detectShortFormChibi() {
         if (len > 0 && len < 0.5 * maxLen && len < 600) chibi.add(gi);
     });
     // Никогда не прячем всё — если под фильтр попали все группы, отменяем.
-    if (chibi.size >= groups.length) { renderExtrasToggle(); return; }
+    if (chibi.size >= groups.length) return;
 
     state.shortFormChibi = chibi;
     if (chibi.size) {
@@ -406,54 +413,6 @@ async function detectShortFormChibi() {
         populateEpisodes(false, true);
         if (window.animeiTrack) window.animeiTrack('chibi_hidden', (titleRu || titleRomaji || '') + ' ×' + chibi.size);
     }
-    renderExtrasToggle();
-}
-
-function setExtrasLabel(btn) {
-    if (btn) btn.textContent = state.showExtras ? window.t('player.hideExtras') : window.t('player.showExtras');
-}
-
-function renderExtrasToggle() {
-    const controls = document.getElementById('player-controls');
-    let group = document.getElementById('extras-group');
-    const need = state.shortFormChibi && state.shortFormChibi.size > 0;
-    if (!need) { if (group) group.remove(); return; }
-    if (!group) {
-        group = document.createElement('div');
-        group.id = 'extras-group';
-        group.className = 'control-group';
-        const btn = document.createElement('button');
-        btn.id = 'extras-toggle';
-        btn.type = 'button';
-        btn.className = 'chip-btn';
-        // Поясняем, что это: короткие ролики (чиби/PV/анонсы), которые Kodik
-        // подмешивает к сезону. По умолчанию прячем — кнопка их возвращает в список.
-        btn.title = window.t('player.extras.title');
-        btn.addEventListener('click', () => {
-            state.showExtras = !state.showExtras;
-            // В режиме сезонов-групп короткие ролики лежат ОТДЕЛЬНЫМ сезоном, а не
-            // в текущем списке серий — поэтому раньше по нажатию «ничего не менялось»
-            // (менялся только скрытый пункт в дропдауне «Сезон»). Теперь при показе
-            // сразу переключаемся на первый открывшийся короткий сезон, а при
-            // скрытии — уходим с него на обычный, чтобы эффект кнопки был виден.
-            if (state.seasonMode === 'groups' && state.shortFormChibi.size) {
-                if (state.showExtras) {
-                    state.seasonIndex = Math.min(...state.shortFormChibi);
-                } else if (state.shortFormChibi.has(state.seasonIndex)) {
-                    const normal = state.episodeGroups.findIndex((_, i) => !state.shortFormChibi.has(i));
-                    state.seasonIndex = normal >= 0 ? normal : 0;
-                }
-                localStorage.setItem(seasonStorageKey(), String(state.seasonIndex));
-            }
-            renderSeasons();
-            populateEpisodes(false, true);   // keepCurrent: не трогаем текущее видео
-            setExtrasLabel(btn);
-            showSnackbar(t(state.showExtras ? 'player.extras.shown' : 'player.extras.hidden'), { duration: 3200 });
-        });
-        group.appendChild(btn);
-        controls.appendChild(group);
-    }
-    setExtrasLabel(group.querySelector('#extras-toggle'));
 }
 
 // Переход на другой сезон-тайтл франшизы — перезагружаем плеер с его id
@@ -794,7 +753,10 @@ function setSyncing(on) {
             txt.textContent = t('subs.syncing');
             banner.appendChild(spin);
             banner.appendChild(txt);
-            transcriptList.insertBefore(banner, transcriptList.firstChild);
+            // Вешаем баннер НА ПАНЕЛЬ субтитров (не в прокручиваемый список) — как
+            // плавающую «пилюлю» под шапкой. Иначе (sticky внутри списка) при
+            // прокрутке он наезжал на реплики: текст ложился на текст.
+            (transcriptList.parentElement || transcriptList).appendChild(banner);
         }
         // Предохранитель: если поток так и не поднялся (ошибка стрима), не держим
         // время скрытым вечно — показываем не дольше жизни запроса автосинка.
@@ -934,12 +896,24 @@ function appendWithFurigana(el, surface, reading) {
     }
 }
 
-function applyFuriganaPref() {
-    const btn = document.getElementById('furigana-toggle');
-    btn.classList.toggle('chip-btn--active', state.furigana);
-    transcriptList.classList.toggle('no-furigana', !state.furigana);
-    nowCue.classList.toggle('no-furigana', !state.furigana);
-    // В оверлее чтение над словом задаётся текстом (ромадзи/кана) — перерисуем.
+// Один переключатель чтения над словами: кана ЛИБО ромадзи ЛИБО ничего.
+// Применяется и к центральному оверлею (buildWordCells), и к списку субтитров
+// справа (строка чтения НАД репликой, снизу чтения нет).
+function applyReadingPref() {
+    const btn = document.getElementById('reading-toggle');
+    const mode = state.readingMode;
+    if (btn) {
+        btn.classList.toggle('chip-btn--active', mode !== 'off');
+        btn.textContent = mode === 'romaji' ? 'Rōmaji' : 'あ';
+    }
+    transcriptList.classList.toggle('show-reading', mode !== 'off');
+    // Перерисовываем список — строка чтения строится по текущему режиму.
+    if (typeof renderTranscript === 'function') renderTranscript();
+    // renderTranscript пересобирает реплики — вернём подсветку текущей.
+    if (state.activeCueIndex >= 0) {
+        const el = transcriptList.querySelector(`.cue[data-index="${state.activeCueIndex}"]`);
+        if (el) el.classList.add('cue--active');
+    }
     if (typeof updateNowCue === 'function') updateNowCue(state.activeCueIndex);
 }
 
@@ -1014,13 +988,13 @@ function romajiForCue(cue) {
         .trim();
 }
 
-function applyRomajiPref() {
-    const btn = document.getElementById('romaji-toggle');
-    btn.classList.toggle('chip-btn--active', state.romaji);
-    transcriptList.classList.toggle('show-romaji', state.romaji);
-    nowCue.classList.toggle('show-romaji', state.romaji);
-    // В оверлее чтение над словом (ромадзи/кана) задаётся текстом — перерисуем.
-    if (typeof updateNowCue === 'function') updateNowCue(state.activeCueIndex);
+// Строка кана-чтения для реплики (для строки НАД репликой в списке субтитров).
+// Если в реплике нет кандзи — чтение совпадает с текстом, дублировать не нужно.
+function kanaForCue(cue) {
+    if (!cue.tokens || !cue.tokens.length) return '';
+    const surface = cue.tokens.map((tok) => tok.surface).join('');
+    const kana = cue.tokens.map((tok) => tok.reading || tok.surface).join('');
+    return kana === surface ? '' : kana;
 }
 
 function buildTokensHtml(cue) {
@@ -1032,7 +1006,9 @@ function buildTokensHtml(cue) {
 
     return cue.tokens.map((tok) => {
         const span = document.createElement('span');
-        appendWithFurigana(span, tok.surface, tok.reading);
+        // Само слово — без внутренней фуриганы: чтение идёт ОДНОЙ строкой над
+        // репликой (см. renderTranscript), как и в центральном оверлее.
+        span.textContent = tok.surface;
         span.className = 'tok';
         if (tok.learnable) {
             span.classList.add('tok--learnable');
@@ -1063,11 +1039,10 @@ function buildWordCells(cue) {
         const cell = document.createElement('span');
         cell.className = 'ncw';
 
-        // Над словом — ОДНО чтение: ромадзи (по умолчанию) ЛИБО хирагана, не оба.
-        // Ромадзи в приоритете; выключишь ромадзи — сверху будет кана (фуригана).
+        // Над словом — ОДНО чтение по выбранному режиму: кана ЛИБО ромадзи, не оба.
         let reading = '';
-        if (state.romaji) reading = kanaToRomaji(tok.reading || tok.surface);
-        else if (state.furigana) reading = readingKana(tok);
+        if (state.readingMode === 'romaji') reading = kanaToRomaji(tok.reading || tok.surface);
+        else if (state.readingMode === 'kana') reading = readingKana(tok);
         if (reading && reading !== tok.surface) {
             const rm = document.createElement('span');
             rm.className = 'ncw__read';
@@ -1118,19 +1093,22 @@ function renderTranscript() {
         time.textContent = formatTime(Math.max(0, cue.start + state.offset));
         div.appendChild(time);
 
+        // Чтение (кана ЛИБО ромадзи) — ОДНОЙ строкой НАД репликой; снизу чтения нет.
+        // Видимость строки — класс .show-reading на списке (см. applyReadingPref).
+        let reading = '';
+        if (state.readingMode === 'romaji') reading = romajiForCue(cue);
+        else if (state.readingMode === 'kana') reading = kanaForCue(cue);
+        if (reading) {
+            const rd = document.createElement('div');
+            rd.className = 'cue__reading';
+            rd.textContent = reading;
+            div.appendChild(rd);
+        }
+
         const jp = document.createElement('div');
         jp.className = 'cue__jp';
         buildTokensHtml(cue).forEach(s => jp.appendChild(s));
         div.appendChild(jp);
-
-        // Ромадзи всегда в разметке, но по умолчанию скрыто (показывает CSS-класс)
-        const romaji = romajiForCue(cue);
-        if (romaji) {
-            const rm = document.createElement('div');
-            rm.className = 'cue__romaji';
-            rm.textContent = romaji;
-            div.appendChild(rm);
-        }
 
         if (cue.translation) {
             const ru = document.createElement('div');
@@ -1259,12 +1237,12 @@ transcriptList.addEventListener('scroll', () => {
 
 jumpBtn.addEventListener('click', () => setFollowCue(true));
 
-// ---------- Сдвиг сабов ----------
-
-const offsetValue = document.getElementById('offset-value');
+// ---------- Автосинк субтитров ----------
+// Ручной «Сдвиг сабов» убран из интерфейса; смещение теперь подбирает ТОЛЬКО
+// автосинк (maybeAutoSync). Эти помощники пересчитывают тайм-коды/оверлей и
+// сохраняют найденное смещение, чтобы не подгонять его при каждой загрузке.
 
 function updateOffsetLabel() {
-    offsetValue.textContent = (state.offset >= 0 ? '+' : '') + state.offset.toFixed(1) + 's';
     state.activeCueIndex = -2; // перерисовать оверлей
     updateTranscriptTimes();   // тайм-коды в транскрипте — с учётом нового сдвига
 }
@@ -1277,28 +1255,10 @@ function updateTranscriptTimes() {
     });
 }
 
-// Сдвиг сохраняем ТОЛЬКО когда его реально меняют (кнопки/«Сейчас!»/автосинк).
-// Раньше запись шла прямо в updateOffsetLabel, и при простом показе загруженного
-// значения в ключ попадал «0» — а автосинк, увидев «сдвиг уже задан», сразу
-// выходил и никогда не подгонял субтитры.
+// Смещение, найденное автосинком, сохраняем — чтобы не пересчитывать заново.
 function saveOffset() {
     localStorage.setItem(offsetStorageKey(), String(state.offset));
 }
-
-document.getElementById('offset-minus').addEventListener('click', () => { state.offset -= 0.5; updateOffsetLabel(); saveOffset(); });
-document.getElementById('offset-plus').addEventListener('click', () => { state.offset += 0.5; updateOffsetLabel(); saveOffset(); });
-document.getElementById('offset-zero').addEventListener('click', () => { state.offset = 0; updateOffsetLabel(); saveOffset(); });
-
-// «Сейчас!» — текущая или ближайшая следующая реплика должна звучать в этот момент
-document.getElementById('offset-sync').addEventListener('click', () => {
-    if (!state.cues.length) return;
-    const t = video.currentTime;
-    let target = state.cues.find(c => c.start + state.offset >= t) || state.cues[state.cues.length - 1];
-    state.offset = t - target.start;
-    updateOffsetLabel();
-    saveOffset();
-    showSnackbar(t('subs.synced'), { duration: 2500 });
-});
 
 // ---------- Режимы ----------
 
@@ -1323,18 +1283,13 @@ ruToggle.addEventListener('click', () => {
     updateNowCue(state.activeCueIndex);
 });
 
-// あ — показать/скрыть фуригану (чтения над кандзи)
-document.getElementById('furigana-toggle').addEventListener('click', () => {
-    state.furigana = !state.furigana;
-    localStorage.setItem('animei:furigana', state.furigana ? 'on' : 'off');
-    applyFuriganaPref();
-});
-
-// Rōmaji — показать/скрыть транскрипцию латиницей
-document.getElementById('romaji-toggle').addEventListener('click', () => {
-    state.romaji = !state.romaji;
-    localStorage.setItem('animei:romaji', state.romaji ? 'on' : 'off');
-    applyRomajiPref();
+// Чтение над словами — ОДИН переключатель: кана → ромадзи → выкл → кана.
+const READING_CYCLE = ['kana', 'romaji', 'off'];
+document.getElementById('reading-toggle').addEventListener('click', () => {
+    const i = READING_CYCLE.indexOf(state.readingMode);
+    state.readingMode = READING_CYCLE[(i + 1) % READING_CYCLE.length];
+    localStorage.setItem('animei:readingMode', state.readingMode);
+    applyReadingPref();
 });
 
 // Стартовое состояние переключателей из глобальных настроек (перевод, авто-пауза).
@@ -1914,6 +1869,17 @@ controlsToggle.addEventListener('click', () => {
 });
 // По умолчанию настройки видны (в т.ч. на телефоне); свернуть можно кнопкой
 
-applyFuriganaPref();
-applyRomajiPref();
+// Блоки под видео по ширине совпадают с центрированным кадром 16:9 (десктоп):
+// следим за шириной .video-wrap и кладём её в --video-w — CSS ограничивает ею
+// now-cue/настройки/подсказки и центрирует их (см. player.css, min-width: 901px).
+(function matchBelowVideoWidth() {
+    const vw = document.querySelector('.video-wrap');
+    if (!playerMain || !vw || !window.ResizeObserver) return;
+    const ro = new ResizeObserver(() => {
+        playerMain.style.setProperty('--video-w', Math.round(vw.getBoundingClientRect().width) + 'px');
+    });
+    ro.observe(vw);
+})();
+
+applyReadingPref();
 init();

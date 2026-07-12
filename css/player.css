@@ -237,67 +237,25 @@ html, body {
     flex-shrink: 0;
 }
 
-/* Громкость — всплывающая панелька над кнопкой звука, открывается по КЛИКУ
-   (единый стиль с меню скорости/качества). Внутри: кнопка mute, ползунок и
-   проценты в один ряд. Раньше панель держалась на hover/:focus-within и при
-   перетаскивании схлопывалась — звук «не доезжал»; теперь клик её фиксирует. */
+/* Громкость — ползунок в одном ряду с кнопкой звука, ВЫЕЗЖАЕТ вправо по
+   наведению/фокусу (как в YouTube). Никакой всплывающей панели: кнопка и
+   ползунок в общей группе .player-ui__vol, поэтому при перетаскивании ползунок
+   не «срывается» (наведение не теряется). Свёрнут — ширина 0 (кнопка кру́глая),
+   развёрнут — ~92px. На тач-раскладке ползунок скрыт — кнопка просто мьютит. */
 .player-ui__vol-popup {
-    position: absolute;
-    /* Кнопка звука стоит у левого края панели — привязываем левый край панельки
-       к кнопке: она уходит вправо, внутрь плеера, и не обрезается. */
-    left: 0;
-    bottom: calc(100% + 8px);
-    display: none;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    background: rgba(18, 18, 28, 0.96);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 12px;
-    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    z-index: 30;
-}
-
-.player-ui__vol.is-open .player-ui__vol-popup {
     display: flex;
-}
-
-/* Кнопка mute внутри панельки */
-.player-ui__vol-mute {
-    flex-shrink: 0;
-    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    color: rgba(255, 255, 255, 0.92);
-    cursor: pointer;
+    overflow: hidden;
+    width: 0;
+    opacity: 0;
+    transition: width 0.2s ease, opacity 0.18s ease, margin 0.2s ease;
 }
 
-.player-ui__vol-mute:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
-}
-
-.player-ui__vol-mute svg {
-    width: 20px;
-    height: 20px;
-}
-
-/* Текущий уровень громкости, % */
-.player-ui__vol-pct {
-    flex-shrink: 0;
-    min-width: 34px;
-    text-align: right;
-    font-size: 12px;
-    font-variant-numeric: tabular-nums;
-    color: rgba(255, 255, 255, 0.85);
+.player-ui__vol:hover .player-ui__vol-popup,
+.player-ui__vol:focus-within .player-ui__vol-popup {
+    width: 92px;
+    opacity: 1;
+    margin: 0 6px 0 4px;
 }
 
 /* Свой ползунок громкости: дорожка во всю ширину + заливка от 0 до бегунка и сам
@@ -308,7 +266,7 @@ html, body {
     -webkit-appearance: none;
     appearance: none;
     display: block;
-    width: 130px;
+    width: 84px;
     height: 16px;
     margin: 0;
     background: transparent;
@@ -934,20 +892,28 @@ html, body {
     visibility: hidden;
 }
 
+/* Плавающая «пилюля» статуса автосинка — прикреплена к панели субтитров (не к
+   прокручиваемому списку) и сидит в зазоре под шапкой. Фон НЕПРОЗРАЧНЫЙ, поэтому
+   реплики под ней не просвечивают — больше нет «текста на тексте» при прокрутке. */
 .subs-syncing {
+    position: absolute;
+    top: 52px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 24px);
     display: flex;
     align-items: center;
     gap: 9px;
-    margin: 8px 12px;
-    padding: 9px 12px;
-    border-radius: 10px;
-    background: rgba(124, 140, 248, 0.10);
-    border: 1px solid rgba(124, 140, 248, 0.28);
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--card);
+    border: 1px solid rgba(124, 140, 248, 0.45);
     color: var(--text-muted);
     font-size: 12.5px;
-    position: sticky;
-    top: 6px;
-    z-index: 2;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    z-index: 6;
+    pointer-events: none;
 }
 
 .subs-syncing__spin {
@@ -997,22 +963,24 @@ html, body {
 
 /* ---------- Ромадзи ---------- */
 
-/* В СПИСКЕ субтитров ромадзи — отдельная строка, скрыта по умолчанию. */
-.cue__romaji {
+/* В СПИСКЕ субтитров чтение (кана ЛИБО ромадзи) — отдельная строка НАД репликой,
+   скрыта по умолчанию, показывается классом .show-reading (см. applyReadingPref). */
+.cue__reading {
     display: none;
     color: var(--primary-hover);
     letter-spacing: 0.02em;
     font-size: 12px;
-    margin-top: 2px;
+    line-height: 1.4;
+    margin-bottom: 3px;
+    font-family: 'Noto Sans JP', sans-serif;
 }
 
-.transcript__list.show-romaji .cue__romaji {
+.transcript__list.show-reading .cue__reading {
     display: block;
 }
 
-/* В центральном оверлее над словом одно чтение (.ncw__read): ромадзи по умолчанию
-   или кана — задаётся ТЕКСТОМ в buildWordCells по state.romaji/state.furigana,
-   поэтому CSS-скрытия по .show-romaji тут больше нет. */
+/* В центральном оверлее над словом одно чтение (.ncw__read): кана ЛИБО ромадзи —
+   задаётся ТЕКСТОМ в buildWordCells по state.readingMode, поэтому CSS-скрытий тут нет. */
 
 /* ---------- Словарная карточка ---------- */
 
@@ -1331,9 +1299,16 @@ html, body {
         align-self: center;
     }
 
-    /* Всё под видео — фиксированной высоты, ужимается только видео. */
+    /* Всё под видео — фиксированной высоты, ужимается только видео. По ШИРИНЕ
+       блоки совпадают с центрированным кадром 16:9: JS кладёт ширину .video-wrap
+       в --video-w (ResizeObserver), а мы ограничиваем ею блоки и центрируем —
+       иначе они растягивались на всю колонку и были заметно шире видео. */
     .player-main > :not(.video-wrap) {
         flex-shrink: 0;
+        width: 100%;
+        max-width: var(--video-w, 100%);
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .transcript {
@@ -1581,8 +1556,8 @@ html, body {
         margin-top: 1px;
     }
 
-    .cue__romaji {
+    .cue__reading {
         font-size: 12px;
-        margin-top: 1px;
+        margin-bottom: 1px;
     }
 }

@@ -448,9 +448,18 @@
     }
 }
 
-/* Мобильные: свёрнуто — только иконка-лупа; по тапу поле выезжает от центра
-   влево (не наезжая на лого), над правым блоком. */
+/* Мобильные: поиск ПРИЖАТ К ЛЕВОМУ КРАЮ — не центрируем, а ставим сразу за лого
+   (position: relative + margin-right:auto: кнопка-лупа пакуется влево, а правый
+   блок уходит вправо). Свёрнуто — только иконка-лупа; по тапу поле выезжает
+   вправо от кнопки. */
 @media (max-width: 767px) {
+    .header__search {
+        position: relative;
+        left: auto;
+        transform: none;
+        margin-right: auto;
+    }
+
     .header__search-input {
         display: none;
     }
@@ -458,8 +467,8 @@
     .header__search.is-open .header__search-input {
         display: block;
         position: absolute;
-        left: auto;
-        right: 0;
+        left: 0;
+        right: auto;
         top: 50%;
         transform: translateY(-50%);
         width: min(70vw, 320px);
@@ -470,6 +479,7 @@
         color: var(--text);
         font: inherit;
         outline: none;
+        z-index: 5;
     }
 
     .header__search.is-open .header__search-input:focus {

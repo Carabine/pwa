@@ -177,9 +177,17 @@ audio {
     margin: 0 2px 0 12px;
 }
 
-/* На тач-экранах ховера нет — держим ползунок видимым всегда. */
+/* На тач-экранах ховера нет — по умолчанию ползунок СКРЫТ (не перекрывает кадр),
+   выезжает по тапу на кнопку звука (класс .is-vol-open ставит study-core.js).
+   max-width:0 гарантирует, что свёрнутый ползунок не занимает места (иначе флекс
+   держит min-content ~30px и «пилюля» не круглая). */
 @media (hover: none) {
     .clip-player__vol-slider {
+        display: none;   /* range не ужимается флексом до 0 — просто убираем из потока */
+    }
+
+    .clip-player__vol.is-vol-open .clip-player__vol-slider {
+        display: block;
         width: 64px;
         opacity: 1;
         margin: 0 2px 0 12px;

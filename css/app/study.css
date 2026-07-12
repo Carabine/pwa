@@ -22,7 +22,7 @@
     display: flex;
     gap: 10px;
     width: 100%;
-    max-width: 600px;
+    max-width: 540px;
     justify-content: center;
 }
 
@@ -60,7 +60,7 @@
 /* ---- Progress bar ---- */
 .study-progress {
     width: 100%;
-    max-width: 600px;
+    max-width: 540px;
     height: 6px;
     background: var(--card);
     border-radius: 999px;
@@ -83,7 +83,9 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    max-width: 600px;
+    /* Чуть уже (было 600px): видео в карточке мельче, а под ним больше места
+       разбору/переводу/предложению. */
+    max-width: 540px;
     /* На ПК карточка занимает доступную высоту (не больше — без прокрутки), а
        внутри под остаток подстраивается видеоклип. min-height держит компактную
        карточку-вопрос. На телефоне (медиазапрос ниже) — по контенту. */
@@ -215,7 +217,8 @@
     width: auto;
     height: auto;
     max-width: 100%;
-    max-height: 40vh;
+    /* Ниже (было 40vh) — видео компактнее, освобождает место под ним в карточке. */
+    max-height: 34vh;
     object-fit: contain;
     margin: 0;
 }
@@ -386,18 +389,34 @@
     color: var(--text);
 }
 
+/* Кнопка ИИ — вивидная «пилюля» с градиентом бренда, приклеенная к концу фразы.
+   Раньше это была тусклая одноцветная иконка (почти невидимая); теперь заметный
+   элемент-действие, но по-прежнему органично на самой фразе. */
 .sentence__spark {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-left: 5px;
-    color: var(--primary-hover);
+    gap: 4px;
+    margin-left: 7px;
+    padding: 3px 9px;
     vertical-align: middle;
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    border-radius: 999px;
+    box-shadow: 0 2px 10px -2px rgba(124, 140, 248, 0.7);
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+}
+
+.sentence__spark:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+    box-shadow: 0 4px 15px -2px rgba(124, 140, 248, 0.9);
 }
 
 .sentence__spark .ai-icon {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
 }
 
 .sentence__spark.is-loading {
@@ -405,7 +424,7 @@
 }
 
 @keyframes spark-pulse {
-    0%, 100% { opacity: 0.35; }
+    0%, 100% { opacity: 0.45; }
     50% { opacity: 1; }
 }
 

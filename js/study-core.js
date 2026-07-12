@@ -863,15 +863,32 @@
             video.addEventListener('ended', sync);
             video.addEventListener('click', toggle);
             playBtn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+            // На тач-экране ползунок скрыт и ВЫЕЗЖАЕТ по тапу на кнопку звука
+            // (иначе он висел всегда и перекрывал кадр). Держим открытым, пока
+            // с ним работают, и авто-прячем через паузу бездействия.
+            const isTouch = window.matchMedia('(hover: none)').matches;
+            let volHideTimer = null;
+            const revealVol = () => {
+                volGroup.classList.add('is-vol-open');
+                clearTimeout(volHideTimer);
+                volHideTimer = setTimeout(() => volGroup.classList.remove('is-vol-open'), 3000);
+            };
+
             volSlider.addEventListener('input', () => {
                 video.volume = parseFloat(volSlider.value);
                 video.muted = video.volume === 0;
                 localStorage.setItem(VOLUME_KEY, String(video.volume));
+                if (isTouch) revealVol();
             });
             // Клик по регулятору не должен переключать воспроизведение видео.
             volGroup.addEventListener('click', (e) => e.stopPropagation());
             muteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                // Первый тап на телефоне только показывает ползунок (не мьютит).
+                if (isTouch && !volGroup.classList.contains('is-vol-open')) {
+                    revealVol();
+                    return;
+                }
                 if (video.muted || video.volume === 0) {
                     if (video.volume === 0) video.volume = 0.5; // с нуля — до слышимой
                     video.muted = false;
@@ -879,6 +896,7 @@
                     video.muted = true;
                 }
                 localStorage.setItem(VOLUME_KEY, String(video.volume));
+                if (isTouch) revealVol();
             });
             video.addEventListener('volumechange', updateVolUi);
             updateVolUi();
