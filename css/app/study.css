@@ -1,4 +1,10 @@
 /* ========== FLASHCARD ========== */
+/* Дизайн «кинопостер»: сцена с амбиентным светом позади карточки, сама карточка —
+   постер с верхней подсветкой и глубокой тенью, клип — «экран» со светящимся
+   кантом, текст разбора — «титры». Все эффекты статичны (красятся один раз),
+   анимации только на открытии ответа — дёшево на телефоне. Цвета через
+   var()/color-mix, перед каждым color-mix есть плоский fallback — на старых
+   движках остаётся сегодняшний плоский вид, ничего не пропадает. */
 
 .main.study {
     display: flex;
@@ -15,40 +21,63 @@
        верхнюю строку между ними, а вся освободившаяся высота уходит карточке
        (flex:1) — клип на обороте (ограничен по высоте контентом ниже) выше. */
     padding-top: 12px;
+    /* Амбиентный «свет сцены» позади карточки. background-image, а не
+       background — не затираем возможный фон .main. */
+    background-image: radial-gradient(58% 44% at 50% 30%,
+        color-mix(in srgb, var(--primary) 9%, transparent),
+        transparent 70%);
+}
+
+:root[data-theme="light"] .main.study {
+    background-image: radial-gradient(58% 44% at 50% 30%,
+        color-mix(in srgb, var(--primary) 5%, transparent),
+        transparent 70%);
 }
 
 /* ---- Session stats (New / Learning / Review) ---- */
+/* Счётчики — одна «стеклянная» капсула-HUD вместо трёх коробок: компактнее и
+   не спорит с карточкой за внимание. */
 .study-stats {
     display: flex;
-    gap: 10px;
-    width: 100%;
+    width: auto;
     max-width: 540px;
+    gap: 0;
     justify-content: center;
+    padding: 4px 6px;
+    background: var(--card);
+    background: color-mix(in srgb, var(--card) 72%, transparent);
+    border: 1px solid var(--border);
+    border-color: color-mix(in srgb, var(--border) 80%, transparent);
+    border-radius: 999px;
 }
 
-/* Счётчики намеренно компактные: жертвуем их размером ради видео — освободившаяся
-   по высоте полоса уходит карточке (flex:1), и клип на обороте растёт. */
+/* До первого рендера контейнер пуст — не показываем пустую пилюлю. */
+.study-stats:empty { display: none; }
+
 .stat {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 64px;
-    padding: 5px 12px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    min-width: 76px;
+    padding: 3px 16px;
     line-height: 1.15;
 }
 
+.stat + .stat {
+    border-left: 1px solid var(--border);
+    border-left-color: color-mix(in srgb, var(--border) 70%, transparent);
+}
+
 .stat b {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
 }
 
 .stat small {
-    font-size: 10px;
+    font-size: 9.5px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.09em;
     color: var(--text-dim);
     margin-top: 1px;
 }
@@ -61,10 +90,12 @@
 .study-progress {
     width: 100%;
     max-width: 540px;
-    height: 6px;
+    height: 4px;
     background: var(--card);
+    background: color-mix(in srgb, var(--border) 55%, transparent);
     border-radius: 999px;
-    overflow: hidden;
+    /* было hidden: даём свечению заполнения выйти за дорожку */
+    overflow: visible;
 }
 
 .study-progress__bar {
@@ -72,6 +103,7 @@
     height: 100%;
     background: linear-gradient(90deg, var(--primary), var(--primary-hover));
     border-radius: 999px;
+    box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 60%, transparent);
     transition: width 0.35s ease;
 }
 
@@ -93,10 +125,40 @@
     min-height: 240px;
     overflow: hidden;
     padding: 20px 22px;
-    background: var(--card);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-color: color-mix(in srgb, var(--primary) 18%, var(--border));
+    border-radius: 20px;
+    /* Поверхность «постера»: верхний прожектор + вертикальный градиент. */
+    background: var(--card);
+    background:
+        radial-gradient(120% 80% at 50% -10%,
+            color-mix(in srgb, var(--primary) 13%, transparent),
+            transparent 55%),
+        linear-gradient(180deg,
+            color-mix(in srgb, var(--card) 97%, var(--primary) 3%) 0%,
+            var(--card) 42%,
+            color-mix(in srgb, var(--card) 88%, var(--bg) 12%) 100%);
+    /* Световая кромка сверху → глубина → амбиентный отсвет бренда снизу. */
     box-shadow: var(--shadow);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 2px 6px rgba(0, 0, 0, 0.35),
+        0 24px 60px -24px rgba(0, 0, 0, 0.65),
+        0 60px 120px -60px color-mix(in srgb, var(--primary) 38%, transparent);
+}
+
+:root[data-theme="light"] .card-area {
+    border-color: var(--border);
+    background:
+        radial-gradient(120% 80% at 50% -10%,
+            color-mix(in srgb, var(--primary) 7%, transparent),
+            transparent 55%),
+        linear-gradient(180deg, #ffffff 0%, var(--card) 60%,
+            color-mix(in srgb, var(--card) 96%, var(--primary) 4%) 100%);
+    box-shadow:
+        0 2px 6px rgba(30, 34, 60, 0.06),
+        0 24px 50px -28px rgba(30, 34, 60, 0.28),
+        0 50px 100px -60px color-mix(in srgb, var(--primary) 45%, transparent);
 }
 
 /* Карточка с видеоклипом обнимает контент (не растягивается на всю высоту) —
@@ -151,20 +213,26 @@
     flex-shrink: 0;
 }
 
-/* separator line only appears once the answer is revealed */
+/* Разделитель вопроса и ответа: тающая по краям линия с барвинковым центром.
+   border-image поверх solid — если color-mix не поддержан, остаётся обычная
+   линия var(--border). Появляется только вместе с ответом. */
 .card-area:has(.back-side--visible) .front-side {
     border-bottom: 1px solid var(--border);
-    margin-bottom: 14px;
+    border-image: linear-gradient(90deg,
+        transparent,
+        color-mix(in srgb, var(--primary) 40%, var(--border)) 50%,
+        transparent) 1;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
 }
 
 .back-side {
     display: none;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 11px;
     width: 100%;
     max-width: 100%;
-    animation: card-reveal 0.25s ease;
 }
 
 .back-side--visible {
@@ -173,11 +241,31 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
+    animation: back-in 0.16s ease-out;
 }
 
-/* Внутри оборота ужимается только медиа-слот (видеоклип) — остальное фиксировано. */
+/* Внутри оборота ужимается только медиа-слот (видеоклип) — остальное фиксировано.
+   Микро-каскад: строки разбора поднимаются друг за другом (задержки до 150мс),
+   ввод ничего не блокирует — быстрая зубрёжка с клавиатуры не страдает. */
 .back-side--visible > * {
     flex-shrink: 0;
+    animation: rise-in 0.24s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+}
+
+.back-side--visible > :nth-child(2) { animation-delay: 0.04s; }
+.back-side--visible > :nth-child(3) { animation-delay: 0.07s; }
+.back-side--visible > :nth-child(4) { animation-delay: 0.10s; }
+.back-side--visible > :nth-child(5) { animation-delay: 0.13s; }
+.back-side--visible > :nth-child(n+6) { animation-delay: 0.15s; }
+
+@keyframes back-in { from { opacity: 0; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(10px); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .word,
+    .back-side--visible,
+    .back-side--visible > *,
+    .sentence__spark { animation: none !important; }
 }
 
 .back-media {
@@ -200,8 +288,9 @@
    прямоугольник 16:9. Так по краям нет чёрных/пустых полос при любом соотношении
    сторон исходника, а регулятор звука (absolute к .clip-player) всегда лежит в углу
    самого кадра. Высота видео ограничена — карточка не «слишком большая» и без
-   прокрутки. */
+   прокрутки. Рамка — «экран в тёмной комнате»: светящийся кант + bloom. */
 .card-area .clip-player {
+    position: relative;
     display: block;
     width: fit-content;
     max-width: 100%;
@@ -210,6 +299,35 @@
     min-height: 0;
     background: #000;
     line-height: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px var(--border), 0 14px 34px -14px rgba(0, 0, 0, 0.65);
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--primary) 22%, var(--border)),
+        0 14px 34px -14px rgba(0, 0, 0, 0.65),
+        0 0 44px -10px color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+/* Внутренняя виньетка + блик по верхней кромке кадра.
+   z-index:1 — ниже кнопок Play/громкости (z-index:2). */
+.card-area .clip-player::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 1;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.10),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+        inset 0 -26px 30px -26px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="light"] .card-area .clip-player {
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--primary) 25%, var(--border)),
+        0 12px 28px -14px rgba(30, 34, 60, 0.35),
+        0 0 36px -12px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
 .card-area .clip-player video {
@@ -224,12 +342,10 @@
 }
 
 .back-media .study-audio {
+    width: 100%;
+    max-width: 400px;
+    margin: 6px auto 0;
     flex-shrink: 0;
-}
-
-@keyframes card-reveal {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ---- Completion state ---- */
@@ -254,6 +370,7 @@
     font-size: 30px;
     font-weight: 700;
     margin-bottom: 6px;
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--success) 7%, transparent);
 }
 
 .done__title {
@@ -267,44 +384,102 @@
     max-width: 340px;
 }
 
+/* Слово-«титул»: крупное и лёгкое на вопросе, мгновенно сжимается в титульную
+   строку после открытия ответа — сцена достаётся клипу и разбору. */
 .word {
-    font-size: clamp(40px, 6vw, 52px);
+    font-size: clamp(44px, 7vw, 62px);
     font-weight: 300;
-    letter-spacing: -1px;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
     text-align: center;
-}
-
-.meaning {
-    font-size: 20px;
-    color: var(--primary-hover);
-    font-weight: 500;
-}
-
-.hiragana {
-    font-size: 18px;
-    font-weight: 600;
     color: var(--text);
+    animation: word-in 0.22s ease-out;
 }
 
-.sentence {
-    font-size: 16px;
-    color: var(--text-muted);
+/* Градиентный текст только там, где точно не станет невидимым. */
+@supports (-webkit-background-clip: text) and (color: color-mix(in srgb, red, blue)) {
+    .word {
+        background: linear-gradient(180deg,
+            var(--text) 40%,
+            color-mix(in srgb, var(--text) 55%, var(--primary) 45%) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+}
+
+@keyframes word-in {
+    from { opacity: 0; transform: translateY(6px); }
+}
+
+/* Без transition — перекладка мгновенна, быстрой зубрёжке не мешает. */
+.card-area:has(.back-side--visible) .word {
+    font-size: clamp(24px, 3.6vw, 30px);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    animation: none;
+}
+
+/* Перевод — главная строка ответа. */
+.meaning {
+    font-size: clamp(20px, 3vw, 24px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
     text-align: center;
+    text-wrap: balance;
+    color: var(--primary-hover);
+}
+
+/* Чтение — чип-«ярлычок» с лёгкой барвинковой заливкой (для kana/romaji/both —
+   каждая строка своим чипом). */
+.hiragana {
+    font-size: 15.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    line-height: 1.5;
+    color: var(--primary-hover);
+    padding: 4px 15px;
+    border-radius: 999px;
+    background: rgba(124, 140, 248, 0.10);
+    border: 1px solid rgba(124, 140, 248, 0.28);
+}
+
+:root[data-theme="light"] .hiragana {
+    background: rgba(124, 140, 248, 0.12);
+    border-color: rgba(124, 140, 248, 0.38);
+}
+
+/* Предложение — «субтитровая» плашка под экраном. display не задаём:
+   .sentence--cells продолжает включать свою flex-раскладку с ромадзи. */
+.sentence {
+    width: 100%;
+    max-width: 460px;
+    padding: 12px 16px;
+    font-size: 16px;
+    color: var(--text);
+    text-align: center;
+    background: color-mix(in srgb, var(--bg) 55%, transparent);
+    border: 1px solid var(--border);
+    border-color: color-mix(in srgb, var(--border) 70%, transparent);
+    border-radius: 14px;
 }
 
 .translatedSentence {
-    font-size: 15px;
+    font-size: 14px;
     color: var(--text-dim);
     text-align: center;
     font-style: italic;
+    max-width: 440px;
 }
 
-/* Из какого аниме слово (готовая колода для новичков) */
+/* Из какого аниме слово — как титр в конце фильма. */
 .card-anime {
-    font-size: 12.5px;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     color: var(--text-dim);
     text-align: center;
-    margin-top: 2px;
+    margin-top: 4px;
 }
 
 /* Кнопка «В коллекцию» на карточке из готовой колоды */
@@ -312,6 +487,7 @@
     margin-top: 10px;
     background: transparent;
     border: 1px solid rgba(79, 70, 229, 0.6);
+    border-color: color-mix(in srgb, var(--primary) 55%, transparent);
     color: var(--text);
     border-radius: 999px;
     padding: 7px 18px;
@@ -331,6 +507,7 @@
 .done__check--starter {
     background: rgba(124, 140, 248, 0.15);
     font-size: 26px;
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--primary) 8%, transparent);
 }
 
 .speak-btn {
@@ -382,11 +559,12 @@
 /* ---- ИИ-разбор органично на самой фразе: клик по предложению + искорка ---- */
 .sentence--ai {
     cursor: pointer;
-    transition: color var(--transition);
+    transition: color var(--transition), border-color var(--transition);
 }
 
 .sentence--ai:hover {
     color: var(--text);
+    border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
 }
 
 /* Кнопка ИИ — заметная «пилюля» с иконкой И подписью «Разбор», градиент бренда,
@@ -454,6 +632,101 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+}
+
+/* ---- Кнопки оценки: гранёные пилюли с подсветкой ---- */
+/* Переопределяем buttons.css локально для экрана учёбы. */
+.main.study .buttons {
+    gap: 14px;
+    margin-top: 6px;
+}
+
+.main.study .show-btn,
+.main.study .keep-word-btn,
+.main.study .bury-word-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 13px 32px;
+    font-weight: 700;
+    font-size: 13.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #fff;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.main.study .show-btn {
+    background: var(--primary);
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--primary) 86%, #fff) 0%,
+        var(--primary) 55%,
+        color-mix(in srgb, var(--primary) 82%, #000) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.25),
+        0 10px 26px -10px color-mix(in srgb, var(--primary) 75%, transparent);
+}
+
+.main.study .keep-word-btn {
+    min-width: 120px;
+    background: var(--danger);
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--danger) 86%, #fff) 0%,
+        var(--danger) 55%,
+        color-mix(in srgb, var(--danger) 82%, #000) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 10px 26px -10px color-mix(in srgb, var(--danger) 65%, transparent);
+}
+
+.main.study .bury-word-btn {
+    min-width: 120px;
+    background: var(--success);
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--success) 86%, #fff) 0%,
+        var(--success) 55%,
+        color-mix(in srgb, var(--success) 82%, #000) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 10px 26px -10px color-mix(in srgb, var(--success) 65%, transparent);
+}
+
+.main.study .show-btn:hover {
+    background: linear-gradient(180deg,
+        color-mix(in srgb, var(--primary) 86%, #fff) 0%,
+        var(--primary) 55%,
+        color-mix(in srgb, var(--primary) 82%, #000) 100%);
+    filter: brightness(1.07);
+    transform: translateY(-2px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        0 14px 32px -10px color-mix(in srgb, var(--primary) 90%, transparent);
+}
+
+.main.study .keep-word-btn:hover {
+    filter: brightness(1.07);
+    transform: translateY(-2px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        0 14px 32px -10px color-mix(in srgb, var(--danger) 80%, transparent);
+}
+
+.main.study .bury-word-btn:hover {
+    filter: brightness(1.07);
+    transform: translateY(-2px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        0 14px 32px -10px color-mix(in srgb, var(--success) 80%, transparent);
+}
+
+.main.study .buttons button:active {
+    transform: translateY(0) scale(0.98);
+    filter: brightness(0.98);
+}
+
+/* Клавиатурная навигация: видимый фокус на пилюлях */
+.main.study .buttons button:focus-visible {
+    outline: 2px solid var(--primary-hover);
+    outline-offset: 2px;
 }
 
 /* ---- Редактор длины аудио (±1с к началу/концу) ---- */
@@ -836,27 +1109,27 @@
     }
 
     .study-stats {
-        gap: 6px;
         max-width: 100%;
+        padding: 3px 4px;
     }
 
     .stat {
         min-width: 0;
         flex: 1;
-        padding: 5px 6px;
+        padding: 3px 8px;
     }
 
-    .stat b { font-size: 16px; }
+    .stat b { font-size: 15px; }
 
     .stat small {
-        font-size: 9px;
-        letter-spacing: 0.3px;
+        font-size: 8.5px;
+        letter-spacing: 0.06em;
         margin-top: 1px;
     }
 
     .study-progress {
         max-width: 100%;
-        height: 5px;
+        height: 4px;
     }
 
     /* На телефоне — иначе, чем на ПК: карточка растёт под контент, а видео —
@@ -867,12 +1140,31 @@
         min-height: 200px;
         padding: 16px 14px;
         overflow: visible;
+        border-radius: 18px;
+        /* Компактнее стек теней — дешевле растр и нет распирания краёв */
+        box-shadow:
+            0 14px 34px -16px rgba(0, 0, 0, 0.55),
+            0 30px 70px -40px color-mix(in srgb, var(--primary) 32%, transparent);
+    }
+
+    :root[data-theme="light"] .card-area {
+        box-shadow:
+            0 12px 28px -16px rgba(30, 34, 60, 0.25),
+            0 26px 60px -40px color-mix(in srgb, var(--primary) 38%, transparent);
     }
 
     /* На телефоне слово крупное, но с потолком — чтобы длинные слова не распирали
        и без того склонную к прокрутке карточку. */
-    .word {
-        font-size: 44px;
+    .word { font-size: 42px; }
+
+    .card-area:has(.back-side--visible) .word { font-size: 23px; }
+
+    .meaning { font-size: 20px; }
+
+    .sentence {
+        max-width: 100%;
+        padding: 10px 12px;
+        font-size: 15px;
     }
 
     .card-area:has(.clip-player) {
@@ -894,11 +1186,18 @@
         width: fit-content;
         max-width: 100%;
         min-height: 0;
+        border-radius: 12px;
     }
 
     .card-area .clip-player video {
         max-height: 44vh;
     }
+
+    .main.study .buttons { gap: 10px; }
+
+    .main.study .show-btn,
+    .main.study .keep-word-btn,
+    .main.study .bury-word-btn { padding: 13px 18px; }
 
     .study-settings-btn {
         top: 8px;
