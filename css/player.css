@@ -648,29 +648,39 @@ html, body {
     padding: 12px 16px;
 }
 
-/* Кнопка «свернуть настройки» — только на телефоне (см. медиазапрос ниже) */
+/* Полоса «свернуть настройки» + компактная кнопка «Скрыть видео» рядом с шевроном.
+   Заголовок (шестерёнка/подпись/шеврон) — только на телефоне; сама кнопка видео
+   доступна на всех ширинах (на десктопе прижата вправо над панелью настроек). */
 .controls-toggle {
-    display: none;
+    display: flex;
     align-items: center;
     gap: 8px;
     width: 100%;
     margin-top: 10px;
-    padding: 10px 14px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-muted);
-    font-size: 13px;
-    font-weight: 600;
+}
+
+/* Заголовок-свёртка виден только на телефоне (см. медиазапрос ниже) */
+.controls-toggle__gear,
+.controls-toggle__title,
+.controls-toggle__chevron {
+    display: none;
 }
 
 .controls-toggle__chevron {
-    margin-left: auto;
     transition: transform 0.2s ease;
 }
 
 .controls-toggle__gear {
     color: var(--text-dim);
+}
+
+/* Кнопка «Скрыть/Показать видео» — компактная, с мелкой надписью, прижата вправо
+   вплотную к шеврону; вместе они читаются как одна кнопка полосы настроек. */
+.chip-btn.controls-toggle__video {
+    margin-left: auto;
+    padding: 4px 10px;
+    font-size: 11px;
+    white-space: nowrap;
 }
 
 .control-group label {
@@ -1517,9 +1527,22 @@ html, body {
         min-height: 0;
     }
 
-    /* Кнопка сворачивания настроек — видна только на телефоне */
+    /* Полоса настроек с картой-рамкой — заголовок-свёртка виден только на телефоне */
     .controls-toggle {
-        display: flex;
+        padding: 10px 14px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text-muted);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .controls-toggle__gear,
+    .controls-toggle__title,
+    .controls-toggle__chevron {
+        display: block;
     }
 
     /* «Настройки видео» — единый блок: кнопка-заголовок и панель под ней

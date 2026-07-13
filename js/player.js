@@ -1297,7 +1297,9 @@ autopauseBtn.addEventListener('click', toggleAutoPause);
 // слух. Кадр схлопывается в тонкую полосу с управлением и подписью (см. CSS).
 const videoToggle = document.getElementById('video-toggle');
 const videoWrapEl = document.getElementById('video-wrap');
-videoToggle.addEventListener('click', () => {
+videoToggle.addEventListener('click', (e) => {
+    // Кнопка живёт внутри полосы-заголовка настроек — не даём клику свернуть панель.
+    e.stopPropagation();
     const hidden = videoWrapEl.classList.toggle('video-hidden');
     videoWrapEl.dataset.hiddenLabel = t('player.videoHidden');
     videoToggle.classList.toggle('chip-btn--active', hidden);
@@ -1943,6 +1945,14 @@ function setControlsCollapsed(collapsed) {
 
 controlsToggle.addEventListener('click', () => {
     setControlsCollapsed(!playerMain.classList.contains('controls-collapsed'));
+});
+// Полоса-заголовок теперь <div> (внутри живёт кнопка «Скрыть видео»), поэтому
+// клавиатурную активацию вешаем сами.
+controlsToggle.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        setControlsCollapsed(!playerMain.classList.contains('controls-collapsed'));
+    }
 });
 // По умолчанию настройки видны (в т.ч. на телефоне); свернуть можно кнопкой
 
