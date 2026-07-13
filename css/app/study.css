@@ -40,7 +40,7 @@
 .study-stats {
     display: flex;
     width: auto;
-    max-width: 540px;
+    max-width: 480px;
     gap: 0;
     justify-content: center;
     padding: 4px 6px;
@@ -89,7 +89,7 @@
 /* ---- Progress bar ---- */
 .study-progress {
     width: 100%;
-    max-width: 540px;
+    max-width: 480px;
     height: 4px;
     background: var(--card);
     background: color-mix(in srgb, var(--border) 55%, transparent);
@@ -115,9 +115,9 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    /* Чуть уже (было 600px): видео в карточке мельче, а под ним больше места
-       разбору/переводу/предложению. */
-    max-width: 540px;
+    /* Уже (600 → 540 → 480px): видео в карточке мельче (его ширину ограничивает
+       именно карточка), а разбор читается колонкой, не разъезжаясь вширь. */
+    max-width: 480px;
     /* На ПК карточка занимает доступную высоту (не больше — без прокрутки), а
        внутри под остаток подстраивается видеоклип. min-height держит компактную
        карточку-вопрос. На телефоне (медиазапрос ниже) — по контенту. */
@@ -412,9 +412,10 @@
     from { opacity: 0; transform: translateY(6px); }
 }
 
-/* Без transition — перекладка мгновенна, быстрой зубрёжке не мешает. */
+/* Без transition — перекладка мгновенна, быстрой зубрёжке не мешает.
+   Титул заметно крупнее перевода — слово остаётся главным и после открытия. */
 .card-area:has(.back-side--visible) .word {
-    font-size: clamp(24px, 3.6vw, 30px);
+    font-size: clamp(27px, 4vw, 33px);
     font-weight: 500;
     letter-spacing: -0.01em;
     animation: none;
@@ -454,7 +455,7 @@
 .sentence {
     width: 100%;
     max-width: 460px;
-    padding: 12px 16px;
+    padding: 11px 14px;
     font-size: 16px;
     color: var(--text);
     text-align: center;
@@ -639,6 +640,8 @@
 .main.study .buttons {
     gap: 14px;
     margin-top: 6px;
+    /* По ширине карточки — кнопки не торчат за её края. */
+    max-width: 480px;
 }
 
 .main.study .show-btn,
@@ -1157,7 +1160,7 @@
        и без того склонную к прокрутке карточку. */
     .word { font-size: 42px; }
 
-    .card-area:has(.back-side--visible) .word { font-size: 23px; }
+    .card-area:has(.back-side--visible) .word { font-size: 26px; }
 
     .meaning { font-size: 20px; }
 
