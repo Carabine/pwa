@@ -697,6 +697,16 @@ async function loadSubtitles(episodeNumber = 1) {
         // Подобрали (или выбрали) файл — предлагаем сменить, если серия не та
         subsFixBtn.hidden = false;
 
+        // Самолечение старого рассинхрона: у не-MegaPlay видеоряд общий с оригиналом,
+        // поэтому реальный сдвиг маленький. Большой СОХРАНЁННЫЙ сдвиг остался от старой
+        // версии автосинка, которая могла зацепиться за шумовой пик (напр. Наруто 63:
+        // −9.5с) и записать его. Стираем — и автосинк пересчитает в новом узком ±6с.
+        // Ручной правки сдвига в UI нет, поэтому любое сохранённое значение — от
+        // автосинка, стирать безопасно.
+        const savedOffset = parseFloat(localStorage.getItem(offsetStorageKey()));
+        if (state.provider !== 'megaplay' && Number.isFinite(savedOffset) && Math.abs(savedOffset) > 6) {
+            localStorage.removeItem(offsetStorageKey());
+        }
         state.offset = parseFloat(localStorage.getItem(offsetStorageKey())) || 0;
         updateOffsetLabel();
         renderTranscript();
