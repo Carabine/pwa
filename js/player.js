@@ -843,7 +843,13 @@ async function maybeAutoSync() {
         // сдвиги (интро MegaPlay) по-прежнему требуют высокой уверенности.
         const strong = confidence >= 0.6;
         const okModerate = confidence >= 0.4 && (matched || 0) >= 12 && Math.abs(offset) <= 20;
-        if (Number.isFinite(offset) && (strong || okModerate) && Math.abs(offset) >= 0.3) {
+        // Малый сдвиг с большой опорой: у дубляжа (Kodik) тайминг речи не совпадает
+        // с японскими сабами дословно, поэтому доля совпадений упирается в ~0.4 даже
+        // при верном сдвиге. Но если совпадений МНОГО (>=20) и сдвиг НЕБОЛЬШОЙ (<=6с),
+        // сигнал реальный, а риск минимален — маленький сдвиг незаметен даже если чуть
+        // мимо. Без этого серии вроде «Наруто 62» (offset 2.8, conf 0.39) не синкались.
+        const okSmall = confidence >= 0.34 && (matched || 0) >= 20 && Math.abs(offset) <= 6;
+        if (Number.isFinite(offset) && (strong || okModerate || okSmall) && Math.abs(offset) >= 0.3) {
             state.offset = offset;
             updateOffsetLabel();
             saveOffset();
