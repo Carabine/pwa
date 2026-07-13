@@ -116,6 +116,10 @@ html, body {
 .video-wrap.video-hidden {
     aspect-ratio: auto;
     height: 92px;
+    /* В десктопной колонке .video-wrap растягивается по высоте (flex:1) —
+       свёрнутой полосе рост запрещаем, ширину держим по колонке. */
+    flex: 0 0 auto;
+    width: 100%;
 }
 
 .video-wrap.video-hidden video {
