@@ -1271,6 +1271,11 @@ html, body {
     gap: 6px;
 }
 
+/* display:flex выше перебивал атрибут hidden — кнопка не пряталась после разбора */
+.word-popup__explain-btn[hidden] {
+    display: none;
+}
+
 .word-popup__explain-btn .ai-icon {
     width: 15px;
     height: 15px;
