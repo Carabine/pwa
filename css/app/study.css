@@ -122,9 +122,11 @@
        внутри под остаток подстраивается видеоклип. min-height держит компактную
        карточку-вопрос. На телефоне (медиазапрос ниже) — по контенту. */
     flex: 0 1 auto;
-    min-height: 240px;
+    min-height: 300px;
     overflow: hidden;
-    padding: 20px 22px;
+    /* Просторнее по вертикали: карточка «дышит», секции разбора не слипаются
+       (на телефоне компактнее — см. медиазапрос ниже). */
+    padding: 28px 24px;
     border: 1px solid var(--border);
     border-color: color-mix(in srgb, var(--primary) 18%, var(--border));
     border-radius: 20px;
@@ -222,15 +224,15 @@
         transparent,
         color-mix(in srgb, var(--primary) 40%, var(--border)) 50%,
         transparent) 1;
-    padding-bottom: 12px;
-    margin-bottom: 12px;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
 }
 
 .back-side {
     display: none;
     flex-direction: column;
     align-items: center;
-    gap: 11px;
+    gap: 15px;
     width: 100%;
     max-width: 100%;
 }
@@ -335,8 +337,13 @@
     width: auto;
     height: auto;
     max-width: 100%;
-    /* Ниже (было 40vh) — видео компактнее, освобождает место под ним в карточке. */
-    max-height: 34vh;
+    /* Потолок «остаток экрана»: всё, кроме клипа, на ПК почти фиксировано
+       (~580px: шапка+счётчики ~155, хром карточки с титулом и разделителем ~140,
+       разбор ~215, кнопки с отступами ~70) — клип получает то, что осталось.
+       Иначе на низких экранах (768px) слот сжимается, а видео с чистым 34vh
+       не ужимается следом и наезжает на перевод. Пол 140px — совсем крошечным
+       клип не делаем. */
+    max-height: clamp(140px, calc(100vh - 580px), 34vh);
     object-fit: contain;
     margin: 0;
 }
@@ -415,8 +422,8 @@
 /* Без transition — перекладка мгновенна, быстрой зубрёжке не мешает.
    Титул заметно крупнее перевода — слово остаётся главным и после открытия. */
 .card-area:has(.back-side--visible) .word {
-    font-size: clamp(27px, 4vw, 33px);
-    font-weight: 500;
+    font-size: clamp(32px, 4.5vw, 42px);
+    font-weight: 400;
     letter-spacing: -0.01em;
     animation: none;
 }
@@ -1160,7 +1167,15 @@
        и без того склонную к прокрутке карточку. */
     .word { font-size: 42px; }
 
-    .card-area:has(.back-side--visible) .word { font-size: 26px; }
+    .card-area:has(.back-side--visible) .word { font-size: 27px; }
+
+    /* Компактный ритм на телефоне — простор нужен только на ПК. */
+    .card-area:has(.back-side--visible) .front-side {
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+    }
+
+    .back-side { gap: 11px; }
 
     .meaning { font-size: 20px; }
 
