@@ -1302,7 +1302,7 @@ videoToggle.addEventListener('click', (e) => {
     e.stopPropagation();
     const hidden = videoWrapEl.classList.toggle('video-hidden');
     videoWrapEl.dataset.hiddenLabel = t('player.videoHidden');
-    videoToggle.classList.toggle('chip-btn--active', hidden);
+    videoToggle.classList.toggle('is-active', hidden);
     videoToggle.textContent = t(hidden ? 'controls.showVideo' : 'controls.hideVideo');
     if (window.animeiTrack) window.animeiTrack('setting', 'hide_video:' + (hidden ? 'on' : 'off'));
 });
