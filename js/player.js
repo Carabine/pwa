@@ -1299,18 +1299,6 @@ function toggleAutoPause() {
 
 autopauseBtn.addEventListener('click', toggleAutoPause);
 
-// «Скрыть видео»: картинку прячем, звук и субтитры остаются — тренировка на
-// слух. Кадр схлопывается в тонкую полосу с управлением и подписью (см. CSS).
-const videoToggle = document.getElementById('video-toggle');
-const videoWrapEl = document.getElementById('video-wrap');
-videoToggle.addEventListener('click', () => {
-    const hidden = videoWrapEl.classList.toggle('video-hidden');
-    videoWrapEl.dataset.hiddenLabel = t('player.videoHidden');
-    videoToggle.classList.toggle('chip-btn--active', hidden);
-    videoToggle.textContent = t(hidden ? 'controls.showVideo' : 'controls.hideVideo');
-    if (window.animeiTrack) window.animeiTrack('setting', 'hide_video:' + (hidden ? 'on' : 'off'));
-});
-
 // RU — показать/скрыть русский перевод в списке субтитров
 ruToggle.addEventListener('click', () => {
     state.showRu = !state.showRu;
