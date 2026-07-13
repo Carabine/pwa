@@ -86,13 +86,13 @@
             </div>
 
             <!-- На телефоне блок настроек можно свернуть, чтобы субтитры были сразу под видео.
-                 Рядом с шевроном — компактная кнопка «Скрыть/Показать видео». -->
-            <div class="controls-toggle" id="controls-toggle" role="button" tabindex="0" aria-expanded="true">
+                 Слева от шеврона — мелкая подпись-состояние «Скрыть/Показать». -->
+            <button class="controls-toggle" id="controls-toggle" type="button" aria-expanded="true">
                 <svg class="controls-toggle__gear" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 <span class="controls-toggle__title" data-i18n="controls.settings">Настройки видео</span>
-                <button id="video-toggle" class="controls-toggle__video" data-i18n="controls.hideVideo" data-i18n-title="controls.hideVideo.title" title="Спрятать картинку, оставить звук и субтитры — тренировка на слух">Скрыть видео</button>
+                <span class="controls-toggle__state" id="controls-toggle-state" data-i18n="controls.collapse">Скрыть</span>
                 <svg class="controls-toggle__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-            </div>
+            </button>
 
             <div class="player-controls" id="player-controls">
                 <div class="control-group control-group--season" id="season-group" hidden>
@@ -113,6 +113,7 @@
                         <button id="autopause-btn" class="chip-btn" data-i18n="controls.autopause" data-i18n-title="controls.autopause.title" title="Пауза после каждой реплики (S)">⏸ Авто-пауза</button>
                         <button id="ru-toggle" class="chip-btn chip-btn--active" data-i18n-title="controls.ru.title" title="Показывать перевод в списке субтитров">RU</button>
                         <button id="reading-toggle" class="chip-btn chip-btn--active" data-i18n-title="controls.reading.title" title="Чтение над словами: кана ⇄ ромадзи">あ</button>
+                        <button id="video-toggle" class="chip-btn" data-i18n="controls.hideVideo" data-i18n-title="controls.hideVideo.title" title="Спрятать картинку, оставить звук и субтитры — тренировка на слух">Скрыть видео</button>
                     </div>
                 </div>
             </div>

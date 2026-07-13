@@ -1303,12 +1303,10 @@ autopauseBtn.addEventListener('click', toggleAutoPause);
 // слух. Кадр схлопывается в тонкую полосу с управлением и подписью (см. CSS).
 const videoToggle = document.getElementById('video-toggle');
 const videoWrapEl = document.getElementById('video-wrap');
-videoToggle.addEventListener('click', (e) => {
-    // Кнопка живёт внутри полосы-заголовка настроек — не даём клику свернуть панель.
-    e.stopPropagation();
+videoToggle.addEventListener('click', () => {
     const hidden = videoWrapEl.classList.toggle('video-hidden');
     videoWrapEl.dataset.hiddenLabel = t('player.videoHidden');
-    videoToggle.classList.toggle('is-active', hidden);
+    videoToggle.classList.toggle('chip-btn--active', hidden);
     videoToggle.textContent = t(hidden ? 'controls.showVideo' : 'controls.hideVideo');
     if (window.animeiTrack) window.animeiTrack('setting', 'hide_video:' + (hidden ? 'on' : 'off'));
 });
@@ -1942,23 +1940,18 @@ seasonSelect.addEventListener('change', () => {
 // за одну кнопку, чтобы список реплик умещался в экран сразу под видео.
 
 const controlsToggle = document.getElementById('controls-toggle');
+const controlsToggleState = document.getElementById('controls-toggle-state');
 const playerMain = document.querySelector('.player-main');
 
 function setControlsCollapsed(collapsed) {
     playerMain.classList.toggle('controls-collapsed', collapsed);
     controlsToggle.setAttribute('aria-expanded', String(!collapsed));
+    // Подпись у шеврона показывает, что сделает клик: развёрнуто → «Скрыть».
+    controlsToggleState.textContent = t(collapsed ? 'controls.expand' : 'controls.collapse');
 }
 
 controlsToggle.addEventListener('click', () => {
     setControlsCollapsed(!playerMain.classList.contains('controls-collapsed'));
-});
-// Полоса-заголовок теперь <div> (внутри живёт кнопка «Скрыть видео»), поэтому
-// клавиатурную активацию вешаем сами.
-controlsToggle.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        setControlsCollapsed(!playerMain.classList.contains('controls-collapsed'));
-    }
 });
 // По умолчанию настройки видны (в т.ч. на телефоне); свернуть можно кнопкой
 
