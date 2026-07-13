@@ -24,6 +24,24 @@ const titleRomaji = params.get('name') || titleRu;
     } catch { /* localStorage может быть недоступен */ }
 })();
 
+// Разовая чистка №2: автосинк до v0.0.99 брал крайний сдвиг «плато» совпадений
+// (допуск ±0.6с) — мелкие сохранённые сдвиги систематически врали до ~0.5с.
+// Сбрасываем их, чтобы уточнённый автосинк (медиана остатков на бэкенде)
+// подобрал заново. Большие сдвиги (интро MegaPlay, десятки секунд) не трогаем:
+// их главная часть верна, а потерять её при неудачном перезапуске дороже.
+(function clearBiasedSmallOffsets() {
+    try {
+        if (localStorage.getItem('animei:offsetResync1')) return;
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const k = localStorage.key(i);
+            if (!k || !k.startsWith('animei:subsOffset:')) continue;
+            const v = parseFloat(localStorage.getItem(k));
+            if (Number.isFinite(v) && Math.abs(v) <= 2) localStorage.removeItem(k);
+        }
+        localStorage.setItem('animei:offsetResync1', '1');
+    } catch { /* localStorage может быть недоступен */ }
+})();
+
 const video = document.getElementById('video');
 const videoLoading = document.getElementById('video-loading');
 const translationSelect = document.getElementById('translation-select');
@@ -1111,7 +1129,7 @@ function findCueIndex(t) {
     return -1;
 }
 
-video.addEventListener('timeupdate', () => {
+function syncCues() {
     if (!state.cues.length) return;
     const t = video.currentTime;
 
@@ -1141,7 +1159,17 @@ video.addEventListener('timeupdate', () => {
             state.autoPauseAt = state.cues[idx].end + state.offset;
         }
     }
-});
+}
+
+// timeupdate срабатывает всего ~4 раза в секунду — реплика появлялась с опозданием
+// до четверти секунды (а с тормозами браузера и больше). Во время воспроизведения
+// сверяемся с currentTime каждый кадр (как в watch.js); timeupdate оставляем для
+// перемотки на паузе. syncCues дешёвый: при том же индексе выходит сразу.
+video.addEventListener('timeupdate', syncCues);
+(function cueSyncLoop() {
+    if (!video.paused && !video.ended) syncCues();
+    requestAnimationFrame(cueSyncLoop);
+})();
 
 // ---------- Слежение за списком ----------
 // Пока followCue включён, список сам подкручивается к текущей реплике.
