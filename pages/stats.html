@@ -67,7 +67,11 @@
     .visitor__meta { color: var(--muted); font-size: 12px; }
     .chip { background: var(--accent2); color: #cdd6f4; font-size: 11px; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
     .visitor__spacer { flex: 1; }
-    .visitor__caret { color: var(--muted); font-size: 12px; }
+    .visitor__caret { color: var(--accent); font-size: 12px; white-space: nowrap; }
+    .visitor__caret::after { content: ' ▾'; display: inline-block; transition: transform .15s; }
+    .visitor.open .visitor__caret::after { transform: rotate(180deg); }
+    .visitor__geo { color: var(--muted); font-size: 12px; }
+    .visitor__dev { color: var(--muted); font-size: 11px; font-family: ui-monospace, monospace; }
     .visitor__body { display: none; padding: 4px 14px 14px; border-top: 1px solid var(--border); }
     .visitor.open .visitor__body { display: block; }
     .tl { list-style: none; margin: 8px 0 0; padding: 0; }
@@ -207,6 +211,45 @@
         return new Date(iso).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
     }
 
+    // Короткое описание устройства из User-Agent: «📱 Android · Chrome».
+    function uaShort(ua) {
+        if (!ua) return '';
+        var os = /iPhone|iPod/.test(ua) ? 'iPhone'
+            : /iPad/.test(ua) ? 'iPad'
+            : /Android/.test(ua) ? 'Android'
+            : /Windows/.test(ua) ? 'Windows'
+            : /Mac OS X/.test(ua) ? 'macOS'
+            : /Linux/.test(ua) ? 'Linux' : '?';
+        var br = /YaBrowser/.test(ua) ? 'Яндекс'
+            : /Edg\//.test(ua) ? 'Edge'
+            : /OPR\/|Opera/.test(ua) ? 'Opera'
+            : /Firefox/.test(ua) ? 'Firefox'
+            : /Chrome/.test(ua) ? 'Chrome'
+            : /Safari/.test(ua) ? 'Safari' : '?';
+        var mob = /Mobile|iPhone|Android/.test(ua) ? '📱' : '🖥';
+        return mob + ' ' + os + ' · ' + br;
+    }
+
+    // Гео по IP — лениво при раскрытии карточки (ipwho.is, бесплатно, кешируем).
+    var geoCache = {};
+    function loadGeo(ip, el) {
+        if (!ip || ip === 'неизвестно' || /^(127\.|10\.|192\.168\.)/.test(ip)) return;
+        if (geoCache[ip]) { el.textContent = geoCache[ip]; return; }
+        fetch('https://ipwho.is/' + ip + '?lang=ru')
+            .then(function (r) { return r.json(); })
+            .then(function (g) {
+                if (!g || !g.success) return;
+                var parts = [];
+                if (g.flag && g.flag.emoji) parts.push(g.flag.emoji);
+                if (g.country) parts.push(g.country + (g.city ? ', ' + g.city : ''));
+                if (g.connection && g.connection.isp) parts.push('· ' + g.connection.isp);
+                geoCache[ip] = parts.join(' ');
+                el.textContent = geoCache[ip];
+            })
+            .catch(function () {});
+    }
+    window.__loadGeo = loadGeo;
+
     // Одна сессия = один визит: сверху краткий путь по страницам стрелками,
     // ниже — полный хронологический список действий (что куда нажимал).
     function renderSession(s, idx) {
@@ -230,10 +273,11 @@
         var range = fmtDate(s.start) + ' ' + fmtHM(s.start) + '–' +
             (sameDay ? '' : fmtDate(s.end) + ' ') + fmtHM(s.end);
 
+        var dev = s.ua ? uaShort(s.ua) : String(s.visitorId || '—').slice(0, 8);
         return '<div class="session">' +
             '<div class="session__head">' +
                 '<span class="session__n">Сессия #' + (idx + 1) + '</span>' +
-                '<span class="session__dev">' + esc(String(s.visitorId || '—').slice(0, 8)) + '</span>' +
+                '<span class="session__dev" title="' + esc(s.ua || s.visitorId || '') + '">' + esc(dev) + '</span>' +
                 '<span class="session__time">' + range + '</span>' +
                 '<span class="session__count">' + (s.count || 0) + ' шаг.</span>' +
             '</div>' + path +
@@ -242,7 +286,8 @@
 
     function renderVisitors(data) {
         document.getElementById('visitors-sub').textContent =
-            data.count + ' уникальных IP за ' + data.days + ' дн.';
+            data.count + ' уникальных IP за ' + data.days +
+            ' дн. Клик по строке раскрывает путь: сессии, страницы и действия по порядку.';
 
         if (!data.visitors.length) {
             document.getElementById('visitors').innerHTML = '<div class="msg">Пока нет данных</div>';
@@ -259,13 +304,22 @@
                 ? sessions.map(function (s, si) { return renderSession(s, si); }).join('')
                 : '<div class="msg">Нет сессий</div>';
 
-            return '<div class="visitor" data-i="' + i + '">' +
-                '<div class="visitor__head" onclick="this.parentNode.classList.toggle(\'open\')">' +
+            // Устройства этого IP — короткие подписи из уникальных User-Agent'ов
+            var devices = (v.uas || []).map(uaShort);
+            devices = devices.filter(function (d, di) { return d && devices.indexOf(d) === di; });
+            var devLine = devices.length
+                ? '<span class="visitor__dev">' + devices.map(esc).join(' | ') + '</span>'
+                : '';
+
+            return '<div class="visitor" data-ip="' + esc(v.ip) + '">' +
+                '<div class="visitor__head" onclick="this.parentNode.classList.toggle(\'open\'); window.__loadGeo(this.parentNode.dataset.ip, this.querySelector(\'.visitor__geo\'))">' +
                 '<span class="visitor__ip">' + esc(v.ip) + '</span>' +
+                '<span class="visitor__geo"></span>' +
                 '<span class="visitor__meta">' + (v.sessionCount != null ? v.sessionCount : sessions.length) + ' сессий · ' + v.hits + ' действий · ' +
                 v.visitors + ' устр. · ' + fmtTime(v.firstSeen) + ' → ' + fmtTime(v.lastSeen) + '</span>' +
+                devLine +
                 '<span class="visitor__spacer"></span>' + summary +
-                '<span class="visitor__caret">▾</span></div>' +
+                '<span class="visitor__caret">путь</span></div>' +
                 '<div class="visitor__body">' + body + '</div></div>';
         }).join('');
     }

@@ -111,6 +111,38 @@ html, body {
     display: flex;
 }
 
+/* Режим «Скрыть видео» (чип в настройках): кадр схлопывается в тонкую полосу —
+   звук играет, управление и перемотка остаются, сверху подпись-напоминание. */
+.video-wrap.video-hidden {
+    aspect-ratio: auto;
+    height: 92px;
+}
+
+.video-wrap.video-hidden video {
+    visibility: hidden;
+}
+
+.video-wrap.video-hidden::before {
+    content: attr(data-hidden-label);
+    position: absolute;
+    top: 12px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+/* Пока видео скрыто, панель управления не прячем (курсор над «кадром» не ловится). */
+.video-wrap.video-hidden .player-ui__bottom {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.video-wrap.video-hidden .player-ui__bigplay {
+    display: none;
+}
+
 .player-ui__bottom {
     position: absolute;
     left: 0;
@@ -1287,6 +1319,24 @@ html, body {
 .word-popup--sentence .word-popup__body,
 .word-popup--sentence .word-popup__save {
     display: none;
+}
+
+/* Заголовок здесь — не японское слово, а название модалки: скромнее размером. */
+.word-popup--sentence .word-popup__word {
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Предложение — пословные столбики [чтение][слово], как в субтитрах. */
+.word-popup--sentence .word-popup__sentence {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2px 8px;
+    font-size: 15px;
 }
 
 /* Шапка плеера: слева теперь две кнопки (меню + назад), поэтому фиксированную

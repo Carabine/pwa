@@ -114,6 +114,8 @@ audio {
 /* Регулятор звука клипа: кнопка (вкл/выкл) + ползунок громкости. Правый нижний
    угол. Порядок в DOM — [ползунок][кнопка], поэтому ползунок выезжает слева от
    кнопки; группа прижата к правому краю, поэтому растёт влево. */
+/* Без «пилюли»-подложки: тёмная капсула читалась как отдельная карточка поверх
+   кадра. Теперь просто иконка и ползунок лежат на видео, читаемость даёт тень. */
 .clip-player__vol {
     position: absolute;
     right: 8px;
@@ -121,16 +123,6 @@ audio {
     z-index: 2;
     display: flex;
     align-items: center;
-    border-radius: 999px;
-    background: rgba(10, 10, 16, 0.55);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
-    transition: background 0.15s ease;
-}
-
-.clip-player__vol:hover {
-    background: rgba(10, 10, 16, 0.75);
 }
 
 .clip-player__mute {
@@ -145,6 +137,7 @@ audio {
     opacity: 0.9;
     flex-shrink: 0;
     transition: opacity 0.15s ease;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
 }
 
 .clip-player__mute:hover {
@@ -161,6 +154,7 @@ audio {
     width: 0;
     min-width: 0;      /* иначе браузер держит range шире нуля и свёрнутая «пилюля» не круглая */
     opacity: 0;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7)); /* читаемость без подложки */
     height: 4px;
     margin: 0;
     appearance: none;

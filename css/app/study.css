@@ -9,10 +9,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* Верх-выравнивание, а не центрирование: центр оставлял сверху много пустоты,
-       а высокую карточку (видеоклип + разбор) зажимало по высоте — контент
-       вылезал за её верх и низ, налезая на счётчики и кнопки. С flex-start
-       + .card-area{flex-shrink:0} карточка растёт под контент, а .main скроллится. */
+    /* Базово flex-start (нельзя голый center: когда контент выше экрана, верх
+       становится недостижим для прокрутки). Центрирование на ПК дают спейсеры
+       ::before/::after ниже: контент помещается — они делят свободную высоту и
+       группа стоит по центру экрана; не помещается — ужимаются в 0 и .main
+       скроллится как раньше. */
     justify-content: flex-start;
     gap: 10px;
     /* «← Назад» и шестерёнка — absolute-оверлеи по углам (не занимают строку),
@@ -22,13 +23,20 @@
     padding-top: 12px;
 }
 
+.main.study::before,
+.main.study::after {
+    content: '';
+    flex: 1 1 0;
+    min-height: 0;
+}
+
 /* ---- Session stats (New / Learning / Review) ---- */
 /* Счётчики — одна «стеклянная» капсула-HUD вместо трёх коробок: компактнее и
    не спорит с карточкой за внимание. */
 .study-stats {
     display: flex;
     width: auto;
-    max-width: 480px;
+    max-width: 560px;
     gap: 0;
     justify-content: center;
     padding: 4px 6px;
@@ -77,7 +85,7 @@
 /* ---- Progress bar ---- */
 .study-progress {
     width: 100%;
-    max-width: 480px;
+    max-width: 560px;
     height: 4px;
     background: var(--card);
     background: color-mix(in srgb, var(--border) 55%, transparent);
@@ -101,18 +109,18 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    /* Уже (600 → 540 → 480px): видео в карточке мельче (его ширину ограничивает
-       именно карточка), а разбор читается колонкой, не разъезжаясь вширь. */
-    max-width: 480px;
+    /* 560px: карточка на ПК просторнее (была 480 — выглядела зажатой), видео в
+       ней крупнее, а разбор всё ещё читается колонкой. */
+    max-width: 560px;
     /* На ПК карточка занимает доступную высоту (не больше — без прокрутки), а
-       внутри под остаток подстраивается видеоклип. min-height держит компактную
-       карточку-вопрос. На телефоне (медиазапрос ниже) — по контенту. */
+       внутри под остаток подстраивается видеоклип. min-height держит карточку-
+       вопрос статной, не куцей. На телефоне (медиазапрос ниже) — по контенту. */
     flex: 0 1 auto;
-    min-height: 300px;
+    min-height: 400px;
     overflow: hidden;
     /* Просторнее по вертикали: карточка «дышит», секции разбора не слипаются
        (на телефоне компактнее — см. медиазапрос ниже). */
-    padding: 28px 24px;
+    padding: 40px 32px;
     border: 1px solid var(--border);
     border-radius: 16px;
     background: var(--card);
@@ -349,7 +357,7 @@
 
 /* Перевод — главная строка ответа. */
 .meaning {
-    font-size: clamp(20px, 3vw, 24px);
+    font-size: clamp(21px, 3vw, 27px);
     font-weight: 700;
     letter-spacing: -0.01em;
     text-align: center;
@@ -360,7 +368,7 @@
 /* Чтение — чип-«ярлычок» с лёгкой барвинковой заливкой (для kana/romaji/both —
    каждая строка своим чипом). */
 .hiragana {
-    font-size: 15.5px;
+    font-size: 16.5px;
     font-weight: 600;
     letter-spacing: 0.05em;
     line-height: 1.5;
@@ -380,9 +388,9 @@
    .sentence--cells продолжает включать свою flex-раскладку с ромадзи. */
 .sentence {
     width: 100%;
-    max-width: 460px;
-    padding: 11px 14px;
-    font-size: 16px;
+    max-width: 520px;
+    padding: 12px 16px;
+    font-size: 17px;
     color: var(--text);
     text-align: center;
     background: color-mix(in srgb, var(--bg) 55%, transparent);
@@ -1006,6 +1014,12 @@
            (overflow-y:auto) даёт прокрутку, если всё не влезло. */
         padding: 14px 12px 24px;
         justify-content: flex-start;
+    }
+
+    /* Центрирующие спейсеры — только для ПК; на телефоне контент прижат кверху. */
+    .main.study::before,
+    .main.study::after {
+        display: none;
     }
 
     .study-stats {

@@ -602,20 +602,17 @@
             els.back.appendChild(el);
         }
 
-        // Транскрипция слова с учётом настройки studyTranscription:
-        // kana (по умолчанию) / romaji / both / none.
+        // Транскрипция слова с учётом настройки studyTranscription: kana (по
+        // умолчанию) или romaji. Старые значения both/none убраны из настроек —
+        // если такое сохранилось, показываем кану.
         function renderTranscription(w) {
-            const mode = studyPref('studyTranscription') || 'kana';
-            if (mode === 'none') return;
+            const mode = studyPref('studyTranscription') === 'romaji' ? 'romaji' : 'kana';
             const kana = w.kana || '';
             const romaji = (w.romaji && String(w.romaji).trim())
                 ? String(w.romaji).trim()
                 : (typeof window.kanaToRomaji === 'function' ? window.kanaToRomaji(kana) : '');
-            const lines = [];
-            if (mode === 'romaji') { if (romaji) lines.push(romaji); }
-            else if (mode === 'both') { if (kana) lines.push(kana); if (romaji) lines.push(romaji); }
-            else { if (kana) lines.push(kana); } // kana
-            for (const text of lines) addLine('hiragana', text);
+            const text = mode === 'romaji' ? (romaji || kana) : kana;
+            if (text) addLine('hiragana', text);
         }
 
         // Панель настроек обучения (шестерёнка в углу карточки). Меняет настройки
@@ -687,14 +684,16 @@
             trLabel.textContent = t('study.transcription');
             const seg = document.createElement('div');
             seg.className = 'seg';
-            [['kana', t('study.transcription.kana')], ['romaji', t('study.transcription.romaji')],
-             ['both', t('study.transcription.both')], ['none', t('study.transcription.none')]]
+            // Только кана/ромадзи: «Обе» и «Скрыть» убраны (сохранённое старое
+            // значение трактуется как кана — см. renderTranscription).
+            const curTr = studyPref('studyTranscription') === 'romaji' ? 'romaji' : 'kana';
+            [['kana', t('study.transcription.kana')], ['romaji', t('study.transcription.romaji')]]
                 .forEach(([val, label]) => {
                     const b = document.createElement('button');
                     b.type = 'button';
                     b.textContent = label;
                     b.dataset.val = val;
-                    b.classList.toggle('is-active', String(studyPref('studyTranscription')) === val);
+                    b.classList.toggle('is-active', curTr === val);
                     b.addEventListener('click', () => {
                         window.AnimeiSettings.set('studyTranscription', val);
                         seg.querySelectorAll('button').forEach((x) => x.classList.remove('is-active'));

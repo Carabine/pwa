@@ -1293,6 +1293,18 @@ function toggleAutoPause() {
 
 autopauseBtn.addEventListener('click', toggleAutoPause);
 
+// «Скрыть видео»: картинку прячем, звук и субтитры остаются — тренировка на
+// слух. Кадр схлопывается в тонкую полосу с управлением и подписью (см. CSS).
+const videoToggle = document.getElementById('video-toggle');
+const videoWrapEl = document.getElementById('video-wrap');
+videoToggle.addEventListener('click', () => {
+    const hidden = videoWrapEl.classList.toggle('video-hidden');
+    videoWrapEl.dataset.hiddenLabel = t('player.videoHidden');
+    videoToggle.classList.toggle('chip-btn--active', hidden);
+    videoToggle.textContent = t(hidden ? 'controls.showVideo' : 'controls.hideVideo');
+    if (window.animeiTrack) window.animeiTrack('setting', 'hide_video:' + (hidden ? 'on' : 'off'));
+});
+
 // RU — показать/скрыть русский перевод в списке субтитров
 ruToggle.addEventListener('click', () => {
     state.showRu = !state.showRu;
@@ -1593,9 +1605,12 @@ async function openSentenceExplain(cue, event) {
     popup.classList.add('word-popup--sentence');
     state.popupContext = { tok: null, cue, dict: null, event };
 
-    popupWord.textContent = t('words.explainShort');
+    popupWord.textContent = t('words.explain');
     popupReading.textContent = '';
-    popupSentence.textContent = cue.text;
+    // Предложение — пословно, с чтением над словами как в субтитрах (кана или
+    // ромадзи по текущему режиму); по словам можно кликать в словарь.
+    popupSentence.innerHTML = '';
+    buildWordCells(cue).forEach(s => popupSentence.appendChild(s));
     popupBody.innerHTML = '';
     popupExplainBtn.hidden = true;
     popupExplain.hidden = false;
