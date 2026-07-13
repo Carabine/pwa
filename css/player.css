@@ -682,10 +682,16 @@ html, body {
     text-overflow: ellipsis;
 }
 
-.control-group--season select,
-.control-group--episode select {
+.control-group--season select {
     width: auto;
     min-width: 84px;
+}
+
+/* Серия: фиксированный минимум ширины — ниже не сжимается, чтобы номер серии и
+   шеврон всегда помещались (короткое «Серия 1» не схлопывается в узкую кнопку). */
+.control-group--episode select {
+    width: auto;
+    min-width: 104px;
 }
 
 .control-group label {
