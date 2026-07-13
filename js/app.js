@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.100';
+const APP_VERSION = 'v0.0.101';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -363,6 +363,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // На главной — живой счётчик учёбы на карточке «Учёба».
     renderHomeProgress();
+
+    // Гость с лендинга ещё не набрал свою коллекцию — «Повторить всё» ему не по
+    // делу и только распыляет. Прячем карточку; после входа в аккаунт вернётся.
+    const customCard = document.getElementById('custom-study-card');
+    if (customCard && localStorage.getItem('animei:fromLanding') === '1'
+        && !(typeof isLoggedIn === 'function' && isLoggedIn())) {
+        // display:none, а не hidden: у .hub-card свой display, он перебил бы [hidden]
+        customCard.style.display = 'none';
+    }
 });
 
 // «Сегодня: 5 к повторению · 3 новых · 🔥 4 дня подряд» — чтобы было видно,

@@ -1058,6 +1058,9 @@ function readingKana(tok) {
     return tok.reading;
 }
 
+// Иконка «искры ИИ» — та же, что в кнопке разбора словарной карточки.
+const AI_ICON_SVG = '<svg class="ai-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 2 9.15 6.15 5 8l4.15 1.85L11 14l1.85-4.15L17 8l-4.15-1.85L11 2Zm7.5 9-1.1 2.4-2.4 1.1 2.4 1.1 1.1 2.4 1.1-2.4 2.4-1.1-2.4-1.1L18.5 11Z"/></svg>';
+
 function renderTranscript() {
     transcriptList.querySelectorAll('.cue').forEach(el => el.remove());
 
@@ -1087,6 +1090,19 @@ function renderTranscript() {
             div.appendChild(ru);
         }
 
+        // ИИ-разбор реплики — иконка в правом верхнем углу строки. Кнопки в DOM
+        // всегда; видимы, только когда ИИ доступен (класс ai-on на списке).
+        const aiBtn = document.createElement('button');
+        aiBtn.type = 'button';
+        aiBtn.className = 'cue__ai';
+        aiBtn.title = t('words.explain');
+        aiBtn.innerHTML = AI_ICON_SVG;
+        aiBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openSentenceExplain(cue, e);
+        });
+        div.appendChild(aiBtn);
+
         div.addEventListener('click', () => {
             video.currentTime = cue.start + state.offset + 0.01;
             video.play().catch(() => {});
@@ -1102,6 +1118,16 @@ const nowCue = document.getElementById('now-cue');
 const nowCueJp = document.getElementById('now-cue-jp');
 const nowCueRu = document.getElementById('now-cue-ru');
 
+// Реплика, показанная в блоке под видео (в тишине там остаётся последняя —
+// иконка ИИ должна разбирать именно её, а не «ничего»).
+let nowCueIdx = -1;
+
+document.getElementById('now-cue-ai').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const cue = state.cues[nowCueIdx];
+    if (cue) openSentenceExplain(cue, e);
+});
+
 function updateNowCue(idx) {
     // Пока субтитры загружены, блок всегда на месте — чтобы верстка не прыгала.
     if (!state.cues.length) {
@@ -1110,6 +1136,7 @@ function updateNowCue(idx) {
     }
     nowCue.hidden = false;
     if (idx < 0) return; // между репликами оставляем последнюю строку, не мигаем
+    nowCueIdx = idx;
     const cue = state.cues[idx];
     // Реплика под видео — пословно: над каждым словом ромадзи, само слово с
     // фуриганой, а перевод одной строкой ниже (см. buildWordCells).
@@ -1201,7 +1228,18 @@ function setFollowCue(on) {
     jumpBtn.hidden = on;
     jumpBtn.classList.toggle('is-visible', !on);
     if (on) {
-        const el = transcriptList.querySelector('.cue--active');
+        let el = transcriptList.querySelector('.cue--active');
+        // Между репликами активной нет (в тишине класс снимается) — кнопка
+        // «молчала». Едем к последней прозвучавшей реплике, а до первой — к первой.
+        if (!el && state.cues.length) {
+            const t = video.currentTime;
+            let idx = 0;
+            for (let i = 0; i < state.cues.length; i++) {
+                if (state.cues[i].start + state.offset <= t) idx = i;
+                else break;
+            }
+            el = transcriptList.querySelector(`.cue[data-index="${idx}"]`);
+        }
         if (el) scrollCueIntoView(el);
     }
 }
@@ -1338,6 +1376,9 @@ const popupExplainLabel = popupExplainBtn.querySelector('.btn-label') || popupEx
 client.get('explain/status')
     .then(({ data: res }) => {
         state.aiAvailable = !!res?.data?.available;
+        // Иконки ИИ-разбора у реплик (список и строка под видео) — только с ИИ.
+        transcriptList.classList.toggle('ai-on', state.aiAvailable);
+        nowCue.classList.toggle('ai-on', state.aiAvailable);
         // Карточка уже открыта, а статус пришёл позже — показываем кнопку разбора сразу
         if (state.aiAvailable && !popup.hidden && popupExplain.hidden) popupExplainBtn.hidden = false;
     })
@@ -1346,6 +1387,7 @@ client.get('explain/status')
 async function openWordPopup(tok, cue, event) {
     video.pause();
 
+    popup.classList.remove('word-popup--sentence');
     state.popupContext = { tok, cue, dict: null, event };
 
     popupWord.textContent = tok.base;
@@ -1500,28 +1542,36 @@ function renderExplain(data) {
     if (state.popupContext?.event) positionPopup(state.popupContext.event);
 }
 
+// Получить разбор реплики (из кеша или с сервера). Общий для кнопки в словарной
+// карточке и для иконки ИИ у реплики.
+async function fetchExplain(cue) {
+    const cached = explainCache.get(cue.text);
+    if (cached) return cached;
+    const { data: res } = await client.get('explain', {
+        params: { sentence: cue.text, context: cueContext(cue) },
+        timeout: 60000,
+    });
+    const data = res.data.explanation;
+    explainCache.set(cue.text, data);
+    return data;
+}
+
+function explainErrorText(err) {
+    const limited = err.response?.data?.reason === 'limited' || err.response?.status === 429;
+    return limited ? t('popup.explainLimited') : t('popup.explainError');
+}
+
 popupExplainBtn.addEventListener('click', async () => {
     const ctx = state.popupContext;
     if (!ctx) return;
 
     const sentence = ctx.cue.text;
-    const cached = explainCache.get(sentence);
-    if (cached) {
-        renderExplain(cached);
-        return;
-    }
-
     popupExplainBtn.disabled = true;
     popupExplainLabel.textContent = t('popup.explaining');
     if (window.animeiTrack) window.animeiTrack('explain', 'player');
 
     try {
-        const { data: res } = await client.get('explain', {
-            params: { sentence, context: cueContext(ctx.cue) },
-            timeout: 60000,
-        });
-        const data = res.data.explanation;
-        explainCache.set(sentence, data);
+        const data = await fetchExplain(ctx.cue);
         // Пока ждали ответ, могли открыть другое слово той же реплики — это ок,
         // разбор относится к реплике, а не к слову
         if (!popup.hidden && state.popupContext?.cue.text === sentence) {
@@ -1529,12 +1579,45 @@ popupExplainBtn.addEventListener('click', async () => {
         }
     } catch (err) {
         console.error(err);
-        const limited = err.response?.data?.reason === 'limited' || err.response?.status === 429;
-        showSnackbar(limited ? t('popup.explainLimited') : t('popup.explainError'), { duration: 3500, type: 'error' });
+        showSnackbar(explainErrorText(err), { duration: 3500, type: 'error' });
         popupExplainBtn.disabled = false;
         popupExplainLabel.textContent = t('popup.explain');
     }
 });
+
+// ИИ-разбор реплики БЕЗ клика по слову: та же карточка, но в «режиме предложения» —
+// без словарной части и кнопки сохранения, разбор грузится сразу.
+async function openSentenceExplain(cue, event) {
+    video.pause();
+
+    popup.classList.add('word-popup--sentence');
+    state.popupContext = { tok: null, cue, dict: null, event };
+
+    popupWord.textContent = t('words.explainShort');
+    popupReading.textContent = '';
+    popupSentence.textContent = cue.text;
+    popupBody.innerHTML = '';
+    popupExplainBtn.hidden = true;
+    popupExplain.hidden = false;
+    popupExplain.innerHTML = '<div class="dict-loading"></div>';
+    popupExplain.firstChild.textContent = t('popup.explaining');
+
+    popup.hidden = false;
+    positionPopup(event);
+    if (window.animeiTrack) window.animeiTrack('explain', 'player_cue');
+
+    try {
+        const data = await fetchExplain(cue);
+        // Пока ждали, могли открыть другую реплику/слово — не перетираем чужое
+        if (!popup.hidden && state.popupContext?.cue === cue) renderExplain(data);
+    } catch (err) {
+        console.error(err);
+        if (!popup.hidden && state.popupContext?.cue === cue) {
+            popupExplain.innerHTML = '<div class="dict-loading"></div>';
+            popupExplain.firstChild.textContent = explainErrorText(err);
+        }
+    }
+}
 
 function positionPopup(event) {
     // На телефоне карточка не помещается рядом со словом и вылазит за экран —

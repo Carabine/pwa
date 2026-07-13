@@ -251,8 +251,20 @@ html, body {
     transition: width 0.2s ease, opacity 0.18s ease, margin 0.2s ease;
 }
 
-.player-ui__vol:hover .player-ui__vol-popup,
-.player-ui__vol:focus-within .player-ui__vol-popup {
+/* Раскрытие по наведению/фокусу — только там, где есть мышь: на таче фокус
+   после тапа «залипает», и ползунок было не убрать. */
+@media (hover: hover) and (pointer: fine) {
+    .player-ui__vol:hover .player-ui__vol-popup,
+    .player-ui__vol:focus-within .player-ui__vol-popup {
+        width: 80px;
+        opacity: 1;
+        margin: 0 3px 0 2px;
+    }
+}
+
+/* Тач-режим: ползунок открывает JS классом is-open (тап по кнопке звука) и сам
+   закрывает его по таймеру/тапу мимо — см. player-ui.js. */
+.player-ui__vol.is-open .player-ui__vol-popup {
     width: 80px;
     opacity: 1;
     margin: 0 3px 0 2px;
@@ -498,6 +510,7 @@ html, body {
 /* ---------- Текущая реплика под видео ---------- */
 
 .now-cue {
+    position: relative; /* якорь для иконки ИИ-разбора в углу */
     margin-top: 12px;
     padding: 10px 16px;
     min-height: 64px;
@@ -508,6 +521,45 @@ html, body {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     text-align: center;
+}
+
+/* Иконка ИИ-разбора реплики — в правом верхнем углу строки под видео и каждой
+   реплики списка. Ненавязчивая: полупрозрачная, ярче по наведению. Появляется,
+   только когда ИИ на сервере доступен (класс ai-on ставит player.js). */
+.now-cue__ai,
+.cue__ai {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.now-cue.ai-on .now-cue__ai,
+.transcript__list.ai-on .cue__ai {
+    display: inline-flex;
+}
+
+.now-cue__ai:hover,
+.cue__ai:hover {
+    color: var(--pink);
+    background: rgba(124, 140, 248, 0.12);
+}
+
+.now-cue__ai .ai-icon,
+.cue__ai .ai-icon {
+    width: 15px;
+    height: 15px;
 }
 
 .now-cue__jp {
@@ -865,6 +917,7 @@ html, body {
 }
 
 .cue {
+    position: relative; /* якорь для иконки ИИ-разбора в углу */
     padding: 8px 16px;
     cursor: pointer;
     border-left: 3px solid transparent;
@@ -1224,6 +1277,13 @@ html, body {
     color: var(--primary-hover);
 }
 
+/* Режим «разбор предложения» (открыт иконкой ИИ у реплики): словарная часть и
+   кнопка сохранения не нужны — остаются предложение и сам разбор. */
+.word-popup--sentence .word-popup__body,
+.word-popup--sentence .word-popup__save {
+    display: none;
+}
+
 /* Шапка плеера: слева теперь две кнопки (меню + назад), поэтому фиксированную
    ширину снимаем, а заголовок центрируем сам по себе. */
 .player-app .header__left {
@@ -1546,11 +1606,8 @@ html, body {
         right: -6.5px;
     }
 
-    /* Слайдер громкости раскрыть на тач нельзя (он по hover) — прячем,
-       остаётся понятная кнопка «звук вкл/выкл» */
-    .player-ui__vol-popup {
-        display: none !important;
-    }
+    /* Слайдер громкости на таче раскрывается тапом по кнопке звука (класс
+       is-open ставит JS) и сам сворачивается — прятать его больше не нужно. */
 
     /* Строка японских субтитров под видео — компактная (по просьбе: ещё мельче) */
     .now-cue__jp {

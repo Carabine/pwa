@@ -125,7 +125,29 @@
     // Без всплывающей панели: ползунок сидит в одном ряду с кнопкой звука и просто
     // ВЫЕЗЖАЕТ вправо при наведении/фокусе (как в YouTube). Кнопка и ползунок — в
     // одной группе .player-ui__vol, поэтому наведение не «срывается» при
-    // перетаскивании. Клик по кнопке — мьют; на телефоне ползунок скрыт (см. CSS).
+    // перетаскивании. Клик по кнопке — мьют. На таче hover нет: тап по кнопке
+    // мьютит и ненадолго показывает ползунок (is-open), который сам сворачивается
+    // по таймеру или тапу мимо — иначе раскрытый ползунок было не закрыть.
+
+    const volWrap = muteBtn.closest('.player-ui__vol');
+    const touchLike = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    let volHideTimer = null;
+
+    function showVolPopup() {
+        volWrap.classList.add('is-open');
+        clearTimeout(volHideTimer);
+        volHideTimer = setTimeout(() => volWrap.classList.remove('is-open'), 3000);
+    }
+
+    if (touchLike) {
+        // Тап мимо группы звука — закрываем ползунок сразу, не дожидаясь таймера.
+        document.addEventListener('click', (e) => {
+            if (!volWrap.contains(e.target)) {
+                clearTimeout(volHideTimer);
+                volWrap.classList.remove('is-open');
+            }
+        });
+    }
 
     function volumeIcon() {
         if (video.muted || video.volume === 0) return ICONS.muted;
@@ -143,6 +165,8 @@
         video.volume = parseFloat(volumeSlider.value);
         video.muted = video.volume === 0;
         localStorage.setItem(VOLUME_KEY, String(video.volume));
+        // Пока пользователь крутит громкость — не даём попапу свернуться под пальцем.
+        if (touchLike) showVolPopup();
     });
 
     muteBtn.addEventListener('click', (e) => {
@@ -153,6 +177,7 @@
             video.volume = 0.5;
             localStorage.setItem(VOLUME_KEY, '0.5');
         }
+        if (touchLike) showVolPopup();
     });
 
     video.addEventListener('volumechange', updateVolumeUi);
