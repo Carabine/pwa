@@ -95,17 +95,21 @@
             </button>
 
             <div class="player-controls" id="player-controls">
-                <div class="control-group control-group--season" id="season-group" hidden>
-                    <label data-i18n="controls.season">Сезон</label>
-                    <select id="season-select"></select>
-                </div>
-                <div class="control-group">
-                    <label data-i18n="controls.translation">Перевод</label>
-                    <select id="translation-select"></select>
-                </div>
-                <div class="control-group">
-                    <label data-i18n="controls.episode">Серия</label>
-                    <select id="episode-select"></select>
+                <!-- Сезон/дорожка/серия — компактный ряд: на ПК всегда в одну строку,
+                     на телефоне сезон занимает всю строку, дорожка и серия — рядом. -->
+                <div class="control-row">
+                    <div class="control-group control-group--season" id="season-group" hidden>
+                        <label data-i18n="controls.season">Сезон</label>
+                        <select id="season-select"></select>
+                    </div>
+                    <div class="control-group control-group--track">
+                        <label data-i18n="controls.translation">Перевод</label>
+                        <select id="translation-select"></select>
+                    </div>
+                    <div class="control-group control-group--episode">
+                        <label data-i18n="controls.episode">Серия</label>
+                        <select id="episode-select"></select>
+                    </div>
                 </div>
                 <div class="control-group">
                     <label data-i18n="controls.mode">Режим</label>
