@@ -707,15 +707,16 @@ async function loadSubtitles(episodeNumber = 1) {
         // Подобрали (или выбрали) файл — предлагаем сменить, если серия не та
         subsFixBtn.hidden = false;
 
-        // Самолечение старого рассинхрона: у не-MegaPlay видеоряд общий с оригиналом,
-        // поэтому реальный сдвиг маленький. Большой СОХРАНЁННЫЙ сдвиг остался от старой
-        // версии автосинка, которая могла зацепиться за шумовой пик (напр. Наруто 63:
-        // −9.5с) и записать его. Стираем — и автосинк пересчитает в новом узком ±6с.
-        // Ручной правки сдвига в UI нет, поэтому любое сохранённое значение — от
-        // автосинка, стирать безопасно.
-        const savedOffset = parseFloat(localStorage.getItem(offsetStorageKey()));
-        if (state.provider !== 'megaplay' && Number.isFinite(savedOffset) && Math.abs(savedOffset) > 6) {
-            localStorage.removeItem(offsetStorageKey());
+        // Разовая миграция: сдвиги, сохранённые ПРЕЖНИМИ (ошибочными) версиями
+        // автосинка, могут быть неверны — чистим все один раз, чтобы автосинк
+        // пересчитал их свежим, исправленным методом (alass, который корректно
+        // находит и большие сдвиги от обрезки интро). Ручной правки сдвига в UI нет,
+        // поэтому любое сохранённое значение — от автосинка, стирать безопасно.
+        if (localStorage.getItem('animei:subsOffsetReset') !== '3') {
+            Object.keys(localStorage)
+                .filter((k) => k.startsWith('animei:subsOffset:'))
+                .forEach((k) => localStorage.removeItem(k));
+            localStorage.setItem('animei:subsOffsetReset', '3');
         }
         state.offset = parseFloat(localStorage.getItem(offsetStorageKey())) || 0;
         updateOffsetLabel();
@@ -952,16 +953,12 @@ function appendWithFurigana(el, surface, reading) {
 // Применяется и к центральному оверлею (buildWordCells), и к списку субтитров
 // справа — оба показывают чтение НАД каждым словом (пословно, как эталон).
 function applyReadingPref() {
-    const btn = document.getElementById('reading-toggle');
-    const mode = state.readingMode;
-    if (btn) {
-        btn.classList.add('chip-btn--active', 'reading-toggle');
-        // Показываем ОБА варианта чтения, подсвечивая активный — так понятно, что
-        // кнопка переключает хирагану ⇄ ромадзи (раньше была одинокая «あ»).
-        btn.innerHTML =
-            '<span class="rd-opt' + (mode === 'kana' ? ' on' : '') + '">あ</span>' +
-            '<span class="rd-sep">/</span>' +
-            '<span class="rd-opt' + (mode === 'romaji' ? ' on' : '') + '">A</span>';
+    const seg = document.getElementById('reading-toggle');
+    if (seg) {
+        // Сегмент-контрол (кана | ромадзи) — подсвечиваем активный сегмент, как
+        // в переключателе чтения японских новостей: сразу видно, что это выбор.
+        seg.querySelectorAll('.reading-seg__btn').forEach((b) =>
+            b.classList.toggle('active', b.dataset.reading === state.readingMode));
     }
     // Перерисовываем список — чтение над словами строится по текущему режиму.
     if (typeof renderTranscript === 'function') renderTranscript();
@@ -1166,6 +1163,10 @@ document.getElementById('now-cue-ai').addEventListener('click', (e) => {
     const cue = state.cues[nowCueIdx];
     if (cue) openSentenceExplain(cue, e);
 });
+// По умолчанию кнопка ИИ скрыта (inline перебивает класс .ai-on) — иначе при
+// старте, когда реплики ещё нет, она висела «без предложения». Покажем её только
+// когда под видео реально появится разбираемая реплика (updateNowCue, idx>=0).
+document.getElementById('now-cue-ai').style.display = 'none';
 
 function updateNowCue(idx) {
     // Пока субтитры загружены, блок всегда на месте — чтобы верстка не прыгала.
@@ -1174,7 +1175,15 @@ function updateNowCue(idx) {
         return;
     }
     nowCue.hidden = false;
-    if (idx < 0) return; // между репликами оставляем последнюю строку, не мигаем
+    if (idx < 0) {
+        // Тишина. Между репликами оставляем последнюю (не мигаем), но если реплики
+        // ещё не было ни одной — прячем кнопку ИИ: разбирать нечего (нет предложения).
+        if (nowCueIdx < 0) {
+            const aiBtn0 = document.getElementById('now-cue-ai');
+            if (aiBtn0) aiBtn0.style.display = 'none';
+        }
+        return;
+    }
     nowCueIdx = idx;
     const cue = state.cues[idx];
     // Кнопку ИИ-разбора прячем, если в реплике нет разбираемых слов (музыка «♪»,
@@ -1356,12 +1365,15 @@ ruToggle.addEventListener('click', () => {
     updateNowCue(state.activeCueIndex);
 });
 
-// Чтение над словами — ОДИН переключатель: кана → ромадзи → выкл → кана.
-// Переключатель чтения: кана ⇄ ромадзи (или/или, без «выкл»).
-document.getElementById('reading-toggle').addEventListener('click', () => {
-    state.readingMode = state.readingMode === 'romaji' ? 'kana' : 'romaji';
-    localStorage.setItem('animei:readingMode', state.readingMode);
-    applyReadingPref();
+// Чтение над словами — сегмент-контрол «кана | ромадзи» (или/или, без «выкл»):
+// тап по сегменту сразу выбирает режим.
+document.querySelectorAll('#reading-toggle .reading-seg__btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+        if (btn.dataset.reading === state.readingMode) return;
+        state.readingMode = btn.dataset.reading;
+        localStorage.setItem('animei:readingMode', state.readingMode);
+        applyReadingPref();
+    });
 });
 
 // Стартовое состояние переключателей из глобальных настроек (перевод, авто-пауза).
@@ -1991,6 +2003,31 @@ controlsToggle.addEventListener('click', () => {
     setControlsCollapsed(!playerMain.classList.contains('controls-collapsed'));
 });
 // По умолчанию настройки видны (в т.ч. на телефоне); свернуть можно кнопкой
+
+// ---------- Телефон: табы «Субтитры / Настройки» ----------
+// На узком экране субтитры и настройки не стекаются друг под другом, а
+// переключаются табами. Класс живёт на .player-layout (родитель и настроек,
+// и списка субтитров); на десктопе классы ни на что не влияют (правила — в @media).
+const playerLayout = document.querySelector('.player-layout');
+const mobileTabs = document.getElementById('mobile-tabs');
+
+function setMobileTab(tab) {
+    if (!playerLayout) return;
+    playerLayout.classList.toggle('mtab-subs', tab === 'subs');
+    playerLayout.classList.toggle('mtab-settings', tab === 'settings');
+    if (mobileTabs) {
+        mobileTabs.querySelectorAll('.mobile-tabs__btn').forEach((b) => {
+            b.classList.toggle('is-active', b.dataset.mtab === tab);
+        });
+    }
+}
+
+if (mobileTabs) {
+    mobileTabs.querySelectorAll('.mobile-tabs__btn').forEach((b) => {
+        b.addEventListener('click', () => setMobileTab(b.dataset.mtab));
+    });
+}
+setMobileTab('settings'); // по умолчанию — настройки (выбрать серию/дорожку)
 
 // Следим за шириной кадра 16:9 и кладём её в --video-w на .player-layout (десктоп):
 //  1) левую колонку грида сужаем ровно до видео и центрируем пару «видео+сабы»
