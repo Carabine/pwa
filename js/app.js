@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.111';
+const APP_VERSION = 'v0.0.114';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -59,7 +59,12 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         // updateViaCache: 'none' — браузер не берёт сам скрипт SW из HTTP-кеша
         // при проверке обновлений, поэтому новая версия SW находится сразу.
-        navigator.serviceWorker.register('./service-worker.js', { updateViaCache: 'none' })
+        // SW лежит в /app/. С относительным './' на страницах из /app/pages/ путь
+        // резолвился в /app/pages/service-worker.js → 404, и SW там не регистрировался
+        // (офлайн-кэш и авто-перезагрузка после деплоя не работали при заходе сразу
+        // на подстраницу). Берём путь от корня приложения — работает с любой страницы.
+        const swUrl = (window.location.pathname.includes('/pages/') ? '../' : './') + 'service-worker.js';
+        navigator.serviceWorker.register(swUrl, { updateViaCache: 'none' })
             .then((reg) => {
                 console.log('SW registered');
                 // Принудительно проверяем обновление при каждом запуске —
