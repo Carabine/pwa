@@ -42,7 +42,7 @@
         </div>
     </header>
 
-    <main class="player-layout">
+    <main class="player-layout mtab-settings">
         <section class="player-main">
             <div class="video-wrap" id="video-wrap">
                 <video id="video" playsinline></video>
@@ -70,6 +70,7 @@
                             <div class="player-ui__spacer"></div>
                             <button class="player-ui__speed" id="ctrl-speed" data-i18n-title="ui.speed.title" title="Скорость воспроизведения">1×</button>
                             <button class="player-ui__quality" id="ctrl-quality" data-i18n-title="ui.quality.title" title="Качество видео" hidden>auto</button>
+                            <button class="player-ui__btn" id="ctrl-theater" data-i18n-title="ui.theater.title" title="Кино-режим: видео + субтитры сбоку"></button>
                             <button class="player-ui__btn" id="ctrl-fs" data-i18n-title="ui.fs.title" title="Во весь экран (F)"></button>
                         </div>
                     </div>
@@ -83,6 +84,12 @@
                 </button>
                 <div class="now-cue__jp" id="now-cue-jp"></div>
                 <div class="now-cue__ru" id="now-cue-ru"></div>
+            </div>
+
+            <!-- Телефон: переключение между субтитрами и настройками табами -->
+            <div class="mobile-tabs" id="mobile-tabs" role="tablist">
+                <button class="mobile-tabs__btn is-active" type="button" data-mtab="settings" data-i18n="mtab.settings">Настройки</button>
+                <button class="mobile-tabs__btn" type="button" data-mtab="subs" data-i18n="mtab.subs">Субтитры</button>
             </div>
 
             <!-- На телефоне блок настроек можно свернуть, чтобы субтитры были сразу под видео.
@@ -116,7 +123,10 @@
                     <div class="offset-buttons">
                         <button id="autopause-btn" class="chip-btn" data-i18n="controls.autopause" data-i18n-title="controls.autopause.title" title="Пауза после каждой реплики (S)">⏸ Авто-пауза</button>
                         <button id="ru-toggle" class="chip-btn chip-btn--active" data-i18n-title="controls.ru.title" title="Показывать перевод в списке субтитров">RU</button>
-                        <button id="reading-toggle" class="chip-btn chip-btn--active" data-i18n-title="controls.reading.title" title="Чтение над словами: кана ⇄ ромадзи">あ</button>
+                        <div id="reading-toggle" class="reading-seg" role="group" data-i18n-title="controls.reading.title" title="Чтение над словами: кана ⇄ ромадзи">
+                            <button type="button" class="reading-seg__btn" data-reading="kana" data-i18n-title="controls.reading.kana" title="Кана над словами">あ</button>
+                            <button type="button" class="reading-seg__btn" data-reading="romaji" data-i18n-title="controls.reading.romaji" title="Ромадзи над словами">A</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -155,6 +165,12 @@
                 <div class="subs-picker__head">
                     <span data-i18n="subs.picker.title">Выбрать субтитры вручную</span>
                     <button class="subs-picker__close" id="subs-picker-close" aria-label="Закрыть">✕</button>
+                </div>
+                <div class="subs-picker__sync">
+                    <button class="subs-precise-btn" id="subs-precise" type="button"
+                            data-i18n="subs.precise.btn">🎯 Точно синхронизировать по звуку</button>
+                    <p class="subs-precise-hint" id="subs-precise-status"
+                       data-i18n="subs.precise.hint">Распознаём речь и подбираем точный сдвиг — может занять пару минут.</p>
                 </div>
                 <div class="subs-picker__search">
                     <input type="text" id="subs-picker-input" autocomplete="off"

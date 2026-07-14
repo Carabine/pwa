@@ -53,6 +53,8 @@ const subsStatus = document.getElementById('subs-status');
 const subsSource = document.getElementById('subs-source');
 const jumpBtn = document.getElementById('transcript-jump');
 const subsFixBtn = document.getElementById('subs-fix');
+const subsPreciseBtn = document.getElementById('subs-precise');
+const subsPreciseStatus = document.getElementById('subs-precise-status');
 
 const state = {
     translations: [],
@@ -854,6 +856,11 @@ async function maybeAutoSync() {
     const audioLang = state.provider === 'megaplay' ? 'ja' : subsLang();
     const cueTexts = inWin.map((c) => (audioLang === 'ja' ? (c.text || '') : (c.translation || c.text || '')));
 
+    // Ключ дорожки-сериала — для консенсуса сдвига по сериям (у одной дорожки
+    // обрезка интро одинакова, выброс одной серии правится по «соседям»).
+    const trSel = state.translations[parseInt(translationSelect.value, 10)] || {};
+    const seriesKey = shikimoriId + ':' + (trSel.id || trSel.provider || 'k') + ':s' + state.seasonIndex;
+
     // Для MegaPlay передаём конец интро — субтитры из архива обычно без него,
     // и весь диалог смещён примерно на его длину (у автосинка иначе не тот диапазон).
     const introEnd = (state.provider === 'megaplay' && state.megaIntro) ? state.megaIntro.end : 0;
@@ -868,6 +875,7 @@ async function maybeAutoSync() {
             cueEnds,
             cueTexts,
             audioLang,
+            seriesKey,
             introEnd,
         }, { timeout: 130000 });
         const { offset, confidence, matched, method } = res.data || {};
@@ -903,6 +911,54 @@ async function maybeAutoSync() {
         // переключить серию за время запроса) баннер/таймер уже принадлежат новой
         // серии — не гасим их, чтобы у неё не мелькнуло неверное время.
         if (offsetStorageKey() === key) setSyncing(false);
+    }
+}
+
+// Точный подбор сдвига по запросу («не те?» → Whisper). Распознаёт речь дубляжа и
+// матчит по содержанию — сервер считает синхронно (пара минут), показываем прогресс.
+let preciseBusy = false;
+async function preciseSyncSubs() {
+    if (preciseBusy || !state.cues.length || !state.currentVideoUrl) return;
+    const inWin = state.cues
+        .filter((c) => Number.isFinite(c.start) && c.start >= 0 && c.start < 400)
+        .slice(0, 300);
+    const cueStarts = inWin.map((c) => c.start);
+    if (cueStarts.length < 5) return;
+    const audioLang = state.provider === 'megaplay' ? 'ja' : subsLang();
+    const cueTexts = inWin.map((c) => (audioLang === 'ja' ? (c.text || '') : (c.translation || c.text || '')));
+    const trSel = state.translations[parseInt(translationSelect.value, 10)] || {};
+    const seriesKey = shikimoriId + ':' + (trSel.id || trSel.provider || 'k') + ':s' + state.seasonIndex;
+    const introEnd = (state.provider === 'megaplay' && state.megaIntro) ? state.megaIntro.end : 0;
+    const key = offsetStorageKey();
+
+    preciseBusy = true;
+    if (subsPreciseBtn) subsPreciseBtn.disabled = true;
+    if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.working');
+    try {
+        const { data: res } = await client.post('subtitles/precise-sync', {
+            videoUrl: state.currentVideoUrl, cues: cueStarts, cueTexts, audioLang, seriesKey, introEnd,
+        }, { timeout: 300000 });
+        const r = res.data || {};
+        if (r.ok && Number.isFinite(r.offset)) {
+            if (offsetStorageKey() === key) {   // серия не сменилась за время подбора
+                state.offset = r.offset;
+                updateOffsetLabel();
+                saveOffset();
+                localStorage.setItem(key + ':m', 'whisper-verified');   // точный — больше не трогаем
+                renderTranscript();
+                updateNowCue(state.activeCueIndex);
+            }
+            if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.done');
+            showSnackbar(t('subs.precise.done'), { duration: 3500 });
+            setTimeout(closeSubsPicker, 900);
+        } else if (subsPreciseStatus) {
+            subsPreciseStatus.textContent = t('subs.precise.fail');
+        }
+    } catch {
+        if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.fail');
+    } finally {
+        preciseBusy = false;
+        if (subsPreciseBtn) subsPreciseBtn.disabled = false;
     }
 }
 
@@ -1831,6 +1887,8 @@ function pickerStatus(key) {
 
 function openSubsPicker() {
     subsPicker.hidden = false;
+    if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.hint');
+    if (subsPreciseBtn) subsPreciseBtn.disabled = preciseBusy;
     subsPickerMode = 'shows';
     subsPickerInput.placeholder = t('subs.picker.search');
     if (!subsPickerInput.value) subsPickerInput.value = titleRomaji || titleRu || '';
@@ -1963,6 +2021,7 @@ function chooseSubsFile(file) {
 }
 
 subsFixBtn.addEventListener('click', openSubsPicker);
+if (subsPreciseBtn) subsPreciseBtn.addEventListener('click', preciseSyncSubs);
 document.getElementById('subs-picker-close').addEventListener('click', closeSubsPicker);
 subsPickerInput.addEventListener('input', () => {
     clearTimeout(subsPickerTimer);

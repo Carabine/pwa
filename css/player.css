@@ -263,11 +263,24 @@ html, body {
 }
 
 /* Тач-режим: ползунок открывает JS классом is-open (тап по кнопке звука) и сам
-   закрывает его по таймеру/тапу мимо — см. player-ui.js. */
+   закрывает его по таймеру/тапу мимо — см. player-ui.js. Показываем его как
+   МАЛЕНЬКИЙ ВСПЛЫВАЮЩИЙ попап НАД кнопкой звука (position:absolute), чтобы он не
+   раздвигал остальной ряд контролов. */
 .player-ui__vol.is-open .player-ui__vol-popup {
-    width: 80px;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    overflow: visible;
     opacity: 1;
-    margin: 0 3px 0 2px;
+    margin: 0;
+    padding: 9px 12px;
+    background: rgba(15, 17, 25, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    z-index: 6;
 }
 
 /* Свой ползунок громкости: дорожка во всю ширину + заливка от 0 до бегунка и сам
@@ -281,7 +294,12 @@ html, body {
     width: 78px;
     height: 16px;
     margin: 0;
+    /* Сброс глобального стиля инпутов (border+radius) — иначе у ползунка своя
+       рамка и получается «коробка в коробке» внутри всплывающей карточки. */
     background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
     cursor: pointer;
     vertical-align: middle;
 }
@@ -672,7 +690,7 @@ html, body {
 .control-group--track {
     flex: 1 1 auto;
     min-width: 0;
-    max-width: 320px;
+    max-width: 460px;   /* на ПК дорожка шире — длинные названия перевода помещаются */
 }
 
 /* Внутри ряда селект заполняет свою колонку целиком (длинное имя обрезаем). */
@@ -684,7 +702,7 @@ html, body {
 
 .control-group--season select {
     width: auto;
-    min-width: 84px;
+    min-width: 68px;   /* на ПК селект сезона компактнее */
 }
 
 /* Серия: фиксированный минимум ширины — ниже не сжимается, чтобы номер серии и
@@ -783,6 +801,9 @@ html, body {
     font-weight: 600;
 }
 
+/* Мобильные табы «Субтитры / Настройки» — только на узком экране (см. @media). */
+.mobile-tabs { display: none; }
+
 /* ---------- Транскрипт ---------- */
 
 .transcript {
@@ -798,8 +819,10 @@ html, body {
     overflow: hidden;
 }
 
+/* Шапку субтитров (название «Субтитры», источник и «Не те?») убрали везде —
+   список реплик начинается сразу, без заголовочной полосы. */
 .transcript__header {
-    display: flex;
+    display: none;
     justify-content: space-between;
     align-items: baseline;
     gap: 8px;
@@ -850,12 +873,12 @@ html, body {
     transform: translateX(-50%) translateY(8px);
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
+    gap: 7px;
+    padding: 10px 20px;
     background: var(--grad);
     color: #fff;
     border-radius: 999px;
-    font-size: 12.5px;
+    font-size: 14px;
     font-weight: 600;
     box-shadow: var(--shadow-pink);
     opacity: 0;
@@ -875,8 +898,8 @@ html, body {
 }
 
 .transcript__jump svg {
-    width: 15px;
-    height: 15px;
+    width: 17px;
+    height: 17px;
 }
 
 /* Панель ручного выбора субтитров */
@@ -913,6 +936,32 @@ html, body {
 
 .subs-picker__close:hover {
     color: var(--text);
+}
+
+.subs-picker__sync {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.subs-precise-btn {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--grad, var(--primary));
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.subs-precise-btn:hover { filter: brightness(1.06); }
+.subs-precise-btn:disabled { opacity: .6; cursor: default; }
+
+.subs-precise-hint {
+    margin: 8px 2px 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--text-dim);
 }
 
 .subs-picker__search {
@@ -1032,7 +1081,7 @@ html, body {
    реплики под ней не просвечивают — больше нет «текста на тексте» при прокрутке. */
 .subs-syncing {
     position: absolute;
-    top: 52px;
+    top: 48px;
     left: 50%;
     transform: translateX(-50%);
     max-width: calc(100% - 24px);
@@ -1063,6 +1112,50 @@ html, body {
 
 @keyframes subs-syncing-spin {
     to { transform: rotate(360deg); }
+}
+
+/* Во время автосинка субтитры чуть притушены — сигнал, что тайминги ещё
+   подбираются. НЕ disabled: клики по словам, ИИ-разбор и прокрутка работают. */
+.transcript__list.is-syncing .cue {
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+/* Переключатель чтения кана ⇄ ромадзи: оба варианта видны, активный подсвечен. */
+/* Переключатель чтения над словами — сегмент-контрол «кана | ромадзи» в стиле
+   переключателя чтения из японских новостей: контурная пилюля, активный сегмент
+   залит фирменным градиентом. Сразу читается как выбор из двух вариантов. */
+.reading-seg {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+    font-family: 'Noto Sans JP', sans-serif;
+}
+
+.reading-seg__btn {
+    border: none;
+    background: none;
+    color: var(--text-dim);
+    padding: 3px 13px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+}
+
+.reading-seg__btn:hover {
+    color: var(--text);
+}
+
+.reading-seg__btn.active {
+    background: var(--grad);
+    color: #fff;
 }
 
 /* Реплика в списке — ПОСЛОВНО, как эталон (#now-cue-jp): слова в ряд с переносом,
@@ -1493,6 +1586,11 @@ html, body {
            flex-колонке блоки жмутся по ширине контента (при загрузке субтитров
            блок сужался до ширины текста статуса вместо полной ширины) */
         align-items: stretch;
+        /* width:100% — фикс «узкого контейнера при загрузке»: без него первые ~300 мс
+           flex-раскладка не растягивалась на всю ширину, и лишь поздний reflow
+           (ResizeObserver, выставляющий --video-w) её чинил. Явная ширина ставит
+           полный размер сразу. */
+        width: 100%;
         flex: 1;
         min-height: 0;
         gap: 10px;
@@ -1577,6 +1675,46 @@ html, body {
     .player-main.controls-collapsed .hotkeys-hint {
         display: none;
     }
+
+    /* ===== Табы «Субтитры / Настройки» — минималистичные, на месте шапки субтитров.
+       Подчёркивание вместо залитой пилюли; выравнены влево, как обычные вкладки. ===== */
+    .mobile-tabs {
+        display: flex;
+        gap: 2px;
+        background: none;
+        border: none;
+        border-radius: 0;
+        padding: 0 2px;
+    }
+    .mobile-tabs__btn {
+        flex: 0 0 auto;
+        padding: 8px 14px;
+        border: none;
+        background: none;
+        color: var(--text-dim);
+        font-size: 14px;
+        font-weight: 600;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        cursor: pointer;
+    }
+    .mobile-tabs__btn.is-active { color: var(--text); border-bottom-color: var(--pink); }
+
+    /* Шапку субтитров (название «Субтитры» + источник + «Не те?») на телефоне
+       убираем — её место занимают табы. */
+    .transcript__header { display: none; }
+
+    /* Старую кнопку-свёртку настроек прячем — её роль теперь у табов. */
+    .controls-toggle { display: none; }
+    /* Панель настроек — самостоятельный блок с полной рамкой (заголовка над ней нет). */
+    .player-main:not(.controls-collapsed) .player-controls {
+        border-top: 1px solid var(--border);
+        border-radius: var(--radius);
+    }
+    /* Показываем только активную вкладку. now-cue виден всегда. */
+    .player-layout.mtab-subs .player-controls,
+    .player-layout.mtab-subs .hotkeys-hint { display: none; }
+    .player-layout.mtab-settings .transcript { display: none; }
 
     /* Компактнее блок настроек */
     .player-controls {
@@ -1679,32 +1817,36 @@ html, body {
     /* Нижняя панель контролов на телефоне занимала слишком много кадра
        (почти 2/5 видео) — делаем её компактной. */
     .player-ui__bottom {
-        padding: 12px 10px 7px;
+        padding: 10px 8px 6px;
     }
 
     .player-ui__row {
-        gap: 4px;
+        gap: 3px;
         margin-top: 4px;
     }
 
     .player-ui__btn {
-        width: 34px;
-        height: 34px;
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
     }
 
     .player-ui__btn svg {
-        width: 20px;
-        height: 20px;
+        width: 19px;
+        height: 19px;
     }
 
     .player-ui__time {
         font-size: 11px;
+        margin-left: 5px;
     }
 
-    .player-ui__speed {
-        min-width: 40px;
-        height: 26px;
-        font-size: 12px;
+    .player-ui__speed,
+    .player-ui__quality {
+        min-width: 36px;
+        height: 24px;
+        padding: 0 8px;
+        font-size: 11.5px;
     }
 
     /* Полоса перемотки: тонкая, но по ней всё ещё легко попасть */
@@ -1735,23 +1877,149 @@ html, body {
         line-height: 1.4;
     }
 
+    /* Список субтитров на телефоне компактнее — меньше кегль и плотнее строки. */
     .cue__jp {
-        font-size: 16px;
-        line-height: 1.6;
+        font-size: 14px;
+        line-height: 1.45;
+        gap: 1px 6px;
     }
 
-    /* Плотные строки списка субтитров */
     .cue {
-        padding: 6px 12px;
+        padding: 5px 12px;
     }
 
     .cue__time {
         font-size: 10px;
-        margin-bottom: 1px;
+        margin-bottom: 0;
     }
 
     .cue__ru {
-        font-size: 12px;
+        font-size: 11.5px;
         margin-top: 1px;
     }
 }
+
+/* ============ «Театр»: видео крупно + субтитры + текущая реплика ============
+   Оверлей на весь экран (в установленном PWA это фактически фуллскрин). БЕЗ
+   requestFullscreen и без принудительного поворота — раньше div-fullscreen на
+   части Android отваливался, дёргал ориентацию и ломал раскладку. Раскладка
+   адаптивная по ориентации. */
+.player-layout.theater {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: none;
+    margin: 0;
+    padding: 6px;
+    gap: 6px;
+    background: #000;
+    overflow: hidden;
+    /* Портрет по умолчанию: видео сверху, реплика, субтитры заполняют низ. */
+    display: flex;
+    flex-direction: column;
+}
+.player-layout.theater .player-main {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    flex: 0 0 auto;
+}
+.player-layout.theater .video-wrap {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    flex: 0 0 auto;
+}
+.player-layout.theater .now-cue { flex: 0 0 auto; }
+.player-layout.theater .transcript {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-width: none;
+    position: relative;
+    top: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Лендскейп — «как на ПК»: видео + реплика слева, субтитры справа. */
+@media (orientation: landscape) {
+    .player-layout.theater {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) clamp(200px, 32vw, 340px);
+        grid-template-rows: 100%;
+        align-items: stretch;
+    }
+    .player-layout.theater .player-main { flex: initial; min-height: 0; }
+    .player-layout.theater .video-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        width: auto;
+        aspect-ratio: 16 / 9;
+        align-self: center;
+    }
+    .player-layout.theater .now-cue { max-height: 38%; overflow-y: auto; }
+    .player-layout.theater .transcript { height: auto; }
+}
+
+/* В театре не нужны: мобильные табы, свёртка настроек, сами настройки, хоткеи. */
+.player-layout.theater .mobile-tabs,
+.player-layout.theater .controls-toggle,
+.player-layout.theater .player-controls,
+.player-layout.theater .hotkeys-hint {
+    display: none !important;
+}
+/* Словарный попап переносится внутрь раскладки — держим его поверх всего. */
+.player-layout.theater .word-popup { z-index: 300; }
+/* Кнопка «К текущей» в театре — компактнее. */
+.player-layout.theater .transcript__jump {
+    padding: 6px 12px;
+    font-size: 12px;
+    gap: 5px;
+}
+.player-layout.theater .transcript__jump svg { width: 14px; height: 14px; }
+
+/* Активная кнопка кино-режима — акцентом. */
+.player-ui__btn.is-active { color: var(--pink); }
+
+/* ---- Театр: ужимаем модалку слова, плашку синхронизации и список ---- */
+/* Словарная карточка — центрированная модалка со скроллом (в театре мало места
+   по высоте, а обычная карточка обрезалась по overflow:hidden). */
+.player-layout.theater .word-popup,
+.player-layout.theater .word-popup--sheet {
+    position: fixed;
+    top: 50% !important;
+    left: 50% !important;
+    right: auto;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    width: min(340px, 92vw);
+    max-width: 92vw;
+    max-height: 86vh;
+    max-height: 86dvh;
+    overflow-y: auto;
+    padding: 14px;
+    border-radius: 16px;
+    border-width: 1px;
+    animation: none;
+}
+/* Плашка «синхронизируем…»: переносим текст и мельче — иначе в узкой колонке
+   субтитров он вылезал за края. */
+.player-layout.theater .subs-syncing {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+    font-size: 11px;
+    gap: 6px;
+    padding: 6px 10px;
+    max-width: calc(100% - 12px);
+    top: 8px;
+}
+/* Список субтитров в театре компактнее. */
+.player-layout.theater .cue { padding: 4px 10px; }
+.player-layout.theater .cue__jp { font-size: 13px; line-height: 1.4; }
+.player-layout.theater .cue__ru { font-size: 11px; }
+.player-layout.theater .cue__time { font-size: 9.5px; }
