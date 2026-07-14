@@ -89,6 +89,7 @@ const state = {
     currentVideoUrl: '',   // адрес текущего HLS-потока — уходит в слово, чтобы сервер нарезал клип
     popupContext: null,
     followCue: true,       // список сам едет за текущей репликой; сбрасываем, когда листают вручную
+    syncing: false,        // идёт автосинк: не тащим список за репликой и прячем «К текущей»
     manualSubs: null,      // выбранный вручную файл сабов { path, name } — не пересчитываем по номеру серии
     shortFormChibi: new Set(), // индексы групп-серий, определённых как короткометражки (чиби/PV)
     showExtras: false,     // показывать ли скрытые «доп. материалы» (чиби и т.п.)
@@ -462,6 +463,15 @@ async function selectEpisode(index) {
     videoLoading.style.display = 'flex';
     videoLoading.textContent = t('player.videoLoading');
 
+    // Новая серия: адрес старого видео больше не актуален — обнуляем ЕГО ДО загрузки
+    // нового потока. Иначе автосинк, который запускает loadSubtitles ниже, успеет
+    // выровнять свежие субтитры по звуку ПРЕДЫДУЩЕЙ серии, впустую займёт autoSyncKey,
+    // и правильный проход (после загрузки нового видео) будет пропущен — серия
+    // останется без синхронизации. С пустым currentVideoUrl тот преждевременный
+    // вызов выйдет по guard'у, а синк сделает вызов после setState нового видео.
+    state.currentVideoUrl = '';
+    state.autoSyncKey = null;
+
     // Сабы под номер серии
     loadSubtitles(ep.number);
 
@@ -768,7 +778,11 @@ let syncSafetyTimer = null;
 
 function setSyncing(on) {
     if (!transcriptList) return;
+    state.syncing = on;
     transcriptList.classList.toggle('is-syncing', on);
+    // Во время синка не тащим список за репликой и убираем «К текущей» — тайминги
+    // ещё могут быть неверными. Сами субтитры при этом остаются кликабельными.
+    if (typeof updateJumpVisibility === 'function') updateJumpVisibility();
     let banner = document.getElementById('subs-syncing');
     if (on) {
         if (!banner) {
@@ -937,8 +951,13 @@ function applyReadingPref() {
     const btn = document.getElementById('reading-toggle');
     const mode = state.readingMode;
     if (btn) {
-        btn.classList.add('chip-btn--active');   // всегда активна: кана/ромадзи
-        btn.textContent = mode === 'romaji' ? 'Rōmaji' : 'あ';
+        btn.classList.add('chip-btn--active', 'reading-toggle');
+        // Показываем ОБА варианта чтения, подсвечивая активный — так понятно, что
+        // кнопка переключает хирагану ⇄ ромадзи (раньше была одинокая «あ»).
+        btn.innerHTML =
+            '<span class="rd-opt' + (mode === 'kana' ? ' on' : '') + '">あ</span>' +
+            '<span class="rd-sep">/</span>' +
+            '<span class="rd-opt' + (mode === 'romaji' ? ' on' : '') + '">A</span>';
     }
     // Перерисовываем список — чтение над словами строится по текущему режиму.
     if (typeof renderTranscript === 'function') renderTranscript();
@@ -1154,12 +1173,21 @@ function updateNowCue(idx) {
     if (idx < 0) return; // между репликами оставляем последнюю строку, не мигаем
     nowCueIdx = idx;
     const cue = state.cues[idx];
+    // Кнопку ИИ-разбора прячем, если в реплике нет разбираемых слов (музыка «♪»,
+    // звуки, пустая строка) — разбирать нечего.
+    const aiBtn = document.getElementById('now-cue-ai');
+    if (aiBtn) aiBtn.style.display = cueHasWords(cue) ? '' : 'none';
     // Реплика под видео — пословно: над каждым словом ромадзи, само слово с
     // фуриганой, а перевод одной строкой ниже (см. buildWordCells).
     nowCueJp.innerHTML = '';
     buildWordCells(cue).forEach(s => nowCueJp.appendChild(s));
     nowCueRu.textContent = cue.translation || '';
     nowCueRu.style.display = (cue.translation && state.showRu) ? '' : 'none';
+}
+
+// Есть ли в реплике разбираемые (кликабельные) слова.
+function cueHasWords(cue) {
+    return !!(cue && cue.tokens && cue.tokens.some((tk) => tk.learnable));
 }
 
 function findCueIndex(t) {
@@ -1195,8 +1223,9 @@ function syncCues() {
         const el = transcriptList.querySelector(`.cue[data-index="${idx}"]`);
         if (el) {
             el.classList.add('cue--active');
-            // Едем за репликой только пока пользователь не листает список сам
-            if (state.followCue) scrollCueIntoView(el);
+            // Едем за репликой только пока пользователь не листает список сам и не
+            // идёт автосинк (тайминги во время синка ненадёжны).
+            if (state.followCue && !state.syncing) scrollCueIntoView(el);
         }
         if (state.autoPause) {
             state.autoPauseAt = state.cues[idx].end + state.offset;
@@ -1239,10 +1268,16 @@ function scrollCueIntoView(el) {
     transcriptList.scrollBy({ top: delta, behavior: 'smooth' });
 }
 
+// «К текущей» видна только когда пользователь листал сам И не идёт автосинк.
+function updateJumpVisibility() {
+    const show = !state.followCue && !state.syncing;
+    jumpBtn.hidden = !show;
+    jumpBtn.classList.toggle('is-visible', show);
+}
+
 function setFollowCue(on) {
     state.followCue = on;
-    jumpBtn.hidden = on;
-    jumpBtn.classList.toggle('is-visible', !on);
+    updateJumpVisibility();
     if (on) {
         let el = transcriptList.querySelector('.cue--active');
         // Между репликами активной нет (в тишине класс снимается) — кнопка
