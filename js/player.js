@@ -832,8 +832,9 @@ async function maybeAutoSync() {
     const key = offsetStorageKey();
     if (state.autoSyncKey === key) return;                       // уже пробовали для этой серии
     if (!state.cues.length || !state.currentVideoUrl) return;    // ждём вторую половину — время держим спрятанным
-    // Любой сохранённый сдвиг (в т.ч. ручной «0») означает, что пользователь уже
-    // решил сам — не перебиваем и не зацикливаемся на переприменении автосинка.
+    // Уже есть сохранённый сдвиг — доверяем ему, не перезапрашиваем (у автосинка
+    // один результат на серию; серверный Whisper-верификатор помогает НОВЫМ зрителям
+    // серии через кэш — тем, у кого своего сохранённого сдвига ещё нет).
     if (localStorage.getItem(key) !== null) { state.autoSyncKey = key; setSyncing(false); return; }
     state.autoSyncKey = key;
 
@@ -848,6 +849,11 @@ async function maybeAutoSync() {
     const cueEnds = inWin.map((c) => (Number.isFinite(c.end) ? c.end : c.start + 2));
     if (cueStarts.length < 5) { setSyncing(false); return; }
 
+    // Тексты реплик на языке ЗВУКА — для фоновой Whisper-верификации по содержанию.
+    // MegaPlay = японская дорожка → оригинал реплик; иначе дубляж на языке перевода.
+    const audioLang = state.provider === 'megaplay' ? 'ja' : subsLang();
+    const cueTexts = inWin.map((c) => (audioLang === 'ja' ? (c.text || '') : (c.translation || c.text || '')));
+
     // Для MegaPlay передаём конец интро — субтитры из архива обычно без него,
     // и весь диалог смещён примерно на его длину (у автосинка иначе не тот диапазон).
     const introEnd = (state.provider === 'megaplay' && state.megaIntro) ? state.megaIntro.end : 0;
@@ -860,11 +866,13 @@ async function maybeAutoSync() {
             videoUrl: state.currentVideoUrl,
             cues: cueStarts,
             cueEnds,
+            cueTexts,
+            audioLang,
             introEnd,
         }, { timeout: 130000 });
-        const { offset, confidence, matched } = res.data || {};
-        // За время запроса серия могла смениться или пользователь мог тронуть сдвиг
-        // (любое действие со сдвигом пишет ключ в localStorage) — тогда не трогаем.
+        const { offset, confidence, matched, method } = res.data || {};
+        // За время запроса серия могла смениться или пользователь мог тронуть сдвиг —
+        // тогда не трогаем.
         if (offsetStorageKey() !== key || localStorage.getItem(key) !== null) return;
         // Применяем: либо высокая уверенность, либо средняя, но с реальной опорой
         // (много совпадений) и НЕБОЛЬШИМ сдвигом — маленький сдвиг почти незаметен
@@ -882,6 +890,8 @@ async function maybeAutoSync() {
             state.offset = offset;
             updateOffsetLabel();
             saveOffset();
+            // Метод сдвига: 'whisper-verified' → в следующий раз не перезапрашиваем.
+            localStorage.setItem(key + ':m', method || 'alass');
             renderTranscript();
             updateNowCue(state.activeCueIndex);
             showSnackbar(t('subs.autoSynced'), { duration: 3500 });
