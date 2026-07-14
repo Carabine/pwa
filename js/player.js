@@ -838,10 +838,13 @@ async function maybeAutoSync() {
 
     // Отдаём реплики шире (до 340с) — бэкенд анализирует более длинное окно, чтобы
     // у тайтлов с медленным началом было за что зацепиться (см. sync.service.js).
-    const cueStarts = state.cues
-        .map((c) => c.start)
-        .filter((s) => Number.isFinite(s) && s >= 0 && s < 340)
+    // Старты И концы (параллельно, по индексам) — по интервалам речи alass строит
+    // синтетический srt для VAD-выравнивания.
+    const inWin = state.cues
+        .filter((c) => Number.isFinite(c.start) && c.start >= 0 && c.start < 340)
         .slice(0, 260);
+    const cueStarts = inWin.map((c) => c.start);
+    const cueEnds = inWin.map((c) => (Number.isFinite(c.end) ? c.end : c.start + 2));
     if (cueStarts.length < 5) { setSyncing(false); return; }
 
     // Для MegaPlay передаём конец интро — субтитры из архива обычно без него,
@@ -855,6 +858,7 @@ async function maybeAutoSync() {
         const { data: res } = await client.post('subtitles/align', {
             videoUrl: state.currentVideoUrl,
             cues: cueStarts,
+            cueEnds,
             introEnd,
         }, { timeout: 130000 });
         const { offset, confidence, matched } = res.data || {};
