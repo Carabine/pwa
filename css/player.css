@@ -631,12 +631,12 @@ html, body {
 .player-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px 18px;
-    margin-top: 12px;
+    gap: 14px 22px;
+    margin-top: 14px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 9px 12px;
+    padding: 12px 16px;
 }
 
 /* Полоса «свернуть настройки» + компактная кнопка «Скрыть видео» рядом с шевроном.
