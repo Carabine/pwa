@@ -714,11 +714,11 @@ async function loadSubtitles(episodeNumber = 1) {
         // пересчитал их свежим, исправленным методом (alass, который корректно
         // находит и большие сдвиги от обрезки интро). Ручной правки сдвига в UI нет,
         // поэтому любое сохранённое значение — от автосинка, стирать безопасно.
-        if (localStorage.getItem('animei:subsOffsetReset') !== '3') {
+        if (localStorage.getItem('animei:subsOffsetReset') !== '4') {
             Object.keys(localStorage)
                 .filter((k) => k.startsWith('animei:subsOffset:'))
                 .forEach((k) => localStorage.removeItem(k));
-            localStorage.setItem('animei:subsOffsetReset', '3');
+            localStorage.setItem('animei:subsOffsetReset', '4');
         }
         state.offset = parseFloat(localStorage.getItem(offsetStorageKey())) || 0;
         updateOffsetLabel();
@@ -894,7 +894,13 @@ async function maybeAutoSync() {
         // сигнал реальный, а риск минимален — маленький сдвиг незаметен даже если чуть
         // мимо. Без этого серии вроде «Наруто 62» (offset 2.8, conf 0.39) не синкались.
         const okSmall = confidence >= 0.34 && (matched || 0) >= 20 && Math.abs(offset) <= 6;
-        if (Number.isFinite(offset) && (strong || okModerate || okSmall) && Math.abs(offset) >= 0.3) {
+        const trusted = Number.isFinite(offset) && (strong || okModerate || okSmall);
+        // ВАЖНО: применяем только ЗАМЕТНЫЙ сдвиг (>=1.2с). Мелкий (<1.2с) — это обычно
+        // естественное упреждение саба перед речью, а не рассинхрон; alass/онсеты
+        // меряют по НАЧАЛУ РЕЧИ и дают такой «сдвиг» даже у идеально timed-сабов (напр.
+        // «Атака титанов»: все дорожки дают −0.8с). Двигать их — только портить то, что
+        // уже синхронно. Крупные сдвиги (обрезка интро, Наруто −31) применяются как есть.
+        if (trusted && Math.abs(offset) >= 1.2) {
             state.offset = offset;
             updateOffsetLabel();
             saveOffset();
@@ -904,6 +910,12 @@ async function maybeAutoSync() {
             updateNowCue(state.activeCueIndex);
             showSnackbar(t('subs.autoSynced'), { duration: 3500 });
             if (window.animeiTrack) window.animeiTrack('autosync', offset.toFixed(1) + ' · ' + confidence.toFixed(2));
+        } else if (trusted) {
+            // Сдвиг мал — субтитры уже практически синхронны, оставляем как есть (0).
+            // Фиксируем это (offset 0 + метод), чтобы не перезапрашивать каждый заход.
+            state.offset = 0;
+            saveOffset();
+            localStorage.setItem(key + ':m', method || 'alass');
         }
     } catch { /* автосинк — не критично, остаются ручные «Сейчас!»/«Сдвиг» */ }
     finally {
