@@ -886,7 +886,11 @@ async function maybeAutoSync() {
         // меряют по НАЧАЛУ РЕЧИ и дают такой «сдвиг» даже у идеально timed-сабов (напр.
         // «Атака титанов»: все дорожки дают −0.8с). Двигать их — только портить то, что
         // уже синхронно. Крупные сдвиги (обрезка интро, Наруто −31) применяются как есть.
-        if (trusted && Math.abs(offset) >= 1.2) {
+        // Точный подбор (whisper-verified) — авторитетный общий сдвиг, найденный
+        // другим пользователем: применяем ЛЮБОЙ его размер (даже <1.2с), чтобы точный
+        // результат раздавался всем. Порог 1.2с — только для alass/онсетов (там мелкий
+        // «сдвиг» обычно естественное упреждение, а не рассинхрон).
+        if (trusted && (Math.abs(offset) >= 1.2 || method === 'whisper-verified')) {
             state.offset = offset;
             updateOffsetLabel();
             saveOffset();
@@ -1899,18 +1903,22 @@ async function loadKnownWords() {
 
 const subsPicker = document.getElementById('subs-picker');
 const subsPreciseLoading = document.getElementById('subs-precise-loading');
-const subsOffsetValue = document.getElementById('subs-offset-value');
+const subsOffsetInput = document.getElementById('subs-offset-input');
 
-// Текущий сдвиг для показа: «0», «+2.5с», «−31с».
-function fmtOffset(o) {
-    const unit = t('subs.manual.sec');
-    if (!o) return '0 ' + unit;
-    const rounded = Math.round(Math.abs(o) * 10) / 10;
-    return (o > 0 ? '+' : '−') + rounded + ' ' + unit;
+// Показываем текущий сдвиг в поле ввода как число (без единицы — она рядом).
+// Не перезаписываем, пока пользователь сам печатает в поле.
+function refreshOffsetDisplay() {
+    if (subsOffsetInput && document.activeElement !== subsOffsetInput) {
+        subsOffsetInput.value = String(Math.round(state.offset * 10) / 10);
+    }
 }
 
-function refreshOffsetDisplay() {
-    if (subsOffsetValue) subsOffsetValue.textContent = fmtOffset(state.offset);
+// Ввод сдвига числом напрямую (абсолютное значение). Как и кнопки — ручной сдвиг,
+// сохраняется только у этого пользователя (localStorage).
+function setOffsetAbsolute(v) {
+    if (!state.cues.length || !Number.isFinite(v)) return;
+    state.offset = Math.max(-600, Math.min(600, Math.round(v * 10) / 10));
+    applyManualOffset();
 }
 
 // Ручной сдвиг субтитров: применяем, сохраняем НАВСЕГДА для этой серии (метод
@@ -1935,12 +1943,11 @@ function resetOffset() {
     applyManualOffset();
 }
 
-// Подписи кнопок сдвига — с локализованной единицей («с»/«s»).
+// Подписи кнопок шага — только число со знаком (единица показана у поля ввода).
 function labelManualButtons() {
-    const unit = t('subs.manual.sec');
     document.querySelectorAll('.subs-manual__btn').forEach((btn) => {
         const d = parseFloat(btn.dataset.delta);
-        btn.textContent = (d > 0 ? '+' : '−') + Math.abs(d) + ' ' + unit;
+        btn.textContent = (d > 0 ? '+' : '−') + Math.abs(d);
     });
 }
 
@@ -1968,6 +1975,15 @@ document.getElementById('subs-picker-close').addEventListener('click', closeSubs
 document.querySelectorAll('.subs-manual__btn').forEach((btn) => {
     btn.addEventListener('click', () => nudgeOffset(parseFloat(btn.dataset.delta)));
 });
+if (subsOffsetInput) {
+    // Применяем по Enter/уходу из поля; запятую тоже принимаем как разделитель.
+    subsOffsetInput.addEventListener('change', () => {
+        const v = parseFloat(String(subsOffsetInput.value).replace(',', '.'));
+        if (Number.isFinite(v)) setOffsetAbsolute(v);
+        refreshOffsetDisplay();   // нормализуем показ (или вернём текущее при вводе мусора)
+    });
+    subsOffsetInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') subsOffsetInput.blur(); });
+}
 document.getElementById('subs-offset-reset').addEventListener('click', resetOffset);
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !subsPicker.hidden) closeSubsPicker();

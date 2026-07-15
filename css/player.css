@@ -1006,22 +1006,62 @@ html, body {
     margin-bottom: 8px;
 }
 
+/* Поле ручного ввода сдвига (можно вписать число), отдельной строкой над кнопками. */
+.subs-manual__input {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.subs-manual__input input {
+    width: 84px;
+    padding: 7px 8px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--primary-hover);
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    -moz-appearance: textfield;
+}
+
+.subs-manual__input input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.subs-manual__input input::-webkit-outer-spin-button,
+.subs-manual__input input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.subs-manual__unit {
+    font-size: 12px;
+    color: var(--text-dim);
+}
+
 .subs-manual__row {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-wrap: wrap;
-    gap: 6px;
+    gap: 5px;
 }
 
+/* Кнопки шага одинаковой ширины (flex: 1 1 0) и симметричны слева/справа. */
 .subs-manual__btn {
-    flex: 1 1 46px;
-    padding: 8px 3px;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 2px;
     border-radius: 8px;
     background: var(--surface);
     border: 1px solid var(--border);
     color: var(--text);
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
@@ -1029,15 +1069,6 @@ html, body {
 
 .subs-manual__btn:hover { border-color: var(--primary); }
 .subs-manual__btn:active { background: rgba(255, 255, 255, 0.06); }
-
-.subs-manual__value {
-    min-width: 62px;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    color: var(--primary-hover);
-}
 
 .subs-manual__foot {
     display: flex;

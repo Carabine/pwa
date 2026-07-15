@@ -181,13 +181,19 @@
                 <!-- Ручной сдвиг субтитров (как раньше): если авто/точный промахнулись -->
                 <div class="subs-manual">
                     <div class="subs-manual__title" data-i18n="subs.manual.title">Сдвинуть субтитры вручную</div>
+                    <label class="subs-manual__input">
+                        <input id="subs-offset-input" type="number" step="0.1" inputmode="decimal"
+                               value="0" aria-label="Сдвиг субтитров в секундах">
+                        <span class="subs-manual__unit" data-i18n="subs.manual.sec">с</span>
+                    </label>
                     <div class="subs-manual__row">
                         <button class="subs-manual__btn" type="button" data-delta="-5">−5</button>
+                        <button class="subs-manual__btn" type="button" data-delta="-1">−1</button>
                         <button class="subs-manual__btn" type="button" data-delta="-0.5">−0.5</button>
                         <button class="subs-manual__btn" type="button" data-delta="-0.2">−0.2</button>
-                        <span class="subs-manual__value" id="subs-offset-value">0</span>
                         <button class="subs-manual__btn" type="button" data-delta="0.2">+0.2</button>
                         <button class="subs-manual__btn" type="button" data-delta="0.5">+0.5</button>
+                        <button class="subs-manual__btn" type="button" data-delta="1">+1</button>
                         <button class="subs-manual__btn" type="button" data-delta="5">+5</button>
                     </div>
                     <div class="subs-manual__foot">
