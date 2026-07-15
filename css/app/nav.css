@@ -463,8 +463,10 @@
 
     /* Свободное место собирает только лупа (margin-left:auto ниже) — убираем
        второй auto у правого блока, иначе место делится и лупа болтается в 40px
-       от языка вместо того, чтобы прижаться к нему. */
-    .header--flush-left .header__right { margin-left: 0; }
+       от языка вместо того, чтобы прижаться к нему. ВАЖНО: только на страницах С
+       лупой (:has(.header__search)) — на каталоге лупы нет, и правый блок должен
+       сохранить базовый margin-left:auto, иначе профиль лепится к логотипу. */
+    .header--flush-left:has(.header__search) .header__right { margin-left: 0; }
 
     .header__search {
         position: relative;
