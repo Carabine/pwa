@@ -461,6 +461,11 @@
     .header__search { order: 2; }
     .header__right  { order: 3; }
 
+    /* Свободное место собирает только лупа (margin-left:auto ниже) — убираем
+       второй auto у правого блока, иначе место делится и лупа болтается в 40px
+       от языка вместо того, чтобы прижаться к нему. */
+    .header--flush-left .header__right { margin-left: 0; }
+
     .header__search {
         position: relative;
         left: auto;
