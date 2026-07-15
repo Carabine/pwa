@@ -1202,9 +1202,10 @@ html, body {
    реплики под ней не просвечивают — больше нет «текста на тексте» при прокрутке. */
 .subs-syncing {
     position: absolute;
-    top: 48px;
+    /* По центру панели субтитров (и по горизонтали, и по вертикали). */
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     max-width: calc(100% - 24px);
     display: flex;
     align-items: center;
