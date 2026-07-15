@@ -453,37 +453,59 @@
    блок уходит вправо). Свёрнуто — только иконка-лупа; по тапу поле выезжает
    вправо от кнопки. */
 @media (max-width: 767px) {
+    /* Лупа прижата к ПРАВОМУ краю — перед переключателем языка (первый элемент
+       .header__right). margin-left:auto собирает всё свободное место слева, поэтому
+       лупа + язык + профиль уходят вправо единой группой. */
+    .header__left   { order: 0; }
+    .header__logo   { order: 1; }
+    .header__search { order: 2; }
+    .header__right  { order: 3; }
+
     .header__search {
         position: relative;
         left: auto;
         transform: none;
-        margin-right: auto;
+        margin: 0 0 0 auto;
     }
 
     .header__search-input {
         display: none;
     }
 
-    .header__search.is-open .header__search-input {
-        display: block;
+    /* Открытая: форма превращается в строку поиска во всю ширину шапки —
+       абсолютно позиционирована в .header (position:relative), поэтому НЕ
+       толкает соседние элементы и не вылезает за правый край (раньше поле
+       выезжало от лупы вправо и уходило за экран — «ломало вёрстку строкой»).
+       Иконку-лупу прячем: поле само заполняет строку. */
+    .header__search.is-open {
         position: absolute;
-        left: 0;
-        right: auto;
+        left: 12px;
+        right: 12px;
         top: 50%;
         transform: translateY(-50%);
-        width: min(70vw, 320px);
-        padding: 9px 14px;
+        margin: 0;
+        z-index: 20;
+    }
+
+    .header__search.is-open .header__search-toggle {
+        display: none;
+    }
+
+    .header__search.is-open .header__search-input {
+        display: block;
+        width: 100%;
+        padding: 9px 16px;
         border-radius: 999px;
         background: var(--card);
         border: 1.5px solid var(--border);
         color: var(--text);
         font: inherit;
         outline: none;
-        z-index: 5;
     }
 
     .header__search.is-open .header__search-input:focus {
         border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(124, 140, 248, .16);
     }
 }
 
@@ -550,9 +572,10 @@
 }
 
 @media (max-width: 767px) {
+    /* Автокомплит во всю ширину раскрытой строки поиска. */
     .header__search-ac {
-        left: auto;
+        left: 0;
         right: 0;
-        width: min(80vw, 340px);
+        width: auto;
     }
 }
