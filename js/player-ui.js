@@ -30,6 +30,8 @@
         muted: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><line x1="15" y1="9" x2="21" y2="15"/><line x1="21" y1="9" x2="15" y2="15"/></svg>',
         fs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>',
         fsExit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3a2 2 0 0 0 2-2V3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/></svg>',
+        // «Театр»: кадр видео + правая колонка (субтитры) + нижняя полоса (реплика).
+        theater: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M15 5v14"/><path d="M3 14.5h12"/></svg>',
     };
 
     const VOLUME_KEY = 'animei:volume';
@@ -250,12 +252,14 @@
 
     const nowCue = document.getElementById('now-cue');
     const popup = document.getElementById('word-popup');
+    const layoutEl = document.querySelector('.player-layout');
+    const theaterBtn = document.getElementById('ctrl-theater');
     const homes = new Map();
 
-    function moveIn(el) {
+    function moveIn(el, target) {
         if (!el) return;
         homes.set(el, { parent: el.parentNode, next: el.nextSibling });
-        wrap.appendChild(el);
+        (target || wrap).appendChild(el);
     }
 
     function moveBack(el) {
@@ -279,20 +283,102 @@
         }
     }
 
+    // Телефон/планшет — грубый указатель или узкий экран.
+    const mobileLike = () => touchLike || window.matchMedia('(max-width: 820px)').matches;
+
+    function lockLandscape() {
+        try {
+            const o = screen.orientation;
+            if (o && o.lock) o.lock('landscape').catch(() => {});
+        } catch (e) { /* не поддерживается — ничего страшного */ }
+    }
+    function unlockOrientation() {
+        try {
+            const o = screen.orientation;
+            if (o && o.unlock) o.unlock();
+        } catch (e) {}
+    }
+
+    // ---------- «Театр»: видео крупно + субтитры справа + реплика снизу ----------
+    // Реальный fullscreen на всю раскладку (нужен для блокировки ориентации на
+    // Android); где его нет для <div> (iOS) — fixed-оверлей через класс .theater.
+    // Словарный попап переносим ВНУТРЬ раскладки — иначе в реальном fullscreen
+    // (виден только fullscreen-элемент) он бы не показывался.
+    let savedMtab = null;
+
+    // Театр = реальный fullscreen всей раскладки + авто-поворот в альбомную.
+    // Раньше ломалось не из-за fullscreen, а из-за бага в обработчике
+    // fullscreenchange (он на входе в театр тут же делал unlockOrientation +
+    // возвращал попап). Обработчик ниже это учитывает. Если fullscreen/lock не
+    // выйдет (напр. iOS для <div>), остаётся оверлей, а CSS сам разложит по
+    // фактической ориентации (портрет — стопкой).
+    function enterTheater() {
+        if (!layoutEl) return;
+        savedMtab = layoutEl.classList.contains('mtab-settings') ? 'settings'
+            : layoutEl.classList.contains('mtab-subs') ? 'subs' : '';
+        layoutEl.classList.remove('mtab-settings', 'mtab-subs');
+        layoutEl.classList.add('theater');
+        moveIn(popup, layoutEl);
+        if (theaterBtn) theaterBtn.classList.add('is-active');
+        if (layoutEl.requestFullscreen) {
+            layoutEl.requestFullscreen().then(lockLandscape).catch(() => {});
+        }
+    }
+
+    function exitTheater() {
+        if (!layoutEl) return;
+        layoutEl.classList.remove('theater');
+        moveBack(popup);
+        if (savedMtab) layoutEl.classList.add('mtab-' + savedMtab);
+        savedMtab = null;
+        if (theaterBtn) theaterBtn.classList.remove('is-active');
+        unlockOrientation();
+        if (document.fullscreenElement === layoutEl) document.exitFullscreen().catch(() => {});
+    }
+
+    function toggleTheater() {
+        if (layoutEl && layoutEl.classList.contains('theater')) exitTheater();
+        else enterTheater();
+    }
+
     fsBtn.addEventListener('click', toggleFullscreen);
     fsBtn.innerHTML = ICONS.fs;
+    if (theaterBtn) {
+        theaterBtn.addEventListener('click', toggleTheater);
+        theaterBtn.innerHTML = ICONS.theater;
+    }
 
     document.addEventListener('fullscreenchange', () => {
-        const fs = isFs();
-        wrap.classList.toggle('is-fs', fs);
-        fsBtn.innerHTML = fs ? ICONS.fsExit : ICONS.fs;
-        if (fs) {
-            moveIn(nowCue);
-            moveIn(popup);
+        const el = document.fullscreenElement;
+        const inWrap = el === wrap;
+        wrap.classList.toggle('is-fs', inWrap);
+        fsBtn.innerHTML = inWrap ? ICONS.fsExit : ICONS.fs;
+
+        // Видео-fullscreen (кнопка «на весь экран»)
+        if (inWrap) {
+            if (mobileLike()) lockLandscape();       // телефон — только видео + альбомная
+            else { moveIn(nowCue); moveIn(popup); }  // ПК — субтитры/словарь поверх
+            return;
+        }
+        // Вошли в театр (fullscreen на всю раскладку) — только докручиваем поворот,
+        // НИКАКОЙ уборки (класс/попап уже выставлены в enterTheater).
+        if (el === layoutEl) {
+            lockLandscape();
+            return;
+        }
+        // Ничего не в fullscreen. Возвращаем перенесённое из видео-fs.
+        moveBack(nowCue);
+        // Если театр был активен и его закрыли системно (Esc/жест «назад») — гасим.
+        if (layoutEl && layoutEl.classList.contains('theater')) {
+            layoutEl.classList.remove('theater');
+            moveBack(popup);
+            if (savedMtab) layoutEl.classList.add('mtab-' + savedMtab);
+            savedMtab = null;
+            if (theaterBtn) theaterBtn.classList.remove('is-active');
         } else {
-            moveBack(nowCue);
             moveBack(popup);
         }
+        unlockOrientation();
     });
 
     // ---------- Автоскрытие панели ----------
@@ -340,6 +426,13 @@
             case 'ArrowRight':
                 e.preventDefault();
                 seekBy(5);
+                break;
+            case 'Escape':
+                // Театр — не реальный fullscreen, поэтому Esc закрываем сами.
+                if (layoutEl && layoutEl.classList.contains('theater')) {
+                    e.preventDefault();
+                    exitTheater();
+                }
                 break;
         }
     });
