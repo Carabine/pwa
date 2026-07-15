@@ -602,6 +602,15 @@ html, body {
     flex-direction: column;
     align-items: center;
     line-height: 1.15;
+    /* Длинные слова (катакана) переносятся внутри ячейки, а не распирают строку
+       вбок — иначе список субтитров получал горизонтальную прокрутку. */
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.ncw__jp,
+.ncw__read {
+    overflow-wrap: anywhere;
 }
 
 .ncw__read {
@@ -1111,6 +1120,10 @@ html, body {
 
 .transcript__list {
     overflow-y: auto;
+    /* Только вертикальная прокрутка. Без этого overflow-x становился auto, и
+       длинное слово (напр. катакана サーティーワンアイスクリーム) давало
+       горизонтальный скролл субтитров — особенно в узкой панели кино-режима. */
+    overflow-x: hidden;
     padding: 8px 0;
     flex: 1;
 }
