@@ -173,6 +173,17 @@ function isJpTrack(tr) {
     return /субтитр|саб|subtitle|\bsub\b|\bjp\b|\bjpn\b|ориг|original|япон|japanese|日本語|オリジナル/i.test(tr.title || '');
 }
 
+// Язык ЗВУКА выбранной дорожки — для Whisper (автосинк-верификатор и точный подбор).
+// MegaPlay и Kodik-дорожки с оригинальной японской озвучкой (сабы/ориг) = японская
+// РЕЧЬ, даже если субтитры русские. Раньше здесь всегда брался subsLang() (язык
+// перевода сабов), поэтому по японскому аудио whisper запускался с `-l ru` и матчинг
+// всегда падал («не удалось»). Дубляж — на языке перевода.
+function trackAudioLang(tr) {
+    if (state.provider === 'megaplay') return 'ja';
+    if (isJpTrack(tr)) return 'ja';
+    return subsLang();
+}
+
 function renderTranslations() {
     translationSelect.innerHTML = '';
     state.translations.forEach((tr, i) => {
@@ -851,15 +862,15 @@ async function maybeAutoSync() {
     const cueEnds = inWin.map((c) => (Number.isFinite(c.end) ? c.end : c.start + 2));
     if (cueStarts.length < 5) { setSyncing(false); return; }
 
-    // Тексты реплик на языке ЗВУКА — для фоновой Whisper-верификации по содержанию.
-    // MegaPlay = японская дорожка → оригинал реплик; иначе дубляж на языке перевода.
-    const audioLang = state.provider === 'megaplay' ? 'ja' : subsLang();
-    const cueTexts = inWin.map((c) => (audioLang === 'ja' ? (c.text || '') : (c.translation || c.text || '')));
-
     // Ключ дорожки-сериала — для консенсуса сдвига по сериям (у одной дорожки
     // обрезка интро одинакова, выброс одной серии правится по «соседям»).
     const trSel = state.translations[parseInt(translationSelect.value, 10)] || {};
     const seriesKey = shikimoriId + ':' + (trSel.id || trSel.provider || 'k') + ':s' + state.seasonIndex;
+
+    // Тексты реплик на языке ЗВУКА — для фоновой Whisper-верификации по содержанию.
+    // Японская дорожка (MegaPlay/сабы) → оригинал реплик; дубляж → на языке перевода.
+    const audioLang = trackAudioLang(trSel);
+    const cueTexts = inWin.map((c) => (audioLang === 'ja' ? (c.text || '') : (c.translation || c.text || '')));
 
     // Для MegaPlay передаём конец интро — субтитры из архива обычно без него,
     // и весь диалог смещён примерно на его длину (у автосинка иначе не тот диапазон).
@@ -954,9 +965,9 @@ async function preciseSyncSubs() {
         .slice(0, 300);
     const cueStarts = inWin.map((c) => c.start);
     if (cueStarts.length < 5) return;
-    const audioLang = state.provider === 'megaplay' ? 'ja' : subsLang();
-    const cueTexts = inWin.map((c) => (audioLang === 'ja' ? (c.text || '') : (c.translation || c.text || '')));
     const trSel = state.translations[parseInt(translationSelect.value, 10)] || {};
+    const audioLang = trackAudioLang(trSel);
+    const cueTexts = inWin.map((c) => (audioLang === 'ja' ? (c.text || '') : (c.translation || c.text || '')));
     const seriesKey = shikimoriId + ':' + (trSel.id || trSel.provider || 'k') + ':s' + state.seasonIndex;
     const introEnd = (state.provider === 'megaplay' && state.megaIntro) ? state.megaIntro.end : 0;
     const key = offsetStorageKey();
