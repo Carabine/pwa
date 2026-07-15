@@ -4,6 +4,13 @@
 const searchInput = document.getElementById('search-input');
 const resultsEl = document.getElementById('results');
 const statusEl = document.getElementById('status');
+
+// Автофокус поля поиска — ТОЛЬКО на десктопе (мышь). Раньше был HTML-атрибут
+// autofocus, но на телефоне он при каждом заходе поднимал экранную клавиатуру.
+// На тач-устройствах фокус ставит пользователь сам, тапнув по полю.
+if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    searchInput.focus();
+}
 const headingEl = document.getElementById('heading');
 
 let debounceTimer = null;
