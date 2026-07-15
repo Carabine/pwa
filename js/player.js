@@ -92,7 +92,6 @@ const state = {
     popupContext: null,
     followCue: true,       // список сам едет за текущей репликой; сбрасываем, когда листают вручную
     syncing: false,        // идёт автосинк: не тащим список за репликой и прячем «К текущей»
-    manualSubs: null,      // выбранный вручную файл сабов { path, name } — не пересчитываем по номеру серии
     shortFormChibi: new Set(), // индексы групп-серий, определённых как короткометражки (чиби/PV)
     showExtras: false,     // показывать ли скрытые «доп. материалы» (чиби и т.п.)
     epLenCache: {},        // длительность серии по её id (сек) — чтобы не зондировать повторно
@@ -693,26 +692,14 @@ async function loadSubtitles(episodeNumber = 1) {
     subsFixBtn.hidden = true;
 
     try {
-        let cues, fileName;
-        if (state.manualSubs) {
-            // Пользователь сам выбрал файл — берём именно его, без подбора по номеру.
-            // Источник может быть jimaku (по ссылке) или kitsunekko (по пути).
-            const ms = state.manualSubs;
-            const endpoint = ms.source === 'jimaku' ? 'subtitles/jimaku/cues' : 'subtitles/cues';
-            const params = ms.source === 'jimaku'
-                ? { url: ms.url, name: ms.name, translate: subsLang() }
-                : { path: ms.path, translate: subsLang() };
-            const { data: res } = await client.get(endpoint, { params, timeout: 180000 });
-            cues = res.data;
-            fileName = ms.name;
-        } else {
-            const { data: res } = await client.get('subtitles/episode', {
-                params: { title: titleRomaji, episode: episodeNumber, translate: subsLang() },
-                timeout: 180000,
-            });
-            cues = res.data.cues;
-            fileName = res.data.file;
-        }
+        // Субтитры подбираются автоматически по названию и номеру серии (ручного
+        // выбора файла нет — он путал сдвиг: у разных файлов свои тайминги).
+        const { data: res } = await client.get('subtitles/episode', {
+            params: { title: titleRomaji, episode: episodeNumber, translate: subsLang() },
+            timeout: 180000,
+        });
+        const cues = res.data.cues;
+        const fileName = res.data.file;
 
         state.cues = cues;
         subsSource.textContent = fileName;
@@ -748,19 +735,11 @@ async function loadSubtitles(episodeNumber = 1) {
         }
     } catch (err) {
         console.error(err);
-        // Даже когда авто-подбор не сработал, оставляем ручной выбор доступным
-        subsFixBtn.hidden = false;
         if (err.response?.status === 404) {
-            // Не тупик: можно выбрать субтитры вручную, посмотреть без них или принести свои
+            // Сабов в архиве нет. Не тупик: можно смотреть без них или принести своё видео.
             subsStatus.textContent = '';
             subsStatus.append(t('subs.notFound'));
             subsStatus.appendChild(document.createElement('br'));
-            const pick = document.createElement('a');
-            pick.href = '#';
-            pick.textContent = t('subs.pickManually');
-            pick.addEventListener('click', (e) => { e.preventDefault(); openSubsPicker(); });
-            subsStatus.appendChild(pick);
-            subsStatus.appendChild(document.createTextNode(' · '));
             const link = document.createElement('a');
             link.href = './watch.html';
             link.textContent = t('subs.notFoundLink');
@@ -1999,9 +1978,8 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ---------- Селекты ----------
-// При смене серии/перевода авто-подбор снова в силе — сбрасываем ручной выбор
-translationSelect.addEventListener('change', () => { state.manualSubs = null; selectTranslation(parseInt(translationSelect.value, 10)); });
-episodeSelect.addEventListener('change', () => { state.manualSubs = null; selectEpisode(parseInt(episodeSelect.value, 10)); });
+translationSelect.addEventListener('change', () => { selectTranslation(parseInt(translationSelect.value, 10)); });
+episodeSelect.addEventListener('change', () => { selectEpisode(parseInt(episodeSelect.value, 10)); });
 // Смена сезона: франшиза — переход на другой тайтл; группы — фильтр на клиенте
 seasonSelect.addEventListener('change', () => {
     const idx = parseInt(seasonSelect.value, 10);
@@ -2009,7 +1987,6 @@ seasonSelect.addEventListener('change', () => {
         navigateToSeason(state.franchiseSeasons[idx]);
         return;
     }
-    state.manualSubs = null;
     state.seasonIndex = idx;
     localStorage.setItem(seasonStorageKey(), String(idx));
     populateEpisodes(false);
