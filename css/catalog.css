@@ -119,6 +119,32 @@ html, body {
     }
 }
 
+/* Телефон: блок над «Популярное» (поиск + подсказка) занимал слишком много
+   высоты — компактнее, чтобы карточки были видны выше. */
+@media (max-width: 600px) {
+    .catalog {
+        padding-top: 12px;
+    }
+    .catalog__search {
+        margin: 4px auto 4px;
+    }
+    .catalog__search input {
+        padding: 11px 18px 11px 44px;
+    }
+    .catalog__search-icon {
+        left: 16px;
+    }
+    .catalog__hint {
+        margin: 8px auto 2px;
+        padding: 8px 12px;
+        font-size: 12px;
+        line-height: 1.45;
+    }
+    .catalog__heading {
+        margin-top: 14px;
+    }
+}
+
 /* ---------- Карточка ---------- */
 .anime-card {
     position: relative;
