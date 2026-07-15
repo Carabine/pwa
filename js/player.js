@@ -929,6 +929,24 @@ async function maybeAutoSync() {
 // Точный подбор сдвига по запросу («не те?» → Whisper). Распознаёт речь дубляжа и
 // матчит по содержанию — сервер считает синхронно (пара минут), показываем прогресс.
 let preciseBusy = false;
+
+// Опрос фоновой джобы точного подбора: короткие запросы каждые 5с (до ~5 мин).
+// Обрыв сети на отдельном опросе не фатален — просто ждём следующего.
+async function pollPreciseSync(jobId) {
+    const deadline = Date.now() + 300000;
+    while (Date.now() < deadline) {
+        await new Promise((res) => setTimeout(res, 5000));
+        try {
+            const { data } = await client.get('subtitles/precise-sync/status', {
+                params: { jobId }, timeout: 20000,
+            });
+            const s = data.data || {};
+            if (s.done) return s;
+        } catch { /* временный обрыв — продолжаем опрос */ }
+    }
+    return { ok: false, reason: 'timeout' };
+}
+
 async function preciseSyncSubs() {
     if (preciseBusy || !state.cues.length || !state.currentVideoUrl) return;
     const inWin = state.cues
@@ -947,10 +965,14 @@ async function preciseSyncSubs() {
     if (subsPreciseBtn) subsPreciseBtn.disabled = true;
     setPreciseLoading(true);   // явный лоадер: «распознаём речь… сохранится навсегда»
     try {
+        // Расчёт идёт в фоне на сервере: POST быстро отдаёт jobId, дальше опрашиваем
+        // статус короткими запросами — они переживают обрыв мобильной сети (раньше
+        // один длинный запрос рвался с 499 и показывал ошибку).
         const { data: res } = await client.post('subtitles/precise-sync', {
             videoUrl: state.currentVideoUrl, cues: cueStarts, cueTexts, audioLang, seriesKey, introEnd,
-        }, { timeout: 300000 });
-        const r = res.data || {};
+        }, { timeout: 20000 });
+        let r = res.data || {};
+        if (r.ok && r.pending && r.jobId) r = await pollPreciseSync(r.jobId);
         if (r.ok && Number.isFinite(r.offset)) {
             if (offsetStorageKey() === key) {   // серия не сменилась за время подбора
                 state.offset = r.offset;
