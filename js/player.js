@@ -804,6 +804,8 @@ function setSyncing(on) {
 // время сразу при отрисовке сабов, а не только в момент запроса.
 function autoSyncEligible() {
     if (window.AnimeiSettings && window.AnimeiSettings.get('autoSyncSubs') === false) return false;
+    // MegaPlay не автосинкаем — см. maybeAutoSync (alass не тянет аудио с их CDN).
+    if (state.provider === 'megaplay') return false;
     const key = offsetStorageKey();
     if (state.autoSyncKey === key) return false;
     if (localStorage.getItem(key) !== null) return false;
@@ -824,6 +826,11 @@ async function maybeAutoSync() {
     // один результат на серию; серверный Whisper-верификатор помогает НОВЫМ зрителям
     // серии через кэш — тем, у кого своего сохранённого сдвига ещё нет).
     if (localStorage.getItem(key) !== null) { state.autoSyncKey = key; setSyncing(false); return; }
+    // MegaPlay: alass не может вытащить аудио с их CDN (extractWav упирается в
+    // таймаут ~110с и возвращает «не смог») → автосинк только зря держит баннер
+    // «синхронизация» пару минут и всё равно ничего не находит. Пропускаем: для
+    // японской дорожки синк делает кнопка «Не совпадают?» (точный подбор по звуку).
+    if (state.provider === 'megaplay') { state.autoSyncKey = key; setSyncing(false); return; }
     state.autoSyncKey = key;
 
     // Отдаём реплики шире (до 340с) — бэкенд анализирует более длинное окно, чтобы
