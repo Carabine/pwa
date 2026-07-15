@@ -631,12 +631,12 @@ html, body {
 .player-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 14px 22px;
-    margin-top: 14px;
+    gap: 10px 18px;
+    margin-top: 12px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 12px 16px;
+    padding: 9px 12px;
 }
 
 /* Полоса «свернуть настройки» + компактная кнопка «Скрыть видео» рядом с шевроном.
@@ -1150,6 +1150,13 @@ html, body {
     background: linear-gradient(90deg, rgba(124, 140, 248, 0.12), rgba(79, 70, 229, 0.06));
     border-left-color: var(--pink);
 }
+
+/* Когда включён ИИ-разбор, у каждой реплики в углу иконка (.cue__ai, 24px @ right:4).
+   Резервируем справа место, чтобы текст субтитров не залезал под неё. */
+.transcript__list.ai-on .cue { padding-right: 36px; }
+/* Реплика под видео центрирована — резервируем место симметрично, чтобы текст не
+   уезжал под угловую иконку ИИ и оставался по центру. */
+.now-cue.ai-on { padding-left: 34px; padding-right: 34px; }
 
 .cue__time {
     font-size: 11px;

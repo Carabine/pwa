@@ -522,9 +522,14 @@
     height: 26px;
     padding: 0;
     color: #fff;
-    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    /* Чуть глубже градиент + светлая рамка — искорка контрастнее и кнопка
+       заметнее на фоне карточки. */
+    background: linear-gradient(135deg,
+        color-mix(in srgb, var(--primary) 85%, #000),
+        color-mix(in srgb, var(--primary-hover) 80%, #000));
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    box-shadow: 0 3px 12px -2px rgba(124, 140, 248, 0.75);
+    box-shadow: 0 3px 12px -2px rgba(124, 140, 248, 0.85);
     cursor: pointer;
     animation: spark-attn 2.6s ease-in-out infinite;
     transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
@@ -543,8 +548,8 @@
 }
 
 .sentence__spark .ai-icon {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
 }
 
