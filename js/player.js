@@ -1881,169 +1881,25 @@ async function loadKnownWords() {
     } catch { /* нет слов — просто без подсветки */ }
 }
 
-// ---------- Ручной выбор субтитров ----------
-// Авто-подбор ищет тайтл в архиве по названию и угадывает файл серии по номеру —
-// иногда промахивается (не тот сезон/серия). Здесь можно выбрать файл руками.
+// ---------- Синхронизация субтитров («Не те?») ----------
+// Ручной выбор файла субтитров убран — работает авто-подбор. Кнопка «Не те?»
+// открывает панель ТОЛЬКО с точной синхронизацией по звуку.
 
 const subsPicker = document.getElementById('subs-picker');
-const subsPickerInput = document.getElementById('subs-picker-input');
-const subsPickerList = document.getElementById('subs-picker-list');
-let subsPickerTimer = null;
-let subsPickerSeq = 0;   // защита от гонок: показываем только ответ на последний запрос
-let subsPickerMode = 'shows';                 // 'shows' — верхнее поле ищет тайтл; 'files' — фильтрует файлы
-let subsPickerCurrent = { show: null, files: [] };
-
-function pickerStatus(key) {
-    subsPickerList.innerHTML = `<div class="subs-picker__status">${t(key)}</div>`;
-}
 
 function openSubsPicker() {
     subsPicker.hidden = false;
     if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.hint');
     if (subsPreciseBtn) subsPreciseBtn.disabled = preciseBusy;
-    subsPickerMode = 'shows';
-    subsPickerInput.placeholder = t('subs.picker.search');
-    if (!subsPickerInput.value) subsPickerInput.value = titleRomaji || titleRu || '';
-    subsPickerInput.focus();
-    subsPickerInput.select();
-    searchSubsShows(subsPickerInput.value.trim());
 }
 
 function closeSubsPicker() {
     subsPicker.hidden = true;
 }
 
-// Вернуться от списка файлов к поиску тайтла
-function backToShows() {
-    subsPickerMode = 'shows';
-    subsPickerInput.placeholder = t('subs.picker.search');
-    subsPickerInput.value = titleRomaji || titleRu || '';
-    searchSubsShows(subsPickerInput.value.trim());
-}
-
-async function searchSubsShows(query) {
-    subsPickerMode = 'shows';
-    if (!query || query.length < 2) { pickerStatus('subs.picker.hint'); return; }
-    const seq = ++subsPickerSeq;
-    pickerStatus('subs.picker.searching');
-    try {
-        // Сначала jimaku (чистая разбивка по сезонам), при пустом ответе — kitsunekko
-        let shows = [];
-        try {
-            const { data: jr } = await client.get('subtitles/jimaku/search', { params: { title: query } });
-            shows = (jr.data || []).map((e) => ({ source: 'jimaku', id: e.id, title: e.title, sub: e.sub }));
-        } catch { /* jimaku недоступен — идём в kitsunekko */ }
-
-        if (!shows.length) {
-            const { data: kr } = await client.get('subtitles/search', { params: { title: query } });
-            shows = (kr.data || []).map((s) => ({ source: 'kitsunekko', dir: s.dir, title: s.title }));
-        }
-
-        if (seq !== subsPickerSeq) return;
-        if (!shows.length) { pickerStatus('subs.picker.nothing'); return; }
-        renderSubsShows(shows);
-    } catch (err) {
-        console.error(err);
-        if (seq === subsPickerSeq) pickerStatus('subs.picker.error');
-    }
-}
-
-function renderSubsShows(shows) {
-    subsPickerList.innerHTML = '';
-    for (const show of shows) {
-        const item = document.createElement('div');
-        item.className = 'subs-picker__item';
-        const title = document.createElement('span');
-        title.textContent = show.title;
-        item.appendChild(title);
-        if (show.sub) {
-            const sub = document.createElement('span');
-            sub.className = 'subs-picker__item-sub';
-            sub.textContent = show.sub;
-            item.appendChild(sub);
-        }
-        item.addEventListener('click', () => openSubsFiles(show));
-        subsPickerList.appendChild(item);
-    }
-}
-
-async function openSubsFiles(show) {
-    const seq = ++subsPickerSeq;
-    pickerStatus('subs.picker.loadingFiles');
-    try {
-        const req = show.source === 'jimaku'
-            ? client.get('subtitles/jimaku/files', { params: { id: show.id } })
-            : client.get('subtitles/files', { params: { dir: show.dir } });
-        const { data: res } = await req;
-        if (seq !== subsPickerSeq) return;
-        const files = res.data || [];
-        if (!files.length) { pickerStatus('subs.picker.noFiles'); return; }
-        // Переходим в режим фильтра файлов: верхнее поле теперь сужает список
-        // (у популярных тайтлов десятки-сотни файлов — иначе не найти нужную серию)
-        subsPickerMode = 'files';
-        subsPickerCurrent = { show, files };
-        subsPickerInput.value = '';
-        subsPickerInput.placeholder = t('subs.picker.filterFiles');
-        subsPickerInput.focus();
-        renderSubsFiles('');
-    } catch (err) {
-        console.error(err);
-        if (seq === subsPickerSeq) pickerStatus('subs.picker.error');
-    }
-}
-
-function renderSubsFiles(filter) {
-    const { show, files } = subsPickerCurrent;
-    subsPickerList.innerHTML = '';
-
-    const back = document.createElement('div');
-    back.className = 'subs-picker__item subs-picker__item--back';
-    back.textContent = '← ' + show.title;
-    back.addEventListener('click', backToShows);
-    subsPickerList.appendChild(back);
-
-    const q = (filter || '').toLowerCase();
-    const shown = q ? files.filter((f) => f.name.toLowerCase().includes(q)) : files;
-
-    if (!shown.length) {
-        const empty = document.createElement('div');
-        empty.className = 'subs-picker__status';
-        empty.textContent = t('subs.picker.nothing');
-        subsPickerList.appendChild(empty);
-        return;
-    }
-
-    for (const file of shown) {
-        const item = document.createElement('div');
-        item.className = 'subs-picker__item';
-        item.textContent = file.name;
-        item.addEventListener('click', () => chooseSubsFile(file));
-        subsPickerList.appendChild(item);
-    }
-}
-
-function chooseSubsFile(file) {
-    const src = subsPickerCurrent.show?.source;
-    state.manualSubs = src === 'jimaku'
-        ? { source: 'jimaku', url: file.url, name: file.name }
-        : { source: 'kitsunekko', path: file.path, name: file.name };
-    closeSubsPicker();
-    loadSubtitles();   // грузим выбранный файл (episodeNumber игнорируется при manualSubs)
-    showSnackbar(t('subs.picker.chosen'), { duration: 2500 });
-}
-
 subsFixBtn.addEventListener('click', openSubsPicker);
 if (subsPreciseBtn) subsPreciseBtn.addEventListener('click', preciseSyncSubs);
 document.getElementById('subs-picker-close').addEventListener('click', closeSubsPicker);
-subsPickerInput.addEventListener('input', () => {
-    clearTimeout(subsPickerTimer);
-    if (subsPickerMode === 'files') {
-        // фильтр файлов — мгновенно, без запроса на сервер
-        renderSubsFiles(subsPickerInput.value.trim());
-    } else {
-        subsPickerTimer = setTimeout(() => searchSubsShows(subsPickerInput.value.trim()), 400);
-    }
-});
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !subsPicker.hidden) closeSubsPicker();
 });

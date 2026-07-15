@@ -160,10 +160,11 @@
                 <span data-i18n="subs.backToCurrent">К текущей</span>
             </button>
 
-            <!-- Ручной выбор субтитров: если авто-подбор ошибся серией/тайтлом -->
+            <!-- Панель по кнопке «Не те?»: точная синхронизация субтитров по звуку.
+                 Ручной выбор файла субтитров убран — работает авто-подбор. -->
             <div class="subs-picker" id="subs-picker" hidden>
                 <div class="subs-picker__head">
-                    <span data-i18n="subs.picker.title">Выбрать субтитры вручную</span>
+                    <span data-i18n="subs.sync.title">Синхронизация субтитров</span>
                     <button class="subs-picker__close" id="subs-picker-close" aria-label="Закрыть">✕</button>
                 </div>
                 <div class="subs-picker__sync">
@@ -172,11 +173,6 @@
                     <p class="subs-precise-hint" id="subs-precise-status"
                        data-i18n="subs.precise.hint">Распознаём речь и подбираем точный сдвиг — может занять пару минут.</p>
                 </div>
-                <div class="subs-picker__search">
-                    <input type="text" id="subs-picker-input" autocomplete="off"
-                           data-i18n-placeholder="subs.picker.search" placeholder="Название аниме на латинице">
-                </div>
-                <div class="subs-picker__list" id="subs-picker-list"></div>
             </div>
         </aside>
     </main>
