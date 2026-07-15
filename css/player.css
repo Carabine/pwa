@@ -848,15 +848,6 @@ html, body {
     min-width: 0;
 }
 
-.transcript__source {
-    font-size: 11px;
-    font-weight: 400;
-    color: var(--text-dim);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 150px;
-}
 
 /* «Не те?» — открыть ручной выбор субтитров */
 .transcript__fix {

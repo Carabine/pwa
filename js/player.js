@@ -50,7 +50,6 @@ const seasonSelect = document.getElementById('season-select');
 const seasonGroup = document.getElementById('season-group');
 const transcriptList = document.getElementById('transcript-list');
 const subsStatus = document.getElementById('subs-status');
-const subsSource = document.getElementById('subs-source');
 const jumpBtn = document.getElementById('transcript-jump');
 const subsFixBtn = document.getElementById('subs-fix');
 const subsPreciseBtn = document.getElementById('subs-precise');
@@ -688,7 +687,6 @@ async function loadSubtitles(episodeNumber = 1) {
     renderTranscript();
     subsStatus.style.display = '';
     subsStatus.textContent = t('subs.searching');
-    subsSource.textContent = '';
     subsFixBtn.hidden = true;
 
     try {
@@ -699,10 +697,8 @@ async function loadSubtitles(episodeNumber = 1) {
             timeout: 180000,
         });
         const cues = res.data.cues;
-        const fileName = res.data.file;
 
         state.cues = cues;
-        subsSource.textContent = fileName;
         subsStatus.style.display = 'none';
         // Подобрали (или выбрали) файл — предлагаем сменить, если серия не та
         subsFixBtn.hidden = false;
