@@ -1018,12 +1018,14 @@ html, body {
 .subs-manual__row {
     display: flex;
     align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
     gap: 6px;
 }
 
 .subs-manual__btn {
-    flex: 1;
-    padding: 8px 4px;
+    flex: 1 1 46px;
+    padding: 8px 3px;
     border-radius: 8px;
     background: var(--surface);
     border: 1px solid var(--border);
