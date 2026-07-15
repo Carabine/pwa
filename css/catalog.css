@@ -314,3 +314,33 @@ html, body {
 @keyframes shimmer {
     100% { transform: translateX(100%); }
 }
+
+/* На телефоне карточки идут по 3 в ряд (~110px) — текст и лейблы внутри
+   уменьшаем под их размер. Блок в КОНЦЕ файла: базовые правила .anime-card__*
+   стоят выше, а при равной специфичности побеждает более позднее правило. */
+@media (max-width: 600px) {
+    .anime-card__info {
+        padding: 8px 8px 9px;
+    }
+    .anime-card__title {
+        font-size: 11.5px;
+        line-height: 1.25;
+    }
+    .anime-card__meta {
+        margin-top: 3px;
+        font-size: 9.5px;
+    }
+    .anime-card__kind {
+        top: 6px;
+        left: 6px;
+        font-size: 9px;
+        padding: 2px 6px;
+        max-width: 74%;
+    }
+    .anime-card__score {
+        top: 6px;
+        right: 6px;
+        font-size: 9.5px;
+        padding: 2px 6px;
+    }
+}
