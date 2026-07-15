@@ -964,6 +964,105 @@ html, body {
     color: var(--text-dim);
 }
 
+.subs-precise-hint[hidden] { display: none; }
+
+/* Явный лоадер точной синхронизации */
+.subs-precise-loading {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin: 10px 2px 0;
+}
+
+.subs-precise-loading[hidden] { display: none; }
+
+.subs-precise-loading__txt {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--text);
+}
+
+.subs-spinner {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    border: 2px solid rgba(255, 255, 255, 0.22);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: subs-spin 0.8s linear infinite;
+}
+
+@keyframes subs-spin { to { transform: rotate(360deg); } }
+
+/* Ручной сдвиг субтитров */
+.subs-manual {
+    padding: 12px 16px;
+}
+
+.subs-manual__title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.subs-manual__row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.subs-manual__btn {
+    flex: 1;
+    padding: 8px 4px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.subs-manual__btn:hover { border-color: var(--primary); }
+.subs-manual__btn:active { background: rgba(255, 255, 255, 0.06); }
+
+.subs-manual__value {
+    min-width: 62px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--primary-hover);
+}
+
+.subs-manual__foot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.subs-manual__reset {
+    flex-shrink: 0;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.subs-manual__reset:hover { color: var(--text); border-color: var(--primary); }
+
+.subs-manual__hint {
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--text-dim);
+}
+
 .subs-picker__search {
     padding: 12px 16px 8px;
 }

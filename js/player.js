@@ -945,7 +945,7 @@ async function preciseSyncSubs() {
 
     preciseBusy = true;
     if (subsPreciseBtn) subsPreciseBtn.disabled = true;
-    if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.working');
+    setPreciseLoading(true);   // явный лоадер: «распознаём речь… сохранится навсегда»
     try {
         const { data: res } = await client.post('subtitles/precise-sync', {
             videoUrl: state.currentVideoUrl, cues: cueStarts, cueTexts, audioLang, seriesKey, introEnd,
@@ -959,14 +959,18 @@ async function preciseSyncSubs() {
                 localStorage.setItem(key + ':m', 'whisper-verified');   // точный — больше не трогаем
                 renderTranscript();
                 updateNowCue(state.activeCueIndex);
+                refreshOffsetDisplay();
             }
+            setPreciseLoading(false);
             if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.done');
             showSnackbar(t('subs.precise.done'), { duration: 3500 });
             setTimeout(closeSubsPicker, 900);
-        } else if (subsPreciseStatus) {
-            subsPreciseStatus.textContent = t('subs.precise.fail');
+        } else {
+            setPreciseLoading(false);
+            if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.fail');
         }
     } catch {
+        setPreciseLoading(false);
         if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.fail');
     } finally {
         preciseBusy = false;
@@ -1886,11 +1890,64 @@ async function loadKnownWords() {
 // открывает панель ТОЛЬКО с точной синхронизацией по звуку.
 
 const subsPicker = document.getElementById('subs-picker');
+const subsPreciseLoading = document.getElementById('subs-precise-loading');
+const subsOffsetValue = document.getElementById('subs-offset-value');
+
+// Текущий сдвиг для показа: «0», «+2.5с», «−31с».
+function fmtOffset(o) {
+    const unit = t('subs.manual.sec');
+    if (!o) return '0 ' + unit;
+    const rounded = Math.round(Math.abs(o) * 10) / 10;
+    return (o > 0 ? '+' : '−') + rounded + ' ' + unit;
+}
+
+function refreshOffsetDisplay() {
+    if (subsOffsetValue) subsOffsetValue.textContent = fmtOffset(state.offset);
+}
+
+// Ручной сдвиг субтитров: применяем, сохраняем НАВСЕГДА для этой серии (метод
+// 'manual' — автосинк такую серию больше не трогает) и перерисовываем тайминги.
+function applyManualOffset() {
+    updateOffsetLabel();
+    saveOffset();
+    localStorage.setItem(offsetStorageKey() + ':m', 'manual');
+    if (typeof updateNowCue === 'function') updateNowCue(state.activeCueIndex);
+    refreshOffsetDisplay();
+}
+
+function nudgeOffset(delta) {
+    if (!state.cues.length) return;
+    // Ограничиваем разумным диапазоном (обрезка интро редко больше пары минут).
+    state.offset = Math.max(-600, Math.min(600, Math.round((state.offset + delta) * 10) / 10));
+    applyManualOffset();
+}
+
+function resetOffset() {
+    state.offset = 0;
+    applyManualOffset();
+}
+
+// Подписи кнопок сдвига — с локализованной единицей («с»/«s»).
+function labelManualButtons() {
+    const unit = t('subs.manual.sec');
+    document.querySelectorAll('.subs-manual__btn').forEach((btn) => {
+        const d = parseFloat(btn.dataset.delta);
+        btn.textContent = (d > 0 ? '+' : '−') + Math.abs(d) + ' ' + unit;
+    });
+}
+
+function setPreciseLoading(on) {
+    if (subsPreciseLoading) subsPreciseLoading.hidden = !on;
+    if (subsPreciseStatus) subsPreciseStatus.hidden = on;   // подсказку прячем на время загрузки
+}
 
 function openSubsPicker() {
     subsPicker.hidden = false;
+    setPreciseLoading(preciseBusy);
     if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.hint');
     if (subsPreciseBtn) subsPreciseBtn.disabled = preciseBusy;
+    labelManualButtons();
+    refreshOffsetDisplay();
 }
 
 function closeSubsPicker() {
@@ -1900,6 +1957,10 @@ function closeSubsPicker() {
 subsFixBtn.addEventListener('click', openSubsPicker);
 if (subsPreciseBtn) subsPreciseBtn.addEventListener('click', preciseSyncSubs);
 document.getElementById('subs-picker-close').addEventListener('click', closeSubsPicker);
+document.querySelectorAll('.subs-manual__btn').forEach((btn) => {
+    btn.addEventListener('click', () => nudgeOffset(parseFloat(btn.dataset.delta)));
+});
+document.getElementById('subs-offset-reset').addEventListener('click', resetOffset);
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !subsPicker.hidden) closeSubsPicker();
 });

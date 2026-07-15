@@ -160,8 +160,8 @@
                 <span data-i18n="subs.backToCurrent">К текущей</span>
             </button>
 
-            <!-- Панель по кнопке «Не те?»: точная синхронизация субтитров по звуку.
-                 Ручной выбор файла субтитров убран — работает авто-подбор. -->
+            <!-- Панель по кнопке «Не те?»: точная синхронизация по звуку + ручной
+                 сдвиг субтитров. Ручной выбор файла убран — работает авто-подбор. -->
             <div class="subs-picker" id="subs-picker" hidden>
                 <div class="subs-picker__head">
                     <span data-i18n="subs.sync.title">Синхронизация субтитров</span>
@@ -170,8 +170,30 @@
                 <div class="subs-picker__sync">
                     <button class="subs-precise-btn" id="subs-precise" type="button"
                             data-i18n="subs.precise.btn">🎯 Точно синхронизировать по звуку</button>
+                    <!-- Явный лоадер во время распознавания -->
+                    <div class="subs-precise-loading" id="subs-precise-loading" hidden>
+                        <span class="subs-spinner" aria-hidden="true"></span>
+                        <span class="subs-precise-loading__txt" id="subs-precise-loading-text"
+                              data-i18n="subs.precise.working">🎧 Распознаём речь… это может занять пару минут.</span>
+                    </div>
                     <p class="subs-precise-hint" id="subs-precise-status"
-                       data-i18n="subs.precise.hint">Распознаём речь и подбираем точный сдвиг — может занять пару минут.</p>
+                       data-i18n="subs.precise.hint">Найдём точный сдвиг по звуку и сохраним его навсегда для этой серии.</p>
+                </div>
+                <!-- Ручной сдвиг субтитров (как раньше): если авто/точный промахнулись -->
+                <div class="subs-manual">
+                    <div class="subs-manual__title" data-i18n="subs.manual.title">Сдвинуть субтитры вручную</div>
+                    <div class="subs-manual__row">
+                        <button class="subs-manual__btn" type="button" data-delta="-5">−5</button>
+                        <button class="subs-manual__btn" type="button" data-delta="-0.5">−0.5</button>
+                        <span class="subs-manual__value" id="subs-offset-value">0</span>
+                        <button class="subs-manual__btn" type="button" data-delta="0.5">+0.5</button>
+                        <button class="subs-manual__btn" type="button" data-delta="5">+5</button>
+                    </div>
+                    <div class="subs-manual__foot">
+                        <button class="subs-manual__reset" type="button" id="subs-offset-reset"
+                                data-i18n="subs.manual.reset">Сбросить</button>
+                        <span class="subs-manual__hint" data-i18n="subs.manual.hint">Сохраняется навсегда для этой серии. «+» — показать позже, «−» — раньше.</span>
+                    </div>
                 </div>
             </div>
         </aside>
