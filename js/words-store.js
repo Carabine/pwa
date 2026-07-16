@@ -190,6 +190,10 @@ async function syncGuestWordsToAccount() {
     const words = getGuestWords();
     if (!words.length) return;
 
+    // Слова пересоздаются на сервере с новыми id — запоминаем old→new, чтобы
+    // потом перенести на них членство в локальных колодах (иначе колоды опустеют).
+    const idMap = {};
+
     for (const w of words) {
         // id локальный — на сервер не отправляем, там свой сгенерится.
         const { id, ...payload } = w;
@@ -203,6 +207,7 @@ async function syncGuestWordsToAccount() {
                 ...(Number.isFinite(w.trimEnd) ? { trimEnd: w.trimEnd } : {}),
             });
             const saved = res?.data ?? res;
+            if (saved?.id) idMap[id] = saved.id;
 
             if (saved?.id && typeof getClip === 'function') {
                 const blob = await getClip(id);
@@ -234,6 +239,9 @@ async function syncGuestWordsToAccount() {
             console.error('Не удалось перенести слово в аккаунт:', err);
         }
     }
+
+    // Переносим членство в колодах со старых локальных id на новые серверные.
+    if (typeof window !== 'undefined' && window.Decks) window.Decks.remapIds(idMap);
 
     setGuestWords([]);
 }

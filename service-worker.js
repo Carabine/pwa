@@ -1,12 +1,13 @@
 // Пути относительные — SW живёт в /app/, поэтому './' указывает на /app/.
 // ВАЖНО: меняй номер версии при каждом деплое — иначе старый кеш не сбросится.
-const CACHE_NAME = 'animei-cache-v0.0.145';
+const CACHE_NAME = 'animei-cache-v0.0.146';
 const urlsToCache = [
     './',
     './index.html',
     './pages/study.html',
     './pages/custom-study.html',
     './pages/beginner.html',
+    './pages/deck-study.html',
     './pages/watch.html',
     './pages/words.html',
     './pages/login.html',
@@ -24,10 +25,13 @@ const urlsToCache = [
     './js/custom-study.js',
     './js/starter-deck.js',
     './js/beginner-study.js',
+    './js/deck-study.js',
     './js/player-ui.js',
     './js/watch.js',
     './js/axiosClient.js',
     './js/words-store.js',
+    './js/decks-store.js',
+    './js/decks-ui.js',
     './js/clip-trim.js',
     './js/word-edit.js',
     './js/stats.js',

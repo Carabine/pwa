@@ -34,6 +34,8 @@ async function loadWords() {
         console.error('Failed to load words:', err);
         allWords = [];
     }
+    // Чистим из колод «мёртвые» id — слова, которых уже нет в коллекции.
+    if (window.Decks) Decks.sanitize(allWords.map((w) => w.id));
     renderWords();
 }
 
@@ -86,11 +88,18 @@ function renderWords() {
         return;
     }
 
-    const words = allWords.filter(matchesFilter);
+    // Фильтр по активной колоде (если выбрана) поверх текстового поиска.
+    const deckActive = window.DecksUI ? DecksUI.activeDeckId() : null;
+    const words = allWords
+        .filter(matchesFilter)
+        .filter((w) => (window.DecksUI ? DecksUI.visible(w) : true));
     wordsListEl.innerHTML = '';
 
     if (words.length === 0) {
-        wordsListEl.innerHTML = `<p class="words-nothing">${t('words.nothingFound')}</p>`;
+        // Пустая колода — своя формулировка, а не «ничего не нашлось».
+        const msg = (deckActive && !wordsFilter) ? t('decks.empty') : t('words.nothingFound');
+        wordsListEl.innerHTML = `<p class="words-nothing">${msg}</p>`;
+        if (window.DecksUI) DecksUI.refresh();
         return;
     }
 
@@ -124,6 +133,7 @@ function renderWords() {
 
         wordEl.querySelector('.word-card__delete').addEventListener('click', async () => {
             await deleteWord(wordData.id);
+            if (window.Decks) Decks.forgetWord(wordData.id);   // и из всех колод
             allWords = allWords.filter((w) => w.id !== wordData.id);
             renderWords();
         });
@@ -132,8 +142,14 @@ function renderWords() {
             AnimeiWordEdit.open(wordData, renderWords);
         });
 
+        // Мини-чипы колод + кнопка «в колоды» на карточке.
+        if (window.DecksUI) DecksUI.decorateCard(wordEl, wordData);
+
         wordsListEl.appendChild(wordEl);
     }
+
+    // Обновляем чипы/счётчики колод под текущую коллекцию.
+    if (window.DecksUI) DecksUI.refresh();
 
     // Есть слова с ещё не готовым клипом — тихо перепроверим их чуть позже.
     if (words.some((w) => clipBadge(w) === 'pending')) scheduleClipRefresh();
@@ -165,6 +181,17 @@ async function exportWords() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+    // Слой колод (необязательный): чип-фильтр, кнопка «Учить», меню карточек.
+    if (window.DecksUI) {
+        DecksUI.init({
+            chips: document.getElementById('deck-chips'),
+            study: document.getElementById('deck-study'),
+            hint: document.getElementById('deck-hint'),
+            getWords: () => allWords,
+            onChange: () => renderWords(),
+        });
+    }
+
     loadWords();
 
     const filterInput = document.getElementById('words-filter');

@@ -1,0 +1,301 @@
+/* Колоды карточек на экране словаря: чип-ряд фильтра, кнопка «Учить»,
+   мини-чипы членства на карточках, bottom sheet «в колоды» и редактор колоды.
+   Палитра и радиусы — из base.css (var(--*)). */
+
+/* Заголовок текущей колоды на экране её изучения (deck-study.html). */
+.deck-run-title {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+.deck-run-title:empty { display: none; }
+
+/* Подсказка первого запуска */
+.deck-hint {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+    margin: -6px 0 12px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+}
+
+/* Чип-ряд: одна строка, горизонтальный скролл, «Все» всегда виден слева. */
+.deck-chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 0 10px;
+    margin-bottom: 6px;
+    /* Лёгкое затухание у правого края — намёк, что ряд листается. */
+    -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+}
+.deck-chips::-webkit-scrollbar { display: none; }
+
+.deck-chip {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 200px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color var(--transition), background var(--transition), color var(--transition);
+}
+.deck-chip:hover { border-color: var(--primary); }
+.deck-chip--active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #0a0a0f;
+}
+.deck-chip--add { color: var(--text-muted); border-style: dashed; }
+.deck-chip__emoji { font-size: 14px; }
+.deck-chip__count {
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: inherit;
+}
+.deck-chip--active .deck-chip__count { background: rgba(0, 0, 0, 0.18); }
+
+/* Кнопка запуска изучения колоды — сразу под чипами. */
+.deck-study {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    align-items: stretch;
+}
+.deck-study__go { flex: 1 1 auto; }
+.deck-study__more { flex: 0 0 auto; width: 46px; padding: 0; font-size: 18px; line-height: 1; }
+
+/* Мини-чипы колод на карточке словаря (какие колоды содержат слово). */
+.word-card__decks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.word-deck-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 8px;
+}
+.word-deck-chip span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+}
+
+/* Небольшая нейтральная кнопка «в колоды» рядом с «Изменить» — не тянется. */
+.word-card__actions .word-card__decks-btn {
+    flex: 0 0 auto;
+    width: 42px;
+    min-width: 42px;
+    padding: 0;
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* ---- Общий оверлей для bottom sheet и редактора ---- */
+.deck-sheet__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+.deck-sheet__overlay.is-open { opacity: 1; }
+
+/* ---- Bottom sheet «Добавить в колоды» ---- */
+.deck-sheet {
+    width: 100%;
+    max-width: 520px;
+    max-height: 78vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: var(--radius) var(--radius) 0 0;
+    box-shadow: var(--shadow);
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    transform: translateY(12px);
+    transition: transform 0.18s ease;
+}
+.is-open .deck-sheet { transform: translateY(0); }
+
+.deck-sheet__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.deck-sheet__title { font-size: 15px; font-weight: 600; }
+.deck-sheet__word {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 18px;
+    color: var(--primary-hover);
+    margin-top: 2px;
+}
+.deck-sheet__x {
+    flex: 0 0 auto;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.deck-sheet__list { overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.deck-sheet__empty { color: var(--text-dim); font-size: 13px; padding: 8px 2px; }
+
+.deck-sheet__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color var(--transition), background var(--transition);
+}
+.deck-sheet__row:hover { border-color: var(--primary); }
+.deck-sheet__row.is-on { border-color: var(--success); background: rgba(16, 185, 129, 0.08); }
+.deck-sheet__emoji { font-size: 18px; }
+.deck-sheet__name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deck-sheet__check { color: var(--success); font-weight: 700; width: 16px; text-align: center; }
+
+.deck-sheet__status {
+    color: var(--success);
+    font-size: 12.5px;
+    height: 16px;
+    margin: 8px 2px 0;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.deck-sheet__status.is-show { opacity: 1; }
+
+.deck-sheet__create {
+    margin-top: 10px;
+    padding: 12px;
+    width: 100%;
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--primary-hover);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color var(--transition);
+}
+.deck-sheet__create:hover { border-color: var(--primary); }
+
+/* ---- Редактор колоды (создание/управление) ---- */
+.deck-editor {
+    width: 100%;
+    max-width: 460px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    box-shadow: var(--shadow);
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    transform: translateY(12px);
+    transition: transform 0.18s ease;
+}
+.is-open .deck-editor { transform: translateY(0); }
+
+.deck-editor__title { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+
+.deck-editor__emojis {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 14px;
+}
+.deck-editor__emoji {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color var(--transition), transform var(--transition);
+}
+.deck-editor__emoji:hover { transform: translateY(-1px); }
+.deck-editor__emoji.is-sel { border-color: var(--primary); background: rgba(124, 140, 248, 0.14); }
+
+.deck-editor__input {
+    width: 100%;
+    padding: 11px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 15px;
+    font-family: var(--font);
+    margin-bottom: 14px;
+}
+.deck-editor__input:focus { outline: none; border-color: var(--primary); }
+
+.deck-editor__actions { display: flex; gap: 8px; justify-content: flex-end; }
+.deck-editor__actions .btn { flex: 1 1 auto; }
+
+.deck-editor__delete {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    padding: 10px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--danger);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color var(--transition);
+}
+.deck-editor__delete:hover { border-color: var(--danger); }
+
+/* На широком экране показываем sheet/редактор по центру, а не прижатым к низу. */
+@media (min-width: 640px) {
+    .deck-sheet__overlay { align-items: center; }
+    .deck-sheet { border-radius: var(--radius); border-bottom: 1px solid var(--border); }
+    .deck-editor { border-radius: var(--radius); }
+}
