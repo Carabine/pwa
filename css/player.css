@@ -1012,34 +1012,36 @@ html, body {
     margin-bottom: 8px;
 }
 
-/* Поле ручного ввода сдвига (можно вписать число) — по центру ряда, между
-   минусами и плюсами. Не тянется как кнопки: своя ширина, небольшой зазор. */
+/* Поле по центру ряда: число читается как жирный акцентный текст (не «коробка»,
+   которая была выше кнопок и выглядела громоздко), рядом единица «с» — как в
+   прежнем дизайне, но теперь редактируемое. */
 .subs-manual__input {
-    display: flex;
-    align-items: center;
+    display: inline-flex;
+    align-items: baseline;
     justify-content: center;
-    gap: 4px;
+    gap: 2px;
     flex: 0 0 auto;
-    margin: 0 3px;
+    margin: 0 6px;
 }
 
 .subs-manual__input input {
-    width: 60px;
-    padding: 7px 6px;
-    border-radius: 8px;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    width: 48px;
+    padding: 2px 0;
+    border: none;
+    border-bottom: 1px solid transparent;
+    background: none;
     color: var(--primary-hover);
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     text-align: center;
     font-variant-numeric: tabular-nums;
     -moz-appearance: textfield;
 }
 
+/* Подчёркивание при фокусе — подсказка, что число можно вписать вручную. */
 .subs-manual__input input:focus {
     outline: none;
-    border-color: var(--primary);
+    border-bottom-color: var(--primary);
 }
 
 .subs-manual__input input::-webkit-outer-spin-button,
