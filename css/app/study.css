@@ -15,12 +15,10 @@
        группа стоит по центру экрана; не помещается — ужимаются в 0 и .main
        скроллится как раньше. */
     justify-content: flex-start;
-    gap: 10px;
-    /* «← Назад» и шестерёнка — absolute-оверлеи по углам (не занимают строку),
-       поэтому сверху резервируем лишь тонкий отступ. Счётчики поднимаются в ту же
-       верхнюю строку между ними, а вся освободившаяся высота уходит карточке
-       (flex:1) — клип на обороте (ограничен по высоте контентом ниже) выше. */
-    padding-top: 12px;
+    /* Компактный ритм сверху: счётчики/прогресс жмутся ближе к шапке, чтобы
+       максимум высоты достался карточке и клипу (акцент на видео). */
+    gap: 7px;
+    padding-top: 6px;
 }
 
 .main.study::before,
@@ -54,9 +52,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-width: 76px;
-    padding: 3px 16px;
-    line-height: 1.15;
+    min-width: 66px;
+    padding: 2px 15px;
+    line-height: 1.1;
 }
 
 .stat + .stat {
@@ -65,13 +63,13 @@
 }
 
 .stat b {
-    font-size: 17px;
+    font-size: 15.5px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
 
 .stat small {
-    font-size: 9.5px;
+    font-size: 9px;
     text-transform: uppercase;
     letter-spacing: 0.09em;
     color: var(--text-dim);
@@ -85,7 +83,7 @@
 /* ---- Progress bar ---- */
 .study-progress {
     width: 100%;
-    max-width: 560px;
+    max-width: 660px;
     height: 4px;
     background: var(--card);
     background: color-mix(in srgb, var(--border) 55%, transparent);
@@ -109,20 +107,23 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    /* 560px: карточка на ПК просторнее (была 480 — выглядела зажатой), видео в
-       ней крупнее, а разбор всё ещё читается колонкой. */
-    max-width: 560px;
+    /* 660px: карточка на ПК широкая — акцент на видео. Видео 16:9 упирается в
+       ШИРИНУ карточки (не в max-height), поэтому ширина — главный рычаг размера
+       кадра: 560→660 даёт заметно крупнее клип. Текст разбора центрирован и
+       читается колонкой (предложение со своим max-width уже). */
+    max-width: 660px;
     /* Карточка держит высоту своего контента и НЕ сжимается: раньше была 0 1 auto
        и на низких экранах ужималась, обрезая (overflow:hidden) низ разбора. Теперь
        если всё не влезло — прокручивается .main (честно, ничего не режем). На
        обычных десктопах (≥900) контент помещается и прокрутки нет. min-height
        держит карточку-вопрос статной. */
     flex: 0 0 auto;
-    min-height: 400px;
+    min-height: 360px;
     overflow: hidden;
-    /* Просторнее по вертикали: карточка «дышит», секции разбора не слипаются
-       (на телефоне компактнее — см. медиазапрос ниже). */
-    padding: 40px 32px;
+    /* Отступы умеренные: раньше 40px сверху/снизу «съедали» высоту у клипа. 22px
+       всё ещё даёт карточке дышать, но акцент отдан видео (на телефоне компактнее
+       — см. медиазапрос ниже). */
+    padding: 22px 32px;
     border: 1px solid var(--border);
     border-radius: 16px;
     background: var(--card);
@@ -229,15 +230,15 @@
     border-bottom: 1px solid var(--border);
     border-image: linear-gradient(90deg,
         transparent, var(--border) 22%, var(--border) 78%, transparent) 1;
-    padding-bottom: 18px;
-    margin-bottom: 18px;
+    padding-bottom: 13px;
+    margin-bottom: 13px;
 }
 
 .back-side {
     display: none;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
     width: 100%;
     max-width: 100%;
 }
@@ -329,7 +330,7 @@
        остаток. Резерв 700 подобран так, чтобы на десктопе ≥900px всё помещалось
        без прокрутки; ниже (ноутбуки 720–800) клип падает до пола 140px, а если
        всё же не влезло — прокручивается .main (ничего не режем). */
-    max-height: clamp(140px, calc(100vh - 700px), 32vh);
+    max-height: clamp(160px, calc(100vh - 560px), 44vh);
     object-fit: contain;
     margin: 0;
 }
@@ -670,8 +671,9 @@
 .main.study .buttons {
     gap: 14px;
     margin-top: 6px;
-    /* По ширине карточки — кнопки не торчат за её края. */
-    max-width: 480px;
+    /* Ближе к ширине карточки (660) — кнопки не выглядят потерянными под широким
+       кадром, но и не торчат за края. */
+    max-width: 540px;
 }
 
 /* «Показать ответ» — тихая пилюля, как .btn--ghost: действие рутинное, не акцент. */
