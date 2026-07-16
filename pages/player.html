@@ -178,9 +178,15 @@
                     <p class="subs-precise-hint" id="subs-precise-status"
                        data-i18n="subs.precise.hint">Найдём точный сдвиг по звуку и сохраним его навсегда для этой серии.</p>
                 </div>
+                <!-- Разделитель: отделяет «точно по звуку» от ручного сдвига -->
+                <div class="subs-picker__divider"></div>
                 <!-- Ручной сдвиг субтитров: если авто/точный промахнулись -->
                 <div class="subs-manual">
-                    <div class="subs-manual__title" data-i18n="subs.manual.title">Сдвинуть субтитры вручную</div>
+                    <div class="subs-manual__head">
+                        <div class="subs-manual__title" data-i18n="subs.manual.title">Сдвинуть вручную</div>
+                        <button class="subs-manual__reset" type="button" id="subs-offset-reset"
+                                data-i18n="subs.manual.reset">Сбросить</button>
+                    </div>
                     <!-- Крупное «табло» текущего сдвига (редактируемое) + ряд кнопок шага под ним. -->
                     <label class="subs-manual__display">
                         <input id="subs-offset-input" type="number" step="0.1" inputmode="decimal"
@@ -195,11 +201,7 @@
                         <button class="subs-manual__btn" type="button" data-delta="0.5">+0.5</button>
                         <button class="subs-manual__btn" type="button" data-delta="5">+5</button>
                     </div>
-                    <div class="subs-manual__foot">
-                        <button class="subs-manual__reset" type="button" id="subs-offset-reset"
-                                data-i18n="subs.manual.reset">Сбросить</button>
-                        <span class="subs-manual__hint" data-i18n="subs.manual.hint">Сохраняется навсегда для этой серии. «+» — показать позже, «−» — раньше.</span>
-                    </div>
+                    <div class="subs-manual__hint" data-i18n="subs.manual.hint">«+» — позже, «−» — раньше. Сохранится для этой серии.</div>
                 </div>
             </div>
         </aside>
