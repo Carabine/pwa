@@ -662,7 +662,33 @@
                 ? String(w.romaji).trim()
                 : (typeof window.kanaToRomaji === 'function' ? window.kanaToRomaji(kana) : '');
             const text = mode === 'romaji' ? (romaji || kana) : kana;
-            if (text) addLine('hiragana', text);
+            if (!text) return;
+
+            const chip = document.createElement('div');
+            chip.className = 'hiragana';
+            chip.textContent = text;
+
+            // Тап по чтению — озвучка слова (совет Codex): произношение под рукой,
+            // без похода в шестерёнку. Озвучиваем кану (однозначное чтение).
+            if (typeof canSpeakJa === 'function' && canSpeakJa()) {
+                const speakText = kana || w.word || w.kanji || text;
+                chip.classList.add('hiragana--speak');
+                chip.setAttribute('role', 'button');
+                chip.setAttribute('tabindex', '0');
+                chip.title = t('study.listen');
+                const spk = document.createElement('span');
+                spk.className = 'hiragana__speak';
+                spk.textContent = '🔊';
+                chip.appendChild(spk);
+                chip.addEventListener('click', () => speakJa(speakText));
+                // Enter — озвучить; stopPropagation, чтобы глобальный onKey не оценил
+                // карточку тем же нажатием. Space оставляем оценке (см. onKey).
+                chip.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); speakJa(speakText); }
+                });
+            }
+
+            els.back.appendChild(chip);
         }
 
         // Панель настроек обучения (шестерёнка в углу карточки). Меняет настройки
@@ -983,8 +1009,15 @@
             els.back.innerHTML = '';
             els.back.classList.add('back-side--visible');
 
-            // Медиа (видео/звук) держим в одном слоте сверху — асинхронная
-            // подгрузка не должна раскидывать их по карточке.
+            // Ядро ответа сразу под словом: перевод (главный акцент) + чтение
+            // (тап — озвучка). Это и есть проверка припоминания — держим её на
+            // верху, чтобы клип не вклинивался между словом и переводом.
+            addLine('meaning', w.meaning ?? w.translation ?? '');
+            renderTranscription(w);
+
+            // Медиа-контекст (клип/озвучка) — ниже ядра, как «награда», а не
+            // преграда (совет Codex). Один слот: асинхронная подгрузка не должна
+            // раскидывать элементы по карточке.
             const mediaSlot = document.createElement('div');
             mediaSlot.className = 'back-media';
             els.back.appendChild(mediaSlot);
@@ -1042,11 +1075,6 @@
             // слово), а не одинокой строкой в самом низу. Без клипа титру там не
             // место (всплыл бы над разбором) — тогда оставляем его внизу (ниже).
             if (w.anime && expectsClip) addLine('card-anime', t('starter.fromAnime') + ' ' + w.anime);
-
-            addLine('meaning', w.meaning ?? w.translation ?? '');
-
-            // Транскрипция слова: хирагана / ромадзи / обе / скрыть (настройка).
-            renderTranscription(w);
 
             // Предложение. По умолчанию — пословно с ромадзи над каждым словом (как
             // в плеере). ИИ-разбор интегрирован органично: сама фраза кликабельна и
