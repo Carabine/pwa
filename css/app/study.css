@@ -170,6 +170,47 @@
     flex-shrink: 0;
 }
 
+/* ---- Свайпы оценки (телефон) ---- */
+/* Горизонталь отдаём нашему жесту (следование за пальцем), вертикаль — прокрутке
+   страницы. На самом видео/аудио восстанавливаем auto — там своя перемотка. */
+.card-area { touch-action: pan-y; }
+.card-area .clip-player,
+.card-area .study-audio { touch-action: auto; }
+
+/* Круглые подсказки действия у краёв карточки: проступают, когда свайп прошёл
+   порог предпросмотра (влево — «Забыл»/красная, вправо — «Помню»/зелёная). */
+.swipe-hint {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%) scale(0.8);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 4;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.swipe-hint--again { left: 14px; background: var(--danger); }
+.swipe-hint--good  { right: 14px; background: var(--success); }
+
+.card-area.is-swipe-again .swipe-hint--again,
+.card-area.is-swipe-good .swipe-hint--good {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .swipe-hint { transition: opacity 0.15s ease; }
+}
+
 .front-side {
     display: flex;
     align-items: center;
@@ -349,16 +390,19 @@
 /* Без transition — перекладка мгновенна, быстрой зубрёжке не мешает.
    Титул заметно крупнее перевода — слово остаётся главным и после открытия. */
 .card-area:has(.back-side--visible) .word {
-    font-size: clamp(32px, 4.5vw, 42px);
-    font-weight: 400;
+    /* Слово остаётся якорем ответа — крупнее и плотнее перевода, чтобы главным
+       оставался объект памяти (японское слово), а не его перевод. */
+    font-size: clamp(34px, 5vw, 46px);
+    font-weight: 500;
     letter-spacing: -0.01em;
     animation: none;
 }
 
-/* Перевод — главная строка ответа. */
+/* Перевод — подтверждение ответа: ясный и акцентный, но чуть спокойнее слова,
+   чтобы не перетягивать взгляд на себя (раньше он был крупнее/ярче самого слова). */
 .meaning {
-    font-size: clamp(21px, 3vw, 27px);
-    font-weight: 700;
+    font-size: clamp(19px, 2.6vw, 24px);
+    font-weight: 600;
     letter-spacing: -0.01em;
     text-align: center;
     text-wrap: balance;
@@ -408,14 +452,15 @@
     max-width: 440px;
 }
 
-/* Из какого аниме слово — как титр в конце фильма. */
+/* Из какого аниме слово — как подпись к кадру: жмётся к клипу сверху
+   (отрицательный отступ гасит flex-gap), читается как «источник этой сцены». */
 .card-anime {
     font-size: 10.5px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--text-dim);
     text-align: center;
-    margin-top: 4px;
+    margin-top: -7px;
 }
 
 /* Кнопка «В коллекцию» на карточке из готовой колоды */
@@ -462,7 +507,7 @@
 /* ---- Ромадзи предложения (настройка обучения) ---- */
 .sentence-romaji {
     font-size: 13.5px;
-    color: var(--primary-hover);
+    color: var(--text-dim);
     text-align: center;
     letter-spacing: 0.2px;
     margin-top: -4px;
@@ -485,8 +530,10 @@
 }
 
 .read-cell__romaji {
+    /* Ромадзи над словами — вспомогательная подсказка, а не акцент: приглушаем,
+       чтобы взгляд шёл на японское письмо, а не на латиницу над ним. */
     font-size: 0.62em;
-    color: var(--primary-hover);
+    color: var(--text-dim);
     user-select: none;
     margin-bottom: 1px;
 }
@@ -529,9 +576,11 @@
         color-mix(in srgb, var(--primary-hover) 80%, #000));
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    box-shadow: 0 3px 12px -2px rgba(124, 140, 248, 0.85);
+    box-shadow: 0 3px 12px -2px rgba(124, 140, 248, 0.55);
     cursor: pointer;
-    animation: spark-attn 2.6s ease-in-out infinite;
+    /* Одноразовое мягкое появление вместо вечной пульсации: раньше искорка
+       «дышала» на каждой карточке и конкурировала с клипом за внимание. */
+    animation: spark-in 0.45s ease-out;
     transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
 }
 
@@ -553,10 +602,9 @@
     flex-shrink: 0;
 }
 
-/* Мягкое «дыхание» подсветки — привлекает внимание, но не мельтешит. */
-@keyframes spark-attn {
-    0%, 100% { box-shadow: 0 3px 12px -2px rgba(124, 140, 248, 0.5); }
-    50% { box-shadow: 0 3px 20px 0 rgba(124, 140, 248, 0.95); }
+/* Искорка мягко «влетает» один раз при показе разбора — не мельтешит. */
+@keyframes spark-in {
+    from { opacity: 0; transform: scale(0.6); }
 }
 
 .sentence__spark.is-loading {
@@ -592,53 +640,67 @@
     max-width: 480px;
 }
 
-.main.study .show-btn,
-.main.study .keep-word-btn,
-.main.study .bury-word-btn {
-    border: none;
+/* «Показать ответ» — тихая пилюля, как .btn--ghost: действие рутинное, не акцент. */
+.main.study .show-btn {
+    border: 1px solid var(--border);
     border-radius: 999px;
     padding: 13px 32px;
     font-weight: 600;
     font-size: 13.5px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: #fff;
-    transition: background var(--transition), transform 0.15s ease, box-shadow 0.2s ease;
-}
-
-/* «Показать ответ» — тихая, как .btn--ghost: действие рутинное, не акцент. */
-.main.study .show-btn {
     background: var(--card);
-    border: 1px solid var(--border);
     color: var(--text);
+    transition: background var(--transition), transform 0.15s ease, border-color var(--transition);
 }
 
-.main.study .keep-word-btn {
-    min-width: 120px;
-    background: var(--danger);
-}
-
-.main.study .bury-word-btn {
-    min-width: 120px;
-    background: var(--success);
-}
-
-/* Ховеры — как у остальных кнопок приложения (buttons.css). */
 .main.study .show-btn:hover {
     background: var(--border);
     transform: translateY(-1px);
 }
 
+/* Оценка памяти — две мягкие плашки, а не «светофор» из залитых красной/зелёной
+   кнопок (сплошной красный читался как «удалить»). Лёгкая заливка + акцентная
+   граница и текст, в один тон с чипами приложения. Внутри — подпись и мелкая
+   подсказка-следствие: «когда увижу карточку снова». */
+.main.study .keep-word-btn,
+.main.study .bury-word-btn {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 134px;
+    padding: 9px 26px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    line-height: 1.15;
+    transition: background var(--transition), border-color var(--transition), transform 0.15s ease;
+}
+
+.main.study .keep-word-btn {
+    background: color-mix(in srgb, var(--danger) 15%, var(--card));
+    border-color: color-mix(in srgb, var(--danger) 42%, transparent);
+    color: var(--danger-hover);
+}
+
+.main.study .bury-word-btn {
+    background: color-mix(in srgb, var(--success) 15%, var(--card));
+    border-color: color-mix(in srgb, var(--success) 42%, transparent);
+    color: var(--success-hover);
+}
+
 .main.study .keep-word-btn:hover {
-    background: var(--danger-hover);
+    background: color-mix(in srgb, var(--danger) 26%, var(--card));
+    border-color: color-mix(in srgb, var(--danger) 62%, transparent);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.4);
 }
 
 .main.study .bury-word-btn:hover {
-    background: var(--success-hover);
+    background: color-mix(in srgb, var(--success) 26%, var(--card));
+    border-color: color-mix(in srgb, var(--success) 62%, transparent);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 .main.study .buttons button:active {
@@ -649,6 +711,37 @@
 .main.study .buttons button:focus-visible {
     outline: 2px solid var(--primary-hover);
     outline-offset: 2px;
+}
+
+.rate__label {
+    font-size: 13.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.rate__hint {
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    /* Строчными (buttons.css делает кнопки uppercase) — «через 7 дн» человечнее,
+       чем «ЧЕРЕЗ 7 ДН», и не спорит с подписью-капсом над ней. */
+    text-transform: none;
+    opacity: 0.72;
+}
+
+/* Клавиша-подсказка (1/2) — деликатно в углу кнопки, только на десктопе
+   (устройства с точным указателем и наведением); на тач-экране скрыта. */
+@media (hover: hover) and (pointer: fine) {
+    .main.study .buttons button[data-key]::before {
+        content: attr(data-key);
+        position: absolute;
+        top: 6px;
+        left: 10px;
+        font-size: 9.5px;
+        font-weight: 700;
+        opacity: 0.4;
+    }
 }
 
 /* ---- Редактор длины аудио (±1с к началу/концу) ---- */

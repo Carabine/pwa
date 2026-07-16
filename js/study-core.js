@@ -584,6 +584,50 @@
             return btn;
         }
 
+        // Кнопка оценки памяти: подпись + мелкая подсказка-следствие под ней
+        // («когда увижу снова»), чтобы «Забыл/Помню» читались как оценка, а не
+        // как красное/зелёное «удалить/подтвердить».
+        function makeRateButton(label, hint, key, className, handler) {
+            const btn = document.createElement('button');
+            btn.className = className;
+            btn.type = 'button';
+            if (key) btn.dataset.key = key;    // «1»/«2» — CSS покажет только на десктопе
+            btn.addEventListener('click', handler);
+            const main = document.createElement('span');
+            main.className = 'rate__label';
+            main.textContent = label;
+            btn.appendChild(main);
+            if (hint) {
+                const sub = document.createElement('span');
+                sub.className = 'rate__hint';
+                sub.textContent = hint;
+                btn.appendChild(sub);
+            }
+            return btn;
+        }
+
+        function formatDueHint(days) {
+            if (days <= 0) return t('study.hint.soon');
+            if (days === 1) return t('study.hint.tomorrow');
+            return t('study.hint.days').replace('{n}', days);
+        }
+
+        // Что произойдёт с текущей карточкой при каждой оценке. «Забыл» всегда
+        // возвращает её почти сразу; «Помню» — либо ещё в этой сессии (идут шаги
+        // обучения), либо через реальный интервал повторения (дни). В cram-режиме
+        // расписания нет — у «Помню» подсказки нет.
+        function ratingHints() {
+            // Cram-режим — расписания нет; подсказки-интервалы не показываем вовсе,
+            // чтобы обе кнопки были одинаковой (однострочной) высоты.
+            if (!scheduled || !current) return { again: '', good: '' };
+            const again = t('study.hint.min');
+            const nextLeft = current.left - 1;
+            if (nextLeft > 0) return { again, good: t('study.hint.soon') };
+            const prev = schedule[current.id] ?? { interval: 0 };
+            const days = current.failed ? 1 : nextInterval(prev.interval);
+            return { again, good: formatDueHint(days) };
+        }
+
         function renderFront() {
             els.back.innerHTML = '';
             els.back.classList.remove('back-side--visible');
@@ -994,6 +1038,11 @@
                 });
             }
 
+            // «Источник» — титр сразу под кадром (подпись к сцене, из которой
+            // слово), а не одинокой строкой в самом низу. Без клипа титру там не
+            // место (всплыл бы над разбором) — тогда оставляем его внизу (ниже).
+            if (w.anime && expectsClip) addLine('card-anime', t('starter.fromAnime') + ' ' + w.anime);
+
             addLine('meaning', w.meaning ?? w.translation ?? '');
 
             // Транскрипция слова: хирагана / ромадзи / обе / скрыть (настройка).
@@ -1044,7 +1093,8 @@
 
             addLine('translatedSentence', w.translatedSentence ?? w.sentenceTranslation ?? '');
 
-            if (w.anime) addLine('card-anime', t('starter.fromAnime') + ' ' + w.anime);
+            // Карточка без клипа — титр аниме внизу (под клипом его нет).
+            if (w.anime && !expectsClip) addLine('card-anime', t('starter.fromAnime') + ' ' + w.anime);
 
             // В готовой колоде слово можно забрать к себе в коллекцию
             if (collectable && w._card && typeof saveWord === 'function') {
@@ -1074,9 +1124,10 @@
                 els.back.appendChild(btn);
             }
 
+            const hints = ratingHints();
             els.buttons.innerHTML = '';
-            els.buttons.appendChild(makeButton(t('study.again'), 'keep-word-btn', answerAgain));
-            els.buttons.appendChild(makeButton(t('study.good'), 'bury-word-btn', answerGood));
+            els.buttons.appendChild(makeRateButton(t('study.again'), hints.again, '1', 'keep-word-btn', answerAgain));
+            els.buttons.appendChild(makeRateButton(t('study.good'), hints.good, '2', 'bury-word-btn', answerGood));
 
             if (w.hint && els.hintBtn && els.modalContent) {
                 els.hintBtn.classList.remove('hidden');
@@ -1216,6 +1267,81 @@
             }
         }
 
+        // ---- Свайпы оценки на телефоне -------------------------------------
+        // Карточка следует за пальцем; у края проступает подсказка действия
+        // (влево — «Забыл», вправо — «Помню»). На вопросе любой горизонтальный
+        // свайп раскрывает ответ. Вертикаль отдаём прокрутке (порог + доминанта
+        // оси). Свайпы, начатые на интерактиве (видео/аудио/кнопки/ИИ-фраза),
+        // игнорируем — у них своя механика (перемотка, тап-разбор).
+        function wireSwipe() {
+            const card = document.querySelector('.card-area');
+            if (!card) return;
+
+            const againHint = document.createElement('div');
+            againHint.className = 'swipe-hint swipe-hint--again';
+            againHint.textContent = '↺';
+            const goodHint = document.createElement('div');
+            goodHint.className = 'swipe-hint swipe-hint--good';
+            goodHint.textContent = '✓';
+            card.appendChild(againHint);
+            card.appendChild(goodHint);
+
+            const DEAD = 10;       // мёртвая зона — отсечь тапы/микродвижения
+            const PREVIEW = 40;    // порог, с которого подсвечиваем цель
+            const COMMIT = 70;     // порог срабатывания оценки
+            let startX = 0, startY = 0, dx = 0, tracking = false;
+
+            function blocked(target) {
+                return target.closest(
+                    'button, a, input, textarea, audio, video, .clip-player, .sentence--ai, .study-audio');
+            }
+
+            function reset(animate) {
+                card.style.transition = animate ? 'transform 0.2s ease' : 'none';
+                card.style.transform = '';
+                card.classList.remove('is-swipe-again', 'is-swipe-good');
+                tracking = false;
+                dx = 0;
+            }
+
+            card.addEventListener('touchstart', (e) => {
+                if (!current || e.touches.length !== 1 || blocked(e.target)) return;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                dx = 0;
+                tracking = true;
+                card.style.transition = 'none';
+            }, { passive: true });
+
+            card.addEventListener('touchmove', (e) => {
+                if (!tracking) return;
+                dx = e.touches[0].clientX - startX;
+                const dy = e.touches[0].clientY - startY;
+                // Вертикальное намерение — отдаём странице прокрутку, свайп отменяем.
+                if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > DEAD) { reset(false); return; }
+                if (Math.abs(dx) < DEAD) return;
+                card.style.transform = `translateX(${dx * 0.5}px)`;
+                if (els.back.classList.contains('back-side--visible')) {
+                    card.classList.toggle('is-swipe-good', dx > PREVIEW);
+                    card.classList.toggle('is-swipe-again', dx < -PREVIEW);
+                }
+            }, { passive: true });
+
+            card.addEventListener('touchend', () => {
+                if (!tracking) return;
+                const back = els.back.classList.contains('back-side--visible');
+                const dir = dx;                   // фиксируем до reset() — он обнуляет dx
+                const committed = Math.abs(dir) > COMMIT;
+                reset(true);
+                if (!committed) return;
+                if (!back) renderBack();          // вопрос: свайп раскрывает ответ
+                else if (dir > 0) answerGood();
+                else answerAgain();
+            });
+
+            card.addEventListener('touchcancel', () => reset(true));
+        }
+
         // ---- Wiring --------------------------------------------------------
         function wireModal() {
             const overlay = document.getElementById('modal-overlay');
@@ -1231,6 +1357,7 @@
 
         // ---- Bootstrap -----------------------------------------------------
         wireModal();
+        wireSwipe();
         mountStudySettings();
         mountCardEdit();
         document.addEventListener('keydown', onKey);
