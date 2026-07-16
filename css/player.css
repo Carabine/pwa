@@ -1012,46 +1012,48 @@ html, body {
     margin-bottom: 8px;
 }
 
-/* Поле по центру ряда: число читается как жирный акцентный текст (не «коробка»,
-   которая была выше кнопок и выглядела громоздко), рядом единица «с» — как в
-   прежнем дизайне, но теперь редактируемое. */
-.subs-manual__input {
-    display: inline-flex;
+/* Крупное «табло» текущего сдвига — редактируемое, сразу читается (в т.ч. когда
+   автосинк поставил большой сдвиг). Отдельной строкой над кнопками шага; заменило
+   прежнее тесное поле-коробку внутри ряда, из-за которого панель выглядела криво. */
+.subs-manual__display {
+    display: flex;
     align-items: baseline;
     justify-content: center;
-    gap: 2px;
-    flex: 0 0 auto;
-    margin: 0 6px;
+    gap: 4px;
+    margin-bottom: 12px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
 }
 
-.subs-manual__input input {
-    width: 48px;
-    padding: 2px 0;
+.subs-manual__display:focus-within {
+    border-color: var(--primary);
+}
+
+.subs-manual__display input {
+    width: 92px;
+    padding: 0;
     border: none;
-    border-bottom: 1px solid transparent;
     background: none;
     color: var(--primary-hover);
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 26px;
+    font-weight: 800;
     text-align: center;
     font-variant-numeric: tabular-nums;
     -moz-appearance: textfield;
 }
 
-/* Подчёркивание при фокусе — подсказка, что число можно вписать вручную. */
-.subs-manual__input input:focus {
-    outline: none;
-    border-bottom-color: var(--primary);
-}
+.subs-manual__display input:focus { outline: none; }
 
-.subs-manual__input input::-webkit-outer-spin-button,
-.subs-manual__input input::-webkit-inner-spin-button {
+.subs-manual__display input::-webkit-outer-spin-button,
+.subs-manual__display input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
 .subs-manual__unit {
-    font-size: 12px;
+    font-size: 15px;
     color: var(--text-dim);
 }
 
@@ -1683,16 +1685,23 @@ html, body {
         overflow: hidden;
         align-items: stretch;
         grid-template-rows: minmax(0, 1fr);
-        /* Колонки ФИКСИРОВАННЫЕ: левая — 1fr, список субтитров — 340px. Раньше
-           ширину левой колонки задавал измеренный --video-w, и получалась петля
-           обратной связи: длинная реплика растит блок под видео → видео уже →
-           --video-w меньше → колонка уже → весь контейнер (вместе с панелью
-           субтитров) прыгал по ширине. Теперь контейнер стабилен: «дышит» только
-           само видео, центрируясь внутри своей колонки (align-self: center). */
-        grid-template-columns: minmax(0, 1fr) 340px;
+        /* По краям — резиновые распорки minmax(0,1fr), в центре пара «видео
+           (--video-w) + список субтитров (340px)». Так между видео и субтитрами
+           обычный gap, а не пол-колонки пустоты (раньше левая колонка была 1fr и
+           кадр центрировался внутри неё — субтитры уезжали к правому краю). Ширину
+           видео задаёт --video-w (кладёт JS по кадру 16:9) и она НЕ зависит от длины
+           реплики, поэтому контейнер по ширине стабилен — распорки лишь симметрично
+           центрируют пару, «дышит» только само видео. До первого замера ResizeObserver
+           колонка видео — auto (один кадр). Когда слака нет (узкий экран), распорки
+           схлопываются в 0 и пара просто прижимается друг к другу. */
+        grid-template-columns: minmax(0, 1fr) var(--video-w, auto) 340px minmax(0, 1fr);
     }
 
+    /* Явные колонки: видео — во 2-й (--video-w), список субтитров — в 3-й (340px);
+       1-я и 4-я — пустые распорки. Без этого автораскладка положила бы два грид-
+       элемента в первые две колонки (распорка + видео). */
     .player-main {
+        grid-column: 2;
         display: flex;
         flex-direction: column;
         min-height: 0;
@@ -1727,6 +1736,7 @@ html, body {
     }
 
     .transcript {
+        grid-column: 3;
         height: auto;
         min-height: 0;
     }
