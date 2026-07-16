@@ -16,7 +16,12 @@ function applyAuthMode() {
     if (pw) pw.autocomplete = isLogin ? 'current-password' : 'new-password';
 }
 
+let authSubmitting = false;
 async function submitAuth() {
+    // Re-entry guard: без него двойной сабмит (двойной клик / Enter) запускал
+    // перенос гостевых слов дважды параллельно → дубли слов на сервере.
+    if (authSubmitting) return;
+
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
@@ -24,6 +29,10 @@ async function submitAuth() {
         showSnackbar(t('auth.needFields'), { duration: 3000, type: 'error' });
         return;
     }
+
+    authSubmitting = true;
+    const submitBtn = document.getElementById('submit-btn');
+    if (submitBtn) submitBtn.disabled = true;
 
     const path = authMode === 'login' ? '/api/v1/auth/login' : '/api/v1/auth/register';
     try {
@@ -37,6 +46,10 @@ async function submitAuth() {
     } catch (err) {
         const msg = err?.response?.data?.message || t('auth.error');
         showSnackbar(msg, { duration: 4000, type: 'error' });
+        // Ошибка — разблокируем форму для повторной попытки. При успехе оставляем
+        // заблокированной: идёт навигация на главную.
+        authSubmitting = false;
+        if (submitBtn) submitBtn.disabled = false;
     }
 }
 

@@ -68,10 +68,20 @@
         removeBtn.textContent = t('words.audioRemove');
         removeBtn.hidden = true;
 
+        // refresh() зовётся многократно (загрузка/запись/удаление звука). Каждый
+        // getWordAudioUrl у гостя создаёт новый blob-URL — старый освобождаем,
+        // иначе они копятся до перезагрузки страницы.
+        let currentAudioUrl = null;
+        function releaseAudioUrl() {
+            if (currentAudioUrl && currentAudioUrl.startsWith('blob:')) URL.revokeObjectURL(currentAudioUrl);
+            currentAudioUrl = null;
+        }
         async function refresh() {
             if (typeof getWordAudioUrl !== 'function') return;
             const url = await getWordAudioUrl(wordData);
+            releaseAudioUrl();
             if (url) {
+                currentAudioUrl = url;
                 player.src = url;
                 player.hidden = false;
                 removeBtn.hidden = false;

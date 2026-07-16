@@ -1,6 +1,6 @@
 // Пути относительные — SW живёт в /app/, поэтому './' указывает на /app/.
 // ВАЖНО: меняй номер версии при каждом деплое — иначе старый кеш не сбросится.
-const CACHE_NAME = 'animei-cache-v0.0.146';
+const CACHE_NAME = 'animei-cache-v0.0.147';
 const urlsToCache = [
     './',
     './index.html',
@@ -13,6 +13,9 @@ const urlsToCache = [
     './pages/login.html',
     './pages/feedback.html',
     './pages/settings.html',
+    './pages/catalog.html',
+    './pages/player.html',
+    './pages/stats.html',
     './css/app.css',
     './css/watch.css',
     './js/settings.js',
@@ -28,6 +31,8 @@ const urlsToCache = [
     './js/deck-study.js',
     './js/player-ui.js',
     './js/watch.js',
+    './js/catalog.js',
+    './js/player.js',
     './js/axiosClient.js',
     './js/words-store.js',
     './js/decks-store.js',
@@ -79,7 +84,17 @@ self.addEventListener('fetch', (event) => {
                 }
                 return response;
             })
-            .catch(() => caches.match(request))
+            .catch(async () => {
+                // Офлайн: сначала точная копия страницы/ресурса. Если её нет
+                // (страницу ещё не открывали онлайн), для навигаций отдаём
+                // app-shell — index.html, — вместо сетевой ошибки.
+                const cached = await caches.match(request);
+                if (cached) return cached;
+                if (request.mode === 'navigate') {
+                    return (await caches.match('./index.html')) || (await caches.match('./'));
+                }
+                return Response.error();
+            })
     );
 });
 

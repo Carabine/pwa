@@ -186,7 +186,17 @@ async function getWordAudioUrl(word) {
 
 // Перенести локальные слова гостя в только что вошедший аккаунт.
 // Вызывать сразу после успешного входа/регистрации (токены уже сохранены).
-async function syncGuestWordsToAccount() {
+// single-flight: два параллельных вызова (напр. двойной сабмит формы входа)
+// прочитали бы один и тот же localStorage и создали дубли слов / погонялись за
+// удалением медиа. Повторный вызов возвращает уже идущий промис.
+let guestSyncInFlight = null;
+function syncGuestWordsToAccount() {
+    if (guestSyncInFlight) return guestSyncInFlight;
+    guestSyncInFlight = runGuestSync().finally(() => { guestSyncInFlight = null; });
+    return guestSyncInFlight;
+}
+
+async function runGuestSync() {
     const words = getGuestWords();
     if (!words.length) return;
 

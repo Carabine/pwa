@@ -335,11 +335,17 @@
         return typeof isLoggedIn === 'function' && isLoggedIn() && typeof client !== 'undefined';
     }
 
+    // Отправки сериализуем в одну цепочку: без этого два POST'а по одному слову
+    // могли уйти параллельно и прийти на сервер в обратном порядке, затерев
+    // свежий прогресс старым (сервер пишет последним-выигравшим, без версии).
+    let srsQueue = Promise.resolve();
     function pushSrsToServer(wordId, entry) {
         if (!canSync() || String(wordId).startsWith('local-')) return;
-        client.post('words/srs', {
-            updates: [{ id: wordId, ...entry }],
-        }).catch(() => { /* нет сети — локальная копия расписания всё равно есть */ });
+        srsQueue = srsQueue.then(() =>
+            client.post('words/srs', {
+                updates: [{ id: wordId, ...entry }],
+            }).catch(() => { /* нет сети — локальная копия расписания всё равно есть */ })
+        );
     }
 
     // На новом устройстве локального расписания нет — берём его с сервера
@@ -768,6 +774,12 @@
 
             const video = document.createElement('video');
             video.src = src;
+            // blob-URL из IndexedDB освобождаем, как только видео загрузило данные
+            // (элемент дальше держит blob сам) — иначе URL'ы копились бы до
+            // перезагрузки вкладки. Для http-ссылок revoke — безвредный no-op.
+            if (typeof src === 'string' && src.startsWith('blob:')) {
+                video.addEventListener('loadeddata', () => URL.revokeObjectURL(src), { once: true });
+            }
             // Стартом/остановкой управляем вручную (нужно окно [tStart..tEnd]).
             video.autoplay = false;
             video.loop = false;
@@ -972,6 +984,9 @@
                     if (!els.back.classList.contains('back-side--visible')) return;
                     const audio = document.createElement('audio');
                     audio.src = url;
+                    if (typeof url === 'string' && url.startsWith('blob:')) {
+                        audio.addEventListener('loadeddata', () => URL.revokeObjectURL(url), { once: true });
+                    }
                     audio.controls = true;
                     audio.className = 'study-audio';
                     audio.volume = 0.9;
