@@ -901,6 +901,12 @@ html, body {
 .transcript__jump svg {
     width: 17px;
     height: 17px;
+    transition: transform 0.2s ease;
+}
+
+/* Текущая реплика выше видимой области — разворачиваем стрелку вверх. */
+.transcript__jump--up svg {
+    transform: rotate(180deg);
 }
 
 /* Панель ручного выбора субтитров */
@@ -1006,23 +1012,25 @@ html, body {
     margin-bottom: 8px;
 }
 
-/* Поле ручного ввода сдвига (можно вписать число), отдельной строкой над кнопками. */
+/* Поле ручного ввода сдвига (можно вписать число) — по центру ряда, между
+   минусами и плюсами. Не тянется как кнопки: своя ширина, небольшой зазор. */
 .subs-manual__input {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    margin-bottom: 8px;
+    gap: 4px;
+    flex: 0 0 auto;
+    margin: 0 3px;
 }
 
 .subs-manual__input input {
-    width: 84px;
-    padding: 7px 8px;
+    width: 60px;
+    padding: 7px 6px;
     border-radius: 8px;
     background: var(--surface);
     border: 1px solid var(--border);
     color: var(--primary-hover);
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     text-align: center;
     font-variant-numeric: tabular-nums;
@@ -1673,11 +1681,13 @@ html, body {
         overflow: hidden;
         align-items: stretch;
         grid-template-rows: minmax(0, 1fr);
-        /* Левую колонку сужаем РОВНО до кадра (--video-w кладёт JS), а пару
-           «видео + список субтитров» центрируем — так между ними обычный отступ
-           (gap), а не пол-экрана пустоты. До готовности --video-w — как раньше. */
-        grid-template-columns: minmax(0, var(--video-w, 1fr)) 340px;
-        justify-content: center;
+        /* Колонки ФИКСИРОВАННЫЕ: левая — 1fr, список субтитров — 340px. Раньше
+           ширину левой колонки задавал измеренный --video-w, и получалась петля
+           обратной связи: длинная реплика растит блок под видео → видео уже →
+           --video-w меньше → колонка уже → весь контейнер (вместе с панелью
+           субтитров) прыгал по ширине. Теперь контейнер стабилен: «дышит» только
+           само видео, центрируясь внутри своей колонки (align-self: center). */
+        grid-template-columns: minmax(0, 1fr) 340px;
     }
 
     .player-main {

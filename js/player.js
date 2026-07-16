@@ -1345,6 +1345,9 @@ function syncCues() {
             state.autoPauseAt = state.cues[idx].end + state.offset;
         }
     }
+    // Реплика сменилась, пока список пролистан вручную — стрелка «К текущей» могла
+    // поменять сторону (текущая реплика уехала выше/ниже кадра).
+    if (!jumpBtn.hidden) updateJumpDirection();
 }
 
 // timeupdate срабатывает всего ~4 раза в секунду — реплика появлялась с опозданием
@@ -1387,6 +1390,39 @@ function updateJumpVisibility() {
     const show = !state.followCue && !state.syncing;
     jumpBtn.hidden = !show;
     jumpBtn.classList.toggle('is-visible', show);
+    if (show) updateJumpDirection();
+}
+
+// Стрелку на кнопке разворачиваем по направлению к текущей реплике: если она выше
+// видимой области списка (пользователь пролистал вниз) — стрелка вверх; если ниже —
+// вниз. Класс --up разворачивает иконку (см. player.css).
+function currentCueEl() {
+    let el = transcriptList.querySelector('.cue--active');
+    // Между репликами активной нет — берём последнюю прозвучавшую (как в setFollowCue).
+    if (!el && state.cues.length) {
+        const t = video.currentTime;
+        let idx = 0;
+        for (let i = 0; i < state.cues.length; i++) {
+            if (state.cues[i].start + state.offset <= t) idx = i;
+            else break;
+        }
+        el = transcriptList.querySelector(`.cue[data-index="${idx}"]`);
+    }
+    return el;
+}
+
+function updateJumpDirection() {
+    if (jumpBtn.hidden) return;
+    const listRect = transcriptList.getBoundingClientRect();
+    // Панель субтитров может быть display:none (напр. вкладка «Настройки» на телефоне) —
+    // тогда rect нулевой, и измерение затёрло бы верную сторону стрелки. Не трогаем.
+    if (!listRect.height) return;
+    const el = currentCueEl();
+    if (!el) return;
+    const elRect = el.getBoundingClientRect();
+    const cueMid = elRect.top + elRect.height / 2;
+    // Реплика выше видимой области → возвращаться вверх; иначе (ниже/в кадре) — вниз.
+    jumpBtn.classList.toggle('transcript__jump--up', cueMid < listRect.top);
 }
 
 function setFollowCue(on) {
@@ -1416,6 +1452,7 @@ function setFollowCue(on) {
 // Ловим и перетаскивание ползунка скроллбара: любой scroll, который сделали не мы
 transcriptList.addEventListener('scroll', () => {
     if (!programmaticScroll && state.followCue) setFollowCue(false);
+    else updateJumpDirection(); // кнопка видна — держим стрелку в актуальную сторону
 }, { passive: true });
 
 jumpBtn.addEventListener('click', () => setFollowCue(true));
