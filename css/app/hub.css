@@ -539,3 +539,32 @@
         flex: 1 1 200px;
     }
 }
+
+
+/* ========== ДЕСКТОП ==========
+   400px-колонка посреди широкого экрана выглядела пустой, а done/empty-карточке
+   в ней было тесно (кольцо + nowrap-CTA сжимали текст в столбик по слову).
+   На десктопе колонка шире, контент по вертикали центрируется (высокого стека
+   там нет), вторичные карточки — одним рядом. */
+@media (min-width: 700px) {
+    .hub {
+        justify-content: center;
+        gap: 18px;
+        padding-bottom: 72px; /* оптический центр чуть выше геометрического */
+    }
+
+    .continue-card,
+    .session-card,
+    .daily-plan,
+    .week-strip,
+    .hub-more {
+        max-width: 620px;
+    }
+
+    .daily-plan { padding: 20px 22px; }
+    .continue-card { padding: 14px 18px 14px 14px; }
+
+    .hub-more__grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
