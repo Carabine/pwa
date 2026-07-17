@@ -1711,7 +1711,11 @@ function renderExplain(data) {
             jp.textContent = b.part;
             const rd = document.createElement('span');
             rd.className = 'explain__reading';
-            rd.textContent = b.reading && b.reading !== b.part ? ' ' + b.reading : '';
+            // Чтение из ИИ всегда хираганой; если пользователь выбрал ромадзи —
+            // транслитерируем, чтобы разбор совпадал с чтением над субтитрами.
+            let readingText = b.reading && b.reading !== b.part ? b.reading : '';
+            if (readingText && state.readingMode === 'romaji') readingText = kanaToRomaji(readingText);
+            rd.textContent = readingText ? ' ' + readingText : '';
             const mean = document.createElement('div');
             mean.className = 'explain__meaning';
             mean.textContent = b.meaning;

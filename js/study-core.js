@@ -58,7 +58,14 @@
                 jp.textContent = b.part;
                 const rd = document.createElement('span');
                 rd.className = 'explain__reading';
-                rd.textContent = b.reading && b.reading !== b.part ? ' ' + b.reading : '';
+                // Чтение из ИИ всегда хираганой; если пользователь выбрал ромадзи —
+                // транслитерируем, чтобы разбор совпадал с чтением над словом.
+                let readingText = b.reading && b.reading !== b.part ? b.reading : '';
+                if (readingText && studyPref('studyTranscription') === 'romaji'
+                    && typeof window.kanaToRomaji === 'function') {
+                    readingText = window.kanaToRomaji(readingText);
+                }
+                rd.textContent = readingText ? ' ' + readingText : '';
                 const mean = document.createElement('div');
                 mean.className = 'explain__meaning';
                 mean.textContent = b.meaning;
