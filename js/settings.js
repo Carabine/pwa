@@ -14,7 +14,7 @@
         theme: 'dark',                 // dark | light | system
         // Плеер / субтитры
         subSize: 'md',                 // sm | md | lg — размер текста субтитров
-        playerRomaji: false,           // показывать ромадзи в плеере по умолчанию
+        playerRomaji: true,            // показывать ромадзи в плеере по умолчанию
         playerTranslation: true,       // показывать перевод в списке субтитров
         autoSyncSubs: true,            // автоматически подгонять сдвиг субтитров
         // Воспроизведение / звук
@@ -22,8 +22,8 @@
         autopause: false,              // авто-пауза после каждой реплики
         loopClips: false,              // зацикливать клипы слов в карточках
         // Режим обучения
-        studyTranscription: 'kana',    // kana | romaji | both | none — транскрипция слова
-        studySentenceRomaji: true,     // ромадзи над каждым словом предложения (по умолч. вкл)
+        studyTranscription: 'romaji',  // kana | romaji | both | none — транскрипция слова
+        studySentenceRomaji: true,     // ромадзи над каждым словом предложения (при ромадзи-транскрипции)
         studyAutoplayClip: true,       // автозапуск клипа на обороте карточки
     };
 

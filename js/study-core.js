@@ -1083,9 +1083,10 @@
             // место (всплыл бы над разбором) — тогда оставляем его внизу (ниже).
             if (w.anime && expectsClip) addLine('card-anime', t('starter.fromAnime') + ' ' + w.anime);
 
-            // Предложение. По умолчанию — пословно с ромадзи над каждым словом (как
-            // в плеере). ИИ-разбор интегрирован органично: сама фраза кликабельна и
-            // помечена искоркой ИИ — отдельной кнопки снизу больше нет.
+            // Предложение. Если выбрана ромадзи-транскрипция (тот же выбор, что и для
+            // слова) — раскладываем пословно с ромадзи над каждым словом, как в плеере;
+            // тумблер studySentenceRomaji позволяет это отключить. ИИ-разбор интегрирован
+            // органично: сама фраза кликабельна и помечена искоркой ИИ.
             const sentenceLine = document.createElement('div');
             sentenceLine.className = 'sentence';
             sentenceLine.textContent = w.sentence ?? '';
@@ -1093,7 +1094,8 @@
                 els.back.appendChild(sentenceLine);
 
                 const wid = current && current.word.id;
-                const withRomaji = studyPref('studySentenceRomaji') !== false; // по умолчанию вкл
+                const romajiMode = studyPref('studyTranscription') === 'romaji';
+                const withRomaji = romajiMode && studyPref('studySentenceRomaji') !== false;
                 if (withRomaji) {
                     fetchSentenceTokens(w.sentence).then((tokens) => {
                         if (!tokens.length || !current || current.word.id !== wid) return;

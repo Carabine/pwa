@@ -79,8 +79,11 @@ const state = {
         const saved = localStorage.getItem('animei:readingMode');
         if (saved === 'romaji') return 'romaji';
         if (saved === 'kana') return 'kana';
-        if (localStorage.getItem('animei:romaji') === 'on') return 'romaji';
-        return 'kana';
+        // Легаси-ключ плеера: уважаем явный выбор старых пользователей.
+        const legacy = localStorage.getItem('animei:romaji');
+        if (legacy === 'on') return 'romaji';
+        if (legacy === 'off') return 'kana';
+        return 'romaji'; // новый пользователь — по умолчанию ромадзи
     })(),
     aiAvailable: false,
     knownWords: new Set(),
