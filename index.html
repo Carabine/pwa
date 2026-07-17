@@ -67,58 +67,44 @@
         </div>
     </header>
 
-    <div class="hub">
+    <div class="hub" id="hub">
         <a class="continue-card" id="continue-card" hidden></a>
         <div class="session-card" id="session-card" hidden></div>
-        <a href="./pages/study.html" class="hub-card">
-            <div class="hub-card__icon hub-card__icon--study">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+
+        <!-- Дневной план — ядро главной: конечная порция на сегодня (due + fresh +
+             оценка времени + состояние «на сегодня всё»). Наполняет app.js. -->
+        <a class="daily-plan" id="daily-plan" href="./pages/study.html" hidden></a>
+
+        <!-- Недельная активность: стрик и дни занятий. Наполняет app.js. -->
+        <div class="week-strip" id="week-strip" hidden></div>
+
+        <!-- Вторичное: способы пополнять словарь и прочие режимы. Раньше
+             конкурировали с учёбой на первом уровне — теперь понижены. -->
+        <div class="hub-more">
+            <span class="hub-more__title" data-i18n="hub.more">Ещё</span>
+            <div class="hub-more__grid">
+                <a href="./pages/catalog.html" class="mini-card">
+                    <span class="mini-card__icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </span>
+                    <span class="mini-card__label" data-i18n="hub.pickAnime">Выбрать другое аниме</span>
+                </a>
+                <a href="./pages/beginner.html" class="mini-card">
+                    <span class="mini-card__icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4-2 7-6 7-11V5l-7-3-7 3v6c0 5 3 9 7 11z"/><path d="M9 12l2 2 4-4"/></svg>
+                    </span>
+                    <span class="mini-card__label" data-i18n="hub.beginner">Для новичков</span>
+                </a>
+                <a href="./pages/custom-study.html" class="mini-card" id="custom-study-card">
+                    <span class="mini-card__icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+                    </span>
+                    <span class="mini-card__label" data-i18n="hub.custom">Повторить всё</span>
+                </a>
+                <!-- «Своё видео» (watch.html) не добавляем: страница временно
+                     скрыта продуктом — см. правило a[href$="watch.html"] в misc.css. -->
             </div>
-            <div class="hub-card__info">
-                <span data-i18n="hub.study">Учёба</span>
-                <span class="hub-card__subtitle" data-i18n="hub.study.sub">Ежедневное интервальное повторение</span>
-                <span class="hub-card__progress" id="study-progress" hidden></span>
-            </div>
-        </a>
-        <a href="./pages/beginner.html" class="hub-card">
-            <div class="hub-card__icon hub-card__icon--beginner">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4-2 7-6 7-11V5l-7-3-7 3v6c0 5 3 9 7 11z"/><path d="M9 12l2 2 4-4"/></svg>
-            </div>
-            <div class="hub-card__info">
-                <span data-i18n="hub.beginner">Для новичков</span>
-                <span class="hub-card__subtitle" data-i18n="hub.beginner.sub">Готовая колода: 50 простых слов из известных аниме</span>
-            </div>
-        </a>
-        <a href="./pages/custom-study.html" class="hub-card" id="custom-study-card">
-            <div class="hub-card__icon hub-card__icon--custom">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            </div>
-            <div class="hub-card__info">
-                <span data-i18n="hub.custom">Повторить всё</span>
-                <span class="hub-card__subtitle" data-i18n="hub.custom.sub">Все слова без расписания</span>
-            </div>
-        </a>
-        <a href="./pages/catalog.html" class="hub-card hub-card--accent">
-            <div class="hub-card__icon" style="background: rgba(244, 63, 94, 0.15); color: var(--danger);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            </div>
-            <div class="hub-card__info">
-                <span class="hub-card__label">
-                    <span data-i18n="hub.catalog">Каталог аниме</span>
-                    <span class="hub-card__badge" data-i18n="hub.catalog.badge">словарь</span>
-                </span>
-                <span class="hub-card__subtitle" data-i18n="hub.catalog.sub">Смотри аниме и кликай по словам — учи их в карточках</span>
-            </div>
-        </a>
-        <a href="./pages/watch.html" class="hub-card">
-            <div class="hub-card__icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            </div>
-            <div class="hub-card__info">
-                <span data-i18n="hub.watch">Watch</span>
-                <span class="hub-card__subtitle" data-i18n="hub.watch.sub">Learn from anime videos</span>
-            </div>
-        </a>
+        </div>
     </div>
 
     <nav class="sidebar" id="sidebar">

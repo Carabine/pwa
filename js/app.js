@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.168';
+const APP_VERSION = 'v0.0.169';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -378,7 +378,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // учёбы на карточке «Учёба».
     renderContinueCard();
     renderSessionCard();
-    renderHomeProgress();
+    renderDailyPlan();
+    renderWeekActivity();
 
     // Гость с лендинга ещё не набрал свою коллекцию — «Повторить всё» ему не по
     // делу и только распыляет. Прячем карточку; после входа в аккаунт вернётся.
@@ -503,31 +504,181 @@ function renderSessionCard() {
     if (window.animeiTrack) window.animeiTrack('session_card', 'home_shown:' + s.words.length);
 }
 
-// «Сегодня: 5 к повторению · 3 новых · 🔥 4 дня подряд» — чтобы было видно,
-// зачем заходить каждый день. Работает только на главной (там есть элемент).
-async function renderHomeProgress() {
-    const el = document.getElementById('study-progress');
+// ---- Дневной план -----------------------------------------------------------
+// Ядро новой главной: учёба показана как конечная порция на сегодня
+// («≈5 мин · 8 повторений · 5 новых → Начать»), а после выполнения — явное «на
+// сегодня всё ✓» с CTA обратно к просмотру. Данные (due/fresh/streak) уже
+// считает srsSummary(). Три визуальных варианта переключаются ?hub=1|2|3.
+
+function escHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function dayKeyOf(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+        + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// Грубая оценка времени порции: повторение ≈10 c, новое слово ≈35 c.
+function estimateMinutes(due, fresh) {
+    return Math.max(1, Math.round((due * 10 + fresh * 35) / 60));
+}
+
+// Цель на сегодня фиксируем один раз за день — чтобы у кольца/полосы был
+// знаменатель («8 из 13 сделано»). Если днём добавились слова и осталось больше
+// цели — поднимаем планку.
+function dailyTarget(remaining) {
+    const day = dayKeyOf(new Date());
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('srs:planTarget') || 'null'); } catch { /* битый JSON */ }
+    let target = (saved && saved.day === day) ? (saved.total || 0) : 0;
+    if (!target || remaining > target) target = remaining;
+    try { localStorage.setItem('srs:planTarget', JSON.stringify({ day, total: target })); } catch { /* недоступен */ }
+    return target;
+}
+
+// Ссылка на незаконченный просмотр (для состояния «на сегодня всё»).
+function resumeHref() {
+    try {
+        const lw = JSON.parse(localStorage.getItem('animei:lastWatch') || 'null');
+        if (lw && lw.id && lw.title) {
+            const p = new URLSearchParams({ id: lw.id, title: lw.title, name: lw.name || lw.title });
+            return './pages/player.html?' + p.toString();
+        }
+    } catch { /* нет данных */ }
+    return '';
+}
+
+function ringHTML(frac, label) {
+    const r = 29, C = 2 * Math.PI * r;
+    const off = C * (1 - Math.max(0, Math.min(1, frac)));
+    return '<div class="daily-plan__ring">' +
+        '<svg viewBox="0 0 64 64">' +
+        '<circle class="dp-ring-bg" cx="32" cy="32" r="' + r + '"></circle>' +
+        '<circle class="dp-ring-fg" cx="32" cy="32" r="' + r + '" stroke-dasharray="' +
+        C.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '"></circle>' +
+        '</svg>' +
+        (label ? '<span class="daily-plan__ring-label">' + escHtml(label) + '</span>' : '') +
+        '</div>';
+}
+
+async function renderDailyPlan() {
+    const el = document.getElementById('daily-plan');
     if (!el || typeof srsSummary !== 'function') return;
 
+    // Вариант оформления: ?hub=1|2|3 (по умолчанию 1). Класс вешаем на .hub.
+    const hub = document.getElementById('hub');
+    if (hub) {
+        const v = new URLSearchParams(location.search).get('hub');
+        hub.classList.add('hub--v' + (['1', '2', '3'].includes(v) ? v : '1'));
+    }
+
+    // srsSummary читает localStorage, так что план строится и без сети.
+    // Серверную синхронизацию пробуем, но её отказ не должен прятать план.
     try {
         await fetchDataFromServer();
         if (typeof mergeServerSchedule === 'function') mergeServerSchedule();
-        const s = srsSummary();
-        if (!s.total) return; // слов ещё нет — нечего показывать
+    } catch { /* нет сети — считаем по локальной копии расписания */ }
 
-        if (s.due + s.fresh === 0) {
-            el.textContent = t('home.allClear');
-            el.classList.add('hub-card__progress--clear');
-        } else {
-            const parts = [];
-            if (s.due) parts.push(s.due + ' ' + t('home.due'));
-            if (s.fresh) parts.push(s.fresh + ' ' + t('home.new'));
-            let text = t('home.today') + ' ' + parts.join(' · ');
-            if (s.streak > 1) text += ' · 🔥 ' + tStreak(s.streak);
-            el.textContent = text;
-        }
+    let s;
+    try { s = srsSummary(); } catch { return; }
+
+    // Ещё нет слов — зовём собирать словарь, а не показываем пустой план.
+    if (!s.total) {
+        el.className = 'daily-plan daily-plan--empty';
+        el.href = './pages/catalog.html';
+        el.innerHTML =
+            '<div class="daily-plan__body">' +
+            '<span class="daily-plan__eyebrow">' + escHtml(t('plan.title')) + '</span>' +
+            '<span class="daily-plan__headline">' + escHtml(t('plan.empty.title')) + '</span>' +
+            '<span class="daily-plan__sub">' + escHtml(t('plan.empty.sub')) + '</span>' +
+            '</div>' +
+            '<span class="daily-plan__cta">' + escHtml(t('plan.empty.cta')) + '</span>';
         el.hidden = false;
-    } catch { /* не вышло посчитать — карточка просто без счётчика */ }
+        return;
+    }
+
+    const remaining = s.due + s.fresh;
+    const target = dailyTarget(remaining);
+    const doneCount = Math.max(0, target - remaining);
+    const frac = target > 0 ? Math.min(1, doneCount / target) : 1;
+
+    if (remaining === 0) {
+        // На сегодня всё — зелёное состояние, CTA обратно к просмотру.
+        el.className = 'daily-plan daily-plan--done';
+        el.href = resumeHref() || './pages/catalog.html';
+        el.innerHTML =
+            ringHTML(1, '✓') +
+            '<div class="daily-plan__body">' +
+            '<span class="daily-plan__eyebrow">' + escHtml(t('plan.title')) + '</span>' +
+            '<span class="daily-plan__headline">' + escHtml(t('plan.done.title')) + '</span>' +
+            '<span class="daily-plan__sub">' + escHtml(t('plan.done.sub')) + '</span>' +
+            '</div>' +
+            '<span class="daily-plan__cta">' + escHtml(t('plan.done.cta')) + '</span>';
+        el.hidden = false;
+        if (window.animeiTrack) window.animeiTrack('daily_plan', 'done');
+        return;
+    }
+
+    // Есть что делать: время + разбивка + прогресс.
+    el.className = 'daily-plan daily-plan--plan';
+    el.href = './pages/study.html';
+    const mins = estimateMinutes(s.due, s.fresh);
+    const chips = [];
+    if (s.due) chips.push('<span class="dp-chip dp-chip--due">' + s.due + ' ' + escHtml(t('plan.reviews')) + '</span>');
+    if (s.fresh) chips.push('<span class="dp-chip dp-chip--new">' + s.fresh + ' ' + escHtml(t('home.new')) + '</span>');
+    el.innerHTML =
+        ringHTML(frac, doneCount + '/' + target) +
+        '<div class="daily-plan__body">' +
+        '<span class="daily-plan__eyebrow">' + escHtml(t('plan.title')) + '</span>' +
+        '<span class="daily-plan__headline">≈ ' + mins + ' ' + escHtml(t('plan.min')) + '</span>' +
+        '<div class="daily-plan__chips">' + chips.join('') + '</div>' +
+        '<div class="daily-plan__bar"><span style="width:' + Math.round(frac * 100) + '%"></span></div>' +
+        '</div>' +
+        '<span class="daily-plan__cta">' + escHtml(doneCount > 0 ? t('plan.resume') : t('plan.start')) + '</span>';
+    el.hidden = false;
+    if (window.animeiTrack) window.animeiTrack('daily_plan', 'shown:' + remaining);
+}
+
+// Небольшая недельная активность: последние 7 дней + серия занятий (🔥).
+// Дни занятий пишет study-core в srs:days ('YYYY-MM-DD').
+function renderWeekActivity() {
+    const el = document.getElementById('week-strip');
+    if (!el) return;
+    let days = [];
+    try { days = JSON.parse(localStorage.getItem('srs:days') || '[]'); } catch { /* битый JSON */ }
+    const active = new Set(Array.isArray(days) ? days : []);
+    if (!active.size) return; // ещё ни одного дня занятий — нечего показывать
+
+    const letters = (t('week.days') || 'Su,Mo,Tu,We,Th,Fr,Sa').split(',');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayK = dayKeyOf(today);
+
+    let cells = '';
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const k = dayKeyOf(d);
+        const cls = 'week-day'
+            + (active.has(k) ? ' week-day--active' : '')
+            + (k === todayK ? ' week-day--today' : '');
+        cells += '<span class="' + cls + '">' + escHtml(letters[d.getDay()] || '') + '</span>';
+    }
+
+    // Серия дней подряд, заканчивая сегодня (или вчера — тогда сегодня ещё можно продолжить).
+    let streak = 0;
+    const cur = new Date(today);
+    if (!active.has(dayKeyOf(cur))) cur.setDate(cur.getDate() - 1);
+    while (active.has(dayKeyOf(cur))) { streak++; cur.setDate(cur.getDate() - 1); }
+
+    el.innerHTML =
+        '<div class="week-strip__days">' + cells + '</div>' +
+        (streak > 1 && typeof tStreak === 'function'
+            ? '<span class="week-strip__streak">🔥 ' + escHtml(tStreak(streak)) + '</span>'
+            : '');
+    el.hidden = false;
 }
 
 function renderAuthState() {

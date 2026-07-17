@@ -43,6 +43,10 @@ function normalizeWord(payload) {
         videoStart: payload.videoStart ?? 0,
         videoEnd: payload.videoEnd ?? 0,
         videoUrl: payload.videoUrl ?? '',
+        ...(payload.trimStart !== null && payload.trimStart !== '' && Number.isFinite(Number(payload.trimStart))
+            ? { trimStart: Number(payload.trimStart) } : {}),
+        ...(payload.trimEnd !== null && payload.trimEnd !== '' && Number.isFinite(Number(payload.trimEnd))
+            ? { trimEnd: Number(payload.trimEnd) } : {}),
     };
 }
 
@@ -92,8 +96,8 @@ async function saveWord(payload) {
         id: makeLocalId(),
         ...data,
         ...(sharedUrl ? { video: sharedUrl } : {}),
-        trimStart: wordDur > 0 ? lead : null,
-        trimEnd: wordDur > 0 ? lead + wordDur : null,
+        trimStart: Number.isFinite(data.trimStart) ? data.trimStart : (wordDur > 0 ? lead : null),
+        trimEnd: Number.isFinite(data.trimEnd) ? data.trimEnd : (wordDur > 0 ? lead + wordDur : null),
     };
     const words = getGuestWords();
     words.push(word);

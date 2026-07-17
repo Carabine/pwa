@@ -5,9 +5,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    /* Раньше центрировали по вертикали (короткое меню). Теперь главная —
+       это дневной план сверху вниз, поэтому контент прижат к верху. */
+    justify-content: flex-start;
     gap: 16px;
-    padding: 40px 20px;
+    padding: 28px 20px 40px;
 }
 
 .hub-card {
@@ -64,17 +66,6 @@
 .hub-card__info {
     display: flex;
     flex-direction: column;
-}
-
-/* Карточка «Каталог» — главный вход для пополнения словаря, выделяем её */
-.hub-card--accent {
-    border-color: rgba(244, 63, 94, 0.45);
-    background: linear-gradient(135deg, rgba(244, 63, 94, 0.08), var(--card) 60%);
-}
-
-.hub-card--accent:hover {
-    border-color: var(--danger);
-    box-shadow: 0 8px 24px rgba(244, 63, 94, 0.18);
 }
 
 /* «Продолжить просмотр» — первый блок главной: постер + серия/таймкод.
@@ -238,16 +229,313 @@
     color: var(--text-dim);
 }
 
-/* На узких экранах «Каталог аниме» + бейдж «словарь» не помещались в одну строку:
-   уменьшаем бейдж и разрешаем ему перенос на вторую строку при нехватке места. */
+/* ========== ДНЕВНОЙ ПЛАН ==========
+   Ядро новой главной: учёба показана как конечная задача на сегодня
+   («8 повторений · 5 новых · ≈5 мин → Начать»), а не как ссылка на раздел.
+   Наполняет app.js (renderDailyPlan). Три визуальных варианта переключаются
+   классом .hub--v1/v2/v3 на контейнере (?hub=1|2|3) — выбираем лучший. */
+.daily-plan {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--text);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 12%, var(--card)), var(--card) 70%);
+    border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+.daily-plan[hidden] { display: none; }
+
+.daily-plan:hover {
+    color: var(--text);
+    transform: translateY(-2px);
+    border-color: var(--primary);
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.daily-plan__body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+}
+
+.daily-plan__eyebrow {
+    font-size: var(--fs-eyebrow);
+    font-weight: 700;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+.daily-plan__headline {
+    font-size: var(--fs-headline);
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.daily-plan__sub {
+    font-size: var(--fs-caption);
+    color: var(--text-muted);
+}
+
+.daily-plan__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.dp-chip {
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.dp-chip--due {
+    background: color-mix(in srgb, var(--success) 16%, transparent);
+    color: var(--success-hover);
+}
+
+.dp-chip--new {
+    background: color-mix(in srgb, var(--primary) 18%, transparent);
+    color: var(--primary-hover);
+}
+
+.daily-plan__cta {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    color: #0a0a0f;
+    font-weight: 700;
+    font-size: var(--fs-body);
+    white-space: nowrap;
+}
+
+/* Кольцо и полоса прогресса — показываются только в своих вариантах. */
+.daily-plan__ring,
+.daily-plan__bar { display: none; }
+
+.daily-plan__ring {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+}
+
+.daily-plan__ring svg {
+    width: 64px;
+    height: 64px;
+    transform: rotate(-90deg);
+}
+
+.daily-plan__ring circle { fill: none; stroke-width: 6; }
+.dp-ring-bg { stroke: var(--border); }
+.dp-ring-fg {
+    stroke: var(--primary);
+    stroke-linecap: round;
+    transition: stroke-dashoffset .4s ease;
+}
+
+.daily-plan__ring-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--fs-caption);
+    font-weight: 700;
+}
+
+.daily-plan__bar {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--border);
+    overflow: hidden;
+}
+
+.daily-plan__bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+}
+
+/* Состояние «на сегодня всё» — зелёный акцент, вторичная CTA к просмотру. */
+.daily-plan--done {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--success) 12%, var(--card)), var(--card) 70%);
+    border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+}
+
+.daily-plan--done:hover {
+    border-color: var(--success);
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--success) 20%, transparent);
+}
+
+.daily-plan--done .daily-plan__eyebrow { color: var(--success-hover); }
+.daily-plan--done .dp-ring-fg { stroke: var(--success); }
+
+.daily-plan--done .daily-plan__cta,
+.daily-plan--empty .daily-plan__cta {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+/* Вариант 1 — «кольцо-герой»: горизонтально, кольцо прогресса слева. */
+.hub--v1 .daily-plan__ring { display: block; }
+.hub--v1 .daily-plan__headline { font-size: var(--fs-title); }
+
+/* Вариант 2 — «карточка-задача»: вертикально, крупная цифра, полоса, CTA во всю ширину. */
+.hub--v2 .daily-plan {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 20px;
+}
+.hub--v2 .daily-plan__headline { font-size: var(--fs-display); }
+.hub--v2 .daily-plan__bar { display: block; }
+.hub--v2 .daily-plan__cta { width: 100%; padding: 13px; }
+
+/* Вариант 3 — «минимальный баннер»: тише фон, компактно, без кольца/полосы. */
+.hub--v3 .daily-plan {
+    background: var(--card);
+    border-color: var(--border);
+    padding: 14px 16px;
+}
+.hub--v3 .daily-plan__headline { font-size: var(--fs-title); }
+.hub--v3 .daily-plan__eyebrow { display: none; }
+
+/* ========== НЕДЕЛЬНАЯ АКТИВНОСТЬ ========== */
+.week-strip {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* На узком экране стрик переносится под кружки, а не обрезается справа */
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 2px 4px 0;
+}
+
+.week-strip[hidden] { display: none; }
+
+.week-strip__days { display: flex; gap: 6px; }
+
+.week-day {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+}
+
+.week-day--active {
+    background: color-mix(in srgb, var(--success) 22%, transparent);
+    border-color: var(--success);
+    color: var(--success-hover);
+}
+
+.week-day--today { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+.week-strip__streak {
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* ========== ВТОРИЧНЫЕ КАРТОЧКИ ==========
+   «Выбрать другое аниме / Для новичков / Повторить всё / Своё видео» — раньше
+   конкурировали с учёбой на первом уровне, теперь понижены в компактную сетку. */
+.hub-more { width: 100%; max-width: 400px; margin-top: 8px; }
+
+.hub-more__title {
+    display: block;
+    font-size: var(--fs-eyebrow);
+    font-weight: 700;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    padding-left: 2px;
+}
+
+.hub-more__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.mini-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    transition: border-color .2s ease, color .2s ease, background .2s ease;
+}
+
+.mini-card:hover {
+    border-color: var(--primary);
+    color: var(--text);
+    background: var(--surface);
+}
+
+.mini-card__icon { display: flex; flex-shrink: 0; color: var(--text-dim); }
+.mini-card:hover .mini-card__icon { color: var(--primary); }
+.mini-card__label { min-width: 0; }
+
+@media (max-width: 360px) {
+    .hub-more__grid { grid-template-columns: 1fr; }
+}
+
+
+/* На телефоне done/empty-состояниям плана тесно в одну строку: nowrap-CTA
+   сжимал текст в столбик по 1-2 слова. Переносим кнопку на свою строку. */
 @media (max-width: 480px) {
-    .hub-card__label {
+    .daily-plan--done,
+    .daily-plan--empty {
         flex-wrap: wrap;
-        gap: 6px;
     }
 
-    .hub-card__badge {
-        font-size: 8.5px;
-        padding: 2px 6px;
+    .daily-plan--done .daily-plan__cta,
+    .daily-plan--empty .daily-plan__cta {
+        width: 100%;
+        margin-top: 2px;
+        padding: 12px;
+    }
+
+    .daily-plan--done .daily-plan__body,
+    .daily-plan--empty .daily-plan__body {
+        flex: 1 1 200px;
     }
 }

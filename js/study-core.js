@@ -965,9 +965,28 @@
             const sync = () => wrap.classList.toggle('is-paused', video.paused);
 
             function startPlayback() {
-                if (tStart > 0) { try { video.currentTime = tStart; } catch { /* not seekable yet */ } }
-                if (autoPlay) video.play().catch(() => {});
-                sync();
+                // currentTime применяется асинхронно. Раньше play() вызывался
+                // в ту же микрозадачу, и на части mp4 браузер успевал начать с
+                // нуля, а не с ручной обрезки. Сначала ждём seeked — так первый
+                // кадр и звук всегда начинаются ровно с trimStart.
+                let settled = false;
+                const afterSeek = () => {
+                    if (settled) return;
+                    settled = true;
+                    if (autoPlay) video.play().catch(() => {});
+                    sync();
+                };
+                if (tStart > 0 && Number.isFinite(video.duration) && video.duration > tStart) {
+                    video.addEventListener('seeked', afterSeek, { once: true });
+                    try {
+                        video.currentTime = tStart;
+                        // Отдельные браузеры не шлют seeked, если кадр уже в
+                        // буфере: не оставляем клип в состоянии «загрузка».
+                        setTimeout(afterSeek, 700);
+                        return;
+                    } catch { /* fallback ниже */ }
+                }
+                afterSeek();
             }
             if (video.readyState >= 1) startPlayback();
             else video.addEventListener('loadedmetadata', startPlayback, { once: true });
