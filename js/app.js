@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.175';
+const APP_VERSION = 'v0.0.176';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -35,6 +35,15 @@ function iconifyLink(a) {
     if (key) span.setAttribute('data-i18n', key);
     span.textContent = label;
     a.appendChild(span);
+    // «NEW» на JP News — сосед подписи (не внутри неё: applyI18n затирает
+    // textContent у data-i18n при смене языка и стёр бы бейдж). В свёрнутой
+    // рейке прячется по opacity вместе с nav-label — см. .nav-new в nav.css.
+    if (key === 'nav.news') {
+        const badge = document.createElement('span');
+        badge.className = 'nav-new';
+        badge.textContent = 'NEW';
+        a.appendChild(badge);
+    }
 }
 
 function addSidebarIcons() {

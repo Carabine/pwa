@@ -239,28 +239,20 @@
     color: var(--primary);
 }
 
-/* Пункт «JP News» с бейджем «NEW» — маленькая пульсирующая метка справа */
-.sidebar__news {
-    position: relative;
-}
-
-.sidebar__news .nav-new {
-    font-size: 8px;
+/* Бейдж «NEW» на пункте «JP News» — статичная метка справа от подписи (иконку
+   ставит JS через iconifyLink; сам бейдж тоже добавляет он). Без анимации. */
+.sidebar .nav-new {
+    margin-left: -4px;         /* компенсируем gap:12px у ссылки — прижать к тексту */
+    align-self: center;
+    font-size: 9px;
     font-weight: 800;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     line-height: 1;
     color: #fff;
     background: linear-gradient(135deg, var(--primary), #a78bfa);
-    padding: 2px 4px;
-    border-radius: 4px;
-    box-shadow: 0 0 10px rgba(124, 140, 248, 0.5);
-    animation: sidebarNewPulse 2.4s ease-in-out infinite;
+    padding: 2px 5px;
+    border-radius: 5px;
     pointer-events: none;
-}
-
-@keyframes sidebarNewPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
 }
 
 /* «На сайт Animei» — выход из приложения на лендинг; отделяем чертой сверху */
@@ -374,14 +366,17 @@
        Иконка стоит первой и слева (padding у ссылки неизменный в обоих
        состояниях), поэтому подпись, вылезающая за 68px, просто обрезается
        overflow-x:hidden и НЕ двигает иконку. */
-    .sidebar .nav-label {
+    .sidebar .nav-label,
+    .sidebar .nav-new {
         white-space: nowrap;
         opacity: 0;
         transition: opacity 0.2s ease;
     }
 
     .sidebar.open .nav-label,
-    .sidebar.peek .nav-label {
+    .sidebar.peek .nav-label,
+    .sidebar.open .nav-new,
+    .sidebar.peek .nav-new {
         opacity: 1;
     }
 
