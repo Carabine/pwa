@@ -148,10 +148,12 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: transparent;
-    border: none;
-    color: var(--text-dim);
-    opacity: 0.4;
+    /* Заметный, но не кричащий: лёгкий фон-кружок и рамка — читается как кнопка
+       (раньше opacity 0.4 без фона был почти невидим — «карандаш не вижу»). */
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    opacity: 0.9;
     cursor: pointer;
     transition: opacity var(--transition), background var(--transition), color var(--transition);
     z-index: 5;
