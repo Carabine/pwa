@@ -113,7 +113,11 @@
 
     <div class="cards" id="cards"></div>
 
-    <h2 class="section-title">Открытия по дням</h2>
+    <h2 class="section-title" style="margin-top:28px">Петля по неделям: смотрел + повторял</h2>
+    <div class="sub">Вошедшие пользователи · неделя с понедельника · «оба» — и смотрел аниме, и завершил повторение</div>
+    <div id="weekly"></div>
+
+    <h2 class="section-title" style="margin-top:28px">Открытия по дням</h2>
     <div class="chart" id="chart"></div>
 
     <h2 class="section-title" style="margin-top:28px">Топ страниц</h2>
@@ -181,7 +185,9 @@
         page: 'открыл', session: 'вошёл', save_word: 'сохранил слово', play: 'смотрел',
         study: 'учил', search: 'искал', voiceover: 'озвучка', chibi_hidden: 'скрыл доп.',
         autosync: 'автосинк', explain: 'разбор', onboarding: 'онбординг',
-        setting: 'настройка', password_change: 'сменил пароль'
+        setting: 'настройка', password_change: 'сменил пароль',
+        srs_review: 'повторил', resume: 'продолжил', session_card: 'итог сессии',
+        episode_end: 'досмотрел серию'
     };
     var PAGE_LABELS = {
         'app/index': 'главная', 'app/catalog': 'каталог', 'app/player': 'плеер',
@@ -355,6 +361,36 @@
                 document.getElementById('visitors').innerHTML = '<div class="msg">Не удалось загрузить посетителей</div>';
             });
     }
+
+    // Недельная петля «смотрел + повторял»: главная продуктовая метрика.
+    // Абсолютные числа и поимённый список — не проценты (людей пока десятки).
+    function renderWeekly(data) {
+        var el = document.getElementById('weekly');
+        if (!data.rows || !data.rows.length) {
+            el.innerHTML = '<div class="msg">Пока нет данных</div>';
+            return;
+        }
+        var rows = data.rows.map(function (r) {
+            var who = r.users.filter(function (u) { return u.both; }).map(function (u) {
+                return esc(u.email) + ' (' + u.watched + '▶ ' + u.reviewed + '📚)';
+            }).join(', ');
+            return '<tr><td>' + r.week + '</td><td class="num">' + fmt(r.watched) +
+                '</td><td class="num">' + fmt(r.reviewed) +
+                '</td><td class="num"><b>' + fmt(r.both) + '</b></td><td>' + (who || '—') + '</td></tr>';
+        }).join('');
+        el.innerHTML =
+            '<table><thead><tr><th>Неделя</th><th class="num">Смотрели</th>' +
+            '<th class="num">Повторяли</th><th class="num">Оба</th><th>Кто (оба)</th></tr></thead><tbody>' +
+            rows + '</tbody></table>';
+    }
+
+    var statsKey = new URLSearchParams(location.search).get('key');
+    fetch(apiBase + '/api/v1/stats/weekly?weeks=8' + (statsKey ? '&key=' + encodeURIComponent(statsKey) : ''))
+        .then(function (r) { return r.json(); })
+        .then(renderWeekly)
+        .catch(function () {
+            document.getElementById('weekly').innerHTML = '<div class="msg">Не удалось загрузить</div>';
+        });
 
     // Период (7/30/90 дней)
     document.querySelectorAll('.periods button[data-days]').forEach(function (b) {

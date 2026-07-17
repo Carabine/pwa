@@ -529,6 +529,7 @@
         }
 
         // ---- Persist a graduated card's next review date -------------------
+        let reviewTracked = false;   // событие srs_review — один раз за сессию
         function graduate(item) {
             if (scheduled) {
                 const prev = schedule[item.id] ?? { interval: 0, reps: 0, lapses: 0 };
@@ -542,6 +543,13 @@
                 saveSchedule(schedule);
                 pushSrsToServer(item.id, schedule[item.id]);
                 markStudiedToday();
+                // 'study' летит при открытии сессии; srs_review — по ФАКТУ первого
+                // реально завершённого повторения. На нём строится недельный отчёт
+                // «смотрел + повторял» в статистике.
+                if (!reviewTracked) {
+                    reviewTracked = true;
+                    if (window.animeiTrack) window.animeiTrack('srs_review', 'graduated');
+                }
             }
             graduated++;
         }
