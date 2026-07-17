@@ -186,10 +186,10 @@
         if (sentenceRomajiCache.has(sentence)) return sentenceRomajiCache.get(sentence);
         if (typeof client === 'undefined' || typeof window.kanaToRomaji !== 'function') return '';
         try {
-            const { data: res } = await client.post('analyze', { text: [sentence] }, { timeout: 20000 });
+            const { data: res } = await client.post('analyze', { text: [sentence], merge: true }, { timeout: 20000 });
             const tokens = res?.data?.[0] || [];
             const romaji = tokens
-                .map((tk) => window.kanaToRomaji(tk.kana || tk.surface || ''))
+                .map((tk) => window.kanaToRomaji(tk.reading || tk.kana || tk.surface || ''))
                 .filter(Boolean)
                 .join(' ')
                 .replace(/\s+([,.])/g, '$1')
@@ -209,7 +209,9 @@
         if (sentenceTokensCache.has(sentence)) return sentenceTokensCache.get(sentence);
         if (typeof client === 'undefined') return [];
         try {
-            const { data: res } = await client.post('analyze', { text: [sentence] }, { timeout: 20000 });
+            // merge:true — морфемы склеены в слова (行き+まし+た → 行きました), чтобы
+            // ромадзи стояла над СЛОВОМ, а не над каждым морфемом/символом.
+            const { data: res } = await client.post('analyze', { text: [sentence], merge: true }, { timeout: 20000 });
             const tokens = res?.data?.[0] || [];
             sentenceTokensCache.set(sentence, tokens);
             return tokens;
