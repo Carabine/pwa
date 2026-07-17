@@ -92,8 +92,8 @@
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
             </div>
             <div class="hub-card__info">
-                <span data-i18n="hub.custom">Custom Study</span>
-                <span class="hub-card__subtitle" data-i18n="hub.custom.sub">Review all words</span>
+                <span data-i18n="hub.custom">Повторить всё</span>
+                <span class="hub-card__subtitle" data-i18n="hub.custom.sub">Все слова без расписания</span>
             </div>
         </a>
         <a href="./pages/catalog.html" class="hub-card hub-card--accent">
@@ -121,7 +121,6 @@
 
     <nav class="sidebar" id="sidebar">
         <div class="sidebar__brand">Animei</div>
-        <div class="sidebar__version">v0.0.90</div>
         <a href="./index.html" class="active" data-i18n="nav.home">Home</a>
         <a href="./pages/catalog.html" data-i18n="nav.catalog">Поиск аниме</a>
         <a href="./pages/watch.html" data-i18n="nav.watch">Watch</a>
@@ -143,19 +142,16 @@
 <script src="./js/app.js"></script>
 <script src="./js/stats.js"></script>
 <script>
-    // Прячем сплэш после полной загрузки (но не раньше MIN — чтобы анимация
-    // считалась), с аварийным потолком, чтобы сплэш не завис при ошибке.
+    // Прячем сплэш сразу по готовности страницы (без искусственной задержки),
+    // с аварийным потолком, чтобы сплэш не завис при ошибке.
     (function () {
         var s = document.getElementById('app-splash');
         if (!s) return;
-        var start = Date.now(), MIN = 1100, done = false;
+        var done = false;
         function hide() {
             if (done) return; done = true;
-            var wait = Math.max(0, MIN - (Date.now() - start));
-            setTimeout(function () {
-                s.classList.add('is-hiding');
-                setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 500);
-            }, wait);
+            s.classList.add('is-hiding');
+            setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 500);
         }
         if (document.readyState === 'complete') hide();
         else window.addEventListener('load', hide);

@@ -214,6 +214,13 @@
     align-self: flex-start;
 }
 
+.settings-about {
+    margin-top: 18px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
 @media (max-width: 480px) {
     .settings-range { width: 130px; }
     .settings-page { padding: 14px 12px 50px; }

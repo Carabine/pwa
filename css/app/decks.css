@@ -24,20 +24,31 @@
     border-radius: var(--radius-sm);
 }
 
-/* Чип-ряд: одна строка, горизонтальный скролл, «Все» всегда виден слева. */
+/* Чип-ряд: слева прокручиваемая часть («Все» + колоды), справа — закреплённая
+   кнопка «＋» создания (всегда видна; раньше стояла последней в скролле и на
+   телефоне пряталась под правым затуханием / за краем экрана). */
 .deck-chips {
     display: flex;
+    align-items: center;
     gap: 8px;
+    padding: 2px 0 10px;
+    margin-bottom: 6px;
+}
+.deck-chips__scroll {
+    display: flex;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
-    padding: 2px 0 10px;
-    margin-bottom: 6px;
     /* Лёгкое затухание у правого края — намёк, что ряд листается. */
     -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
     mask-image: linear-gradient(to right, #000 88%, transparent 100%);
 }
-.deck-chips::-webkit-scrollbar { display: none; }
+.deck-chips__scroll::-webkit-scrollbar { display: none; }
+/* Кнопка создания не сжимается и стоит вне прокрутки. */
+.deck-chip--pinned { flex: 0 0 auto; }
 
 .deck-chip {
     flex: 0 0 auto;

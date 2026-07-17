@@ -85,9 +85,13 @@ async function saveWord(payload) {
     // указывает на само слово внутри клипа — его границы можно двигать ±1с.
     const wordDur = Number(data.videoEnd) - Number(data.videoStart);
     const lead = wordDur > 0 ? Math.min(CLIP_MARGIN, Number(data.videoStart)) : 0;
+    // Готовый общий клип (абсолютная ссылка, напр. стартовая колода /storage/*.mp4):
+    // не режем в браузере, а ссылаемся напрямую — word.video читает videoSrcOf.
+    const sharedUrl = /^https?:\/\//.test(String(data.videoUrl || '')) ? data.videoUrl : '';
     const word = {
         id: makeLocalId(),
         ...data,
+        ...(sharedUrl ? { video: sharedUrl } : {}),
         trimStart: wordDur > 0 ? lead : null,
         trimEnd: wordDur > 0 ? lead + wordDur : null,
     };
@@ -98,7 +102,7 @@ async function saveWord(payload) {
     // У гостя клип хранится в браузере. Ждём его, чтобы видео было готово
     // к первому показу карточки, но неудача клипа не ломает сохранение слова.
     // Если клип ожидался, но не получился — мягко предупреждаем (слово-то есть).
-    if (typeof putClip === 'function' && wordDur > 0) {
+    if (!sharedUrl && typeof putClip === 'function' && wordDur > 0) {
         const blob = await requestClip(data, true);
         const stored = blob ? await putClip(word.id, blob) : false;
         if (!stored && typeof showSnackbar === 'function') {
@@ -210,9 +214,12 @@ async function runGuestSync() {
         try {
             // videoUrl гостя (ссылка на HLS) уже протухла — сервер не переклипует,
             // поэтому заливаем сам сохранённый в браузере blob отдельным запросом.
-            // trimStart/trimEnd передаём явно, чтобы окно клипа не сбросилось.
+            // Исключение: общий готовый клип (w.video = абсолютный /storage/*.mp4) —
+            // его сохраняем как videoUrl, чтобы серверная карточка тоже на него
+            // сослалась (blob'а у такой карточки нет). trimStart/trimEnd передаём явно.
+            const sharedUrl = String(w.video || '');
             const { data: res } = await client.post('words', {
-                ...normalizeWord({ ...payload, videoUrl: '' }),
+                ...normalizeWord({ ...payload, videoUrl: sharedUrl }),
                 ...(Number.isFinite(w.trimStart) ? { trimStart: w.trimStart } : {}),
                 ...(Number.isFinite(w.trimEnd) ? { trimEnd: w.trimEnd } : {}),
             });

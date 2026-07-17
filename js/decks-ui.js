@@ -78,9 +78,11 @@
                 return;
             }
 
+            // «Все» + колоды листаются, кнопка «＋» вынесена вправо и не скроллится.
+            const scroll = h('div', 'deck-chips__scroll');
             const all = h('button', 'deck-chip' + (this._activeId ? '' : ' deck-chip--active'), esc(t('decks.all')));
             all.addEventListener('click', () => this._setActive(null));
-            box.appendChild(all);
+            scroll.appendChild(all);
 
             for (const d of decks) {
                 const active = d.id === this._activeId;
@@ -88,10 +90,11 @@
                     `<span class="deck-chip__emoji">${d.emoji}</span>${esc(d.name)}` +
                     `<span class="deck-chip__count">${d.wordIds.length}</span>`);
                 chip.addEventListener('click', () => this._setActive(active ? null : d.id));
-                box.appendChild(chip);
+                scroll.appendChild(chip);
             }
+            box.appendChild(scroll);
 
-            const add = h('button', 'deck-chip deck-chip--add', '＋');
+            const add = h('button', 'deck-chip deck-chip--add deck-chip--pinned', '＋');
             add.title = t('decks.createFirst');
             add.addEventListener('click', () => this._openEditor({ mode: 'create' }));
             box.appendChild(add);

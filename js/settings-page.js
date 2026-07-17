@@ -82,6 +82,12 @@
         }
     }
 
+    // ---- О приложении: версия деплоя (из сайдбара её убрали) ----
+    const about = document.getElementById('settings-about');
+    if (about && typeof APP_VERSION !== 'undefined') {
+        about.textContent = 'Animei ' + APP_VERSION;
+    }
+
     // ---- Смена пароля ----
     const saveBtn = document.getElementById('save-pass');
     if (saveBtn) {

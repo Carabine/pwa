@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.160';
+const APP_VERSION = 'v0.0.165';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -131,8 +131,10 @@ async function fetchDataFromServer() {
 
         localStorage.setItem('words', JSON.stringify(allWords));
     } catch (error) {
+        // Нет сети/сервер упал — оставляем локальную копию слов нетронутой,
+        // иначе ошибка загрузки выглядит как исчезновение коллекции.
         console.error('Error fetching data:', error);
-        localStorage.setItem('words', '[]');
+        if (localStorage.getItem('words') === null) localStorage.setItem('words', '[]');
     }
 }
 
@@ -157,21 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('overlay');
     const menuBtn = document.querySelector('.menu-btn');
 
-    // Версия в сайдбаре — маркер того, какой деплой сейчас в приложении.
-    // Элемент захардкожен в HTML сразу под шапкой (гарантированно виден даже
-    // при старом app.js); здесь только обновляем его текст из APP_VERSION —
-    // единого источника. Если элемента нет (старый HTML) — создаём.
-    if (sidebar) {
-        let ver = sidebar.querySelector('.sidebar__version');
-        if (!ver) {
-            ver = document.createElement('div');
-            ver.className = 'sidebar__version';
-            const brand = sidebar.querySelector('.sidebar__brand');
-            if (brand) brand.insertAdjacentElement('afterend', ver);
-            else sidebar.appendChild(ver);
-        }
-        ver.textContent = APP_VERSION;
-    }
+    // Версию деплоя в пользовательском сайдбаре не показываем — она живёт в
+    // настройках («О приложении»). Захардкоженный в HTML элемент убираем,
+    // чтобы старые страницы из кэша тоже не светили версию.
+    sidebar?.querySelector('.sidebar__version')?.remove();
 
     // Ссылка «Настройки» в сайдбаре — единый источник, не дублируем в каждой
     // HTML-странице. Вставляем перед ссылкой «На сайт» (её добавляет i18n.js).
