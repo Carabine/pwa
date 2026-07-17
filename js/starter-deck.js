@@ -3,37 +3,82 @@
 // не собирая слова из субтитров.
 //
 // Формат карточки:
-//   k  — слово (кандзи или кана), ложится в поле kanji
-//   r  — чтение хираганой
-//   ro — ромадзи
-//   a  — из какого аниме (международное название)
-//   s  — простое предложение-пример на японском
-//   t  — переводы по языкам: [перевод слова, перевод предложения]
+//   k    — слово (кандзи или кана), ложится в поле kanji
+//   r    — чтение хираганой
+//   ro   — ромадзи
+//   a    — из какого аниме (международное название)
+//   s    — простое предложение-пример на японском
+//   t    — переводы по языкам: [перевод слова, перевод предложения]
+//   clip — (только у ядра) абсолютный URL готового видеоклипа реальной сцены
+//   len  — (только у ядра) длительность клипа в секундах
 //
-// Первые 15 карточек — ядро колоды: именно их предлагаем добавить
-// при пустой коллекции (см. study-core.js).
+// Первые 15 карточек (STARTER_CORE_COUNT) — ядро колоды: реальные сцены из
+// аниме с видеоклипами (курируются в seed-аккаунте, клипы лежат в /storage).
+// Их показываем первыми и предлагаем добавить при пустой коллекции.
+// Остальные 35 — пока без видео (плашка «Видео пока нет» на обороте карточки).
 
 const STARTER_CORE_COUNT = 15;
 
 const STARTER_DECK = [
+    // ---- Ядро: 15 карточек с видеоклипами реальных сцен ----
+    { k: 'やつ', r: 'やつ', ro: 'yatsu', a: 'Chainsaw Man', s: 'パワーは いいやつだぜ',
+      clip: 'https://animei.space/storage/d44fdfb0-8fbe-40d0-bfb2-90cc35ec3f2d.mp4', len: 9,
+      t: { ru: ['тип, чувак (разг.)', 'Пауэр — славный малый!'], uk: ['тип, чувак (розм.)', 'Пауер — славний хлопака!'], en: ['guy, dude (casual)', 'Power is a good one!'] } },
+    { k: '仲間', r: 'なかま', ro: 'nakama', a: 'Attack on Titan', s: '仲間の死を嘆く時間はまだないんだよ',
+      clip: 'https://animei.space/storage/85224c52-0861-4035-accd-151a27b04a72.mp4', len: 9,
+      t: { ru: ['товарищ; свои', 'Ещё не время оплакивать павших товарищей.'], uk: ['товариш; свої', 'Ще не час оплакувати полеглих товаришів.'], en: ['comrade; ally', "There's no time to mourn fallen comrades yet."] } },
+    { k: '乗る', r: 'のる', ro: 'noru', a: 'Neon Genesis Evangelion', s: '僕が乗ります！',
+      clip: 'https://animei.space/storage/dea12647-ebb8-4d13-86e7-1cc47afe214b.mp4', len: 9,
+      t: { ru: ['садиться (в/на); пилотировать', 'Я буду пилотом! (Синдзи)'], uk: ['сідати (в/на); пілотувати', 'Я буду пілотом! (Сіндзі)'], en: ['to ride; to pilot', "I'll pilot it! (Shinji)"] } },
+    { k: '来る', r: 'くる', ro: 'kuru', a: 'My Hero Academia', s: '私が来た！',
+      clip: 'https://animei.space/storage/998397d8-f2c0-4748-a1b2-2599b8ef6f95.mp4', len: 9,
+      t: { ru: ['приходить', 'Я пришёл! (Всемогущий)'], uk: ['приходити', 'Я прийшов! (Всемогутній)'], en: ['to come', 'I am here! (All Might)'] } },
+    { k: '最強', r: 'さいきょう', ro: 'saikyou', a: 'Jujutsu Kaisen', s: '大丈夫 僕 最強だから',
+      clip: 'https://animei.space/storage/d0aa00a3-4b44-41ca-8a1c-eedfc2d33798.mp4', len: 9,
+      t: { ru: ['сильнейший', 'Всё в порядке — ведь я сильнейший (Годзё)'], uk: ['найсильніший', 'Усе гаразд — адже я найсильніший (Ґодзьо)'], en: ['the strongest', "It's fine — because I'm the strongest (Gojo)"] } },
+    { k: '助ける', r: 'たすける', ro: 'tasukeru', a: 'Jujutsu Kaisen', s: 'お前は強いから人を助けろ',
+      clip: 'https://animei.space/storage/aaac9758-f82e-4259-a670-9a6b8fffe367.mp4', len: 9,
+      t: { ru: ['спасать, помогать', 'Ты сильный — так спасай людей (дед Итадори)'], uk: ['рятувати, допомагати', 'Ти сильний — тож рятуй людей (дід Ітадорі)'], en: ['to save, to help', "You're strong, so save people (Itadori's grandpa)"] } },
+    { k: '悪魔', r: 'あくま', ro: 'akuma', a: 'Chainsaw Man', s: '悪魔だ…',
+      clip: 'https://animei.space/storage/ab4f158d-dd1b-47c5-b2f5-9f0c1b52f04e.mp4', len: 9,
+      t: { ru: ['дьявол, демон', 'Это дьявол…'], uk: ['диявол, демон', 'Це диявол…'], en: ['devil, demon', "It's a devil…"] } },
+    { k: '心臓', r: 'しんぞう', ro: 'shinzou', a: 'Chainsaw Man', s: 'これは契約だ 私の心臓をやる',
+      clip: 'https://animei.space/storage/0617ecef-5ee9-44e7-bac7-e081db1df99f.mp4', len: 9,
+      t: { ru: ['сердце', 'Это контракт — отдаю тебе своё сердце (Почита)'], uk: ['серце', 'Це контракт — віддаю тобі своє серце (Почіта)'], en: ['heart', "This is a contract — I'll give you my heart (Pochita)"] } },
+    { k: '戦う', r: 'たたかう', ro: 'tatakau', a: 'Attack on Titan', s: '戦わなければ勝てない…戦え、戦え',
+      clip: 'https://animei.space/storage/11e076bb-1818-449e-8b22-7d274d737f37.mp4', len: 15,
+      t: { ru: ['сражаться, воевать', 'Не сражаясь, не победить… Сражайся, сражайся! (Эрен)'], uk: ['битися, воювати', 'Не б’ючись, не перемогти… Бийся, бийся! (Ерен)'], en: ['to fight', "If you don't fight, you can't win… Fight, fight! (Eren)"] } },
+    { k: '妹', r: 'いもうと', ro: 'imouto', a: 'Demon Slayer', s: '妹だ… 俺の妹なんだ！',
+      clip: 'https://animei.space/storage/d3c7fd2b-699d-412f-a133-9bab943aea49.mp4', len: 9,
+      t: { ru: ['младшая сестра', 'Это сестра… моя младшая сестра! (Тандзиро)'], uk: ['молодша сестра', 'Це сестра… моя молодша сестра! (Танджіро)'], en: ['younger sister', "She's my sister… my little sister! (Tanjiro)"] } },
+    { k: '勝つ', r: 'かつ', ro: 'katsu', a: 'Attack on Titan', s: 'エレンが勝ったんだ',
+      clip: 'https://animei.space/storage/e99231c7-a8e1-40c8-a98f-6a11f2f92038.mp4', len: 9,
+      t: { ru: ['побеждать, выигрывать', 'Эрен победил! (Армин)'], uk: ['перемагати, вигравати', 'Ерен переміг! (Армін)'], en: ['to win', 'Eren won! (Armin)'] } },
+    { k: '大丈夫', r: 'だいじょうぶ', ro: 'daijoubu', a: 'My Hero Academia', s: 'もう大丈夫だ 少年',
+      clip: 'https://animei.space/storage/8210c932-9e63-4ee4-99e7-b18020b8d592.mp4', len: 9,
+      t: { ru: ['всё в порядке', 'Теперь всё хорошо, юноша (Всемогущий)'], uk: ['усе гаразд', 'Тепер усе добре, юначе (Всемогутній)'], en: ['okay; all right', "It's all right now, young man (All Might)"] } },
+    { k: '趣味', r: 'しゅみ', ro: 'shumi', a: 'One-Punch Man', s: '趣味でヒーローをやっている者だ',
+      clip: 'https://animei.space/storage/040287f3-bd69-4d1c-8858-3a6ed8253e72.mp4', len: 9,
+      t: { ru: ['хобби, увлечение', 'Я герой по хобби (Сайтама)'], uk: ['хобі, захоплення', 'Я герой за хобі (Сайтама)'], en: ['hobby', "I'm a hero as a hobby (Saitama)"] } },
+    { k: 'スパイ', r: 'スパイ', ro: 'supai', a: 'Spy x Family', s: '早速 スパイごっこか',
+      clip: 'https://animei.space/storage/7cc25f16-2cd4-4d37-b57d-3f9c19a7d060.mp4', len: 6,
+      t: { ru: ['шпион', 'Уже играешь в шпионов?'], uk: ['шпигун', 'Вже граєш у шпигунів?'], en: ['spy', 'Playing spies already?'] } },
+    { k: '計画', r: 'けいかく', ro: 'keikaku', a: 'Death Note', s: 'まさに計画どおりに事は進んでいる',
+      t: { ru: ['план', 'Всё идёт точно по плану (Лайт)'], uk: ['план', 'Усе йде точно за планом (Лайт)'], en: ['plan', 'Everything is going just as planned (Light)'] } },
+
+    // ---- Дополнение: 35 карточек (пока без видео) ----
     { k: '友達', r: 'ともだち', ro: 'tomodachi', a: 'Naruto', s: '友達を守る！',
       t: { ru: ['друг', 'Я защищу своих друзей!'], uk: ['друг', 'Я захищу своїх друзів!'], en: ['friend', 'I will protect my friends!'] } },
     { k: '夢', r: 'ゆめ', ro: 'yume', a: 'One Piece', s: '海賊王になるのが夢だ！',
       t: { ru: ['мечта; сон', 'Моя мечта — стать королём пиратов!'], uk: ['мрія; сон', 'Моя мрія — стати королем піратів!'], en: ['dream', 'My dream is to become the Pirate King!'] } },
-    { k: '仲間', r: 'なかま', ro: 'nakama', a: 'One Piece', s: '仲間はいつも一緒だ。',
-      t: { ru: ['товарищ; свои', 'Товарищи всегда вместе.'], uk: ['товариш; свої', 'Товариші завжди разом.'], en: ['comrade; crewmate', 'Comrades are always together.'] } },
     { k: '諦める', r: 'あきらめる', ro: 'akirameru', a: 'Naruto', s: '諦めないで！',
       t: { ru: ['сдаваться; отказываться', 'Не сдавайся!'], uk: ['здаватися; відмовлятися', 'Не здавайся!'], en: ['to give up', "Don't give up!"] } },
-    { k: '大丈夫', r: 'だいじょうぶ', ro: 'daijoubu', a: 'One-Punch Man', s: '大丈夫？',
-      t: { ru: ['в порядке; всё хорошо', 'Ты в порядке?'], uk: ['у порядку; все гаразд', 'Ти в порядку?'], en: ['okay; all right', 'Are you okay?'] } },
     { k: '魔法', r: 'まほう', ro: 'mahou', a: 'Frieren', s: '魔法は不思議だ。',
       t: { ru: ['магия', 'Магия удивительна.'], uk: ['магія', 'Магія дивовижна.'], en: ['magic', 'Magic is mysterious.'] } },
     { k: '勇者', r: 'ゆうしゃ', ro: 'yuusha', a: 'Frieren', s: '勇者ヒンメルはそう言った。',
       t: { ru: ['герой', 'Так сказал герой Химмель.'], uk: ['герой', 'Так сказав герой Хіммель.'], en: ['hero', 'That is what the hero Himmel said.'] } },
     { k: '巨人', r: 'きょじん', ro: 'kyojin', a: 'Attack on Titan', s: '巨人が壁を壊した！',
       t: { ru: ['великан; титан', 'Титан разрушил стену!'], uk: ['велетень; титан', 'Титан зруйнував стіну!'], en: ['giant; titan', 'A titan broke the wall!'] } },
-    { k: '戦う', r: 'たたかう', ro: 'tatakau', a: 'Attack on Titan', s: '戦え！',
-      t: { ru: ['сражаться', 'Сражайся!'], uk: ['битися', 'Бийся!'], en: ['to fight', 'Fight!'] } },
     { k: '鬼', r: 'おに', ro: 'oni', a: 'Demon Slayer', s: '鬼は夜に来る。',
       t: { ru: ['демон; они', 'Демоны приходят ночью.'], uk: ['демон; оні', 'Демони приходять уночі.'], en: ['demon; oni', 'Demons come at night.'] } },
     { k: '名前', r: 'なまえ', ro: 'namae', a: 'Your Name', s: '君の名前は？',
@@ -46,28 +91,16 @@ const STARTER_DECK = [
       t: { ru: ['идти; ехать', 'Пойдём вместе!'], uk: ['іти; їхати', 'Ходімо разом!'], en: ['to go', "Let's go together!"] } },
     { k: '待つ', r: 'まつ', ro: 'matsu', a: 'Naruto', s: 'ちょっと待って！',
       t: { ru: ['ждать', 'Подожди немного!'], uk: ['чекати', 'Зачекай трохи!'], en: ['to wait', 'Wait a second!'] } },
-
-    // ---- дальше остальная колода (для режима новичков) ----
     { k: '頑張る', r: 'がんばる', ro: 'ganbaru', a: 'My Hero Academia', s: '明日も頑張ろう！',
       t: { ru: ['стараться изо всех сил', 'Завтра тоже постараемся!'], uk: ['старатися з усіх сил', 'Завтра теж постараємося!'], en: ['to do your best', "Let's do our best tomorrow too!"] } },
     { k: '旅', r: 'たび', ro: 'tabi', a: 'Frieren', s: '旅はまだ続く。',
       t: { ru: ['путешествие', 'Путешествие ещё продолжается.'], uk: ['подорож', 'Подорож ще триває.'], en: ['journey', 'The journey still continues.'] } },
     { k: '自由', r: 'じゆう', ro: 'jiyuu', a: 'Attack on Titan', s: '自由はあの空にある。',
       t: { ru: ['свобода', 'Свобода — там, в небе.'], uk: ['свобода', 'Свобода — там, у небі.'], en: ['freedom', 'Freedom is up in that sky.'] } },
-    { k: '呼吸', r: 'こきゅう', ro: 'kokyuu', a: 'Demon Slayer', s: '水の呼吸！',
-      t: { ru: ['дыхание', 'Дыхание воды!'], uk: ['дихання', 'Дихання води!'], en: ['breathing', 'Water breathing!'] } },
-    { k: '妹', r: 'いもうと', ro: 'imouto', a: 'Demon Slayer', s: '妹を守りたい。',
-      t: { ru: ['младшая сестра', 'Хочу защитить младшую сестру.'], uk: ['молодша сестра', 'Хочу захистити молодшу сестру.'], en: ['younger sister', 'I want to protect my little sister.'] } },
     { k: '会う', r: 'あう', ro: 'au', a: 'Your Name', s: 'また会いましょう。',
       t: { ru: ['встречаться', 'Давай встретимся снова.'], uk: ['зустрічатися', 'Зустріньмося знову.'], en: ['to meet', "Let's meet again."] } },
     { k: '世界', r: 'せかい', ro: 'sekai', a: 'Death Note', s: '新しい世界を作る。',
       t: { ru: ['мир (вселенная)', 'Я создам новый мир.'], uk: ['світ', 'Я створю новий світ.'], en: ['world', 'I will create a new world.'] } },
-    { k: '正義', r: 'せいぎ', ro: 'seigi', a: 'Death Note', s: 'これが正義だ。',
-      t: { ru: ['справедливость', 'Вот это — справедливость.'], uk: ['справедливість', 'Ось це — справедливість.'], en: ['justice', 'This is justice.'] } },
-    { k: '死神', r: 'しにがみ', ro: 'shinigami', a: 'Death Note', s: '死神はリンゴが好きだ。',
-      t: { ru: ['бог смерти; синигами', 'Бог смерти любит яблоки.'], uk: ['бог смерті; сініґамі', 'Бог смерті любить яблука.'], en: ['god of death; shinigami', 'The shinigami loves apples.'] } },
-    { k: '呪い', r: 'のろい', ro: 'noroi', a: 'Jujutsu Kaisen', s: '呪いは怖い。',
-      t: { ru: ['проклятие', 'Проклятия страшные.'], uk: ['прокляття', 'Прокляття страшні.'], en: ['curse', 'Curses are scary.'] } },
     { k: '力', r: 'ちから', ro: 'chikara', a: 'Jujutsu Kaisen', s: 'もっと力が欲しい。',
       t: { ru: ['сила', 'Хочу больше силы.'], uk: ['сила', 'Хочу більше сили.'], en: ['power; strength', 'I want more power.'] } },
     { k: '先生', r: 'せんせい', ro: 'sensei', a: 'Assassination Classroom', s: '先生、質問があります。',
@@ -78,30 +111,18 @@ const STARTER_DECK = [
       t: { ru: ['кот; кошка', 'Чёрная кошка заговорила!'], uk: ['кіт; кішка', 'Чорна кішка заговорила!'], en: ['cat', 'The black cat spoke!'] } },
     { k: '月', r: 'つき', ro: 'tsuki', a: 'Sailor Moon', s: '月がきれいだね。',
       t: { ru: ['луна; месяц', 'Луна красивая, правда?'], uk: ['місяць (на небі)', 'Місяць гарний, правда?'], en: ['moon', 'The moon is beautiful, right?'] } },
-    { k: '星', r: 'ほし', ro: 'hoshi', a: 'Dragon Ball', s: '空に星がたくさんある。',
-      t: { ru: ['звезда', 'На небе много звёзд.'], uk: ['зірка', 'На небі багато зірок.'], en: ['star', 'There are many stars in the sky.'] } },
     { k: '強い', r: 'つよい', ro: 'tsuyoi', a: 'Dragon Ball', s: 'あいつは強すぎる！',
       t: { ru: ['сильный', 'Он слишком силён!'], uk: ['сильний', 'Він занадто сильний!'], en: ['strong', 'That guy is too strong!'] } },
     { k: '元気', r: 'げんき', ro: 'genki', a: 'Dragon Ball', s: '元気ですか？',
       t: { ru: ['бодрый; здоровый', 'Как дела? (Ты бодр?)'], uk: ['бадьорий; здоровий', 'Як справи? (Ти бадьорий?)'], en: ['energetic; well', 'How are you? (Are you well?)'] } },
     { k: '飛ぶ', r: 'とぶ', ro: 'tobu', a: "Kiki's Delivery Service", s: '空を飛びたい！',
       t: { ru: ['летать', 'Хочу летать по небу!'], uk: ['літати', 'Хочу літати в небі!'], en: ['to fly', 'I want to fly in the sky!'] } },
-    { k: '森', r: 'もり', ro: 'mori', a: 'My Neighbor Totoro', s: '森にトトロがいる。',
-      t: { ru: ['лес', 'В лесу живёт Тоторо.'], uk: ['ліс', 'У лісі живе Тоторо.'], en: ['forest', 'Totoro lives in the forest.'] } },
-    { k: '雨', r: 'あめ', ro: 'ame', a: 'My Neighbor Totoro', s: '雨が降っている。',
-      t: { ru: ['дождь', 'Идёт дождь.'], uk: ['дощ', 'Іде дощ.'], en: ['rain', 'It is raining.'] } },
-    { k: '風', r: 'かぜ', ro: 'kaze', a: 'The Wind Rises', s: '風が強い。',
-      t: { ru: ['ветер', 'Ветер сильный.'], uk: ['вітер', 'Вітер сильний.'], en: ['wind', 'The wind is strong.'] } },
     { k: '心', r: 'こころ', ro: 'kokoro', a: 'Clannad', s: '心が痛い。',
       t: { ru: ['сердце; душа', 'На сердце больно.'], uk: ['серце; душа', 'На серці боляче.'], en: ['heart; soul', 'My heart hurts.'] } },
-    { k: '涙', r: 'なみだ', ro: 'namida', a: 'Your Lie in April', s: '涙が止まらない。',
-      t: { ru: ['слёзы', 'Слёзы не останавливаются.'], uk: ['сльози', 'Сльози не зупиняються.'], en: ['tears', 'The tears will not stop.'] } },
     { k: '笑う', r: 'わらう', ro: 'warau', a: 'Spy x Family', s: '彼女はいつも笑っている。',
       t: { ru: ['смеяться; улыбаться', 'Она всегда улыбается.'], uk: ['сміятися; усміхатися', 'Вона завжди усміхається.'], en: ['to laugh; to smile', 'She is always smiling.'] } },
     { k: 'ごめん', r: 'ごめん', ro: 'gomen', a: 'Horimiya', s: '遅れてごめん！',
       t: { ru: ['прости', 'Прости за опоздание!'], uk: ['вибач', 'Вибач за запізнення!'], en: ['sorry', 'Sorry I am late!'] } },
-    { k: '助ける', r: 'たすける', ro: 'tasukeru', a: 'Attack on Titan', s: '助けて！',
-      t: { ru: ['спасать; помогать', 'Помогите! Спасите!'], uk: ['рятувати; допомагати', 'Допоможіть! Рятуйте!'], en: ['to help; to save', 'Help me!'] } },
     { k: '分かる', r: 'わかる', ro: 'wakaru', a: 'Jujutsu Kaisen', s: '分かった。',
       t: { ru: ['понимать', 'Понял.'], uk: ['розуміти', 'Зрозумів.'], en: ['to understand', 'Got it.'] } },
     { k: '食べる', r: 'たべる', ro: 'taberu', a: 'Spirited Away', s: '何か食べたい。',
@@ -112,18 +133,15 @@ const STARTER_DECK = [
       t: { ru: ['огонь', 'Осторожно с огнём.'], uk: ['вогонь', 'Обережно з вогнем.'], en: ['fire', 'Be careful with fire.'] } },
     { k: '空', r: 'そら', ro: 'sora', a: 'Your Name', s: '空がきれいだ。',
       t: { ru: ['небо', 'Небо красивое.'], uk: ['небо', 'Небо гарне.'], en: ['sky', 'The sky is beautiful.'] } },
-    { k: '声', r: 'こえ', ro: 'koe', a: 'A Silent Voice', s: '君の声が聞きたい。',
-      t: { ru: ['голос', 'Хочу услышать твой голос.'], uk: ['голос', 'Хочу почути твій голос.'], en: ['voice', 'I want to hear your voice.'] } },
     { k: '学校', r: 'がっこう', ro: 'gakkou', a: 'Assassination Classroom', s: '学校に行きたくない。',
       t: { ru: ['школа', 'Не хочу идти в школу.'], uk: ['школа', 'Не хочу йти до школи.'], en: ['school', 'I do not want to go to school.'] } },
     { k: '忘れる', r: 'わすれる', ro: 'wasureru', a: 'Your Name', s: '君を忘れない。',
       t: { ru: ['забывать', 'Я тебя не забуду.'], uk: ['забувати', 'Я тебе не забуду.'], en: ['to forget', 'I will not forget you.'] } },
 ];
 
-// Видеоклипы к карточкам: настоящие моменты из серий, нарезаны скриптом
-// animei-backend/scripts/build-starter-clips.mjs. Файлы лежат в pwa/media/starter/.
-// Ключ — слово; s — реальная фраза из серии, tr — переводы фразы,
-// a — аниме, откуда клип, len — длительность в секундах.
+// Видеоклипы к карточкам: у ядра клип задан прямо в карточке (поле clip —
+// абсолютный URL). Этот объект оставлен для обратной совместимости и как точка
+// расширения; сейчас пуст.
 const STARTER_CLIPS = {};
 
 // Карточка с учётом найденного клипа: фраза, переводы фразы и аниме
@@ -142,9 +160,11 @@ function starterMergedDeck() {
     return STARTER_DECK.map(starterCard);
 }
 
-// Адрес клипа: страницы лежат в /app/pages/, клипы — в /app/media/starter/.
+// Адрес клипа. Абсолютный URL (клипы ядра из /storage) — как есть; иначе файл
+// из локальной папки /app/media/starter/ (страницы лежат в /app/pages/).
 function starterClipUrl(card) {
     if (!card.clip) return '';
+    if (/^https?:\/\//.test(card.clip)) return card.clip;
     const inPages = window.location.pathname.includes('/pages/');
     const rel = (inPages ? '../' : './') + 'media/starter/' + card.clip;
     return new URL(rel, window.location.href).href;
@@ -179,6 +199,7 @@ function starterWordPayload(card) {
 function starterDeckWords() {
     return starterMergedDeck().map((card, i) => {
         const tr = starterTr(card);
+        const video = starterClipUrl(card);
         return {
             id: 'starter-' + i,
             kanji: card.k,
@@ -191,7 +212,8 @@ function starterDeckWords() {
             translatedSentence: tr[1],
             sentenceTranslation: tr[1],
             anime: card.a,
-            video: starterClipUrl(card),
+            video,
+            noClip: !video,   // нет клипа → на обороте показываем плашку «Видео пока нет»
             _card: card,
         };
     });

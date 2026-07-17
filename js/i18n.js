@@ -312,6 +312,7 @@ const I18N = {
         'clip.loading': 'Видео загружается…',
         'clip.preparing': 'Видео готовится…',
         'clip.unavailable': 'Видео недоступно',
+        'clip.soon': 'Видео пока нет',
 
         'subs.autoSynced': 'Субтитры синхронизированы автоматически',
         'settings.autoSync': 'Автосинхронизация субтитров',
@@ -627,6 +628,7 @@ const I18N = {
         'clip.loading': 'Відео завантажується…',
         'clip.preparing': 'Відео готується…',
         'clip.unavailable': 'Відео недоступне',
+        'clip.soon': 'Відео поки немає',
 
         'subs.autoSynced': 'Субтитри синхронізовано автоматично',
         'settings.autoSync': 'Автосинхронізація субтитрів',
@@ -942,6 +944,7 @@ const I18N = {
         'clip.loading': 'Loading video…',
         'clip.preparing': 'Preparing video…',
         'clip.unavailable': 'Video unavailable',
+        'clip.soon': 'No video yet',
 
         'subs.autoSynced': 'Subtitles synced automatically',
         'settings.autoSync': 'Auto-sync subtitles',

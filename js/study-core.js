@@ -1038,6 +1038,9 @@
             const expectsClip = !!src || Number(w.videoEnd) > Number(w.videoStart);
             if (src) {
                 mediaSlot.appendChild(makeClipVideo(src, w));
+            } else if (w.noClip) {
+                // Карточка курируемой колоды, для которой видео ещё не подобрали.
+                mediaSlot.appendChild(makeClipPending('clip.soon', false));
             } else if (typeof getClipUrl === 'function' && w.id) {
                 const wid = w.id;
                 const isGuest = typeof wid === 'string' && wid.startsWith('local-');

@@ -24,5 +24,6 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
         return;
     }
 
-    startStudy({ scheduled: false, deck: starterDeckWords(), collectable: true });
+    // ordered: сперва 15 карточек с видео, затем 35 без — порядок как в колоде.
+    startStudy({ scheduled: false, deck: starterDeckWords(), collectable: true, ordered: true });
 })();
