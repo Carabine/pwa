@@ -239,6 +239,30 @@
     color: var(--primary);
 }
 
+/* Пункт «JP News» с бейджем «NEW» — маленькая пульсирующая метка справа */
+.sidebar__news {
+    position: relative;
+}
+
+.sidebar__news .nav-new {
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary), #a78bfa);
+    padding: 2px 4px;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(124, 140, 248, 0.5);
+    animation: sidebarNewPulse 2.4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes sidebarNewPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
 /* «На сайт Animei» — выход из приложения на лендинг; отделяем чертой сверху */
 .sidebar__site {
     margin-top: 8px;
