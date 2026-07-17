@@ -216,8 +216,7 @@ const I18N = {
         'week.title': 'Эта неделя',
         'week.days': 'Вс,Пн,Вт,Ср,Чт,Пт,Сб',
         'hub.more': 'Ещё',
-        'hub.pickAnime': 'Найти другое аниме',
-        'hub.pickAnime.first': 'Найти аниме',
+        'hub.watchAnime': 'Смотреть аниме',
 
         'words.title': 'Мои слова',
         'words.loading': 'Загрузка…',
@@ -557,8 +556,7 @@ const I18N = {
         'week.title': 'Цей тиждень',
         'week.days': 'Нд,Пн,Вт,Ср,Чт,Пт,Сб',
         'hub.more': 'Ще',
-        'hub.pickAnime': 'Знайти інше аніме',
-        'hub.pickAnime.first': 'Знайти аніме',
+        'hub.watchAnime': 'Дивитись аніме',
 
         'words.title': 'Мої слова',
         'words.loading': 'Завантаження…',
@@ -898,8 +896,7 @@ const I18N = {
         'week.title': 'This week',
         'week.days': 'Su,Mo,Tu,We,Th,Fr,Sa',
         'hub.more': 'More',
-        'hub.pickAnime': 'Find another anime',
-        'hub.pickAnime.first': 'Find anime',
+        'hub.watchAnime': 'Watch anime',
 
         'words.title': 'My words',
         'words.loading': 'Loading…',

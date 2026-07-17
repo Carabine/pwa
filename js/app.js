@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.174';
+const APP_VERSION = 'v0.0.175';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -380,17 +380,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSessionCard();
     renderDailyPlan();
     renderWeekActivity();
-
-    // «Выбрать ДРУГОЕ аниме» имеет смысл, только когда сверху висит
-    // «Продолжить просмотр». Новому пользователю продолжать нечего —
-    // карточка каталога говорит просто «Выбрать аниме».
-    const pickLabel = document.querySelector('.mini-card__label[data-i18n="hub.pickAnime"]');
-    let hasLastWatch = false;
-    try { hasLastWatch = !!JSON.parse(localStorage.getItem('animei:lastWatch') || 'null')?.id; } catch { /* битый JSON */ }
-    if (pickLabel && !hasLastWatch) {
-        pickLabel.setAttribute('data-i18n', 'hub.pickAnime.first');
-        pickLabel.textContent = t('hub.pickAnime.first');
-    }
 
     // Гость с лендинга ещё не набрал свою коллекцию — «Повторить всё» ему не по
     // делу и только распыляет. Прячем карточку; после входа в аккаунт вернётся.
