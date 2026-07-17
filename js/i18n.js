@@ -3,6 +3,8 @@
 
 const I18N = {
     ru: {
+        'hub.continue': 'Продолжить просмотр',
+        'hub.continue.ep': 'Серия',
         'hub.study': 'Учёба',
         'hub.study.sub': 'Ежедневное интервальное повторение',
         'hub.custom': 'Повторить всё',
@@ -319,6 +321,8 @@ const I18N = {
     },
 
     uk: {
+        'hub.continue': 'Продовжити перегляд',
+        'hub.continue.ep': 'Серія',
         'hub.study': 'Навчання',
         'hub.study.sub': 'Щоденне інтервальне повторення',
         'hub.custom': 'Повторити все',
@@ -635,6 +639,8 @@ const I18N = {
     },
 
     en: {
+        'hub.continue': 'Continue watching',
+        'hub.continue.ep': 'Episode',
         'hub.study': 'Study',
         'hub.study.sub': 'Daily spaced repetition',
         'hub.custom': 'Free review',

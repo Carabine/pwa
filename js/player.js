@@ -90,6 +90,7 @@ const state = {
     hls: null,
     qualities: {},         // { '720': '/proxy/hls?url=…', '480': …, '360': … } — по одному плейлисту на качество
     pendingSeek: null,     // { time, playing } — восстановить позицию после смены качества
+    resumeTime: null,      // сек — продолжить серию с сохранённой позиции просмотра
     currentVideoUrl: '',   // адрес текущего HLS-потока — уходит в слово, чтобы сервер нарезал клип
     popupContext: null,
     followCue: true,       // список сам едет за текущей репликой; сбрасываем, когда листают вручную
@@ -467,12 +468,96 @@ function seasonStorageKey() {
     return 'animei:lastSeason:' + shikimoriId;
 }
 
+// ---------- «Продолжить смотреть» ----------
+// Позиция просмотра переживает закрытие вкладки: animei:watchPos:{id} — сезон/
+// серия/таймкод текущего тайтла, animei:lastWatch — единый указатель для
+// карточки «Продолжить» на главной (последнее, что смотрели вообще).
+function watchPosKey() {
+    return 'animei:watchPos:' + shikimoriId;
+}
+
+function loadWatchPos() {
+    try {
+        return JSON.parse(localStorage.getItem(watchPosKey()) || 'null');
+    } catch { return null; }
+}
+
+function writeWatchPos(epIndex, epNum, time, dur) {
+    try {
+        const updatedAt = Date.now();
+        localStorage.setItem(watchPosKey(), JSON.stringify({
+            seasonIndex: state.seasonIndex, epIndex, epNum, time, dur, updatedAt,
+        }));
+        localStorage.setItem('animei:lastWatch', JSON.stringify({
+            id: shikimoriId,
+            title: titleRu || titleRomaji || '',
+            name: titleRomaji || '',
+            poster: localStorage.getItem('animei:poster:' + shikimoriId) || '',
+            epNum, time, dur, updatedAt,
+        }));
+    } catch { /* localStorage может быть недоступен */ }
+}
+
+function saveWatchPos() {
+    const epIndex = Number(episodeSelect.value);
+    const ep = state.episodes[epIndex];
+    const time = Math.floor(video.currentTime || 0);
+    if (!ep || time <= 0) return;
+    const dur = Number.isFinite(video.duration) ? Math.floor(video.duration) : 0;
+    writeWatchPos(epIndex, ep.number ?? epIndex + 1, time, dur);
+}
+
+// Таймкод пишем раз в ~5 секунд во время воспроизведения + в моменты, когда
+// пользователь может уйти (пауза, сворачивание, закрытие вкладки).
+let lastWatchPosSave = 0;
+video.addEventListener('timeupdate', () => {
+    const now = Date.now();
+    if (now - lastWatchPosSave < 5000) return;
+    lastWatchPosSave = now;
+    saveWatchPos();
+});
+video.addEventListener('pause', saveWatchPos);
+window.addEventListener('pagehide', saveWatchPos);
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') saveWatchPos();
+});
+
+// Серия досмотрена: «Продолжить» должно вести на следующую серию с начала.
+// Двигаем и запомненную серию (epStorageKey), чтобы плеер при следующем
+// открытии сам встал на неё. Если серий больше нет — указатель убираем.
+video.addEventListener('ended', () => {
+    const epIndex = Number(episodeSelect.value);
+    const cur = state.episodes[epIndex];
+    const next = state.episodes[epIndex + 1];
+    try {
+        if (next) {
+            localStorage.setItem(epStorageKey(), String(epIndex + 1));
+            writeWatchPos(epIndex + 1, next.number ?? epIndex + 2, 0, 0);
+        } else {
+            localStorage.removeItem(watchPosKey());
+            const lw = JSON.parse(localStorage.getItem('animei:lastWatch') || 'null');
+            if (lw && String(lw.id) === String(shikimoriId)) localStorage.removeItem('animei:lastWatch');
+        }
+    } catch { /* localStorage может быть недоступен */ }
+    if (window.animeiTrack) window.animeiTrack('episode_end', (titleRu || titleRomaji || 'аниме') + ' · эп ' + (cur?.number ?? epIndex + 1));
+});
+
 async function selectEpisode(index) {
     const ep = state.episodes[index];
     if (!ep) return;
 
     episodeSelect.value = index;
     localStorage.setItem(epStorageKey(), String(index));
+
+    // Если для этой серии есть сохранённая позиция — продолжим с неё после
+    // загрузки потока. Самое начало и финальные титры не считаем.
+    const wp = loadWatchPos();
+    state.resumeTime = (wp
+        && wp.seasonIndex === state.seasonIndex
+        && wp.epIndex === index
+        && wp.time > 30
+        && (!wp.dur || wp.time < wp.dur - 60)) ? wp.time : null;
+
     if (window.animeiTrack) window.animeiTrack('play', (titleRu || titleRomaji || 'аниме') + ' · эп ' + (ep.number ?? index + 1));
     videoLoading.style.display = 'flex';
     videoLoading.textContent = t('player.videoLoading');
@@ -568,7 +653,8 @@ function attachVideo(hlsUrl) {
 }
 
 // После загрузки потока: если это была смена качества — вернуть позицию и
-// прежнее состояние воспроизведения; иначе просто запустить с начала.
+// прежнее состояние воспроизведения; если для серии есть сохранённая позиция
+// просмотра — продолжить с неё; иначе просто запустить с начала.
 function resumeAfterAttach() {
     const seek = state.pendingSeek;
     state.pendingSeek = null;
@@ -576,6 +662,12 @@ function resumeAfterAttach() {
         try { if (seek.time > 0) video.currentTime = seek.time; } catch { /* поток короче — игнор */ }
         if (seek.playing) video.play().catch(() => {});
     } else {
+        const rt = state.resumeTime;
+        state.resumeTime = null;
+        if (rt) {
+            try { video.currentTime = rt; } catch { /* поток короче — игнор */ }
+            if (window.animeiTrack) window.animeiTrack('resume', 'seek:' + rt);
+        }
         video.play().catch(() => {});
     }
 }

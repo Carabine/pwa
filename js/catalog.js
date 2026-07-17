@@ -69,6 +69,11 @@ function renderCards(items) {
         ].filter(Boolean).join(' · ');
 
         card.addEventListener('click', () => {
+            // Постер кэшируем для карточки «Продолжить» на главной: у плеера
+            // своего постера нет, а тут он под рукой.
+            try {
+                if (anime.posterPreview) localStorage.setItem('animei:poster:' + anime.shikimoriId, anime.posterPreview);
+            } catch { /* localStorage может быть недоступен */ }
             const params = new URLSearchParams({
                 id: anime.shikimoriId,
                 title: anime.russian || anime.name,

@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.165';
+const APP_VERSION = 'v0.0.166';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -300,6 +300,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     '<span class="header__search-ac-txt"><span class="header__search-ac-title"></span><span class="header__search-ac-meta"></span></span>';
                 a.querySelector('.header__search-ac-title').textContent = anime.russian || anime.name;
                 a.querySelector('.header__search-ac-meta').textContent = [anime.year, kind].filter(Boolean).join(' · ');
+                // Постер кэшируем для карточки «Продолжить» на главной.
+                a.addEventListener('click', () => {
+                    try {
+                        if (anime.posterPreview) localStorage.setItem('animei:poster:' + anime.shikimoriId, anime.posterPreview);
+                    } catch { /* localStorage может быть недоступен */ }
+                });
                 acList.appendChild(a);
             });
             acList.hidden = false;
@@ -368,7 +374,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Профиль: показываем «Войти» гостю и почту + «Выйти» вошедшему.
     renderAuthState();
 
-    // На главной — живой счётчик учёбы на карточке «Учёба».
+    // На главной — «Продолжить просмотр» и живой счётчик учёбы на карточке «Учёба».
+    renderContinueCard();
     renderHomeProgress();
 
     // Гость с лендинга ещё не набрал свою коллекцию — «Повторить всё» ему не по
@@ -380,6 +387,43 @@ document.addEventListener('DOMContentLoaded', () => {
         customCard.style.display = 'none';
     }
 });
+
+// «Продолжить просмотр» — первый блок главной: последний тайтл, серия и
+// таймкод (пишет плеер в animei:lastWatch). Возврат в просмотр — один тап;
+// сезон/серию/время плеер восстановит сам по своим ключам.
+function renderContinueCard() {
+    const el = document.getElementById('continue-card');
+    if (!el) return;
+    let lw = null;
+    try { lw = JSON.parse(localStorage.getItem('animei:lastWatch') || 'null'); } catch { /* битый JSON */ }
+    if (!lw || !lw.id || !lw.title) return;
+
+    const p = new URLSearchParams({ id: lw.id, title: lw.title, name: lw.name || lw.title });
+    el.href = './pages/player.html?' + p.toString();
+
+    const mm = Math.floor((lw.time || 0) / 60);
+    const ss = String(Math.floor((lw.time || 0) % 60)).padStart(2, '0');
+    const meta = t('hub.continue.ep') + ' ' + lw.epNum + (lw.time > 0 ? ' · ' + mm + ':' + ss : '');
+
+    el.innerHTML =
+        '<div class="continue-card__poster">' + (lw.poster ? '<img src="" alt="" loading="lazy">' : '') + '</div>' +
+        '<div class="continue-card__info">' +
+        '<span class="continue-card__label" data-i18n="hub.continue"></span>' +
+        '<span class="continue-card__title"></span>' +
+        '<span class="continue-card__meta"></span>' +
+        '</div>' +
+        '<span class="continue-card__play"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>';
+    if (lw.poster) el.querySelector('.continue-card__poster img').src = lw.poster;
+    el.querySelector('.continue-card__label').textContent = t('hub.continue');
+    el.querySelector('.continue-card__title').textContent = lw.title;
+    el.querySelector('.continue-card__meta').textContent = meta;
+    el.hidden = false;
+
+    if (window.animeiTrack) window.animeiTrack('resume', 'shown');
+    el.addEventListener('click', () => {
+        if (window.animeiTrack) window.animeiTrack('resume', 'click');
+    });
+}
 
 // «Сегодня: 5 к повторению · 3 новых · 🔥 4 дня подряд» — чтобы было видно,
 // зачем заходить каждый день. Работает только на главной (там есть элемент).
