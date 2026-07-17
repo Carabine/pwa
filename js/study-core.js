@@ -1174,10 +1174,8 @@
             els.buttons.appendChild(makeRateButton(t('study.again'), hints.again, '1', 'keep-word-btn', answerAgain));
             els.buttons.appendChild(makeRateButton(t('study.good'), hints.good, '2', 'bury-word-btn', answerGood));
 
-            if (w.hint && els.hintBtn && els.modalContent) {
-                els.hintBtn.classList.remove('hidden');
-                els.modalContent.innerHTML = w.hint;
-            }
+            // Кнопку-подсказку (ⓘ) убрали из интерфейса карточки — не показываем.
+            if (els.hintBtn) els.hintBtn.classList.add('hidden');
         }
 
         // Коллекция пустая — предлагаем готовую колоду, а не тупик
