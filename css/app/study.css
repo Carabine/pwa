@@ -1223,6 +1223,13 @@
         font-size: 15px;
     }
 
+    /* На телефоне компактный .sentence выше перебивал резерв под угловую кнопку
+       ИИ — возвращаем боковые отступы, иначе текст фразы залезает под искорку. */
+    .sentence--ai {
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+
     .card-area:has(.clip-player) {
         flex: 0 0 auto;
     }
