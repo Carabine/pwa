@@ -1714,10 +1714,17 @@ function renderExplain(data) {
             jp.textContent = b.part;
             const rd = document.createElement('span');
             rd.className = 'explain__reading';
-            // Чтение из ИИ всегда хираганой; если пользователь выбрал ромадзи —
-            // транслитерируем, чтобы разбор совпадал с чтением над субтитрами.
-            let readingText = b.reading && b.reading !== b.part ? b.reading : '';
-            if (readingText && state.readingMode === 'romaji') readingText = kanaToRomaji(readingText);
+            // Чтение из ИИ всегда хираганой. В ромадзи-режиме показываем латиницей
+            // ДАЖЕ для чисто-канных слов (やっている → yatteiru): фраза равна чтению,
+            // но ромадзи-читателю подсказка всё равно нужна. В режиме каны — только
+            // фуригана к словам с кандзи (когда чтение отличается от написания).
+            let readingText;
+            if (state.readingMode === 'romaji') {
+                const rom = kanaToRomaji(b.reading || b.part);
+                readingText = rom && rom !== b.part ? rom : '';
+            } else {
+                readingText = b.reading && b.reading !== b.part ? b.reading : '';
+            }
             rd.textContent = readingText ? ' ' + readingText : '';
             const mean = document.createElement('div');
             mean.className = 'explain__meaning';

@@ -58,12 +58,17 @@
                 jp.textContent = b.part;
                 const rd = document.createElement('span');
                 rd.className = 'explain__reading';
-                // Чтение из ИИ всегда хираганой; если пользователь выбрал ромадзи —
-                // транслитерируем, чтобы разбор совпадал с чтением над словом.
-                let readingText = b.reading && b.reading !== b.part ? b.reading : '';
-                if (readingText && studyPref('studyTranscription') === 'romaji'
-                    && typeof window.kanaToRomaji === 'function') {
-                    readingText = window.kanaToRomaji(readingText);
+                // Чтение из ИИ всегда хираганой. В ромадзи-режиме показываем латиницей
+                // даже для чисто-канных слов (やっている → yatteiru); в режиме каны —
+                // только фуригана к словам с кандзи.
+                let readingText;
+                const romajiMode = studyPref('studyTranscription') === 'romaji'
+                    && typeof window.kanaToRomaji === 'function';
+                if (romajiMode) {
+                    const rom = window.kanaToRomaji(b.reading || b.part);
+                    readingText = rom && rom !== b.part ? rom : '';
+                } else {
+                    readingText = b.reading && b.reading !== b.part ? b.reading : '';
                 }
                 rd.textContent = readingText ? ' ' + readingText : '';
                 const mean = document.createElement('div');
