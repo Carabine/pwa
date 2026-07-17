@@ -3,6 +3,11 @@
 
 const I18N = {
     ru: {
+        'session.title': 'Слова из последнего просмотра',
+        'session.pick': 'Выбери, что учить сегодня — остальные останутся в «Моих словах»',
+        'session.study': 'Учить выбранные',
+        'session.later': 'Позже',
+        'session.next': 'Следующая серия',
         'hub.continue': 'Продолжить просмотр',
         'hub.continue.ep': 'Серия',
         'hub.study': 'Учёба',
@@ -321,6 +326,11 @@ const I18N = {
     },
 
     uk: {
+        'session.title': 'Слова з останнього перегляду',
+        'session.pick': 'Вибери, що вчити сьогодні — решта залишиться в «Моїх словах»',
+        'session.study': 'Вчити вибрані',
+        'session.later': 'Пізніше',
+        'session.next': 'Наступна серія',
         'hub.continue': 'Продовжити перегляд',
         'hub.continue.ep': 'Серія',
         'hub.study': 'Навчання',
@@ -639,6 +649,11 @@ const I18N = {
     },
 
     en: {
+        'session.title': 'Words from your last session',
+        'session.pick': 'Pick what to study today — the rest stay in “My words”',
+        'session.study': 'Study selected',
+        'session.later': 'Later',
+        'session.next': 'Next episode',
         'hub.continue': 'Continue watching',
         'hub.continue.ep': 'Episode',
         'hub.study': 'Study',

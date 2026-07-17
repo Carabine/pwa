@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.166';
+const APP_VERSION = 'v0.0.167';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -374,8 +374,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Профиль: показываем «Войти» гостю и почту + «Выйти» вошедшему.
     renderAuthState();
 
-    // На главной — «Продолжить просмотр» и живой счётчик учёбы на карточке «Учёба».
+    // На главной — «Продолжить просмотр», слова прошлой сессии и живой счётчик
+    // учёбы на карточке «Учёба».
     renderContinueCard();
+    renderSessionCard();
     renderHomeProgress();
 
     // Гость с лендинга ещё не набрал свою коллекцию — «Повторить всё» ему не по
@@ -423,6 +425,82 @@ function renderContinueCard() {
     el.addEventListener('click', () => {
         if (window.animeiTrack) window.animeiTrack('resume', 'click');
     });
+}
+
+// Слова прошлой сессии просмотра (пишет плеер в animei:lastSession): «сохранил
+// N слов — выбери, что учить». Выбранные уходят в начало сегодняшних новых
+// (srs:pickedFirst), остальные остаются в «Моих словах». Карточка показывается,
+// пока сессию не обработали (или не нажали «Позже»).
+function renderSessionCard() {
+    const el = document.getElementById('session-card');
+    if (!el) return;
+    let s = null;
+    try { s = JSON.parse(localStorage.getItem('animei:lastSession') || 'null'); } catch { /* битый JSON */ }
+    if (!s || s.processed || !Array.isArray(s.words) || !s.words.length) return;
+
+    el.innerHTML =
+        '<div class="session-card__title"></div>' +
+        '<div class="session-card__hint"></div>' +
+        '<div class="session-card__list"></div>' +
+        '<div class="session-card__actions">' +
+        '<button class="btn btn--primary session-card__study"></button>' +
+        '<button class="btn session-card__later"></button>' +
+        '</div>';
+
+    el.querySelector('.session-card__title').textContent =
+        t('session.title') + ': ' + s.words.length + ' · ' + s.title;
+    el.querySelector('.session-card__hint').textContent = t('session.pick');
+
+    const list = el.querySelector('.session-card__list');
+    s.words.forEach((w, i) => {
+        const row = document.createElement('label');
+        row.className = 'session-word';
+        row.innerHTML = '<input type="checkbox"><span class="session-word__kanji"></span><span class="session-word__tr"></span>';
+        row.querySelector('input').checked = i < 5;
+        row.querySelector('input').dataset.id = w.id;
+        row.querySelector('.session-word__kanji').textContent = w.kanji + (w.kana ? ' · ' + w.kana : '');
+        row.querySelector('.session-word__tr').textContent = w.translation || '';
+        list.appendChild(row);
+    });
+
+    const studyBtn = el.querySelector('.session-card__study');
+    const updateBtn = () => {
+        const n = list.querySelectorAll('input:checked').length;
+        studyBtn.textContent = t('session.study') + (n ? ' (' + n + ')' : '');
+        studyBtn.disabled = !n;
+    };
+    list.addEventListener('change', updateBtn);
+    updateBtn();
+
+    const markProcessed = () => {
+        try {
+            s.processed = true;
+            localStorage.setItem('animei:lastSession', JSON.stringify(s));
+        } catch { /* недоступен */ }
+    };
+
+    studyBtn.addEventListener('click', () => {
+        const ids = [...list.querySelectorAll('input:checked')].map((c) => c.dataset.id);
+        try {
+            const picked = JSON.parse(localStorage.getItem('srs:pickedFirst') || '[]');
+            for (const id of ids) if (!picked.includes(id)) picked.push(id);
+            localStorage.setItem('srs:pickedFirst', JSON.stringify(picked));
+        } catch { /* недоступен */ }
+        markProcessed();
+        if (window.animeiTrack) window.animeiTrack('session_card', 'home_pick:' + ids.length);
+        window.location.href = './pages/study.html';
+    });
+
+    const laterBtn = el.querySelector('.session-card__later');
+    laterBtn.textContent = t('session.later');
+    laterBtn.addEventListener('click', () => {
+        markProcessed();
+        el.hidden = true;
+        if (window.animeiTrack) window.animeiTrack('session_card', 'home_later');
+    });
+
+    el.hidden = false;
+    if (window.animeiTrack) window.animeiTrack('session_card', 'home_shown:' + s.words.length);
 }
 
 // «Сегодня: 5 к повторению · 3 новых · 🔥 4 дня подряд» — чтобы было видно,

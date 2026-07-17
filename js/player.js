@@ -540,7 +540,105 @@ video.addEventListener('ended', () => {
         }
     } catch { /* localStorage может быть недоступен */ }
     if (window.animeiTrack) window.animeiTrack('episode_end', (titleRu || titleRomaji || 'аниме') + ' · эп ' + (cur?.number ?? epIndex + 1));
+    showSessionPanel(epIndex);
 });
+
+// ---------- Слова текущей сессии просмотра ----------
+// Каждое сохранённое из плеера слово запоминаем в animei:lastSession — из него
+// главная строит карточку «в прошлый раз ты сохранил N слов», а конец серии —
+// панель «выбери и повтори». Смена тайтла или серии начинает новую сессию.
+function loadLastSession() {
+    try {
+        return JSON.parse(localStorage.getItem('animei:lastSession') || 'null');
+    } catch { return null; }
+}
+
+function rememberSessionWord(word) {
+    if (!word || !word.id) return;
+    const epIndex = Number(episodeSelect.value);
+    const ep = state.episodes[epIndex];
+    const epNum = ep?.number ?? epIndex + 1;
+    let s = loadLastSession();
+    if (!s || s.processed || String(s.animeId) !== String(shikimoriId) || s.epNum !== epNum) {
+        s = { animeId: shikimoriId, title: titleRu || titleRomaji || '', epNum, words: [], processed: false };
+    }
+    if (!s.words.some((w) => String(w.id) === String(word.id))) {
+        s.words.push({ id: word.id, kanji: word.kanji, kana: word.kana || '', translation: word.translation || '' });
+    }
+    s.updatedAt = Date.now();
+    try { localStorage.setItem('animei:lastSession', JSON.stringify(s)); } catch { /* недоступен */ }
+}
+
+// Панель в конце серии: «Сохранено N слов — выбери, что учить». Необязательная,
+// закрывается одним тапом; при закрытии сессия остаётся необработанной, и её
+// подхватит карточка на главной.
+function showSessionPanel(endedEpIndex) {
+    const s = loadLastSession();
+    if (!s || s.processed || String(s.animeId) !== String(shikimoriId) || !s.words.length) return;
+    if (document.getElementById('session-panel')) return;
+
+    const next = state.episodes[endedEpIndex + 1];
+    const panel = document.createElement('div');
+    panel.className = 'session-panel';
+    panel.id = 'session-panel';
+    panel.innerHTML =
+        '<div class="session-panel__card">' +
+        '<button class="session-panel__close" aria-label="Close">×</button>' +
+        '<div class="session-panel__title"></div>' +
+        '<div class="session-panel__hint"></div>' +
+        '<div class="session-panel__list"></div>' +
+        '<div class="session-panel__actions">' +
+        '<button class="btn btn--primary session-panel__study"></button>' +
+        (next ? '<button class="btn session-panel__next"></button>' : '') +
+        '</div></div>';
+
+    panel.querySelector('.session-panel__title').textContent =
+        t('session.title') + ': ' + s.words.length;
+    panel.querySelector('.session-panel__hint').textContent = t('session.pick');
+
+    const list = panel.querySelector('.session-panel__list');
+    s.words.forEach((w, i) => {
+        const row = document.createElement('label');
+        row.className = 'session-word';
+        row.innerHTML = '<input type="checkbox"><span class="session-word__kanji"></span><span class="session-word__tr"></span>';
+        row.querySelector('input').checked = i < 5;
+        row.querySelector('input').dataset.id = w.id;
+        row.querySelector('.session-word__kanji').textContent = w.kanji + (w.kana ? ' · ' + w.kana : '');
+        row.querySelector('.session-word__tr').textContent = w.translation || '';
+        list.appendChild(row);
+    });
+
+    const studyBtn = panel.querySelector('.session-panel__study');
+    const updateBtn = () => {
+        const n = list.querySelectorAll('input:checked').length;
+        studyBtn.textContent = t('session.study') + (n ? ' (' + n + ')' : '');
+        studyBtn.disabled = !n;
+    };
+    list.addEventListener('change', updateBtn);
+    updateBtn();
+
+    studyBtn.addEventListener('click', () => {
+        const ids = [...list.querySelectorAll('input:checked')].map((c) => c.dataset.id);
+        try {
+            const picked = JSON.parse(localStorage.getItem('srs:pickedFirst') || '[]');
+            for (const id of ids) if (!picked.includes(id)) picked.push(id);
+            localStorage.setItem('srs:pickedFirst', JSON.stringify(picked));
+            s.processed = true;
+            localStorage.setItem('animei:lastSession', JSON.stringify(s));
+        } catch { /* недоступен */ }
+        if (window.animeiTrack) window.animeiTrack('session_card', 'player_pick:' + ids.length);
+        window.location.href = './study.html';
+    });
+    panel.querySelector('.session-panel__next')?.addEventListener('click', () => {
+        panel.remove();
+        selectEpisode(endedEpIndex + 1);
+    });
+    panel.querySelector('.session-panel__close').addEventListener('click', () => panel.remove());
+    panel.querySelector('.session-panel__next') && (panel.querySelector('.session-panel__next').textContent = t('session.next'));
+
+    document.body.appendChild(panel);
+    if (window.animeiTrack) window.animeiTrack('session_card', 'player_shown:' + s.words.length);
+}
 
 async function selectEpisode(index) {
     const ep = state.episodes[index];
@@ -2002,7 +2100,7 @@ popupSave.addEventListener('click', async () => {
             translation = ordered.slice(0, 2).join('; ');
         }
 
-        await saveWord({
+        const savedWord = await saveWord({
             kanji: ctx.tok.base,
             // Учим словарную форму (kanji = base), поэтому и чтение — от неё:
             //   1) dict.reading — чтение словарной статьи для tok.base (帰る → かえる);
@@ -2024,6 +2122,7 @@ popupSave.addEventListener('click', async () => {
 
         state.knownWords.add(ctx.tok.base);
         if (window.animeiTrack) window.animeiTrack('save_word', ctx.tok.base);
+        rememberSessionWord(savedWord);
         popupSave.textContent = t('popup.saved');
         showSnackbar(t('popup.savedSnack'), { duration: 3000 });
         state.activeCueIndex = -2;

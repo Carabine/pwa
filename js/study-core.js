@@ -497,8 +497,28 @@
             landing.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
             const landingItems = landing.map(w => buildItem(w, true));
 
+            // Слова, отмеченные «повторить сейчас» в итогах сессии просмотра
+            // (srs:pickedFirst), гарантированно входят в сегодняшние новые —
+            // дневной лимит их не вытесняет. Список одноразовый: использовали
+            // при сборке колоды — очистили (удалённые/битые id тоже).
+            let picked = [];
+            try {
+                const pickedIds = JSON.parse(localStorage.getItem('srs:pickedFirst') || '[]');
+                if (Array.isArray(pickedIds) && pickedIds.length) {
+                    const idSet = new Set(pickedIds.map(String));
+                    picked = fresh.filter(w => idSet.has(String(w.id)));
+                    const inPicked = new Set(picked.map(w => String(w.id)));
+                    for (let i = fresh.length - 1; i >= 0; i--) {
+                        if (inPicked.has(String(fresh[i].id))) fresh.splice(i, 1);
+                    }
+                    localStorage.removeItem('srs:pickedFirst');
+                }
+            } catch { /* localStorage может быть недоступен */ }
+
             // Introduce a limited number of new words per day.
-            const newItems = shuffle(fresh).slice(0, NEW_PER_DAY).map(w => buildItem(w, true));
+            const newItems = [...picked, ...shuffle(fresh)]
+                .slice(0, Math.max(NEW_PER_DAY, picked.length))
+                .map(w => buildItem(w, true));
             return [...landingItems, ...shuffle([...due, ...newItems])];
         }
 
