@@ -27,7 +27,7 @@ const STARTER_DECK = [
       t: { ru: ['сражаться, воевать', 'Не сражаясь, не победить… Сражайся, сражайся! (Эрен)'], uk: ['битися, воювати', 'Не б’ючись, не перемогти… Бийся, бийся! (Ерен)'], en: ['to fight', "If you don't fight, you can't win… Fight, fight! (Eren)"] } },
     { k: '僕', r: 'ぼく', ro: 'boku', a: 'Tokyo Ghoul', s: '僕は喰種だ',
       clip: 'https://animei.space/storage/e843e894-085b-4149-87a8-fe039f9273bf.mp4?v=jp', len: 11, ts: 2.5, te: 6.5,
-      t: { ru: ['я (мужское «боку»)', 'Я — гуль'], uk: ['я (чоловіче «боку»)', 'Я — гуль'], en: ['I, me (male "boku")', 'I am… a ghoul'] } },
+      t: { ru: ['я (мужское)', 'Я — гуль'], uk: ['я (чоловіче «боку»)', 'Я — гуль'], en: ['I, me (male "boku")', 'I am… a ghoul'] } },
     { k: '勝つ', r: 'かつ', ro: 'katsu', a: 'Attack on Titan', s: 'エレンが勝ったんだ',
       clip: 'https://animei.space/storage/e99231c7-a8e1-40c8-a98f-6a11f2f92038.mp4', len: 9, ts: 6, te: 7,
       t: { ru: ['побеждать, выигрывать', 'Эрен победил! (Армин)'], uk: ['перемагати, вигравати', 'Ерен переміг! (Армін)'], en: ['to win', 'Eren won! (Armin)'] } },
