@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.177';
+const APP_VERSION = 'v0.0.178';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -424,12 +424,24 @@ function renderContinueCard() {
         '<span class="continue-card__title"></span>' +
         '<span class="continue-card__meta"></span>' +
         '</div>' +
-        '<span class="continue-card__play"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>';
+        '<span class="continue-card__play"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>' +
+        '<button class="continue-card__close" type="button" aria-label="Close">×</button>';
     if (lw.poster) el.querySelector('.continue-card__poster img').src = lw.poster;
     el.querySelector('.continue-card__label').textContent = t('hub.continue');
     el.querySelector('.continue-card__title').textContent = lw.title;
     el.querySelector('.continue-card__meta').textContent = meta;
     el.hidden = false;
+
+    // Крестик убирает карточку с главной (указатель lastWatch). Позицию
+    // просмотра (watchPos) не трогаем: если открыть тайтл заново, плеер
+    // всё равно продолжит с того же места.
+    el.querySelector('.continue-card__close').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try { localStorage.removeItem('animei:lastWatch'); } catch { /* недоступен */ }
+        el.hidden = true;
+        if (window.animeiTrack) window.animeiTrack('resume', 'dismiss');
+    });
 
     if (window.animeiTrack) window.animeiTrack('resume', 'shown');
     el.addEventListener('click', () => {
