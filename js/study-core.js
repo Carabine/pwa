@@ -720,19 +720,23 @@
             wordEl.textContent = current.word.word ?? current.word.kanji ?? '';
             els.front.appendChild(wordEl);
 
-            // Новичок в ромадзи-режиме кандзи ещё не читает — без чтения вопрос
-            // для него нем. Показываем ромадзи сразу на лицевой стороне (в режиме
-            // каны ничего не добавляем: чтение — часть ответа).
-            if (studyPref('studyTranscription') === 'romaji') {
+            // Чтение на лицевой стороне — в транскрипции из настроек учёбы
+            // (тогл «кана/ромадзи»): новичок, не читающий кандзи, видит, КАК
+            // слово звучит, ещё на вопросе. Чисто-канное слово в режиме каны
+            // не дублируем (чтение совпало бы с самим словом).
+            {
                 const w = current.word;
                 const kana = w.kana || '';
-                const rom = (w.romaji && String(w.romaji).trim())
-                    || (typeof window.kanaToRomaji === 'function' ? window.kanaToRomaji(kana) : '');
+                const romajiMode = studyPref('studyTranscription') === 'romaji';
+                const reading = romajiMode
+                    ? ((w.romaji && String(w.romaji).trim())
+                        || (typeof window.kanaToRomaji === 'function' ? window.kanaToRomaji(kana) : ''))
+                    : kana;
                 const face = wordEl.textContent;
-                if (rom && rom !== face) {
+                if (reading && reading !== face) {
                     const r = document.createElement('div');
                     r.className = 'front-reading';
-                    r.textContent = rom;
+                    r.textContent = reading;
                     els.front.appendChild(r);
                 }
             }

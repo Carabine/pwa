@@ -160,6 +160,25 @@
     var statsKey = urlKey || (function () { try { return localStorage.getItem('animei:statsKey') || ''; } catch (e) { return ''; } })();
     function keyQ() { return statsKey ? '&key=' + encodeURIComponent(statsKey) : ''; }
 
+    // Бэкенд ответил 403 — ключа нет или он неверный. Спрашиваем один раз,
+    // сохраняем и перезагружаем; отказ — понятная подсказка вместо пустой страницы.
+    var keyAsked = false;
+    function requireKey(r) {
+        if (r.status !== 403) return r.json();
+        if (!keyAsked) {
+            keyAsked = true;
+            var k = window.prompt('Статистика закрыта ключом владельца. Введи ключ:');
+            if (k && k.trim()) {
+                try { localStorage.setItem('animei:statsKey', k.trim()); } catch (e) {}
+                location.reload();
+            } else {
+                document.getElementById('sub').textContent =
+                    'Нужен ключ владельца: открой страницу как stats.html?key=<ключ>';
+            }
+        }
+        throw new Error('403');
+    }
+
     var currentDays = 30;
     var showBots = false;   // по умолчанию — только люди; кнопка включает ботов
 
@@ -576,14 +595,14 @@
         var botsQ = showBots ? '&bots=1' : '';
 
         fetch(apiBase + '/api/v1/stats/summary?days=' + days + botsQ + keyQ())
-            .then(function (r) { return r.json(); })
+            .then(requireKey)
             .then(render)
             .catch(function () {
                 document.getElementById('sub').textContent = 'Не удалось загрузить статистику';
             });
 
         fetch(apiBase + '/api/v1/stats/visitors?days=' + days + botsQ + keyQ())
-            .then(function (r) { return r.json(); })
+            .then(requireKey)
             .then(renderVisitors)
             .catch(function () {
                 document.getElementById('visitors').innerHTML = '<div class="msg">Не удалось загрузить посетителей</div>';
@@ -613,7 +632,7 @@
     }
 
     fetch(apiBase + '/api/v1/stats/weekly?weeks=8' + keyQ())
-        .then(function (r) { return r.json(); })
+        .then(requireKey)
         .then(renderWeekly)
         .catch(function () {
             document.getElementById('weekly').innerHTML = '<div class="msg">Не удалось загрузить</div>';
