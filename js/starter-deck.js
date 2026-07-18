@@ -158,8 +158,64 @@ function starterCard(card) {
     return { ...card, s: c.s, a: c.a, clip: c.clip, len: c.len, t };
 }
 
+// ---- Синхронизация порядка ядра с админкой (seed@animei.space) ----
+// Владелец переставляет карточки в админке → порядок пишется на сервере
+// (PUT /admin/seed-order → static/seed-order.json). Колода тянет его через
+// публичный GET /api/v1/starter/order и переставляет ЯДРО (первые
+// STARTER_CORE_COUNT) по kanji. Кэшируем в localStorage: применяем порядок
+// сразу и синхронно (без мигания), а с сервера обновляем в фоне — новый
+// порядок вступит в силу со следующей загрузки. Нет сети/кэша/файла — остаётся
+// статичный порядок массива STARTER_DECK (оффлайн-надёжно).
+const STARTER_ORDER_KEY = 'animei:starterOrder';
+
+function loadStarterOrder() {
+    try {
+        const arr = JSON.parse(localStorage.getItem(STARTER_ORDER_KEY) || 'null');
+        return Array.isArray(arr) && arr.length ? arr : null;
+    } catch { return null; }
+}
+
+let starterOrder = loadStarterOrder();
+
+function starterApiBase() {
+    return ['localhost', '127.0.0.1', ''].includes(location.hostname)
+        ? 'http://localhost:3005' : location.origin;
+}
+
+function refreshStarterOrder() {
+    try {
+        fetch(starterApiBase() + '/api/v1/starter/order')
+            .then((r) => (r.ok ? r.json() : null))
+            .then((j) => {
+                if (j && Array.isArray(j.data) && j.data.length) {
+                    starterOrder = j.data;
+                    try { localStorage.setItem(STARTER_ORDER_KEY, JSON.stringify(j.data)); } catch { /* приватный режим */ }
+                }
+            })
+            .catch(() => { /* оффлайн — оставляем кэш/статичный порядок */ });
+    } catch { /* нет fetch/localStorage */ }
+}
+if (typeof window !== 'undefined') refreshStarterOrder();
+
+// Ядро (первые STARTER_CORE_COUNT), переставленное по starterOrder (по kanji).
+// Карточки не из списка сохраняют исходный относительный порядок в хвосте ядра.
+// Некор (остальные 35) — как есть.
+function orderedStarterDeck() {
+    if (!starterOrder || !starterOrder.length) return STARTER_DECK;
+    const core = STARTER_DECK.slice(0, STARTER_CORE_COUNT);
+    const rest = STARTER_DECK.slice(STARTER_CORE_COUNT);
+    const pos = new Map(starterOrder.map((k, i) => [k, i]));
+    const origIdx = new Map(core.map((c, i) => [c, i]));
+    const sortedCore = core.slice().sort((a, b) => {
+        const pa = pos.has(a.k) ? pos.get(a.k) : Infinity;
+        const pb = pos.has(b.k) ? pos.get(b.k) : Infinity;
+        return pa !== pb ? pa - pb : origIdx.get(a) - origIdx.get(b);
+    });
+    return [...sortedCore, ...rest];
+}
+
 function starterMergedDeck() {
-    return STARTER_DECK.map(starterCard);
+    return orderedStarterDeck().map(starterCard);
 }
 
 // Адрес клипа. Абсолютный URL (клипы ядра из /storage) — как есть; иначе файл
