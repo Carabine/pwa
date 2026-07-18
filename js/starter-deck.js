@@ -64,9 +64,9 @@ const STARTER_DECK = [
     { k: '趣味', r: 'しゅみ', ro: 'shumi', a: 'One-Punch Man', s: '趣味でヒーローをやっている者だ',
       clip: 'https://animei.space/storage/040287f3-bd69-4d1c-8858-3a6ed8253e72.mp4', len: 9, ts: 4, te: 9,
       t: { ru: ['хобби, увлечение', 'Я герой по хобби'], uk: ['хобі, захоплення', 'Я герой за хобі'], en: ['hobby', "I'm a hero as a hobby"] } },
-    { k: 'やつ', r: 'やつ', ro: 'yatsu', a: 'Chainsaw Man', s: 'パワーは いいやつだぜ',
-      clip: 'https://animei.space/storage/d44fdfb0-8fbe-40d0-bfb2-90cc35ec3f2d.mp4', len: 9, ts: 3, te: 7,
-      t: { ru: ['тип, чувак (разг.)', 'Пауэр — славный малый!'], uk: ['тип, чувак (розм.)', 'Пауер — славний хлопака!'], en: ['guy, dude (casual)', 'Power is a good one!'] } },
+    { k: '迷う', r: 'まよう', ro: 'mayou', a: 'Frieren', s: 'さっきの木だ この森 いつも迷うな どこだ ここ',
+      clip: 'https://animei.space/storage/27d6cdb9-1385-44eb-9d42-01692911b773.mp4', len: 12, ts: 0, te: 6,
+      t: { ru: ['теряться; сомневаться', 'Опять это дерево… Вечно в этом лесу теряюсь. Где я?'], uk: ['губитися; вагатися', 'Знову це дерево… Вічно в цьому лісі гублюся. Де я?'], en: ['to get lost; to be unsure', 'That tree again… I always get lost in this forest. Where am I?'] } },
 
     // ---- Дополнение: 35 карточек (пока без видео) ----
     { k: '友達', r: 'ともだち', ro: 'tomodachi', a: 'Naruto', s: '友達を守る！',
