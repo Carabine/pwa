@@ -519,23 +519,22 @@
 }
 
 
-/* На телефоне done/empty-состояниям плана тесно в одну строку: nowrap-CTA
-   сжимал текст в столбик по 1-2 слова. Переносим кнопку на свою строку. */
+/* На телефоне ЛЮБОМУ состоянию плана тесно в одну строку: nowrap-CTA сжимал
+   текст и чипы в узкий столбик. Кнопка переезжает на свою строку во всю
+   ширину, кольцо и текст остаются рядом сверху. */
 @media (max-width: 480px) {
-    .daily-plan--done,
-    .daily-plan--empty {
+    .daily-plan {
         flex-wrap: wrap;
+        row-gap: 12px;
     }
 
-    .daily-plan--done .daily-plan__cta,
-    .daily-plan--empty .daily-plan__cta {
+    .daily-plan .daily-plan__cta {
         width: 100%;
         margin-top: 2px;
         padding: 12px;
     }
 
-    .daily-plan--done .daily-plan__body,
-    .daily-plan--empty .daily-plan__body {
+    .daily-plan .daily-plan__body {
         flex: 1 1 200px;
     }
 }
