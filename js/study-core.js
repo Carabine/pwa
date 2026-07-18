@@ -1234,9 +1234,12 @@
                 if (studyAiAvailable) {
                     sentenceLine.classList.add('sentence--ai');
                     sentenceLine.title = t('words.explain');
-                    const spark = document.createElement('span');
+                    // Настоящая <button>: фокусируется с клавиатуры, Enter/Space
+                    // работают нативно (у span[role=button] их не было); клик
+                    // всплывает до обработчика на самой фразе ниже.
+                    const spark = document.createElement('button');
+                    spark.type = 'button';
                     spark.className = 'sentence__spark';
-                    spark.setAttribute('role', 'button');
                     spark.setAttribute('aria-label', t('words.explain'));
                     // Иконка + подпись «Разбор» — чтобы кнопка ИИ была заметной и
                     // сразу понятной (не просто искорка).
