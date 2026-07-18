@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Админка Animei</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<meta name="theme-color" content="#0a0a0f">
+<style>
+    :root {
+        --bg: #0f1115;
+        --card: #1a1d24;
+        --card2: #21252e;
+        --text: #e8eaed;
+        --muted: #9aa0a6;
+        --accent: #7c9cff;
+        --accent2: #3a4668;
+        --border: #2a2e37;
+        --ok: #6fd08c;
+        --bad: #ff7b7b;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        padding: 24px 16px 48px;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tabs button {
+        background: var(--card); color: var(--text); border: 1px solid var(--border);
+        padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    }
+    .tabs button.active { background: var(--accent); border-color: var(--accent); color: #0f1115; font-weight: 600; }
+
+    .tab { display: none; }
+    .tab.active { display: block; }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .card .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .card .value { font-size: 28px; font-weight: 700; }
+    .card .value.ok { color: var(--ok); }
+    .card .value.bad { color: var(--bad); }
+
+    .section-title { font-size: 15px; margin: 24px 0 12px; }
+    .note {
+        background: var(--card); border: 1px solid var(--accent2); border-left: 3px solid var(--accent);
+        border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--muted); margin-bottom: 16px;
+    }
+    .note b { color: var(--text); font-weight: 600; }
+
+    table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; }
+    th, td { text-align: left; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 500; background: var(--card2); }
+    td.num, th.num { text-align: right; }
+    tr:last-child td { border-bottom: none; }
+
+    .msg { color: var(--muted); padding: 40px 0; text-align: center; }
+
+    /* Редактор seed-карточек */
+    .seed { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; display: flex; gap: 16px; flex-wrap: wrap; }
+    .seed__clip { width: 240px; flex-shrink: 0; }
+    .seed__clip video { width: 100%; border-radius: 8px; background: #000; display: block; }
+    .seed__clip .noclip { width: 100%; aspect-ratio: 16/9; border-radius: 8px; background: var(--card2); color: var(--muted); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .seed__clip .clipbtns { display: flex; gap: 6px; margin-top: 6px; }
+    .seed__fields { flex: 1; min-width: 280px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; }
+    .seed__fields .full { grid-column: 1 / -1; }
+    .seed label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .seed input, .seed textarea {
+        width: 100%; background: var(--card2); color: var(--text); border: 1px solid var(--border);
+        border-radius: 7px; padding: 7px 9px; font-size: 13px; font-family: inherit;
+    }
+    .seed textarea { resize: vertical; min-height: 34px; }
+    .seed input:focus, .seed textarea:focus { outline: none; border-color: var(--accent); }
+    .seed__head { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .seed__word { font-size: 18px; font-weight: 700; }
+    .seed__meta { color: var(--muted); font-size: 11px; font-family: ui-monospace, monospace; }
+    .seed__actions { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+    .btn {
+        background: var(--card2); color: var(--text); border: 1px solid var(--border);
+        padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn--primary { background: var(--accent); border-color: var(--accent); color: #0f1115; font-weight: 600; }
+    .btn--danger { color: var(--bad); }
+    .btn--small { padding: 4px 10px; font-size: 12px; }
+    .saved { color: var(--ok); font-size: 12px; opacity: 0; transition: opacity .3s; }
+    .saved.show { opacity: 1; }
+    .trims { display: flex; gap: 8px; }
+    .trims > div { flex: 1; }
+
+    /* Вкладка статистики */
+    #statsFrame { width: 100%; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>🛠 Админка Animei</h1>
+    <div class="sub" id="sub">Загрузка…</div>
+
+    <div class="tabs">
+        <button data-tab="overview" class="active">Обзор</button>
+        <button data-tab="seed">Карточки новичка</button>
+        <button data-tab="stats">Статистика</button>
+        <button data-tab="users">Пользователи</button>
+    </div>
+
+    <div class="tab active" id="tab-overview">
+        <div class="cards" id="ovCards"></div>
+        <h2 class="section-title">Здоровье сервиса</h2>
+        <div id="ovHealth" class="msg">Загрузка…</div>
+        <h2 class="section-title">Последние регистрации</h2>
+        <div id="ovRecent" class="msg">Загрузка…</div>
+    </div>
+
+    <div class="tab" id="tab-seed">
+        <div class="note">
+            Это карточки аккаунта <b>seed@animei.space</b> — источник ядра стартовой колоды.
+            Приложение показывает новичкам <b>копию</b> из <b>starter-deck.js</b>: после правок здесь
+            попроси Клода синхронизировать её и задеплоить PWA. Окно воспроизведения
+            (трим) — в секундах от начала клипа.
+        </div>
+        <div id="seedList" class="msg">Загрузка…</div>
+    </div>
+
+    <div class="tab" id="tab-stats">
+        <iframe id="statsFrame" src="about:blank" title="Статистика"></iframe>
+    </div>
+
+    <div class="tab" id="tab-users">
+        <div id="usersList" class="msg">Загрузка…</div>
+    </div>
+</div>
+
+<script>
+    // Тот же хост, что и приложение (nginx проксирует /api на бэкенд).
+    var apiBase = ['localhost', '127.0.0.1', ''].includes(location.hostname)
+        ? 'http://localhost:3005'
+        : location.origin;
+
+    // Тот же лёгкий ключ владельца, что у stats.html: ?key=… один раз в адресе —
+    // дальше живёт в localStorage (общий слот animei:statsKey).
+    var urlKey = new URLSearchParams(location.search).get('key');
+    if (urlKey) { try { localStorage.setItem('animei:statsKey', urlKey); } catch (e) {} }
+    var adminKey = urlKey || (function () { try { return localStorage.getItem('animei:statsKey') || ''; } catch (e) { return ''; } })();
+    function keyQ() { return 'key=' + encodeURIComponent(adminKey); }
+
+    var keyAsked = false;
+    function requireKey(r) {
+        if (r.status !== 403) return r.json();
+        if (!keyAsked) {
+            keyAsked = true;
+            var k = window.prompt('Админка закрыта ключом владельца. Введи ключ:');
+            if (k && k.trim()) {
+                try { localStorage.setItem('animei:statsKey', k.trim()); } catch (e) {}
+                location.reload();
+            } else {
+                document.getElementById('sub').textContent =
+                    'Нужен ключ владельца: открой страницу как admin.html?key=<ключ>';
+            }
+        }
+        throw new Error('403');
+    }
+
+    function api(path) {
+        var sep = path.includes('?') ? '&' : '?';
+        return fetch(apiBase + '/api/v1/admin' + path + sep + keyQ()).then(requireKey);
+    }
+
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+    }
+    function fmt(n) { return (n || 0).toLocaleString('ru-RU'); }
+    function dt(s) { return s ? new Date(s).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'; }
+
+    // ---------- Вкладки ----------
+    var loaded = {};
+    document.querySelectorAll('.tabs button').forEach(function (b) {
+        b.addEventListener('click', function () {
+            document.querySelectorAll('.tabs button').forEach(function (x) { x.classList.remove('active'); });
+            document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('active'); });
+            b.classList.add('active');
+            document.getElementById('tab-' + b.dataset.tab).classList.add('active');
+            openTab(b.dataset.tab);
+        });
+    });
+
+    function openTab(name) {
+        if (loaded[name]) return;
+        loaded[name] = true;
+        if (name === 'seed') loadSeed();
+        if (name === 'users') loadUsers();
+        if (name === 'stats') {
+            var f = document.getElementById('statsFrame');
+            f.style.height = Math.max(600, window.innerHeight - 180) + 'px';
+            f.src = 'stats.html'; // ключ у него общий с нами (animei:statsKey)
+        }
+    }
+
+    // ---------- Обзор ----------
+    function loadOverview() {
+        api('/overview').then(function (d) {
+            document.getElementById('sub').textContent = 'Обновлено ' + new Date().toLocaleString('ru-RU');
+
+            var h = d.health;
+            var healthVal = h ? (h.overall === 'ok' ? 'OK' : 'СБОЙ') : '?';
+            var healthCls = h ? (h.overall === 'ok' ? 'ok' : 'bad') : '';
+            document.getElementById('ovCards').innerHTML =
+                cardHtml('Пользователей', fmt(d.users)) +
+                cardHtml('Слов в базе', fmt(d.words)) +
+                cardHtml('Seed-карточек', fmt(d.seedCards)) +
+                '<div class="card"><div class="label">Здоровье</div><div class="value ' + healthCls + '">' + healthVal + '</div></div>';
+
+            if (h) {
+                var rows = Object.keys(h.checks || {}).map(function (k) {
+                    var v = h.checks[k];
+                    var ok = v === 'ok';
+                    return '<tr><td>' + esc(k) + '</td><td style="color:var(--' + (ok ? 'ok' : 'bad') + ')">' + esc(v) + '</td></tr>';
+                }).join('');
+                var bk = h.backupAgeHours >= 0 ? h.backupAgeHours + ' ч назад' : 'нет!';
+                document.getElementById('ovHealth').outerHTML =
+                    '<table><tr><th>Проверка</th><th>Статус</th></tr>' + rows +
+                    '<tr><td>Бэкап БД</td><td>' + esc(bk) + '</td></tr>' +
+                    '<tr><td>Проверено</td><td>' + dt(h.at) + '</td></tr></table>';
+            } else {
+                document.getElementById('ovHealth').textContent = 'health-status.json ещё не создан (cron не отработал)';
+            }
+
+            document.getElementById('ovRecent').outerHTML =
+                '<table><tr><th>Email</th><th>Регистрация</th><th class="num">Слов</th></tr>' +
+                d.recentUsers.map(function (u) {
+                    return '<tr><td>' + esc(u.email) + '</td><td>' + dt(u.createdAt) + '</td><td class="num">' + fmt(u.words) + '</td></tr>';
+                }).join('') + '</table>';
+        }).catch(function () {});
+    }
+    function cardHtml(label, value) {
+        return '<div class="card"><div class="label">' + label + '</div><div class="value">' + value + '</div></div>';
+    }
+
+    // ---------- Карточки новичка ----------
+    var FIELDS = [
+        ['kanji', 'Слово (кандзи)'], ['kana', 'Чтение (кана)'],
+        ['romaji', 'Ромадзи'], ['translation', 'Перевод слова'],
+        ['sentence', 'Фраза (яп.)', 'full'], ['sentenceTranslation', 'Перевод фразы', 'full'],
+        ['hint', 'Подсказка (аниме)', 'full'],
+    ];
+
+    function loadSeed() {
+        api('/seed-words').then(function (r) {
+            var list = document.getElementById('seedList');
+            if (!r.data.length) { list.textContent = 'Карточек нет'; return; }
+            list.className = '';
+            list.innerHTML = r.data.map(seedHtml).join('');
+            r.data.forEach(bindSeed);
+        }).catch(function () {});
+    }
+
+    function seedHtml(w, i) {
+        var clip = w.video
+            ? '<video preload="metadata" src="' + esc(w.video) + '" controls></video>' +
+              '<div class="clipbtns"><button class="btn btn--small" data-act="window">▶ Окно ' +
+              (w.trimStart != null ? w.trimStart : 0) + '–' + (w.trimEnd != null ? w.trimEnd : '…') + ' с</button></div>'
+            : '<div class="noclip">Клипа нет</div>';
+        var inputs = FIELDS.map(function (f) {
+            var tag = f[0] === 'sentence' || f[0] === 'sentenceTranslation' ? 'textarea' : 'input';
+            var val = esc(w[f[0]]);
+            return '<div class="' + (f[2] || '') + '"><label>' + f[1] + '</label>' +
+                (tag === 'input'
+                    ? '<input name="' + f[0] + '" value="' + val + '">'
+                    : '<textarea name="' + f[0] + '" rows="1">' + val + '</textarea>') + '</div>';
+        }).join('');
+        return '<div class="seed" data-id="' + esc(w.id) + '">' +
+            '<div class="seed__clip">' + clip + '</div>' +
+            '<div class="seed__fields">' +
+                '<div class="seed__head"><span class="seed__word">' + (i + 1) + '. ' + esc(w.kanji) + '</span>' +
+                '<span class="seed__meta">' + esc(w.id.slice(0, 8)) + ' · изменено ' + dt(w.updatedAt) + '</span></div>' +
+                inputs +
+                '<div class="trims full">' +
+                    '<div><label>Окно: старт, с</label><input name="trimStart" type="number" step="0.1" value="' + (w.trimStart != null ? w.trimStart : '') + '"></div>' +
+                    '<div><label>Окно: конец, с</label><input name="trimEnd" type="number" step="0.1" value="' + (w.trimEnd != null ? w.trimEnd : '') + '"></div>' +
+                '</div>' +
+                '<div class="seed__actions">' +
+                    '<button class="btn btn--primary" data-act="save">💾 Сохранить</button>' +
+                    '<button class="btn btn--danger" data-act="del">Удалить</button>' +
+                    '<span class="saved">Сохранено ✓</span>' +
+                '</div>' +
+            '</div></div>';
+    }
+
+    function bindSeed(w) {
+        var el = document.querySelector('.seed[data-id="' + w.id + '"]');
+        if (!el) return;
+        var video = el.querySelector('video');
+
+        // Проиграть только окно карточки (как её увидит ученик)
+        var winBtn = el.querySelector('[data-act="window"]');
+        if (winBtn && video) winBtn.addEventListener('click', function () {
+            var ts = parseFloat(el.querySelector('[name=trimStart]').value) || 0;
+            var te = parseFloat(el.querySelector('[name=trimEnd]').value);
+            video.currentTime = ts;
+            video.play();
+            var stop = function () {
+                if (isFinite(te) && video.currentTime >= te) { video.pause(); video.removeEventListener('timeupdate', stop); }
+            };
+            video.addEventListener('timeupdate', stop);
+        });
+
+        el.querySelector('[data-act="save"]').addEventListener('click', function () {
+            var body = {};
+            el.querySelectorAll('input[name], textarea[name]').forEach(function (inp) {
+                body[inp.name] = inp.type === 'number' ? parseFloat(inp.value) : inp.value;
+            });
+            fetch(apiBase + '/api/v1/admin/seed-words/' + w.id + '?' + keyQ(), {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            }).then(requireKey).then(function () {
+                var s = el.querySelector('.saved');
+                s.classList.add('show');
+                setTimeout(function () { s.classList.remove('show'); }, 2000);
+                if (winBtn) winBtn.textContent = '▶ Окно ' + (body.trimStart || 0) + '–' + (isFinite(body.trimEnd) ? body.trimEnd : '…') + ' с';
+            }).catch(function () { alert('Не сохранилось — проверь ключ/сеть'); });
+        });
+
+        el.querySelector('[data-act="del"]').addEventListener('click', function () {
+            if (!confirm('Удалить карточку «' + w.kanji + '» из seed-аккаунта?\nФайл клипа в /storage останется (он общий для стартовой колоды).')) return;
+            fetch(apiBase + '/api/v1/admin/seed-words/' + w.id + '?' + keyQ(), { method: 'DELETE' })
+                .then(requireKey)
+                .then(function () { el.remove(); })
+                .catch(function () { alert('Не удалилось — проверь ключ/сеть'); });
+        });
+    }
+
+    // ---------- Пользователи ----------
+    function loadUsers() {
+        api('/users').then(function (r) {
+            var el = document.getElementById('usersList');
+            if (!r.data.length) { el.textContent = 'Пользователей нет'; return; }
+            el.className = '';
+            el.innerHTML = '<table><tr><th>Email</th><th>Регистрация</th><th class="num">Слов</th>' +
+                '<th class="num">Повторял слов</th><th>Последняя активность</th></tr>' +
+                r.data.map(function (u) {
+                    var mark = u.isSeed ? ' <span style="color:var(--accent)">· seed</span>' : '';
+                    return '<tr><td>' + esc(u.email) + mark + '</td><td>' + dt(u.createdAt) + '</td>' +
+                        '<td class="num">' + fmt(u.words) + '</td><td class="num">' + fmt(u.reviewedWords) + '</td>' +
+                        '<td>' + dt(u.lastSeen) + '</td></tr>';
+                }).join('') + '</table>';
+        }).catch(function () {});
+    }
+
+    loadOverview();
+</script>
+</body>
+</html>
