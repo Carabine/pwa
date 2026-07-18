@@ -59,7 +59,7 @@ const STARTER_DECK = [
       clip: 'https://animei.space/storage/85224c52-0861-4035-accd-151a27b04a72.mp4', len: 9, ts: 5, te: 10,
       t: { ru: ['товарищ; свои', 'Ещё не время оплакивать павших товарищей.'], uk: ['товариш; свої', 'Ще не час оплакувати полеглих товаришів.'], en: ['comrade; ally', "There's no time to mourn fallen comrades yet."] } },
     { k: '仕事', r: 'しごと', ro: 'shigoto', a: 'Spy x Family', s: 'まあ ただの仕事だよ',
-      clip: 'sxf-shigoto.mp4', len: 8, ts: 0, te: 2.4,
+      clip: 'https://animei.space/storage/4143aca7-f738-446a-af44-e0c5bf83ea1e.mp4', len: 8, ts: 0, te: 2.4,
       t: { ru: ['работа; дело', 'Да так, обычная работа.'], uk: ['робота; справа', 'Та так, звичайна робота.'], en: ['work; job', "It's just an ordinary job."] } },
     { k: '趣味', r: 'しゅみ', ro: 'shumi', a: 'One-Punch Man', s: '趣味でヒーローをやっている者だ',
       clip: 'https://animei.space/storage/040287f3-bd69-4d1c-8858-3a6ed8253e72.mp4', len: 9, ts: 4, te: 9,
