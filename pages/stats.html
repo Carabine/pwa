@@ -65,7 +65,6 @@
     .visitor__head:hover { background: var(--card2); }
     .visitor__ip { font-weight: 600; font-size: 14px; font-family: ui-monospace, monospace; }
     .visitor__meta { color: var(--muted); font-size: 12px; }
-    .chip { background: var(--accent2); color: #cdd6f4; font-size: 11px; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
     .visitor__spacer { flex: 1; }
     .visitor__caret { color: var(--accent); font-size: 12px; white-space: nowrap; }
     .visitor__caret::after { content: ' ▾'; display: inline-block; transition: transform .15s; }
@@ -74,12 +73,25 @@
     .visitor__dev { color: var(--muted); font-size: 11px; font-family: ui-monospace, monospace; }
     .visitor__body { display: none; padding: 4px 14px 14px; border-top: 1px solid var(--border); }
     .visitor.open .visitor__body { display: block; }
+
+    /* Сводка «что делал» — вторая строка шапки посетителя, чипы по типам действий */
+    .visitor__digest { width: 100%; font-size: 12px; line-height: 2; }
+    .visitor__digest .dg {
+        background: var(--card2); border: 1px solid var(--border); color: var(--text);
+        padding: 2px 9px; border-radius: 20px; margin-right: 6px; display: inline-block;
+        max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom;
+    }
+    .visitor__digest .dg--idle { color: var(--muted); }
+
     .tl { list-style: none; margin: 8px 0 0; padding: 0; }
     .tl li { display: flex; gap: 10px; padding: 5px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
     .tl li:last-child { border-bottom: none; }
     .tl__time { color: var(--muted); white-space: nowrap; min-width: 54px; }
     .tl__act { color: var(--text); word-break: break-word; }
     .tl__tag { display: inline-block; min-width: 92px; color: var(--accent); }
+    /* Открытия страниц приглушаем — глаз цепляется за реальные действия */
+    .tl li.pg .tl__tag, .tl li.pg .tl__act { color: var(--muted); }
+    .tl__rep { color: var(--accent); white-space: nowrap; }
 
     /* Сессии посетителя: каждая — отдельный визит с путём (что куда нажимал). */
     .session { border: 1px solid var(--border); border-radius: 10px; margin: 10px 0; overflow: hidden; }
@@ -89,6 +101,8 @@
     .session__time { color: var(--muted); }
     .session__count { color: var(--accent); margin-left: auto; white-space: nowrap; }
     .session .tl { margin: 0; padding: 4px 12px 8px; }
+    /* Итог сессии одной строкой: что реально сделал за визит */
+    .session__sum { padding: 8px 12px 0; font-size: 12px; color: var(--text); line-height: 1.6; }
     /* Стрелка-путь: краткий маршрут по страницам вверху сессии */
     .session__path { padding: 8px 12px 0; font-size: 12px; color: var(--muted); line-height: 1.7; }
     .session__path b { color: var(--text); font-weight: 500; }
@@ -125,6 +139,7 @@
 
     <h2 class="section-title" style="margin-top:28px">Посетители по IP</h2>
     <div class="sub" id="visitors-sub"></div>
+    <div class="periods" id="countryFilter"></div>
     <div id="visitors"></div>
 </div>
 
@@ -187,14 +202,14 @@
         autosync: 'автосинк', explain: 'разбор', onboarding: 'онбординг',
         setting: 'настройка', password_change: 'сменил пароль',
         srs_review: 'повторил', resume: 'продолжил', session_card: 'итог сессии',
-        episode_end: 'досмотрел серию'
+        episode_end: 'досмотрел серию', daily_plan: 'план дня', catalog: 'каталог'
     };
     var PAGE_LABELS = {
         'app/index': 'главная', 'app/catalog': 'каталог', 'app/player': 'плеер',
         'app/watch': 'свой файл', 'app/words': 'словарь', 'app/study': 'повторение',
         'app/custom-study': 'своя учёба', 'app/beginner': 'для новичка',
         'app/settings': 'настройки', 'app/login': 'вход', 'app/feedback': 'отзыв',
-        'app/stats': 'статистика'
+        'app/stats': 'статистика', 'landing/index': 'лендинг'
     };
     var STUDY_LABELS = { srs: 'повторение', cram: 'зубрёжка' };
 
@@ -204,12 +219,37 @@
         });
     }
 
-    function actionText(item) {
-        var verb = EVENT_LABELS[item.event] || item.event;
-        var detail = item.page;
-        if (item.event === 'page') detail = PAGE_LABELS[item.page] || item.page;
-        else if (item.event === 'study') detail = STUDY_LABELS[item.page] || item.page;
-        return { verb: verb, detail: detail };
+    // Расшифровка «технических» деталей события в человеческий текст.
+    function detailText(item) {
+        var p = String(item.page);
+        switch (item.event) {
+            case 'page': return PAGE_LABELS[p] || p;
+            case 'session': return 'на странице «' + (PAGE_LABELS[p] || p) + '»';
+            case 'study': return STUDY_LABELS[p] || p;
+            case 'srs_review': return p === 'graduated' ? 'закончил сессию повторения' : p;
+            case 'search': {
+                var m = p.match(/^(.*) → (\d+)$/);
+                return m ? '«' + m[1] + '» — найдено: ' + m[2] : '«' + p + '»';
+            }
+            case 'resume':
+                return { shown: 'увидел кнопку «продолжить»', click: 'нажал «продолжить»', dismiss: 'закрыл «продолжить»' }[p]
+                    || (p.indexOf('seek:') === 0 ? 'перемотка на ' + p.slice(5) + ' с' : p);
+            case 'session_card':
+                if (p.indexOf('home_shown') === 0) return 'увидел итог сессии на главной (' + (p.split(':')[1] || '?') + ' слов)';
+                if (p.indexOf('player_shown') === 0) return 'увидел итог сессии в плеере (' + (p.split(':')[1] || '?') + ' слов)';
+                if (p.indexOf('home_pick') === 0 || p.indexOf('player_pick') === 0) return 'забрал слова из итога (' + (p.split(':')[1] || '?') + ')';
+                if (p === 'home_later') return 'отложил итог на потом';
+                return p;
+            case 'daily_plan':
+                if (p === 'done') return 'план на день выполнен';
+                if (p.indexOf('shown') === 0) return 'увидел план на день (осталось ' + (p.split(':')[1] || '?') + ')';
+                return p;
+            case 'onboarding':
+                return p.indexOf('from_landing') === 0 ? 'пришёл с лендинга (' + (p.split(':')[1] || '?') + ' фраз)' : p;
+            case 'autosync': return 'сдвиг субтитров ' + p;
+            case 'catalog': return p === 'filter:easy' ? 'фильтр «полегче»' : p;
+            default: return p;
+        }
     }
 
     function fmtTime(iso) {
@@ -244,29 +284,176 @@
         return mob + ' ' + os + ' · ' + br;
     }
 
-    // Гео по IP — лениво при раскрытии карточки (ipwho.is, бесплатно, кешируем).
+    // ---------- Гео по IP + фильтр по странам ----------
+    // Тянем гео (ipwho.is, бесплатно) для ВСЕХ IP списка сразу, кешируем в
+    // localStorage навсегда (гео IP почти не меняется) — фильтр по странам
+    // строится из этих данных.
+    var GEO_LS = 'animei:statsGeo';
     var geoCache = {};
-    function loadGeo(ip, el) {
-        if (!ip || ip === 'неизвестно' || /^(127\.|10\.|192\.168\.)/.test(ip)) return;
-        if (geoCache[ip]) { el.textContent = geoCache[ip]; return; }
-        fetch('https://ipwho.is/' + ip + '?lang=ru')
+    try { geoCache = JSON.parse(localStorage.getItem(GEO_LS)) || {}; } catch (e) {}
+
+    function isPrivateIp(ip) {
+        return !ip || ip === 'неизвестно' || /^(127\.|10\.|192\.168\.|::1)/.test(ip);
+    }
+
+    function fetchGeo(ip) {
+        if (geoCache[ip]) return Promise.resolve(geoCache[ip]);
+        if (isPrivateIp(ip)) return Promise.resolve(null);
+        return fetch('https://ipwho.is/' + ip + '?lang=ru')
             .then(function (r) { return r.json(); })
             .then(function (g) {
-                if (!g || !g.success) return;
-                var parts = [];
-                if (g.flag && g.flag.emoji) parts.push(g.flag.emoji);
-                if (g.country) parts.push(g.country + (g.city ? ', ' + g.city : ''));
-                if (g.connection && g.connection.isp) parts.push('· ' + g.connection.isp);
-                geoCache[ip] = parts.join(' ');
-                el.textContent = geoCache[ip];
+                if (!g || !g.success) return null;
+                geoCache[ip] = {
+                    flag: (g.flag && g.flag.emoji) || '🌐',
+                    country: g.country || '?',
+                    code: g.country_code || '??',
+                    city: g.city || '',
+                    isp: (g.connection && g.connection.isp) || ''
+                };
+                try { localStorage.setItem(GEO_LS, JSON.stringify(geoCache)); } catch (e) {}
+                return geoCache[ip];
             })
-            .catch(function () {});
+            .catch(function () { return null; }); // сетевые ошибки не кешируем — доберём в след. раз
     }
-    window.__loadGeo = loadGeo;
 
-    // Одна сессия = один визит: сверху краткий путь по страницам стрелками,
-    // ниже — полный хронологический список действий (что куда нажимал).
+    // По 4 запроса параллельно, чтобы не душить бесплатный ipwho.is.
+    function prefetchGeo(ips, done) {
+        var queue = ips.filter(function (ip) { return !geoCache[ip] && !isPrivateIp(ip); });
+        if (!queue.length) { done(); return; }
+        var i = 0;
+        function worker() {
+            if (i >= queue.length) return Promise.resolve();
+            return fetchGeo(queue[i++]).then(worker);
+        }
+        Promise.all([worker(), worker(), worker(), worker()]).then(done, done);
+    }
+
+    // Страна посетителя для фильтра; без гео — отдельная корзина «❓».
+    function countryOf(ip) {
+        var g = geoCache[ip];
+        return g ? { code: g.code, name: g.country, flag: g.flag }
+                 : { code: '??', name: 'без гео', flag: '❓' };
+    }
+
+    var visitorsData = null;   // последний ответ /stats/visitors
+    var countryFilter = '';    // '' = все страны, иначе код ('RU', '??'...)
+
+    // Кнопки-фильтр: «Все» + каждая страна, встретившаяся в списке, с числом IP.
+    function renderCountryFilter() {
+        var el = document.getElementById('countryFilter');
+        if (!visitorsData || !visitorsData.visitors.length) { el.innerHTML = ''; return; }
+
+        var byCode = new Map();
+        visitorsData.visitors.forEach(function (v) {
+            var c = countryOf(v.ip);
+            var cur = byCode.get(c.code) || { name: c.name, flag: c.flag, n: 0 };
+            cur.n++;
+            byCode.set(c.code, cur);
+        });
+        if (countryFilter && !byCode.has(countryFilter)) countryFilter = '';
+
+        var buttons = [...byCode.entries()]
+            .sort(function (a, b) { return b[1].n - a[1].n; })
+            .map(function (pair) {
+                var code = pair[0], c = pair[1];
+                return '<button data-country="' + esc(code) + '"' +
+                    (countryFilter === code ? ' class="active"' : '') + '>' +
+                    c.flag + ' ' + esc(c.name) + ' (' + c.n + ')</button>';
+            });
+        el.innerHTML = '<button data-country=""' + (countryFilter === '' ? ' class="active"' : '') +
+            '>🌍 Все (' + visitorsData.visitors.length + ')</button>' + buttons.join('');
+
+        el.querySelectorAll('button').forEach(function (b) {
+            b.addEventListener('click', function () {
+                countryFilter = b.dataset.country;
+                renderCountryFilter();
+                renderVisitorList();
+            });
+        });
+    }
+
+    // ---------- Сводка «что делал» ----------
+    // Из событий собираем человеческий пересказ: какие тайтлы смотрел, какие
+    // слова сохранял, учился ли, что искал. counts (если есть) — полные счётчики
+    // с сервера: сессии в payload обрезаны, а числа должны быть честные.
+    function buildDigest(events, counts) {
+        var titles = [], words = [], queries = [];
+        var reviews = 0, studies = 0, episodes = 0, saved = 0;
+        events.forEach(function (e) {
+            var p = String(e.page);
+            if (e.event === 'play') {
+                var t = p.split(' · эп ')[0];
+                if (t && titles.indexOf(t) < 0) titles.push(t);
+            } else if (e.event === 'episode_end') episodes++;
+            else if (e.event === 'save_word') { saved++; if (words.indexOf(p) < 0) words.push(p); }
+            else if (e.event === 'search') {
+                var q = p.split(' → ')[0];
+                if (q && queries.indexOf(q) < 0) queries.push(q);
+            }
+            else if (e.event === 'srs_review') reviews++;
+            else if (e.event === 'study') studies++;
+        });
+        if (counts) {
+            saved = counts.save_word || saved;
+            episodes = counts.episode_end || episodes;
+            studies = counts.study || studies;
+            reviews = counts.srs_review || reviews;
+        }
+
+        function cut(arr, n) {
+            var s = arr.slice(0, n).join(', ');
+            return arr.length > n ? s + ' и ещё ' + (arr.length - n) : s;
+        }
+
+        var parts = [];
+        if (titles.length) parts.push('▶ смотрел: ' + cut(titles, 2));
+        if (episodes) parts.push('🏁 досмотрел серий: ' + episodes);
+        if (saved) parts.push('💾 слова (' + saved + '): ' + cut(words, 4));
+        if (studies) parts.push('📚 открывал повторение ×' + studies);
+        if (reviews) parts.push('✅ закончил повторение ×' + reviews);
+        if (queries.length) parts.push('🔎 искал: ' + cut(queries, 2));
+        return parts;
+    }
+
+    // Сводка по посетителю: имена — из сессий, счётчики — из полных v.events.
+    function visitorDigest(v) {
+        var all = [];
+        (v.sessions || []).forEach(function (s) { all = all.concat(s.events || []); });
+        var counts = {};
+        (v.events || []).forEach(function (e) { counts[e.event] = e.count; });
+        var parts = buildDigest(all, counts);
+        if (!parts.length) {
+            // Ничего «продуктового» не делал — показываем, какие страницы листал.
+            var top = (v.pages || []).slice(0, 3).map(function (p) {
+                return (PAGE_LABELS[p.page] || p.page) + ' ×' + p.count;
+            });
+            return '<span class="dg dg--idle">👀 только листал: ' + esc(top.join(', ') || '—') + '</span>';
+        }
+        return parts.map(function (t) { return '<span class="dg">' + esc(t) + '</span>'; }).join('');
+    }
+
+    // Подряд идущие одинаковые события схлопываем в одно с «×N»:
+    // 30 строк «смотрел Frieren» превращаются в «смотрел Frieren ×30 до 14:47».
+    function collapseEvents(events) {
+        var out = [];
+        events.forEach(function (e) {
+            var last = out[out.length - 1];
+            if (last && last.event === e.event && last.page === e.page) {
+                last.n++;
+                last.to = e.at;
+            } else {
+                out.push({ at: e.at, to: e.at, event: e.event, page: e.page, n: 1 });
+            }
+        });
+        return out;
+    }
+
+    // Одна сессия = один визит: итог одной строкой, краткий путь по страницам,
+    // ниже — хронология действий (повторы схлопнуты, открытия страниц приглушены).
     function renderSession(s, idx) {
+        var sum = buildDigest(s.events || [], null).join(' · ');
+        var sumHtml = sum ? '<div class="session__sum">' + esc(sum) + '</div>' : '';
+
         var pages = (s.events || [])
             .filter(function (e) { return e.event === 'page'; })
             .map(function (e) { return '<b>' + esc(PAGE_LABELS[e.page] || e.page) + '</b>'; });
@@ -274,11 +461,17 @@
             ? '<div class="session__path">' + pages.join('<span class="arr">→</span>') + '</div>'
             : '';
 
-        var steps = (s.events || []).map(function (item) {
-            var a = actionText(item);
-            return '<li><span class="tl__time">' + fmtHM(item.at) + '</span>' +
-                '<span class="tl__tag">' + esc(a.verb) + '</span>' +
-                '<span class="tl__act">' + esc(a.detail) + '</span></li>';
+        var steps = collapseEvents(s.events || []).map(function (item) {
+            var verb = EVENT_LABELS[item.event] || item.event;
+            var rep = '';
+            if (item.n > 1) {
+                var to = fmtHM(item.to);
+                rep = ' <span class="tl__rep">×' + item.n + (to !== fmtHM(item.at) ? ' до ' + to : '') + '</span>';
+            }
+            return '<li' + (item.event === 'page' ? ' class="pg"' : '') + '>' +
+                '<span class="tl__time">' + fmtHM(item.at) + '</span>' +
+                '<span class="tl__tag">' + esc(verb) + '</span>' +
+                '<span class="tl__act">' + esc(detailText(item)) + rep + '</span></li>';
         }).join('');
 
         // Показываем дату конца, только если сессия перешла на другой день
@@ -294,25 +487,30 @@
                 '<span class="session__dev" title="' + esc(s.ua || s.visitorId || '') + '">' + esc(dev) + '</span>' +
                 '<span class="session__time">' + range + '</span>' +
                 '<span class="session__count">' + (s.count || 0) + ' шаг.</span>' +
-            '</div>' + path +
+            '</div>' + sumHtml + path +
             '<ul class="tl">' + steps + '</ul></div>';
     }
 
-    function renderVisitors(data) {
-        document.getElementById('visitors-sub').textContent =
-            data.count + ' уникальных IP за ' + data.days +
-            ' дн. Клик по строке раскрывает путь: сессии, страницы и действия по порядку.';
+    // Список посетителей с учётом фильтра по стране.
+    function renderVisitorList() {
+        if (!visitorsData) return;
+        var data = visitorsData;
 
-        if (!data.visitors.length) {
+        var list = data.visitors.filter(function (v) {
+            return !countryFilter || countryOf(v.ip).code === countryFilter;
+        });
+
+        var subEl = document.getElementById('visitors-sub');
+        subEl.textContent = data.count + ' уникальных IP за ' + data.days + ' дн.' +
+            (countryFilter ? ' · по фильтру: ' + list.length + '.' : '') +
+            ' Клик по строке раскрывает сессии: итог, путь по страницам и действия по порядку.';
+
+        if (!list.length) {
             document.getElementById('visitors').innerHTML = '<div class="msg">Пока нет данных</div>';
             return;
         }
 
-        document.getElementById('visitors').innerHTML = data.visitors.map(function (v, i) {
-            var summary = v.events.map(function (e) {
-                return '<span class="chip">' + (EVENT_LABELS[e.event] || e.event) + ': ' + e.count + '</span>';
-            }).join(' ');
-
+        document.getElementById('visitors').innerHTML = list.map(function (v) {
             var sessions = (v.sessions || []);
             var body = sessions.length
                 ? sessions.map(function (s, si) { return renderSession(s, si); }).join('')
@@ -325,22 +523,41 @@
                 ? '<span class="visitor__dev">' + devices.map(esc).join(' | ') + '</span>'
                 : '';
 
-            return '<div class="visitor" data-ip="' + esc(v.ip) + '">' +
-                '<div class="visitor__head" onclick="this.parentNode.classList.toggle(\'open\'); window.__loadGeo(this.parentNode.dataset.ip, this.querySelector(\'.visitor__geo\'))">' +
+            var g = geoCache[v.ip];
+            var geoLine = g
+                ? '<span class="visitor__geo" title="' + esc(g.isp || '') + '">' +
+                  esc(g.flag + ' ' + g.country + (g.city ? ', ' + g.city : '')) + '</span>'
+                : '<span class="visitor__geo"></span>';
+
+            return '<div class="visitor">' +
+                '<div class="visitor__head" onclick="this.parentNode.classList.toggle(\'open\')">' +
                 '<span class="visitor__ip">' + esc(v.ip) + '</span>' +
-                '<span class="visitor__geo"></span>' +
+                geoLine +
                 '<span class="visitor__meta">' + (v.sessionCount != null ? v.sessionCount : sessions.length) + ' сессий · ' + v.hits + ' действий · ' +
                 v.visitors + ' устр. · ' + fmtTime(v.firstSeen) + ' → ' + fmtTime(v.lastSeen) + '</span>' +
                 devLine +
-                '<span class="visitor__spacer"></span>' + summary +
-                '<span class="visitor__caret">путь</span></div>' +
+                '<span class="visitor__spacer"></span>' +
+                '<span class="visitor__caret">путь</span>' +
+                '<div class="visitor__digest">' + visitorDigest(v) + '</div>' +
+                '</div>' +
                 '<div class="visitor__body">' + body + '</div></div>';
         }).join('');
     }
 
+    function renderVisitors(data) {
+        visitorsData = data;
+        renderCountryFilter();
+        renderVisitorList();
+        // Дотягиваем гео для новых IP и перерисовываем — появятся флаги и фильтр.
+        prefetchGeo(data.visitors.map(function (v) { return v.ip; }), function () {
+            renderCountryFilter();
+            renderVisitorList();
+        });
+    }
+
     function load(days) {
         currentDays = days;
-        document.querySelectorAll('.periods button').forEach(function (b) {
+        document.querySelectorAll('.periods button[data-days]').forEach(function (b) {
             b.classList.toggle('active', Number(b.dataset.days) === days);
         });
         document.getElementById('sub').textContent = 'Загрузка…';
