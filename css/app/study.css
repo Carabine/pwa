@@ -1373,12 +1373,24 @@
     }
 }
 
-/* Чтение (ромадзи) под словом на лицевой стороне — для новичка в ромадзи-режиме */
+/* Чтение (кана/ромадзи по тоглу настроек) ПОД словом на лицевой стороне.
+   .front-side — flex-row по центру: без wrap чтение вставало сбоку от слова.
+   flex-basis:100% переносит его на собственную строку под словом. */
+.front-side { flex-wrap: wrap; }
+
 .front-reading {
-    margin-top: 6px;
-    font-size: 16px;
+    flex-basis: 100%;
+    text-align: center;
+    margin-top: 10px;
+    font-size: 17px;
     color: var(--text-muted);
     letter-spacing: 0.3px;
+}
+
+/* На обороте чтение уже есть (чип транскрипции) — фронтовое прячем, чтобы
+   не дублировать его над разделителем. */
+.card-area:has(.back-side--visible) .front-reading {
+    display: none;
 }
 
 /* ---- Выбор колоды новичка: 15 сцен или все 50 слов ---- */
