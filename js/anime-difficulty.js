@@ -41,7 +41,7 @@ window.AnimeDifficulty = {
     // запускает обычный поиск (q — запрос, label локализуется через labelKey
     // при наличии, иначе показываем как есть).
     easyPicks: [
-        { q: 'Shirokuma Cafe',   label: 'Кафе «Полярный медведь»' },
+        { q: 'Shirokuma Cafe',   label: 'Кафе «У Белого Медведя»' },
         { q: 'Yuru Camp',        label: 'Лагерь на свежем воздухе' },
         { q: 'Takagi',           label: 'Озорная Такаги' },
         { q: 'Horimiya',         label: 'Хоримия' },
