@@ -196,7 +196,7 @@
             const { data: res } = await client.post('analyze', { text: [sentence], merge: true }, { timeout: 20000 });
             const tokens = res?.data?.[0] || [];
             const romaji = tokens
-                .map((tk) => window.kanaToRomaji(tk.reading || tk.kana || tk.surface || ''))
+                .map((tk) => window.kanaToRomaji(READING_OVERRIDES[tk.surface] || tk.reading || tk.kana || tk.surface || ''))
                 .filter(Boolean)
                 .join(' ')
                 .replace(/\s+([,.])/g, '$1')
@@ -227,6 +227,11 @@
         }
     }
 
+    // Некоторые ateji/выдуманные слова из аниме MeCab не знает и отдаёт без чтения
+    // (напр. 喰種 «гуль» из Tokyo Ghoul читается グール, но словаря нет) — над ними
+    // не рисуется фуригана/ромадзи. Задаём чтение вручную по поверхностной форме.
+    const READING_OVERRIDES = { '喰種': 'グール' };
+
     // Пословная раскладка предложения: над каждым словом — ромадзи его чтения.
     // Токены /analyze (MeCab): чтение лежит в feature.reading КАТАКАНОЙ
     // (kanaToRomaji сам приводит катакану к ромадзи). BOS/EOS пропускаем.
@@ -235,9 +240,10 @@
             .filter((tk) => tk && tk.surface && tk.surface !== 'BOS' && tk.surface !== 'EOS')
             .map((tk) => {
                 const surface = tk.surface;
-                const kana = (tk.feature && tk.feature.reading && tk.feature.reading !== '*')
-                    ? tk.feature.reading
-                    : (tk.kana || tk.reading || '');
+                const kana = READING_OVERRIDES[surface]
+                    || ((tk.feature && tk.feature.reading && tk.feature.reading !== '*')
+                        ? tk.feature.reading
+                        : (tk.kana || tk.reading || ''));
                 const cell = document.createElement('span');
                 cell.className = 'read-cell';
                 const romaji = (kana && typeof window.kanaToRomaji === 'function')
