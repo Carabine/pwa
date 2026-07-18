@@ -936,6 +936,38 @@
             target.appendChild(btn);
         }
 
+        // «Совсем без скролла»: высота оборота фиксирована (стабильная сцена),
+        // и когда разбор в неё не помещается, место отдаёт видео — единственный
+        // гибкий элемент. Ужимаем его ровно на величину переполнения, но не ниже
+        // 120px читаемости. CSS такое не умеет (высота текста ему неизвестна),
+        // поэтому меряем в JS после каждого изменения контента оборота.
+        // Внутренний скролл оборота остаётся только страховкой для крайности
+        // «крохотный экран + очень длинный текст без видео».
+        function fitBackMedia() {
+            const back = els.back;
+            if (!back.classList.contains('back-side--visible')) return;
+            const video = back.querySelector('.clip-player video');
+            // Сбрасываем прошлую подгонку до замера — контент мог стать короче,
+            // и видео имеет право снова вырасти до потолка из CSS.
+            if (video) video.style.maxHeight = '';
+            const overflow = back.scrollHeight - back.clientHeight;
+            if (overflow <= 0 || !video) return;
+            const h = video.getBoundingClientRect().height;
+            if (h <= 0) return;
+            const target = Math.max(120, Math.floor(h - overflow));
+            if (target < h) video.style.maxHeight = target + 'px';
+        }
+        let fitBackScheduled = false;
+        function scheduleFitBack() {
+            if (fitBackScheduled) return;
+            fitBackScheduled = true;
+            requestAnimationFrame(() => {
+                fitBackScheduled = false;
+                fitBackMedia();
+            });
+        }
+        window.addEventListener('resize', scheduleFitBack);
+
         // Свой мини-плеер вместо нативных браузерных контролов: короткий клип
         // сам зациклен, поэтому нужны только Play/Pause по центру и кнопка звука.
         function makeClipVideo(src, w) {
@@ -1055,6 +1087,10 @@
             }
             if (video.readyState >= 1) startPlayback();
             else video.addEventListener('loadedmetadata', startPlayback, { once: true });
+
+            // Реальные размеры кадра известны только после метаданных — тогда
+            // и подгоняем высоту клипа под свободное место оборота.
+            video.addEventListener('loadedmetadata', scheduleFitBack, { once: true });
 
             // Держим воспроизведение в пределах окна [tStart, tEnd].
             video.addEventListener('timeupdate', () => {
@@ -1197,6 +1233,7 @@
                     audio.className = 'study-audio';
                     audio.volume = 0.9;
                     mediaSlot.appendChild(audio);
+                    scheduleFitBack();
                 });
             }
 
@@ -1228,6 +1265,8 @@
                         sentenceLine.classList.add('sentence--cells');
                         buildReadingCells(tokens).forEach((c) => sentenceLine.appendChild(c));
                         if (spark) sentenceLine.appendChild(spark);
+                        // Ромадзи-ячейки выше плоской строки — перемеряем оборот.
+                        scheduleFitBack();
                     });
                 }
 
@@ -1285,6 +1324,8 @@
                 btn.disabled = already;
                 els.back.appendChild(btn);
             }
+
+            scheduleFitBack();
 
             const hints = ratingHints();
             els.buttons.innerHTML = '';
