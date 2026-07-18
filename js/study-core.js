@@ -936,26 +936,106 @@
             target.appendChild(btn);
         }
 
-        // «Совсем без скролла»: высота оборота фиксирована (стабильная сцена),
-        // и когда разбор в неё не помещается, место отдаёт видео — единственный
-        // гибкий элемент. Ужимаем его ровно на величину переполнения, но не ниже
-        // 120px читаемости. CSS такое не умеет (высота текста ему неизвестна),
-        // поэтому меряем в JS после каждого изменения контента оборота.
-        // Внутренний скролл оборота остаётся только страховкой для крайности
-        // «крохотный экран + очень длинный текст без видео».
+        // «Совсем без скролла» и без прыжков: высота оборота фиксирована
+        // (стабильная сцена), а место под клип РЕЗЕРВИРУЕТСЯ сразу при отрисовке —
+        // из свободной высоты оборота, потолка из CSS и оценки кадра 16:9 от
+        // ширины. Видео потом просто появляется в уже отведённом месте, поэтому
+        // текст под ним не прыгает ни при загрузке метаданных, ни при подгонке.
+        // Поздние изменения (ромадзи-ячейки, аудио, не-16:9 кадр) двигают слот
+        // плавным transition (см. .back-media--reserved). Пол — 120px читаемости;
+        // внутренний скролл оборота остаётся страховкой для крайности
+        // «крохотный экран + очень длинный текст».
         function fitBackMedia() {
             const back = els.back;
             if (!back.classList.contains('back-side--visible')) return;
-            const video = back.querySelector('.clip-player video');
-            // Сбрасываем прошлую подгонку до замера — контент мог стать короче,
-            // и видео имеет право снова вырасти до потолка из CSS.
-            if (video) video.style.maxHeight = '';
-            const overflow = back.scrollHeight - back.clientHeight;
-            if (overflow <= 0 || !video) return;
-            const h = video.getBoundingClientRect().height;
-            if (h <= 0) return;
-            const target = Math.max(120, Math.floor(h - overflow));
-            if (target < h) video.style.maxHeight = target + 'px';
+            const slot = back.querySelector('.back-media');
+            if (!slot) return;
+            const clipEl = slot.querySelector('.clip-player, .clip-pending');
+            if (!clipEl) {
+                // Клипа нет и не будет (только аудио или пусто) — слот живёт
+                // своим естественным размером.
+                slot.classList.remove('back-media--reserved');
+                slot.style.height = '';
+                return;
+            }
+            const video = slot.querySelector('.clip-player video');
+
+            // Стартовая точка анимации — фактически отрисованная высота слота.
+            const wasReserved = slot.classList.contains('back-media--reserved');
+            const renderedH = wasReserved ? slot.getBoundingClientRect().height : 0;
+
+            // Пробы ниже меряются с выключенной анимацией и в кадр не попадают
+            // (всё синхронно до ближайшего paint).
+            slot.style.transition = 'none';
+            if (video) video.style.transition = 'none';
+
+            // Остальной контент слота (аудио-плеер) резервируем поверх видео.
+            let extras = 0;
+            for (const child of slot.children) {
+                if (child === clipEl) continue;
+                if (child.offsetHeight > 0) extras += child.offsetHeight + 6;
+            }
+
+            // Потолок из CSS (clamp зависит от вьюпорта): читаем computed без inline.
+            let ceil = 340; // клип ещё едет — потолок как на ПК
+            if (video) {
+                video.style.maxHeight = '';
+                const parsed = parseFloat(getComputedStyle(video).maxHeight);
+                if (Number.isFinite(parsed)) ceil = parsed;
+            }
+
+            // Проба «минимальный клип»: ставим слот на пол и смотрим, сколько
+            // свободного места остаётся под ним. Если высота оборота при этом
+            // изменилась — оборот НЕ ограничен снаружи (карточка растёт под
+            // контент), и бюджет не ограничивает клип.
+            const naturalClient = back.clientHeight;
+            slot.style.height = (120 + extras) + 'px';
+            if (video) video.style.maxHeight = '120px';
+            const probeClient = back.clientHeight;
+            let h = Infinity;
+            if (probeClient === naturalClient) {
+                // offsetTop/offsetHeight — координаты раскладки (не трогает
+                // transform каскадной анимации появления строк).
+                let bottom = 0;
+                for (const child of back.children) {
+                    if (child.offsetHeight > 0) {
+                        bottom = Math.max(bottom, child.offsetTop + child.offsetHeight);
+                    }
+                }
+                const slack = back.offsetTop + probeClient - bottom;
+                h = 120 + slack - 2;
+            }
+            h = Math.min(h, ceil);
+            // Оценка кадра от ширины: не резервируем пустоту под широкий 16:9.
+            const w = slot.clientWidth || back.clientWidth;
+            if (w > 0) h = Math.min(h, Math.round(w * 9 / 16));
+            // Метаданные уже есть — точная высота вместо оценки.
+            if (video && video.videoWidth > 0) {
+                h = Math.min(h, Math.ceil(w * video.videoHeight / video.videoWidth));
+            }
+            h = Math.max(120, Math.floor(h));
+
+            slot.classList.add('back-media--reserved');
+            if (wasReserved && renderedH > 0) {
+                // Возврат к отрисованной высоте + принудительный reflow: следующая
+                // установка поедет плавным transition от неё, а не скачком.
+                slot.style.height = renderedH + 'px';
+                if (video) video.style.maxHeight = Math.max(120, Math.round(renderedH - extras)) + 'px';
+                void slot.offsetHeight;
+                slot.style.transition = '';
+                if (video) video.style.transition = '';
+                slot.style.height = (h + extras) + 'px';
+                if (video) video.style.maxHeight = h + 'px';
+            } else {
+                // Первая резервация — мгновенно: transition включаем только ПОСЛЕ
+                // reflow с финальной высотой, иначе стартом анимации станет
+                // пробное значение (слот на полу 120px) и слот «подъезжал» бы.
+                slot.style.height = (h + extras) + 'px';
+                if (video) video.style.maxHeight = h + 'px';
+                void slot.offsetHeight;
+                slot.style.transition = '';
+                if (video) video.style.transition = '';
+            }
         }
         let fitBackScheduled = false;
         function scheduleFitBack() {
@@ -1206,6 +1286,7 @@
                     if (url) {
                         if (pending) pending.remove();
                         mediaSlot.insertBefore(makeClipVideo(url, w), mediaSlot.firstChild);
+                        scheduleFitBack();
                     } else if (pending && isGuest) {
                         // У гостя клипа в браузере нет — значит нарезать не удалось.
                         pending.replaceWith(makeClipPending('clip.unavailable', false));

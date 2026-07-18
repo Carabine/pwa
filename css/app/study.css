@@ -318,6 +318,27 @@
 /* Пустой медиа-слот (карточка без клипа и аудио) не должен занимать место в gap. */
 .back-media:empty { display: none; }
 
+/* Слот с высотой, зарезервированной JS (fitBackMedia в study-core.js): клип
+   появляется в уже отведённом месте, и текст под ним не прыгает при загрузке
+   видео. Поздние изменения высоты (ромадзи-ячейки, аудио, не-16:9 кадр)
+   подъезжают плавным переходом, а не скачком. */
+.back-media--reserved {
+    flex: 0 0 auto;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    transition: height 0.25s ease;
+}
+
+.back-media--reserved .clip-player video {
+    transition: max-height 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .back-media--reserved,
+    .back-media--reserved .clip-player video { transition: none; }
+}
+
 /* Без медиа разбор короткий — центрируем его в отведённой высоте оборота,
    иначе под текстом остаётся глухая пустота (~60% карточки). `safe` вернёт
    выравнивание к началу, если текст всё-таки окажется выше области. */
