@@ -64,9 +64,9 @@ const STARTER_DECK = [
     { k: '趣味', r: 'しゅみ', ro: 'shumi', a: 'One-Punch Man', s: '趣味でヒーローをやっている者だ',
       clip: 'https://animei.space/storage/040287f3-bd69-4d1c-8858-3a6ed8253e72.mp4', len: 9, ts: 4, te: 9,
       t: { ru: ['хобби, увлечение', 'Я герой по хобби'], uk: ['хобі, захоплення', 'Я герой за хобі'], en: ['hobby', "I'm a hero as a hobby"] } },
-    { k: '迷う', r: 'まよう', ro: 'mayou', a: 'Frieren', s: 'さっきの木だ この森 いつも迷うな どこだ ここ',
-      clip: 'https://animei.space/storage/27d6cdb9-1385-44eb-9d42-01692911b773.mp4', len: 12, ts: 0, te: 6,
-      t: { ru: ['теряться; сомневаться', 'Опять это дерево… Вечно в этом лесу теряюсь. Где я?'], uk: ['губитися; вагатися', 'Знову це дерево… Вічно в цьому лісі гублюся. Де я?'], en: ['to get lost; to be unsure', 'That tree again… I always get lost in this forest. Where am I?'] } },
+    { k: '人間', r: 'にんげん', ro: 'ningen', a: 'Frieren', s: '私は もっと人間を知ろうと思う',
+      clip: 'https://animei.space/storage/b68afb61-da79-4785-a01c-1f5ea048600c.mp4', len: 9, ts: 2.6, te: 6,
+      t: { ru: ['человек; люди', 'Хочу больше узнать о людях.'], uk: ['людина; люди', 'Хочу більше дізнатися про людей.'], en: ['human; people', 'I want to understand people more.'] } },
 
     // ---- Дополнение: 35 карточек (пока без видео) ----
     { k: '友達', r: 'ともだち', ro: 'tomodachi', a: 'Naruto', s: '友達を守る！',
