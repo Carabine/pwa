@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.184';
+const APP_VERSION = 'v0.0.185';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -611,7 +611,7 @@ async function renderDailyPlan() {
     // учёбу на готовом, как было до редизайна главной.
     if (!s.total) {
         el.className = 'daily-plan daily-plan--empty';
-        el.href = './pages/beginner.html';
+        el.href = './pages/beginner.html?deck=core';
         el.innerHTML =
             '<div class="daily-plan__body">' +
             '<span class="daily-plan__eyebrow">' + escHtml(t('plan.title')) + '</span>' +

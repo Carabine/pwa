@@ -1547,6 +1547,40 @@ function findCueIndex(t) {
     return -1;
 }
 
+// ---------- Счётчик встреч сохранённых слов ----------
+// Когда реплика становится активной, отмечаем в ней встречи слов, которые
+// пользователь уже сохранил (animei:wordSeen = {base: n}). Попап показывает
+// «встречалось N раз» — ощущение прогресса прямо во время просмотра.
+let wordSeenMap = null;
+function loadWordSeen() {
+    if (wordSeenMap) return wordSeenMap;
+    try {
+        wordSeenMap = JSON.parse(localStorage.getItem('animei:wordSeen') || '{}');
+        if (!wordSeenMap || typeof wordSeenMap !== 'object') wordSeenMap = {};
+    } catch { wordSeenMap = {}; }
+    return wordSeenMap;
+}
+
+let wordSeenSaveTimer = null;
+function countSeenWords(cue) {
+    if (!cue || !cue.tokens || !state.knownWords.size) return;
+    const map = loadWordSeen();
+    let changed = false;
+    const inCue = new Set();
+    for (const tok of cue.tokens) {
+        if (!tok.learnable || !tok.base || inCue.has(tok.base)) continue;
+        if (!state.knownWords.has(tok.base) && !state.knownWords.has(tok.surface)) continue;
+        inCue.add(tok.base);
+        map[tok.base] = (map[tok.base] || 0) + 1;
+        changed = true;
+    }
+    if (!changed) return;
+    clearTimeout(wordSeenSaveTimer);
+    wordSeenSaveTimer = setTimeout(() => {
+        try { localStorage.setItem('animei:wordSeen', JSON.stringify(map)); } catch { /* недоступен */ }
+    }, 1500);
+}
+
 function syncCues() {
     if (!state.cues.length) return;
     const t = video.currentTime;
@@ -1565,6 +1599,7 @@ function syncCues() {
 
     state.activeCueIndex = idx;
     updateNowCue(idx);
+    if (idx >= 0) countSeenWords(state.cues[idx]);
 
     if (idx >= 0) {
         const el = transcriptList.querySelector(`.cue[data-index="${idx}"]`);
@@ -1927,6 +1962,12 @@ async function openWordPopup(tok, cue, event) {
         const meta = [];
         if (entries[0].isCommon) meta.push(t('popup.common'));
         if (entries[0].jlpt?.length) meta.push(entries[0].jlpt[0].toUpperCase());
+        // Сохранённое слово встретилось снова — покажем, в который раз:
+        // маленькое «оно работает», не выходя из просмотра.
+        const seenCount = loadWordSeen()[tok.base] || 0;
+        if (seenCount >= 2 && (state.knownWords.has(tok.base) || state.knownWords.has(tok.surface))) {
+            meta.push(t('popup.seen').replace('{n}', seenCount));
+        }
         if (meta.length) {
             const tag = document.createElement('div');
             tag.className = 'sense__pos';

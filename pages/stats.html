@@ -127,6 +127,10 @@
 
     <div class="cards" id="cards"></div>
 
+    <h2 class="section-title" style="margin-top:28px">Здоровье сервиса</h2>
+    <div class="sub" id="health-sub"></div>
+    <div class="periods" id="health"></div>
+
     <h2 class="section-title" style="margin-top:28px">Петля по неделям: смотрел + повторял</h2>
     <div class="sub">Вошедшие пользователи · неделя с понедельника · «оба» — и смотрел аниме, и завершил повторение</div>
     <div id="weekly"></div>
@@ -148,6 +152,13 @@
     var apiBase = ['localhost', '127.0.0.1', ''].includes(location.hostname)
         ? 'http://localhost:3005'
         : location.origin;
+
+    // Лёгкий ключ владельца: ?key=… один раз в адресе — дальше живёт в
+    // localStorage. Без него бэкенд (STATS_KEY) отдаёт 403 и страница пуста.
+    var urlKey = new URLSearchParams(location.search).get('key');
+    if (urlKey) { try { localStorage.setItem('animei:statsKey', urlKey); } catch (e) {} }
+    var statsKey = urlKey || (function () { try { return localStorage.getItem('animei:statsKey') || ''; } catch (e) { return ''; } })();
+    function keyQ() { return statsKey ? '&key=' + encodeURIComponent(statsKey) : ''; }
 
     var currentDays = 30;
     var showBots = false;   // по умолчанию — только люди; кнопка включает ботов
@@ -564,14 +575,14 @@
 
         var botsQ = showBots ? '&bots=1' : '';
 
-        fetch(apiBase + '/api/v1/stats/summary?days=' + days + botsQ)
+        fetch(apiBase + '/api/v1/stats/summary?days=' + days + botsQ + keyQ())
             .then(function (r) { return r.json(); })
             .then(render)
             .catch(function () {
                 document.getElementById('sub').textContent = 'Не удалось загрузить статистику';
             });
 
-        fetch(apiBase + '/api/v1/stats/visitors?days=' + days + botsQ)
+        fetch(apiBase + '/api/v1/stats/visitors?days=' + days + botsQ + keyQ())
             .then(function (r) { return r.json(); })
             .then(renderVisitors)
             .catch(function () {
@@ -601,12 +612,34 @@
             rows + '</tbody></table>';
     }
 
-    var statsKey = new URLSearchParams(location.search).get('key');
-    fetch(apiBase + '/api/v1/stats/weekly?weeks=8' + (statsKey ? '&key=' + encodeURIComponent(statsKey) : ''))
+    fetch(apiBase + '/api/v1/stats/weekly?weeks=8' + keyQ())
         .then(function (r) { return r.json(); })
         .then(renderWeekly)
         .catch(function () {
             document.getElementById('weekly').innerHTML = '<div class="msg">Не удалось загрузить</div>';
+        });
+
+    // Здоровье сервиса: сводку пишет cron на VPS (healthcheck.sh) в
+    // /static/health-status.json — API, каталог, словарь, News + возраст бэкапа.
+    fetch('/static/health-status.json?ts=' + Date.now())
+        .then(function (r) { return r.json(); })
+        .then(function (h) {
+            var names = { health: 'API+БД', popular: 'Каталог', dictionary: 'Словарь', news: 'News' };
+            var chips = Object.keys(h.checks || {}).map(function (k) {
+                var ok = h.checks[k] === 'ok';
+                return '<button style="cursor:default;border-color:' + (ok ? '#2e7d32' : '#c62828') + '">' +
+                    (ok ? '✅ ' : '🔴 ') + (names[k] || k) + '</button>';
+            }).join('');
+            var bk = (h.backupAgeHours != null && h.backupAgeHours >= 0)
+                ? '💾 бэкап ' + h.backupAgeHours + ' ч назад' : '💾 бэкапа нет';
+            chips += '<button style="cursor:default">' + bk + '</button>';
+            document.getElementById('health').innerHTML = chips;
+            document.getElementById('health-sub').textContent =
+                'Проверка каждые 15 мин · последняя: ' + new Date(h.at).toLocaleString('ru-RU') +
+                (h.overall === 'ok' ? '' : ' · ЕСТЬ ПРОБЛЕМЫ');
+        })
+        .catch(function () {
+            document.getElementById('health-sub').textContent = 'Статус недоступен (cron ещё не отработал?)';
         });
 
     // Период (7/30/90 дней)

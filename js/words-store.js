@@ -80,6 +80,12 @@ async function requestClip(data, pad) {
 // { kanji, kana, romaji, translation, sentence, sentenceTranslation, hint, videoStart, videoEnd, videoUrl }
 async function saveWord(payload) {
     const data = normalizeWord(payload);
+    // Дедупликация у гостя: одно слово — одна карточка. Повторное сохранение
+    // возвращает уже существующую (у вошедшего то же самое делает бэкенд).
+    if (!isSignedIn() && data.kanji) {
+        const existing = getGuestWords().find((w) => w && w.kanji === data.kanji);
+        if (existing) return existing;
+    }
     if (isSignedIn()) {
         // Клип режет и хранит сервер (см. POST /words) — videoUrl уходит туда.
         const { data: res } = await client.post('words', data);
@@ -211,6 +217,10 @@ async function runGuestSync() {
     // Слова пересоздаются на сервере с новыми id — запоминаем old→new, чтобы
     // потом перенести на них членство в локальных колодах (иначе колоды опустеют).
     const idMap = {};
+    // Слова, которые перенести НЕ удалось (сеть/сервер): остаются в гостевом
+    // хранилище до следующей попытки. Раньше список очищался целиком — при
+    // частично упавшем переносе слова терялись безвозвратно.
+    const failed = [];
 
     for (const w of words) {
         // id локальный — на сервер не отправляем, там свой сгенерится.
@@ -258,11 +268,19 @@ async function runGuestSync() {
             if (typeof deleteAudio === 'function') await deleteAudio(id);
         } catch (err) {
             console.error('Не удалось перенести слово в аккаунт:', err);
+            failed.push(w);
         }
     }
 
     // Переносим членство в колодах со старых локальных id на новые серверные.
     if (typeof window !== 'undefined' && window.Decks) window.Decks.remapIds(idMap);
 
-    setGuestWords([]);
+    // Очищаем только перенесённое; упавшие слова ждут следующего вызова синка.
+    setGuestWords(failed);
+    if (failed.length && typeof showSnackbar === 'function') {
+        showSnackbar(
+            typeof t === 'function' ? t('words.syncPartial') : 'Часть слов не перенеслась — они сохранены локально',
+            { duration: 4000, type: 'error' },
+        );
+    }
 }
