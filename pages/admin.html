@@ -79,8 +79,11 @@
     }
     .seed textarea { resize: vertical; min-height: 34px; }
     .seed input:focus, .seed textarea:focus { outline: none; border-color: var(--accent); }
-    .seed__head { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .seed__head { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .seed__ord { display: inline-flex; gap: 2px; }
+    .seed__ord .btn { padding: 2px 7px; line-height: 1; font-size: 14px; }
     .seed__word { font-size: 18px; font-weight: 700; }
+    .seed__num { color: var(--muted); font-weight: 500; }
     .seed__meta { color: var(--muted); font-size: 11px; font-family: ui-monospace, monospace; }
     .seed__actions { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; margin-top: 4px; }
     .btn {
@@ -264,6 +267,26 @@
         }).catch(function () {});
     }
 
+    // Перенумеровать карточки после перестановки (метка «N.»).
+    function renumberSeed() {
+        document.querySelectorAll('#seedList .seed').forEach(function (el, i) {
+            var n = el.querySelector('.seed__num');
+            if (n) n.textContent = (i + 1) + '.';
+        });
+    }
+
+    // Сохранить текущий порядок карточек (по kanji, как в DOM) на сервер.
+    function saveSeedOrder() {
+        var order = Array.prototype.map.call(
+            document.querySelectorAll('#seedList .seed'),
+            function (el) { return el.getAttribute('data-kanji'); });
+        fetch(apiBase + '/api/v1/admin/seed-order?' + keyQ(), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: order }),
+        }).then(requireKey).catch(function () { alert('Порядок не сохранился — проверь ключ/сеть'); });
+    }
+
     function seedHtml(w, i) {
         var clip = w.video
             ? '<video preload="metadata" src="' + esc(w.video) + '" controls></video>' +
@@ -278,10 +301,15 @@
                     ? '<input name="' + f[0] + '" value="' + val + '">'
                     : '<textarea name="' + f[0] + '" rows="1">' + val + '</textarea>') + '</div>';
         }).join('');
-        return '<div class="seed" data-id="' + esc(w.id) + '">' +
+        return '<div class="seed" data-id="' + esc(w.id) + '" data-kanji="' + esc(w.kanji) + '">' +
             '<div class="seed__clip">' + clip + '</div>' +
             '<div class="seed__fields">' +
-                '<div class="seed__head"><span class="seed__word">' + (i + 1) + '. ' + esc(w.kanji) + '</span>' +
+                '<div class="seed__head">' +
+                    '<span class="seed__ord">' +
+                        '<button class="btn btn--small" data-act="up" title="Выше">↑</button>' +
+                        '<button class="btn btn--small" data-act="down" title="Ниже">↓</button>' +
+                    '</span>' +
+                    '<span class="seed__word"><span class="seed__num">' + (i + 1) + '.</span> ' + esc(w.kanji) + '</span>' +
                 '<span class="seed__meta">' + esc(w.id.slice(0, 8)) + ' · изменено ' + dt(w.updatedAt) + '</span></div>' +
                 inputs +
                 '<div class="trims full">' +
@@ -300,6 +328,19 @@
         var el = document.querySelector('.seed[data-id="' + w.id + '"]');
         if (!el) return;
         var video = el.querySelector('video');
+
+        // Перестановка карточек стрелками ↑/↓ — двигаем DOM-узел (правки в других
+        // карточках не теряются), перенумеровываем и сохраняем порядок на сервер.
+        var upBtn = el.querySelector('[data-act="up"]');
+        var downBtn = el.querySelector('[data-act="down"]');
+        if (upBtn) upBtn.addEventListener('click', function () {
+            var prev = el.previousElementSibling;
+            if (prev) { el.parentNode.insertBefore(el, prev); renumberSeed(); saveSeedOrder(); }
+        });
+        if (downBtn) downBtn.addEventListener('click', function () {
+            var next = el.nextElementSibling;
+            if (next) { el.parentNode.insertBefore(next, el); renumberSeed(); saveSeedOrder(); }
+        });
 
         // Проиграть только окно карточки (как её увидит ученик)
         var winBtn = el.querySelector('[data-act="window"]');
