@@ -78,12 +78,26 @@
             </div>
 
             <div class="now-cue" id="now-cue" hidden>
+                <!-- Навигация по репликам: назад / повторить / вперёд (клавиши Q A D).
+                     На телефоне то же — свайпом по этой строке. -->
+                <div class="now-cue__nav">
+                    <button class="now-cue__navbtn" id="cue-prev" type="button" data-i18n-title="cue.prev" title="Предыдущая реплика (Q)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+                    </button>
+                    <button class="now-cue__navbtn" id="cue-replay" type="button" data-i18n-title="cue.replay" title="Повторить реплику (A)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    </button>
+                    <button class="now-cue__navbtn" id="cue-next" type="button" data-i18n-title="cue.next" title="Следующая реплика (D)">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                    </button>
+                </div>
                 <button class="now-cue__ai" id="now-cue-ai" type="button"
                         data-i18n-title="words.explain" title="ИИ-разбор предложения">
                     <svg class="ai-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 2 9.15 6.15 5 8l4.15 1.85L11 14l1.85-4.15L17 8l-4.15-1.85L11 2Zm7.5 9-1.1 2.4-2.4 1.1 2.4 1.1 1.1 2.4 1.1-2.4 2.4-1.1-2.4-1.1L18.5 11Z"/></svg>
                 </button>
                 <div class="now-cue__jp" id="now-cue-jp"></div>
                 <div class="now-cue__ru" id="now-cue-ru"></div>
+                <div class="episode-coverage" id="episode-coverage" hidden></div>
             </div>
 
             <!-- Телефон: переключение между субтитрами и настройками табами -->

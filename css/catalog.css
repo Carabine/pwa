@@ -235,6 +235,98 @@ html, body {
     box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
 }
 
+/* Бейдж сложности языка (кураторская разметка): зелёный «полегче» заметный,
+   «сложный язык» — тихий, информирует, а не пугает. */
+.anime-card__diff {
+    position: absolute;
+    top: 38px;
+    left: 10px;
+    max-width: 80%;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.anime-card__diff--easy {
+    background: rgba(16, 185, 129, 0.92);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+.anime-card__diff--hard {
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #f2b8b5;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Чипы фильтра сложности и подборка простых тайтлов */
+.catalog__chips {
+    display: flex;
+    gap: 8px;
+    margin: 2px 0 4px;
+}
+
+.catalog-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color var(--transition), background var(--transition), color var(--transition);
+}
+
+.catalog-chip:hover { border-color: var(--primary); }
+
+.catalog-chip--active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.catalog__picks {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.catalog__picks-label {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-right: 2px;
+}
+
+.pick-chip {
+    padding: 5px 12px;
+    font-size: 12.5px;
+    color: var(--text);
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color var(--transition), color var(--transition);
+}
+
+.pick-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
 /* Кнопка play по наведению */
 .anime-card__play {
     position: absolute;

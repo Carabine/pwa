@@ -49,6 +49,14 @@
 
         <p class="catalog__hint" data-i18n="catalog.hint">Открой любое аниме и кликай по словам в субтитрах — они попадут в твой словарь и в карточки для изучения.</p>
 
+        <div class="catalog__chips" id="diff-chips">
+            <button type="button" class="catalog-chip catalog-chip--active" data-val="all" data-i18n="catalog.filter.all">Все</button>
+            <button type="button" class="catalog-chip" data-val="easy" data-i18n="catalog.filter.easy">🎓 Полегче</button>
+        </div>
+        <div class="catalog__picks" id="easy-picks" hidden>
+            <span class="catalog__picks-label" data-i18n="catalog.picks">Проверенные простые тайтлы:</span>
+        </div>
+
         <h2 id="heading" class="catalog__heading" data-i18n="catalog.popular">Популярное</h2>
         <div id="results" class="catalog__grid"></div>
         <div id="status" class="catalog__status" style="display:none"></div>
@@ -72,6 +80,7 @@
 <script src="../js/i18n.js"></script>
 <script src="../js/axiosClient.js"></script>
 <script src="../js/app.js"></script>
+<script src="../js/anime-difficulty.js"></script>
 <script src="../js/catalog.js"></script>
 <script src="../js/stats.js"></script>
 </body>

@@ -1367,6 +1367,9 @@ function buildWordCells(cue) {
         jp.className = 'ncw__jp tok';
         if (tok.learnable) {
             jp.classList.add('tok--learnable');
+            // База слова в data-атрибуте: после сохранения подсвечиваем все
+            // вхождения этого слова (оверлей + список) без пере-рендера.
+            jp.dataset.base = tok.base || tok.surface;
             if (state.knownWords.has(tok.base) || state.knownWords.has(tok.surface)) {
                 jp.classList.add('tok--known');
             }
@@ -1440,6 +1443,9 @@ function renderTranscript() {
 
         transcriptList.appendChild(div);
     });
+
+    // Сабы (пере)загружены — пересчитываем «ты знаешь N% слов серии».
+    updateCoverage();
 }
 
 // ---------- Текущая реплика под видео ----------
@@ -1495,6 +1501,40 @@ function updateNowCue(idx) {
 // Есть ли в реплике разбираемые (кликабельные) слова.
 function cueHasWords(cue) {
     return !!(cue && cue.tokens && cue.tokens.some((tk) => tk.learnable));
+}
+
+// ---------- Покрытие серии словарём ----------
+// «Ты знаешь N% слов этой серии» — считаем по уникальным словарным формам
+// из токенов сабов против сохранённых слов. Обновляется после загрузки сабов,
+// подгрузки словаря и каждого сохранения — цифра растёт прямо во время сессии.
+function updateCoverage() {
+    const el = document.getElementById('episode-coverage');
+    if (!el) return;
+    const bases = new Set();
+    for (const c of state.cues) {
+        for (const tk of (c.tokens || [])) {
+            if (tk.learnable) bases.add(tk.base || tk.surface);
+        }
+    }
+    // На горстке слов процент — шум (сабы ещё не загрузились или это клип).
+    if (bases.size < 30) { el.hidden = true; return; }
+    let known = 0;
+    for (const b of bases) if (state.knownWords.has(b)) known++;
+    const pct = Math.round((100 * known) / bases.size);
+    el.textContent = t('player.coverage')
+        .replace('{p}', pct)
+        .replace('{k}', known)
+        .replace('{n}', bases.size);
+    el.hidden = false;
+}
+
+// Подсветить слово как «известное» во всех уже отрисованных местах — оверлей
+// под видео и список субтитров — без пере-рендера (он сбил бы скролл списка).
+function markKnownEverywhere(base) {
+    if (!base) return;
+    const esc = (window.CSS && CSS.escape) ? CSS.escape(base) : base.replace(/"/g, '\\"');
+    document.querySelectorAll(`.tok--learnable[data-base="${esc}"]`)
+        .forEach((tok) => tok.classList.add('tok--known'));
 }
 
 function findCueIndex(t) {
@@ -1712,48 +1752,91 @@ ruToggle.classList.toggle('chip-btn--active', state.showRu);
 transcriptList.classList.toggle('hide-ru', !state.showRu);
 autopauseBtn.classList.toggle('chip-btn--active', state.autoPause);
 
+// ---------- Навигация по репликам ----------
+// Общие для хоткеев, кнопок у строки субтитров и свайпа на телефоне.
+
+function seekToCue(cue) {
+    video.currentTime = cue.start + state.offset + 0.01;
+    if (state.autoPause) state.autoPauseAt = cue.end + state.offset;
+    video.play().catch(() => {});
+}
+
+// Повторить текущую (или последнюю прозвучавшую) реплику
+function replayCue() {
+    let cue = state.activeCueIndex >= 0 ? state.cues[state.activeCueIndex] : null;
+    if (!cue) {
+        const t = video.currentTime;
+        cue = [...state.cues].reverse().find(c => c.start + state.offset <= t);
+    }
+    if (cue) seekToCue(cue);
+}
+
+function nextCue() {
+    const t = video.currentTime;
+    const next = state.cues.find(c => c.start + state.offset > t + 0.05);
+    if (next) seekToCue(next);
+}
+
+// Порог 0.8с: в начале реплики «назад» уходит к предыдущей, а не к её же старту
+// (к старту текущей ведёт «повторить»).
+function prevCue() {
+    const t = video.currentTime;
+    let cue = null;
+    for (const c of state.cues) {
+        if (c.start + state.offset < t - 0.8) cue = c;
+        else break;
+    }
+    if (cue) seekToCue(cue);
+}
+
+// Кнопки ◀ ↻ ▶ в углу строки субтитров
+const cuePrevBtn = document.getElementById('cue-prev');
+const cueReplayBtn = document.getElementById('cue-replay');
+const cueNextBtn = document.getElementById('cue-next');
+if (cuePrevBtn) cuePrevBtn.addEventListener('click', prevCue);
+if (cueReplayBtn) cueReplayBtn.addEventListener('click', replayCue);
+if (cueNextBtn) cueNextBtn.addEventListener('click', nextCue);
+
+// Свайп по строке субтитров на телефоне: влево — следующая, вправо — предыдущая.
+let cueSwipe = null;
+nowCue.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    cueSwipe = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+}, { passive: true });
+nowCue.addEventListener('touchend', (e) => {
+    if (!cueSwipe) return;
+    const dx = e.changedTouches[0].clientX - cueSwipe.x;
+    const dy = e.changedTouches[0].clientY - cueSwipe.y;
+    cueSwipe = null;
+    if (Math.abs(dx) > 60 && Math.abs(dy) < 40) (dx < 0 ? nextCue : prevCue)();
+}, { passive: true });
+
 // ---------- Хоткеи ----------
 
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
-
-    const currentCue = state.activeCueIndex >= 0 ? state.cues[state.activeCueIndex] : null;
 
     switch (e.code) {
         case 'Space':
             e.preventDefault();
             video.paused ? video.play() : video.pause();
             break;
-        case 'KeyA': {
-            // Повторить текущую (или последнюю прозвучавшую) реплику
+        case 'KeyA':
             e.preventDefault();
-            let cue = currentCue;
-            if (!cue) {
-                const t = video.currentTime;
-                cue = [...state.cues].reverse().find(c => c.start + state.offset <= t);
-            }
-            if (cue) {
-                video.currentTime = cue.start + state.offset + 0.01;
-                if (state.autoPause) state.autoPauseAt = cue.end + state.offset;
-                video.play().catch(() => {});
-            }
+            replayCue();
             break;
-        }
+        case 'KeyQ':
+            e.preventDefault();
+            prevCue();
+            break;
         case 'KeyS':
             e.preventDefault();
             toggleAutoPause();
             break;
-        case 'KeyD': {
+        case 'KeyD':
             e.preventDefault();
-            const t = video.currentTime;
-            const next = state.cues.find(c => c.start + state.offset > t + 0.05);
-            if (next) {
-                video.currentTime = next.start + state.offset + 0.01;
-                if (state.autoPause) state.autoPauseAt = next.end + state.offset;
-                video.play().catch(() => {});
-            }
+            nextCue();
             break;
-        }
     }
 });
 
@@ -2124,6 +2207,10 @@ popupSave.addEventListener('click', async () => {
         });
 
         state.knownWords.add(ctx.tok.base);
+        // Слово стало «своим» — сразу зелёное везде, где встречается, и растёт
+        // процент покрытия серии: маленькое видимое вознаграждение за клик.
+        markKnownEverywhere(ctx.tok.base);
+        updateCoverage();
         if (window.animeiTrack) window.animeiTrack('save_word', ctx.tok.base);
         rememberSessionWord(savedWord);
         popupSave.textContent = t('popup.saved');
@@ -2146,6 +2233,8 @@ async function loadKnownWords() {
         for (const w of words) {
             if (w.kanji) state.knownWords.add(w.kanji);
         }
+        // Словарь мог прийти позже сабов — пересчитываем покрытие серии.
+        updateCoverage();
     } catch { /* нет слов — просто без подсветки */ }
 }
 

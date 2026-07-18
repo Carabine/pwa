@@ -23,6 +23,7 @@
     }
     initSeg('set-theme', 'theme');
     initSeg('set-subSize', 'subSize');
+    initSeg('set-newPerDay', 'newPerDay');
 
     // ---- Язык ----
     const langSel = document.getElementById('set-language');

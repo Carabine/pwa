@@ -14,7 +14,14 @@
     'use strict';
 
     // ---- Tunables ----------------------------------------------------------
-    const NEW_PER_DAY = 20;      // how many brand-new words to introduce per day
+    const NEW_PER_DAY_DEFAULT = 20;  // сколько новых слов вводить в день, если настройка не менялась
+
+    // Дневной лимит новых карточек — настройка (settings.html), а не константа:
+    // «сохранил 100 слов за серию» не должно взрывать завтрашнее повторение.
+    function newPerDay() {
+        const v = Number(window.AnimeiSettings ? window.AnimeiSettings.get('newPerDay') : NEW_PER_DAY_DEFAULT);
+        return Number.isFinite(v) && v > 0 ? v : NEW_PER_DAY_DEFAULT;
+    }
     const NEW_STEPS   = 2;       // correct answers needed to graduate a new/lapsed card
     const CRAM_STEPS  = 1;       // correct answers needed to clear a card in cram mode
     const MAX_INTERVAL = 365;    // cap on the review interval, in days
@@ -406,7 +413,7 @@
         }
         return {
             due,
-            fresh: Math.min(fresh, NEW_PER_DAY),
+            fresh: Math.min(fresh, newPerDay()),
             total: words.length,
             streak: studyStreak(),
         };
@@ -448,6 +455,7 @@
         let current = null;
         let graduated = 0;    // cards finished this session
         let total = 0;        // cards in this session at the start
+        let queuedNew = 0;    // новые слова сверх дневного лимита — ждут следующих дней
 
         // ---- Build the deck for this session -------------------------------
         function buildItem(word, isNew) {
@@ -516,8 +524,11 @@
             } catch { /* localStorage может быть недоступен */ }
 
             // Introduce a limited number of new words per day.
-            const newItems = [...picked, ...shuffle(fresh)]
-                .slice(0, Math.max(NEW_PER_DAY, picked.length))
+            const newLimit = Math.max(newPerDay(), picked.length);
+            const allNew = [...picked, ...shuffle(fresh)];
+            queuedNew = Math.max(0, allNew.length - newLimit);
+            const newItems = allNew
+                .slice(0, newLimit)
                 .map(w => buildItem(w, true));
             return [...landingItems, ...shuffle([...due, ...newItems])];
         }
@@ -571,6 +582,27 @@
             } else {
                 reinsert(current, 3);  // one more step, a few cards later
             }
+            advance();
+        }
+
+        // Триаж новой карточки: «уже знаю» убирает слово из очереди надолго,
+        // не гоняя его через учебные шаги. Спасает от лавины катакана-заимствований
+        // и слов, знакомых до Animei. Интервал большой, но конечный — слово ещё
+        // вернётся один раз для подтверждения.
+        const KNOWN_TRIAGE_INTERVAL = 120;   // дней до контрольного показа
+        function answerKnown() {
+            if (scheduled && current) {
+                schedule[current.id] = {
+                    interval: KNOWN_TRIAGE_INTERVAL,
+                    reps: 3,   // «как будто повторил» — при merge с сервером выигрывает бОльший reps
+                    lapses: 0,
+                    due: dayKey(addDays(todayStart(), KNOWN_TRIAGE_INTERVAL)),
+                };
+                saveSchedule(schedule);
+                pushSrsToServer(current.id, schedule[current.id]);
+                markStudiedToday();
+            }
+            graduated++;
             advance();
         }
 
@@ -684,6 +716,12 @@
 
             els.buttons.innerHTML = '';
             els.buttons.appendChild(makeButton(t('study.showAnswer'), 'show-btn', renderBack));
+
+            // Новая, ещё не тронутая карточка в SRS-режиме: даём отсеять уже
+            // знакомое слово одним тапом, не проходя учебные шаги.
+            if (scheduled && current.isNew && !current.seen) {
+                els.buttons.appendChild(makeButton(t('study.alreadyKnow'), 'know-btn', answerKnown));
+            }
         }
 
         function addLine(cls, text) {
@@ -1289,6 +1327,9 @@
                 const tomorrow = dayKey(addDays(todayStart(), 1));
                 const dueTomorrow = Object.values(loadSchedule()).filter(s => s.due <= tomorrow).length;
                 if (total > 0) lines.push(`${t('study.tomorrow')} ${dueTomorrow}`);
+                // Новые слова сверх дневного лимита не пропали — честно говорим,
+                // что они ждут в очереди (стеки Queued/Active, как у Satori Reader).
+                if (queuedNew > 0) lines.push(`${t('study.queuedNew')} ${queuedNew}`);
                 const streak = studyStreak();
                 if (streak > 1 && typeof tStreak === 'function') lines.push('🔥 ' + tStreak(streak));
             }

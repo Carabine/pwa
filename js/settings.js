@@ -22,6 +22,7 @@
         autopause: false,              // авто-пауза после каждой реплики
         loopClips: false,              // зацикливать клипы слов в карточках
         // Режим обучения
+        newPerDay: 20,                 // сколько новых карточек вводить в день (очередь сверх лимита ждёт)
         studyTranscription: 'romaji',  // kana | romaji | both | none — транскрипция слова
         studySentenceRomaji: true,     // ромадзи над каждым словом предложения (при ромадзи-транскрипции)
         studyAutoplayClip: true,       // автозапуск клипа на обороте карточки

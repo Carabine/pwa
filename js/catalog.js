@@ -16,6 +16,8 @@ const headingEl = document.getElementById('heading');
 let debounceTimer = null;
 let lastQuery = '';
 let popularItems = null;   // кэш популярного, чтобы не грузить повторно
+let currentItems = [];     // что сейчас на экране (до фильтра) — для пере-рендера чипами
+let diffFilter = 'all';    // 'all' | 'easy' — фильтр по сложности языка
 
 // Запрос из поиска в шапке приходит как ?q=… — подставляем в поле и сразу ищем.
 const initialQ = (new URLSearchParams(location.search).get('q') || '').trim();
@@ -35,13 +37,28 @@ function renderSkeletons(n = 12) {
     resultsEl.innerHTML = Array.from({ length: n }, () => '<div class="skeleton"></div>').join('');
 }
 
+// Сложность языка тайтла из кураторской карты (anime-difficulty.js);
+// неразмеченные — «средне», без бейджа.
+function difficultyOf(anime) {
+    return window.AnimeDifficulty ? window.AnimeDifficulty.map[anime.shikimoriId] : undefined;
+}
+
 function renderCards(items) {
     hideStatus();
+    currentItems = items;
     resultsEl.innerHTML = '';
 
-    items.forEach((anime, i) => {
+    const shown = diffFilter === 'easy' ? items.filter(a => difficultyOf(a) === 'easy') : items;
+    if (!shown.length) {
+        // Под фильтром «Полегче» — своё сообщение (подборка-пилюли остаётся видимой).
+        showStatus(diffFilter === 'easy' ? 'catalog.easyEmpty' : 'catalog.empty');
+        return;
+    }
+
+    shown.forEach((anime, i) => {
         const kind = I18N[getLang()]['kind.' + anime.kind] || anime.kind;
         const hasScore = anime.score && anime.score !== '0.0';
+        const diff = difficultyOf(anime);
 
         const card = document.createElement('div');
         card.className = 'anime-card';
@@ -53,6 +70,7 @@ function renderCards(items) {
             </div>
             ${kind ? '<span class="anime-card__kind"></span>' : ''}
             ${hasScore ? `<span class="anime-card__score">★ ${anime.score}</span>` : ''}
+            ${diff ? `<span class="anime-card__diff anime-card__diff--${diff}"></span>` : ''}
             <button class="anime-card__play" tabindex="-1" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </button>
@@ -62,6 +80,7 @@ function renderCards(items) {
             </div>`;
 
         if (kind) card.querySelector('.anime-card__kind').textContent = kind;
+        if (diff) card.querySelector('.anime-card__diff').textContent = t('catalog.diff.' + diff);
         card.querySelector('.anime-card__title').textContent = anime.russian || anime.name;
         card.querySelector('.anime-card__meta').textContent = [
             anime.year,
@@ -159,6 +178,48 @@ async function search(query) {
         console.error(err);
         resultsEl.innerHTML = '';
         showStatus('catalog.error');
+    }
+}
+
+// ---- Фильтр по сложности языка: чипы «Все / Полегче» + подборка для новичков.
+// Разметка кураторская (anime-difficulty.js), поэтому фильтр честный: что не
+// размечено как простое — под фильтром не показываем, но даём проверенные
+// тайтлы пилюлями (тап = обычный поиск).
+const chipsEl = document.getElementById('diff-chips');
+const picksEl = document.getElementById('easy-picks');
+
+function setDiffFilter(val) {
+    diffFilter = val;
+    if (chipsEl) {
+        chipsEl.querySelectorAll('.catalog-chip').forEach(b =>
+            b.classList.toggle('catalog-chip--active', b.dataset.val === val));
+    }
+    if (picksEl) picksEl.hidden = val !== 'easy';
+    renderCards(currentItems);
+    if (window.animeiTrack && val === 'easy') window.animeiTrack('catalog', 'filter:easy');
+}
+
+if (chipsEl) {
+    chipsEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('.catalog-chip');
+        if (btn && btn.dataset.val !== diffFilter) setDiffFilter(btn.dataset.val);
+    });
+}
+
+if (picksEl && window.AnimeDifficulty) {
+    for (const pick of window.AnimeDifficulty.easyPicks) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'pick-chip';
+        b.textContent = pick.label;
+        b.addEventListener('click', () => {
+            // Пилюля — навигация к конкретному тайтлу: фильтр снимаем, чтобы
+            // сезоны/фильмы франшизы не прятались из-за неразмеченных id.
+            setDiffFilter('all');
+            searchInput.value = pick.q;
+            search(pick.q);
+        });
+        picksEl.appendChild(b);
     }
 }
 
