@@ -155,9 +155,80 @@ function renderWords() {
     if (words.some((w) => clipBadge(w) === 'pending')) scheduleClipRefresh();
 }
 
-// ---------- Экспорт ----------
+// ---------- Экспорт в Anki (.apkg) ----------
+// Полноценная колода: карточки с теми же полями, что у нас, но вместо видео —
+// аудио, которое сервер вырезает из клипа по окну trimStart..trimEnd. Гостевые
+// клипы и локальный звук карточек лежат в браузере (IndexedDB) — прикладываем
+// их к запросу файлами "<id>.clip.mp4" / "<id>.custom.<ext>".
+
+function audioBlobExt(blob) {
+    const t = String(blob?.type || '').toLowerCase();
+    if (t.includes('mpeg') || t.includes('mp3')) return 'mp3';
+    if (t.includes('mp4') || t.includes('m4a') || t.includes('aac')) return 'm4a';
+    if (t.includes('ogg')) return 'ogg';
+    if (t.includes('wav')) return 'wav';
+    return 'webm';
+}
+
+async function exportAnki() {
+    const btn = document.getElementById('export-anki-btn');
+    const words = await fetchWords();
+    if (!words.length) {
+        showSnackbar(t('words.empty'), { duration: 3000 });
+        return;
+    }
+
+    btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.textContent = t('words.exportAnki.busy');
+    try {
+        const fd = new FormData();
+        const payload = [];
+        for (const w of words) {
+            payload.push({
+                id: w.id, kanji: w.kanji, kana: w.kana, romaji: w.romaji,
+                translation: w.translation, sentence: w.sentence,
+                sentenceTranslation: w.sentenceTranslation, hint: w.hint,
+                trimStart: w.trimStart, trimEnd: w.trimEnd,
+                clipUrl: videoSrcOf(w) || '',
+                audioUrl: typeof w.audio === 'string' ? w.audio : '',
+            });
+            // Клип гостя лежит только в браузере — шлём файлом.
+            if (!videoSrcOf(w) && typeof getClip === 'function') {
+                const clip = await getClip(w.id);
+                if (clip) fd.append('media', clip, `${w.id}.clip.mp4`);
+            }
+            // Локальный звук карточки (не переносился на сервер) — тоже файлом.
+            if (!w.audio && typeof getAudio === 'function') {
+                const au = await getAudio(w.id);
+                if (au) fd.append('media', au, `${w.id}.custom.${audioBlobExt(au)}`);
+            }
+        }
+        fd.append('words', JSON.stringify(payload));
+
+        // Сервер режет ffmpeg-ом аудио на каждое слово — большим коллекциям
+        // нужно время, поэтому таймаут щедрый.
+        const { data } = await client.post('words/export/anki', fd, {
+            responseType: 'blob', timeout: 300000,
+        });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(data);
+        a.download = 'animei.apkg';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        showSnackbar(t('words.exportAnki.done'), { duration: 4000 });
+    } catch (err) {
+        console.error('Anki export failed:', err);
+        showSnackbar(t('words.exportAnki.fail'), { duration: 4000 });
+    } finally {
+        btn.disabled = false;
+        btn.textContent = oldText;
+    }
+}
+
+// ---------- Экспорт (текст) ----------
 // Формат — простой текст с табуляцией: слово, чтение, значение, предложение,
-// перевод предложения. Такой файл Anki принимает без настройки.
+// перевод предложения. Резервная копия; Anki такой файл тоже принимает.
 
 async function exportWords() {
     const words = await fetchWords();
@@ -201,4 +272,5 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('export-btn')?.addEventListener('click', exportWords);
+    document.getElementById('export-anki-btn')?.addEventListener('click', exportAnki);
 });

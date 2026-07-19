@@ -49,10 +49,11 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input type="text" id="words-filter" autocomplete="off" data-i18n-placeholder="words.filter" placeholder="Поиск по слову или переводу…">
             </label>
-            <!-- Обмен с Anki: экспорт словаря в TSV (Anki принимает без настройки)
-                 и импорт такого же файла обратно. Обработчики — в words.js. -->
+            <!-- Экспорт: полноценная колода Anki (.apkg, карточки с аудио из клипов)
+                 и простой TSV как резервная копия. Обработчики — в words.js. -->
             <div class="words-toolbar__actions">
-                <button class="btn btn--ghost" id="export-btn" data-i18n="words.export" data-i18n-title="words.export.title" title="Файл подходит для Anki и как резервная копия">Экспорт в Anki</button>
+                <button class="btn btn--ghost" id="export-anki-btn" data-i18n="words.exportAnki" data-i18n-title="words.exportAnki.title" title="Готовая колода с аудио из ваших клипов">Экспорт в Anki</button>
+                <button class="btn btn--ghost" id="export-btn" data-i18n="words.export" data-i18n-title="words.export.title" title="Простой текстовый файл — резервная копия">Экспорт (текст)</button>
             </div>
         </div>
         <!-- Опциональные колоды: подсказка, чип-ряд фильтра и кнопка «Учить».
