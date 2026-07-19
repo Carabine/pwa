@@ -272,17 +272,19 @@
     /* Занимает остаток карточки; min-height:0 нужен, чтобы дать ужаться клипу. */
     flex: 1 1 auto;
     min-height: 0;
-    /* Редкий длинный разбор прокручивается внутри оборота: слово-титул остаётся
-       закреплённым сверху, карточка и кнопки оценки не двигаются, ничего не
-       вытекает поверх кнопок. Симметричный резерв под полосу прокрутки держит
-       центрированную колонку текста по оптическому центру. */
+    /* Редкий длинный разбор прокручивается внутри оборота (страховка для «крохотный
+       экран + очень длинный текст»), слово-титул остаётся сверху, кнопки не
+       двигаются. Полосу прокрутки ПРЯЧЕМ: пока грузится видео, fitBackMedia
+       анимирует высоту медиа-слота, и на Android это на пару секунд вспыхивало
+       overlay-скроллбаром, хотя устоявшийся оборот всегда влезает. Touch-scroll
+       остаётся как страховка. */
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-gutter: stable both-edges;
+    scrollbar-width: none;
     animation: back-in 0.16s ease-out;
 }
+.back-side--visible::-webkit-scrollbar { display: none; }
 
 /* Внутри оборота ужимается только медиа-слот (видеоклип) — остальное фиксировано.
    Микро-каскад: строки разбора поднимаются друг за другом (задержки до 150мс),
@@ -547,14 +549,25 @@
 
 .hiragana--speak:hover .hiragana__speak { opacity: 1; }
 
-/* Предложение — «субтитровая» плашка под экраном. display не задаём:
-   .sentence--cells продолжает включать свою flex-раскладку с ромадзи. */
+/* Предложение — «субтитровая» плашка под экраном. Плашка ВСЕГДА резервирует
+   высоту двух строк (min-height): раньше видео получало «остаток после текста»
+   (fitBackMedia), и однострочная фраза делала клип крупнее, двухстрочная —
+   мельче. Теперь бюджет одинаков для 1–2 строк — размер кадра стабилен от
+   карточки к карточке; редкая 3-строчная фраза по-прежнему ужмёт клип или
+   уйдёт во внутренний скролл оборота. Однострочный текст центрируем в плашке
+   по вертикали (grid; .sentence--cells ниже переопределяет display на свой
+   flex, а align-content работает и там — центрирует ряды ячеек). */
 .sentence {
     position: relative;
     width: 100%;
     max-width: 520px;
     padding: 12px 16px;
     font-size: 17px;
+    line-height: 1.5;
+    /* 2 строки (2×1.5em) + вертикальные паддинги и кант (border-box). */
+    min-height: calc(3em + 26px);
+    display: grid;
+    align-content: center;
     color: var(--text);
     text-align: center;
     background: color-mix(in srgb, var(--bg) 55%, transparent);
@@ -563,8 +576,14 @@
     border-radius: 14px;
 }
 
+/* Перевод — тот же принцип: резерв двух строк, чтобы длина перевода не меняла
+   бюджет видео. Однострочный центрируется в зарезервированной высоте. */
 .translatedSentence {
     font-size: 14px;
+    line-height: 1.45;
+    min-height: 2.9em;
+    display: grid;
+    align-content: center;
     color: var(--text-dim);
     text-align: center;
     font-style: italic;
@@ -635,12 +654,16 @@
 }
 
 /* ---- Предложение пословно: ромадзи над каждым словом (как в плеере аниме) ---- */
+/* Ячейки выше плоской строки (ромадзи над словом) — свой резерв двух рядов,
+   чуть с запасом: недобор вернул бы «дыхание» видео, перебор — пара px воздуха. */
 .sentence--cells {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     align-items: flex-end;
+    align-content: center;
     gap: 2px 7px;
+    min-height: 100px;
 }
 
 .read-cell {
@@ -1337,7 +1360,10 @@
         max-width: 100%;
         padding: 10px 12px;
         font-size: 15px;
+        min-height: calc(3em + 22px);
     }
+
+    .sentence--cells { min-height: 88px; }
 
     /* На телефоне компактный .sentence выше перебивал резерв под угловую кнопку
        ИИ — возвращаем боковые отступы, иначе текст фразы залезает под искорку. */
@@ -1406,7 +1432,12 @@
     .card-area:has(.back-side--visible) .word { font-size: 24px; }
     .meaning { font-size: 18px; }
     .hiragana { padding-top: 2px; padding-bottom: 2px; }
-    .sentence { padding-top: 7px; padding-bottom: 7px; }
+    .sentence {
+        padding-top: 7px;
+        padding-bottom: 7px;
+        min-height: calc(3em + 16px);
+    }
+    .sentence--cells { min-height: 82px; }
     .translatedSentence { font-size: 12.5px; }
 }
 

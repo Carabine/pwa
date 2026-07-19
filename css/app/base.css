@@ -72,6 +72,12 @@
 
 html, body {
     height: 100%;
+    /* Малый вьюпорт: высота считается так, будто адресная строка браузера ВИДНА
+       (её максимальный размер). Иначе на телефоне при заходе `height:100%`/`vh`
+       берёт БОЛЬШОЙ вьюпорт (строка спрятана), низ страницы уходит под фолд и
+       появляется скролл «на пару секунд», пока строка не скроется. svh привязывает
+       к меньшему размеру — контент влезает сразу, скролла нет. `100%` — фолбэк. */
+    height: 100svh;
     font-family: var(--font);
     background: var(--bg);
     color: var(--text);
@@ -79,6 +85,16 @@ html, body {
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
+}
+
+/* iOS, в т.ч. установленное PWA (standalone): у `%`/`vh`/`svh` высота при запуске
+   считается от ПОЛНОГО экрана, низ страницы на пару секунд уходит под системные
+   зоны → появляется скролл, пока WebKit не устаканит вьюпорт. -webkit-fill-available
+   даёт реальную доступную высоту сразу. Скоуп — только iOS Safari/standalone
+   (@supports touch-callout), чтобы не трогать десктоп/Android. */
+@supports (-webkit-touch-callout: none) {
+    html, body { height: -webkit-fill-available; }
+    .app { height: -webkit-fill-available; }
 }
 
 a {
