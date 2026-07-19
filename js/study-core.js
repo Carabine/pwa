@@ -1369,9 +1369,15 @@
             // слова) — раскладываем пословно с ромадзи над каждым словом, как в плеере;
             // тумблер studySentenceRomaji позволяет это отключить. ИИ-разбор интегрирован
             // органично: сама фраза кликабельна и помечена искоркой ИИ.
+            // Японский текст живёт во внутреннем контейнере .sentence__jp: перевод
+            // лежит в той же плашке ниже (S1 из галереи вариантов), и замена текста
+            // на ромадзи-ячейки не должна его сносить.
             const sentenceLine = document.createElement('div');
             sentenceLine.className = 'sentence';
-            sentenceLine.textContent = w.sentence ?? '';
+            const jpLine = document.createElement('div');
+            jpLine.className = 'sentence__jp';
+            jpLine.textContent = w.sentence ?? '';
+            sentenceLine.appendChild(jpLine);
             if (w.sentence) {
                 els.back.appendChild(sentenceLine);
 
@@ -1382,12 +1388,11 @@
                     fetchSentenceTokens(w.sentence).then((tokens) => {
                         if (!tokens.length || !current || current.word.id !== wid) return;
                         if (!els.back.classList.contains('back-side--visible')) return;
-                        // сохраняем искорку ИИ (если была добавлена ниже), заменяем только текст
-                        const spark = sentenceLine.querySelector('.sentence__spark');
-                        sentenceLine.textContent = '';
-                        sentenceLine.classList.add('sentence--cells');
-                        buildReadingCells(tokens).forEach((c) => sentenceLine.appendChild(c));
-                        if (spark) sentenceLine.appendChild(spark);
+                        // заменяем только японскую строку — перевод и искорка ИИ
+                        // (соседи по плашке) остаются на месте
+                        jpLine.textContent = '';
+                        jpLine.classList.add('sentence--cells');
+                        buildReadingCells(tokens).forEach((c) => jpLine.appendChild(c));
                         // Ромадзи-ячейки выше плоской строки — перемеряем оборот
                         // синхронно, чтобы клип ужался в том же кадре, без скачка.
                         fitBackMedia();
@@ -1416,16 +1421,18 @@
                 }
             }
 
-            addLine('translatedSentence', w.translatedSentence ?? w.sentenceTranslation ?? '');
-
-            // Предложение и его перевод — одним блоком (.answer-sent): на широких
-            // экранах CSS кладёт их РЯДОМ (ряд), на телефоне — колонкой, как раньше.
-            // Сэкономленная строка перевода тоже уходит в высоту клипа.
-            const sentWrap = document.createElement('div');
-            sentWrap.className = 'answer-sent';
-            els.back.querySelectorAll(':scope > .sentence, :scope > .translatedSentence')
-                .forEach((el) => sentWrap.appendChild(el));
-            if (sentWrap.childElementCount) els.back.appendChild(sentWrap);
+            // Перевод фразы — внутри той же «субтитровой» плашки, курсивом под
+            // японской строкой (S1 из галереи вариантов): одна коробка вместо двух
+            // соседних блоков. Редкий случай «перевод без фразы» — отдельной
+            // строкой, как раньше.
+            const trText = w.translatedSentence ?? w.sentenceTranslation ?? '';
+            if (trText) {
+                const tr = document.createElement('div');
+                tr.className = 'translatedSentence';
+                tr.textContent = trText;
+                if (w.sentence) sentenceLine.appendChild(tr);
+                else els.back.appendChild(tr);
+            }
 
             // В готовой колоде слово можно забрать к себе в коллекцию
             if (collectable && w._card && typeof saveWord === 'function') {

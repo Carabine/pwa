@@ -526,29 +526,6 @@
     margin-left: 6px;
 }
 
-/* Предложение + его перевод: на ПК рядом в один ряд (плашка + курсивный перевод
-   сбоку), на телефоне — колонкой (см. мобильный медиазапрос). Ещё один ряд
-   вертикали в пользу клипа. */
-.answer-sent {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 8px 18px;
-    width: 100%;
-}
-
-/* width:100% из базового .sentence в ряду занял бы всю строку и вытолкнул
-   перевод вниз — в ряду плашка живёт своей корзиной 520px. */
-.answer-sent .sentence {
-    width: auto;
-    flex: 0 1 520px;
-}
-
-.answer-sent .translatedSentence {
-    flex: 0 1 auto;
-}
-
 /* Перевод — подтверждение ответа: ясный и акцентный, но чуть спокойнее слова,
    чтобы не перетягивать взгляд на себя (раньше он был крупнее/ярче самого слова). */
 .meaning {
@@ -560,14 +537,13 @@
     color: var(--primary-hover);
 }
 
-/* Предложение — «субтитровая» плашка под экраном. Плашка ВСЕГДА резервирует
-   высоту двух строк (min-height): раньше видео получало «остаток после текста»
-   (fitBackMedia), и однострочная фраза делала клип крупнее, двухстрочная —
-   мельче. Теперь бюджет одинаков для 1–2 строк — размер кадра стабилен от
-   карточки к карточке; редкая 3-строчная фраза по-прежнему ужмёт клип или
-   уйдёт во внутренний скролл оборота. Однострочный текст центрируем в плашке
-   по вертикали (grid; .sentence--cells ниже переопределяет display на свой
-   flex, а align-content работает и там — центрирует ряды ячеек). */
+/* Предложение — одна «субтитровая» плашка: японская строка (.sentence__jp),
+   под ней курсивный перевод (S1 из галереи вариантов). Внутренние строки
+   ВСЕГДА резервируют высоту двух строк каждая (min-height): раньше видео
+   получало «остаток после текста» (fitBackMedia), и однострочная фраза делала
+   клип крупнее, двухстрочная — мельче. Теперь бюджет одинаков для 1–2 строк —
+   размер кадра стабилен от карточки к карточке; редкие 3+ строки ужмут клип
+   или уйдут во внутренний скролл оборота. */
 .sentence {
     position: relative;
     width: 100%;
@@ -575,16 +551,21 @@
     padding: 12px 16px;
     font-size: 17px;
     line-height: 1.5;
-    /* 2 строки (2×1.5em) + вертикальные паддинги и кант (border-box). */
-    min-height: calc(3em + 26px);
-    display: grid;
-    align-content: center;
     color: var(--text);
     text-align: center;
     background: color-mix(in srgb, var(--bg) 55%, transparent);
     border: 1px solid var(--border);
     border-color: color-mix(in srgb, var(--border) 70%, transparent);
     border-radius: 14px;
+}
+
+/* Японская строка: резерв 2 строк (2×1.5em), однострочная центрируется.
+   .sentence--cells (ромадзи-ячейки, вешается на этот же элемент) переопределит
+   display на flex — align-content центрирует ряды и там. */
+.sentence__jp {
+    min-height: 3em;
+    display: grid;
+    align-content: center;
 }
 
 /* Перевод — тот же принцип: резерв двух строк, чтобы длина перевода не меняла
@@ -599,6 +580,14 @@
     text-align: center;
     font-style: italic;
     max-width: 440px;
+}
+
+/* Внутри плашки перевод мельче и жмётся к японской строке — читается как
+   вторая дорожка субтитров, а не отдельный блок. */
+.sentence .translatedSentence {
+    font-size: 13px;
+    margin-top: 6px;
+    max-width: none;
 }
 
 /* Кнопка «В коллекцию» на карточке из готовой колоды */
@@ -653,7 +642,8 @@
 
 /* ---- Предложение пословно: ромадзи над каждым словом (как в плеере аниме) ---- */
 /* Ячейки выше плоской строки (ромадзи над словом) — свой резерв двух рядов,
-   чуть с запасом: недобор вернул бы «дыхание» видео, перебор — пара px воздуха. */
+   чуть с запасом: недобор вернул бы «дыхание» видео, перебор — пара px воздуха.
+   Класс вешается на внутренний .sentence__jp (паддинги — у внешней плашки). */
 .sentence--cells {
     display: flex;
     flex-wrap: wrap;
@@ -661,7 +651,7 @@
     align-items: flex-end;
     align-content: center;
     gap: 2px 7px;
-    min-height: 100px;
+    min-height: 74px;
 }
 
 .read-cell {
@@ -1360,10 +1350,9 @@
         max-width: 100%;
         padding: 10px 12px;
         font-size: 15px;
-        min-height: calc(3em + 22px);
     }
 
-    .sentence--cells { min-height: 88px; }
+    .sentence--cells { min-height: 64px; }
 
     /* На телефоне компактный .sentence выше перебивал резерв под угловую кнопку
        ИИ — возвращаем боковые отступы, иначе текст фразы залезает под искорку. */
@@ -1372,17 +1361,6 @@
         padding-right: 40px;
     }
 
-    /* Предложение + перевод на телефоне — колонкой, как раньше (ряд — для ПК). */
-    .answer-sent {
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .answer-sent .sentence {
-        width: 100%;
-        flex: 0 0 auto;
-    }
 
     .card-area:has(.clip-player) {
         /* То же фиксированное место, что у вопроса: наличие видео не должно
@@ -1444,9 +1422,8 @@
     .sentence {
         padding-top: 7px;
         padding-bottom: 7px;
-        min-height: calc(3em + 16px);
     }
-    .sentence--cells { min-height: 82px; }
+    .sentence--cells { min-height: 64px; }
     .translatedSentence { font-size: 12.5px; }
 }
 
