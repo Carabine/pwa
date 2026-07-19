@@ -1295,7 +1295,11 @@
                     if (url) {
                         if (pending) pending.remove();
                         mediaSlot.insertBefore(makeClipVideo(url, w), mediaSlot.firstChild);
-                        scheduleFitBack();
+                        // Синхронно, а не через rAF: иначе только что вставленное
+                        // видео успевает отрисоваться в свой потолочный размер (CSS
+                        // max-height), и лишь СЛЕДУЮЩИМ кадром fitBackMedia ужимает
+                        // его под бюджет оборота — виден скачок «большое → меньше».
+                        fitBackMedia();
                     } else if (pending && isGuest) {
                         // У гостя клипа в браузере нет — значит нарезать не удалось.
                         pending.replaceWith(makeClipPending('clip.unavailable', false));
@@ -1323,7 +1327,10 @@
                     audio.className = 'study-audio';
                     audio.volume = 0.9;
                     mediaSlot.appendChild(audio);
-                    scheduleFitBack();
+                    // Синхронно: аудио добавляет высоту слоту — пересчитываем клип
+                    // в том же кадре, чтобы оборот не переполнился на кадр и видео
+                    // не «дёрнулось» под появившийся плеер звука.
+                    fitBackMedia();
                 });
             }
 
@@ -1355,8 +1362,9 @@
                         sentenceLine.classList.add('sentence--cells');
                         buildReadingCells(tokens).forEach((c) => sentenceLine.appendChild(c));
                         if (spark) sentenceLine.appendChild(spark);
-                        // Ромадзи-ячейки выше плоской строки — перемеряем оборот.
-                        scheduleFitBack();
+                        // Ромадзи-ячейки выше плоской строки — перемеряем оборот
+                        // синхронно, чтобы клип ужался в том же кадре, без скачка.
+                        fitBackMedia();
                     });
                 }
 
