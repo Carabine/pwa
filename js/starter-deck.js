@@ -197,6 +197,47 @@ function refreshStarterOrder() {
 }
 if (typeof window !== 'undefined') refreshStarterOrder();
 
+// ---- Синхронизация окон клипов с админкой (seed@animei.space) ----
+// Владелец правит окно воспроизведения карточки в админке (PATCH
+// /admin/seed-words/:id) → мы тянем его через публичный GET /api/v1/starter/timings
+// и подменяем ts/te (и ссылку на клип) у карточек ЯДРА по kanji. Без этого правки
+// таймингов не доезжали: колода держит захардкоженную копию карточек.
+// Кэш в localStorage — применяем синхронно при загрузке (без мигания), с сервера
+// обновляем в фоне; колода строится по клику «Учить», так что свежие значения
+// обычно успевают. Нет сети/кэша — остаются значения из STARTER_DECK.
+const STARTER_TIMINGS_KEY = 'animei:starterTimings';
+
+function applyStarterTimings(list) {
+    if (!Array.isArray(list) || !list.length) return;
+    const byKanji = new Map();
+    for (const it of list) if (it && it.kanji) byKanji.set(it.kanji, it);
+    for (const card of STARTER_DECK) {
+        const it = byKanji.get(card.k);
+        if (!it) continue;
+        if (Number.isFinite(it.trimStart)) card.ts = it.trimStart;
+        if (Number.isFinite(it.trimEnd)) card.te = it.trimEnd;
+        if (it.clip) card.clip = it.clip;
+    }
+}
+
+try {
+    applyStarterTimings(JSON.parse(localStorage.getItem(STARTER_TIMINGS_KEY) || 'null'));
+} catch { /* приватный режим/битый кэш — остаются статичные значения */ }
+
+function refreshStarterTimings() {
+    try {
+        fetch(starterApiBase() + '/api/v1/starter/timings')
+            .then((r) => (r.ok ? r.json() : null))
+            .then((j) => {
+                if (!j || !Array.isArray(j.data) || !j.data.length) return;
+                applyStarterTimings(j.data);
+                try { localStorage.setItem(STARTER_TIMINGS_KEY, JSON.stringify(j.data)); } catch { /* приватный режим */ }
+            })
+            .catch(() => { /* оффлайн — оставляем кэш/статичные тайминги */ });
+    } catch { /* нет fetch/localStorage */ }
+}
+if (typeof window !== 'undefined') refreshStarterTimings();
+
 // Ядро (первые STARTER_CORE_COUNT), переставленное по starterOrder (по kanji).
 // Карточки не из списка сохраняют исходный относительный порядок в хвосте ядра.
 // Некор (остальные 35) — как есть.
