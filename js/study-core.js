@@ -1278,8 +1278,15 @@
             // Ядро ответа сразу под словом: перевод (главный акцент) + чтение
             // (тап — озвучка). Это и есть проверка припоминания — держим её на
             // верху, чтобы клип не вклинивался между словом и переводом.
+            // Собираем ОДНОЙ строкой (.answer-core): вертикаль карточки дорога —
+            // каждый сэкономленный ряд текста уходит в размер клипа.
             addLine('meaning', w.meaning ?? w.translation ?? '');
             renderTranscription(w);
+            const core = document.createElement('div');
+            core.className = 'answer-core';
+            els.back.querySelectorAll(':scope > .meaning, :scope > .hiragana')
+                .forEach((el) => core.appendChild(el));
+            if (core.childElementCount) els.back.appendChild(core);
 
             // Медиа-контекст (клип/озвучка) — ниже ядра, как «награда», а не
             // преграда (совет Codex). Один слот: асинхронная подгрузка не должна
@@ -1406,6 +1413,15 @@
             }
 
             addLine('translatedSentence', w.translatedSentence ?? w.sentenceTranslation ?? '');
+
+            // Предложение и его перевод — одним блоком (.answer-sent): на широких
+            // экранах CSS кладёт их РЯДОМ (ряд), на телефоне — колонкой, как раньше.
+            // Сэкономленная строка перевода тоже уходит в высоту клипа.
+            const sentWrap = document.createElement('div');
+            sentWrap.className = 'answer-sent';
+            els.back.querySelectorAll(':scope > .sentence, :scope > .translatedSentence')
+                .forEach((el) => sentWrap.appendChild(el));
+            if (sentWrap.childElementCount) els.back.appendChild(sentWrap);
 
             // Карточка без клипа — титр аниме внизу (под клипом его нет).
             if (w.anime && !expectsClip) addLine('card-anime', t('starter.fromAnime') + ' ' + w.anime);
