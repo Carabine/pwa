@@ -236,6 +236,9 @@ const I18N = {
         'week.days': 'Вс,Пн,Вт,Ср,Чт,Пт,Сб',
         'hub.more': 'Ещё',
         'hub.watchAnime': 'Смотреть аниме',
+        'install.cta': 'Установить приложение',
+        'install.ios': 'Нажми «Поделиться» в панели браузера и выбери «На экран „Домой“».',
+        'install.hide': 'Скрыть',
 
         'words.syncPartial': 'Часть слов не перенеслась в аккаунт — они сохранены локально и перенесутся позже',
         'words.title': 'Мои слова',
@@ -599,6 +602,9 @@ const I18N = {
         'week.days': 'Нд,Пн,Вт,Ср,Чт,Пт,Сб',
         'hub.more': 'Ще',
         'hub.watchAnime': 'Дивитись аніме',
+        'install.cta': 'Встановити застосунок',
+        'install.ios': 'Натисни «Поділитися» на панелі браузера й обери «На екран „Додому“».',
+        'install.hide': 'Сховати',
 
         'words.syncPartial': 'Частина слів не перенеслася в акаунт — вони збережені локально й перенесуться пізніше',
         'words.title': 'Мої слова',
@@ -962,6 +968,9 @@ const I18N = {
         'week.days': 'Su,Mo,Tu,We,Th,Fr,Sa',
         'hub.more': 'More',
         'hub.watchAnime': 'Watch anime',
+        'install.cta': 'Install the app',
+        'install.ios': 'Tap «Share» in the browser bar and pick «Add to Home Screen».',
+        'install.hide': 'Hide',
 
         'words.syncPartial': 'Some words could not be moved to your account — they are kept locally and will sync later',
         'words.title': 'My words',

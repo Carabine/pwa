@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.215';
+const APP_VERSION = 'v0.0.216';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -97,12 +97,87 @@ if ('serviceWorker' in navigator) {
 
 // ========== PWA Install ==========
 
+// Событие ловим и придерживаем: нативную мини-плашку Chrome гасим, вместо неё
+// показываем свою тихую строку внизу главной (renderInstallHint).
 let deferredPrompt;
+
+const INSTALL_DISMISS_KEY = 'animei:installDismissed';
 
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
+    // Событие приходит асинхронно и часто уже после DOMContentLoaded —
+    // поэтому строку показываем отсюда, а не только при отрисовке главной.
+    renderInstallHint();
 });
+
+// Установили — приглашать больше не о чем (в standalone его и так не видно,
+// но вкладка в браузере может остаться открытой).
+window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    const el = document.getElementById('install-hint');
+    if (el) el.hidden = true;
+    if (window.animeiTrack) window.animeiTrack('install', 'installed');
+});
+
+// Уже установленное приложение: и в standalone-режиме Chrome/Android, и в
+// «на экран Домой» на iOS (там свой нестандартный navigator.standalone).
+function isAppInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+}
+
+function isIOS() {
+    const ua = navigator.userAgent;
+    // iPadOS 13+ представляется как Mac — отличаем по тач-экрану.
+    return /iPhone|iPad|iPod/i.test(ua)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+// Тихая строка «Установить приложение» внизу главной. Показываем только когда
+// установка реально возможна, иначе кнопка вела бы в никуда:
+//   Android/Chrome — есть придержанный beforeinstallprompt, зовём его нативно;
+//   iOS — такого события нет вообще, разворачиваем инструкцию про «Поделиться».
+function renderInstallHint() {
+    const el = document.getElementById('install-hint');
+    if (!el || isAppInstalled()) return;
+    if (localStorage.getItem(INSTALL_DISMISS_KEY) === '1') return;
+
+    const ios = isIOS();
+    if (!deferredPrompt && !ios) return; // установка недоступна — молчим
+
+    el.hidden = false;
+    // Обработчики вешаем один раз: beforeinstallprompt может прийти повторно
+    // (например, после отказа в нативном диалоге) и снова дёрнуть эту функцию.
+    if (el.dataset.wired === '1') return;
+    el.dataset.wired = '1';
+    if (window.animeiTrack) window.animeiTrack('install', ios ? 'shown-ios' : 'shown');
+
+    document.getElementById('install-hint-btn').addEventListener('click', async () => {
+        if (window.animeiTrack) window.animeiTrack('install', 'click');
+        if (ios) {
+            const tip = document.getElementById('install-hint-ios');
+            tip.hidden = !tip.hidden;
+            return;
+        }
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        // Промпт одноразовый: повторно этот же объект вызвать нельзя, браузер
+        // пришлёт новый beforeinstallprompt сам.
+        deferredPrompt = null;
+        if (window.animeiTrack) window.animeiTrack('install', outcome);
+        // Прячем при любом исходе: согласился — установилось, отказался — не
+        // навязываемся. Насовсем не запоминаем, вернётся в следующий заход.
+        el.hidden = true;
+    });
+
+    document.getElementById('install-hint-close').addEventListener('click', () => {
+        try { localStorage.setItem(INSTALL_DISMISS_KEY, '1'); } catch { /* недоступен */ }
+        el.hidden = true;
+        if (window.animeiTrack) window.animeiTrack('install', 'dismiss');
+    });
+}
 
 // ========== Data Fetching ==========
 
@@ -389,6 +464,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSessionCard();
     renderDailyPlan();
     renderWeekActivity();
+    // На iOS beforeinstallprompt не бывает — там строку показывает уже этот
+    // вызов; на Android её обычно поднимет пришедшее позже событие.
+    renderInstallHint();
 
     // Гость с лендинга ещё не набрал свою коллекцию — «Повторить всё» ему не по
     // делу и только распыляет. Прячем карточку; после входа в аккаунт вернётся.

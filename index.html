@@ -105,6 +105,22 @@
                      скрыта продуктом — см. правило a[href$="watch.html"] в misc.css. -->
             </div>
         </div>
+
+        <!-- Установка PWA — тихая строка внизу главной. Показывается только
+             когда установка реально возможна: Android/Chrome (поймали
+             beforeinstallprompt) или iOS (инструкция «Поделиться → На экран
+             „Домой“»). Скрывается в установленном приложении и после отказа.
+             Логика — renderInstallHint() в app.js. -->
+        <div class="install-hint" id="install-hint" hidden>
+            <div class="install-hint__row">
+                <button class="install-hint__btn" type="button" id="install-hint-btn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg>
+                    <span data-i18n="install.cta">Установить приложение</span>
+                </button>
+                <button class="install-hint__close" type="button" id="install-hint-close" data-i18n-title="install.hide" aria-label="Скрыть">×</button>
+            </div>
+            <p class="install-hint__ios" id="install-hint-ios" hidden data-i18n="install.ios"></p>
+        </div>
     </div>
 
     <nav class="sidebar" id="sidebar">
