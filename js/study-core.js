@@ -1009,33 +1009,44 @@
             // Оценка кадра от ширины: не резервируем пустоту под широкий 16:9.
             const w = slot.clientWidth || back.clientWidth;
             if (w > 0) h = Math.min(h, Math.round(w * 9 / 16));
-            // Метаданные уже есть — точная высота вместо оценки. Второй потолок —
-            // натуральная высота кадра: <video> с width/height:auto НЕ апскейлится,
-            // и без него слот, рассчитанный на широкую карточку, резервировал бы
-            // пустоту вокруг маленького клипа (стартовые 640×360 в карточке 760),
-            // а титр «из какого аниме» отклеивался от кадра.
+            // Метаданные уже есть — точная высота вместо оценки.
             if (video && video.videoWidth > 0) {
-                h = Math.min(h, Math.ceil(w * video.videoHeight / video.videoWidth), video.videoHeight);
+                h = Math.min(h, Math.ceil(w * video.videoHeight / video.videoWidth));
             }
             h = Math.max(120, Math.floor(h));
 
+            // Высоту клипу задаём ЯВНО (height, не только max-height): <video> с
+            // height:auto не апскейлится выше натурального размера, и маленький
+            // исходник (стартовые 640×360) оставлял бы пустоту в широкой карточке,
+            // а титр «из какого аниме» отклеивался от кадра. Явная высота растит
+            // кадр до отведённого места (ширина следует за аспектом, h уже ограничен
+            // ширинным пределом выше — за слот не вылезет).
             slot.classList.add('back-media--reserved');
             if (wasReserved && renderedH > 0) {
                 // Возврат к отрисованной высоте + принудительный reflow: следующая
                 // установка поедет плавным transition от неё, а не скачком.
                 slot.style.height = renderedH + 'px';
-                if (video) video.style.maxHeight = Math.max(120, Math.round(renderedH - extras)) + 'px';
+                if (video) {
+                    video.style.maxHeight = Math.max(120, Math.round(renderedH - extras)) + 'px';
+                    video.style.height = video.style.maxHeight;
+                }
                 void slot.offsetHeight;
                 slot.style.transition = '';
                 if (video) video.style.transition = '';
                 slot.style.height = (h + extras) + 'px';
-                if (video) video.style.maxHeight = h + 'px';
+                if (video) {
+                    video.style.maxHeight = h + 'px';
+                    video.style.height = h + 'px';
+                }
             } else {
                 // Первая резервация — мгновенно: transition включаем только ПОСЛЕ
                 // reflow с финальной высотой, иначе стартом анимации станет
                 // пробное значение (слот на полу 120px) и слот «подъезжал» бы.
                 slot.style.height = (h + extras) + 'px';
-                if (video) video.style.maxHeight = h + 'px';
+                if (video) {
+                    video.style.maxHeight = h + 'px';
+                    video.style.height = h + 'px';
+                }
                 void slot.offsetHeight;
                 slot.style.transition = '';
                 if (video) video.style.transition = '';
