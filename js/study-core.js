@@ -1647,12 +1647,17 @@
         mountCardEdit();
         document.addEventListener('keydown', onKey);
 
-        window.addEventListener('load', async () => {
+        async function bootstrap() {
             await fetchDataFromServer();   // makes sure `words` is in localStorage
             mergeServerSchedule();         // на новом устройстве подтянет расписание с сервера
             if (window.animeiTrack) window.animeiTrack('study', scheduled ? 'srs' : 'cram');
             restart();
-        });
+        }
+        // startStudy может вызываться и ПОСЛЕ события load (выбор колоды новичка
+        // на beginner.html) — тогда слушатель 'load' уже никогда не сработает и
+        // сессия не стартует (пустая карточка). Если страница загружена — сразу.
+        if (document.readyState === 'complete') bootstrap();
+        else window.addEventListener('load', bootstrap);
     }
 
     window.startStudy = startStudy;
