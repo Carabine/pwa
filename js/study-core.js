@@ -1416,6 +1416,11 @@
                 const romajiMode = studyPref('studyTranscription') === 'romaji';
                 const withRomaji = romajiMode && studyPref('studySentenceRomaji') !== false;
                 if (withRomaji) {
+                    // Ячейки придут с сервера асинхронно и они ВЫШЕ плоской строки.
+                    // Резервируем их высоту сразу: иначе плашка подрастала через
+                    // ~200мс и fitBackMedia ужимал уже показанный клип — «видео
+                    // скачет» на каждой карточке (ромадзи — режим по умолчанию).
+                    jpLine.classList.add('sentence__jp--cells-reserve');
                     fetchSentenceTokens(w.sentence).then((tokens) => {
                         if (!tokens.length || !current || current.word.id !== wid) return;
                         if (!els.back.classList.contains('back-side--visible')) return;

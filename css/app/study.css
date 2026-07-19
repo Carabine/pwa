@@ -675,6 +675,11 @@
     min-height: 76px;
 }
 
+/* Резерв высоты ячеек ДО их прихода с сервера (режим ромадзи): плоская строка
+   ждёт в той же высоте, что займут ячейки, — замена не двигает ни плашку, ни
+   клип. Значения = min-height .sentence--cells (и в медиазапросах ниже). */
+.sentence__jp--cells-reserve { min-height: 76px; }
+
 .read-cell {
     display: inline-flex;
     flex-direction: column;
@@ -1376,6 +1381,7 @@
     .sentence__jp { font-size: 16px; }
 
     .sentence--cells { min-height: 68px; }
+    .sentence__jp--cells-reserve { min-height: 68px; }
 
     /* На телефоне компактный .sentence выше перебивал резерв под угловую кнопку
        ИИ — возвращаем боковые отступы, иначе текст фразы залезает под искорку. */
@@ -1447,6 +1453,7 @@
         padding-bottom: 7px;
     }
     .sentence--cells { min-height: 68px; }
+    .sentence__jp--cells-reserve { min-height: 68px; }
     .translatedSentence { font-size: 12.5px; }
 }
 
