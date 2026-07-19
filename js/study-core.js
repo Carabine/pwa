@@ -759,43 +759,52 @@
             els.back.appendChild(el);
         }
 
-        // Транскрипция слова с учётом настройки studyTranscription: kana (по
-        // умолчанию) или romaji. Старые значения both/none убраны из настроек —
-        // если такое сохранилось, показываем кану.
-        function renderTranscription(w) {
+        // Чтение слова на ответе — фуриганой НАД словом-титулом (как в манге):
+        // симметрично, без чипа-пилюли рядом с переводом («некрасиво в одну
+        // строку») и без лишнего ряда в обороте — вертикаль уходит клипу.
+        // Транскрипция по настройке studyTranscription: kana (по умолчанию)
+        // или romaji. Живёт в .front-side; renderFront новой карточки лицо
+        // очищает, а при reapplyCard (перерисовка оборота без очистки лица)
+        // снимаем старую фуригану сами.
+        function renderFurigana(w) {
+            const old = els.front.querySelector('.word-furigana');
+            if (old) old.remove();
+
             const mode = studyPref('studyTranscription') === 'romaji' ? 'romaji' : 'kana';
             const kana = w.kana || '';
             const romaji = (w.romaji && String(w.romaji).trim())
                 ? String(w.romaji).trim()
                 : (typeof window.kanaToRomaji === 'function' ? window.kanaToRomaji(kana) : '');
             const text = mode === 'romaji' ? (romaji || kana) : kana;
-            if (!text) return;
+            // Чисто-канное слово в режиме каны — не дублируем титул фуриганой.
+            if (!text || text === (w.word ?? w.kanji)) return;
 
-            const chip = document.createElement('div');
-            chip.className = 'hiragana';
-            chip.textContent = text;
+            const fg = document.createElement('div');
+            fg.className = 'word-furigana';
+            fg.textContent = text;
 
             // Тап по чтению — озвучка слова (совет Codex): произношение под рукой,
             // без похода в шестерёнку. Озвучиваем кану (однозначное чтение).
             if (typeof canSpeakJa === 'function' && canSpeakJa()) {
                 const speakText = kana || w.word || w.kanji || text;
-                chip.classList.add('hiragana--speak');
-                chip.setAttribute('role', 'button');
-                chip.setAttribute('tabindex', '0');
-                chip.title = t('study.listen');
+                fg.classList.add('word-furigana--speak');
+                fg.setAttribute('role', 'button');
+                fg.setAttribute('tabindex', '0');
+                fg.title = t('study.listen');
                 const spk = document.createElement('span');
-                spk.className = 'hiragana__speak';
+                spk.className = 'word-furigana__speak';
                 spk.textContent = '🔊';
-                chip.appendChild(spk);
-                chip.addEventListener('click', () => speakJa(speakText));
+                fg.appendChild(spk);
+                fg.addEventListener('click', () => speakJa(speakText));
                 // Enter — озвучить; stopPropagation, чтобы глобальный onKey не оценил
                 // карточку тем же нажатием. Space оставляем оценке (см. onKey).
-                chip.addEventListener('keydown', (e) => {
+                fg.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); speakJa(speakText); }
                 });
             }
 
-            els.back.appendChild(chip);
+            const wordEl = els.front.querySelector('.word');
+            els.front.insertBefore(fg, wordEl || els.front.firstChild);
         }
 
         // Панель настроек обучения (шестерёнка в углу карточки). Меняет настройки
@@ -1275,18 +1284,12 @@
             els.back.innerHTML = '';
             els.back.classList.add('back-side--visible');
 
-            // Ядро ответа сразу под словом: перевод (главный акцент) + чтение
-            // (тап — озвучка). Это и есть проверка припоминания — держим её на
-            // верху, чтобы клип не вклинивался между словом и переводом.
-            // Собираем ОДНОЙ строкой (.answer-core): вертикаль карточки дорога —
-            // каждый сэкономленный ряд текста уходит в размер клипа.
+            // Ядро ответа: чтение — фуриганой над словом-титулом (в .front-side),
+            // перевод — своей строкой сразу под титулом. Это и есть проверка
+            // припоминания — держим её на верху, чтобы клип не вклинивался
+            // между словом и переводом.
+            renderFurigana(w);
             addLine('meaning', w.meaning ?? w.translation ?? '');
-            renderTranscription(w);
-            const core = document.createElement('div');
-            core.className = 'answer-core';
-            els.back.querySelectorAll(':scope > .meaning, :scope > .hiragana')
-                .forEach((el) => core.appendChild(el));
-            if (core.childElementCount) els.back.appendChild(core);
 
             // Медиа-контекст (клип/озвучка) — ниже ядра, как «награда», а не
             // преграда (совет Codex). Один слот: асинхронная подгрузка не должна
@@ -1359,7 +1362,8 @@
             // «Источник» — титр сразу под кадром (подпись к сцене, из которой
             // слово), а не одинокой строкой в самом низу. Без клипа титру там не
             // место (всплыл бы над разбором) — тогда оставляем его внизу (ниже).
-            if (w.anime && expectsClip) addLine('card-anime', t('starter.fromAnime') + ' ' + w.anime);
+            // Титр «из какого аниме» убран: не критичная информация, а его ряд
+            // (и ряд под клипом, и внизу карточки) отдан размеру клипа.
 
             // Предложение. Если выбрана ромадзи-транскрипция (тот же выбор, что и для
             // слова) — раскладываем пословно с ромадзи над каждым словом, как в плеере;
@@ -1422,9 +1426,6 @@
             els.back.querySelectorAll(':scope > .sentence, :scope > .translatedSentence')
                 .forEach((el) => sentWrap.appendChild(el));
             if (sentWrap.childElementCount) els.back.appendChild(sentWrap);
-
-            // Карточка без клипа — титр аниме внизу (под клипом его нет).
-            if (w.anime && !expectsClip) addLine('card-anime', t('starter.fromAnime') + ' ' + w.anime);
 
             // В готовой колоде слово можно забрать к себе в коллекцию
             if (collectable && w._card && typeof saveWord === 'function') {

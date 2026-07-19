@@ -497,16 +497,33 @@
     animation: none;
 }
 
-/* Ядро ответа (перевод + чип чтения) — одной строкой: вертикаль карточки
-   дорога, каждый сэкономленный ряд текста уходит в размер клипа. Длинный
-   перевод переносит строку внутри ряда (wrap). */
-.answer-core {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 6px 14px;
-    max-width: 100%;
+/* Чтение — фуриганой над словом-титулом (как в манге): симметрично и без
+   лишнего ряда в обороте. .front-side — flex-row wrap, поэтому basis:100%
+   ставит чтение на собственную строку НАД словом (в DOM оно перед ним). */
+.word-furigana {
+    flex-basis: 100%;
+    text-align: center;
+    font-size: 13.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    color: var(--text-dim);
+    margin-bottom: 2px;
+}
+
+.word-furigana--speak { cursor: pointer; transition: color var(--transition); }
+
+.word-furigana--speak:hover { color: var(--text-muted); }
+
+.word-furigana--speak:focus-visible {
+    outline: 2px solid var(--primary-hover);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.word-furigana__speak {
+    font-size: 10px;
+    opacity: 0.55;
+    margin-left: 6px;
 }
 
 /* Предложение + его перевод: на ПК рядом в один ряд (плашка + курсивный перевод
@@ -542,54 +559,6 @@
     text-wrap: balance;
     color: var(--primary-hover);
 }
-
-/* Чтение — чип-«ярлычок» с лёгкой барвинковой заливкой (для kana/romaji/both —
-   каждая строка своим чипом). */
-.hiragana {
-    font-size: 16.5px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    line-height: 1.5;
-    color: var(--primary-hover);
-    padding: 4px 15px;
-    border-radius: 999px;
-    background: rgba(124, 140, 248, 0.10);
-    border: 1px solid rgba(124, 140, 248, 0.28);
-}
-
-:root[data-theme="light"] .hiragana {
-    background: rgba(124, 140, 248, 0.12);
-    border-color: rgba(124, 140, 248, 0.38);
-}
-
-/* Чтение как кнопка озвучки: тап по чипу произносит слово. Динамик-глиф
-   притушен и наливается при наведении — подсказка, что чип интерактивный. */
-.hiragana--speak {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    cursor: pointer;
-    transition: background var(--transition), border-color var(--transition);
-}
-
-.hiragana--speak:hover {
-    background: rgba(124, 140, 248, 0.18);
-    border-color: rgba(124, 140, 248, 0.45);
-}
-
-.hiragana--speak:focus-visible {
-    outline: 2px solid var(--primary-hover);
-    outline-offset: 2px;
-}
-
-.hiragana__speak {
-    font-size: 12px;
-    line-height: 1;
-    opacity: 0.6;
-    transition: opacity var(--transition);
-}
-
-.hiragana--speak:hover .hiragana__speak { opacity: 1; }
 
 /* Предложение — «субтитровая» плашка под экраном. Плашка ВСЕГДА резервирует
    высоту двух строк (min-height): раньше видео получало «остаток после текста»
@@ -630,19 +599,6 @@
     text-align: center;
     font-style: italic;
     max-width: 440px;
-}
-
-/* Из какого аниме слово — как подпись к кадру: жмётся к клипу сверху
-   (отрицательный отступ гасит flex-gap), читается как «источник этой сцены». */
-.card-anime {
-    font-size: 10.5px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    text-align: center;
-    /* Гасим часть flex-gap (12px на ПК → фактические ~8px), но не вплотную:
-       -7px при мобильном gap 8px оставлял титру 1px от кадра. */
-    margin-top: -4px;
 }
 
 /* Кнопка «В коллекцию» на карточке из готовой колоды */
@@ -1455,9 +1411,6 @@
         max-height: clamp(120px, 26dvh, 220px);
     }
 
-    /* Мобильный gap оборота меньше (8px) — гасим его мягче, чем на ПК. */
-    .card-anime { margin-top: -2px; }
-
     .main.study .buttons {
         gap: 10px;
         min-height: 54px;
@@ -1488,7 +1441,6 @@
     }
     .card-area:has(.back-side--visible) .word { font-size: 24px; }
     .meaning { font-size: 18px; }
-    .hiragana { padding-top: 2px; padding-bottom: 2px; }
     .sentence {
         padding-top: 7px;
         padding-bottom: 7px;
