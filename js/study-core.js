@@ -1009,9 +1009,13 @@
             // Оценка кадра от ширины: не резервируем пустоту под широкий 16:9.
             const w = slot.clientWidth || back.clientWidth;
             if (w > 0) h = Math.min(h, Math.round(w * 9 / 16));
-            // Метаданные уже есть — точная высота вместо оценки.
+            // Метаданные уже есть — точная высота вместо оценки. Второй потолок —
+            // натуральная высота кадра: <video> с width/height:auto НЕ апскейлится,
+            // и без него слот, рассчитанный на широкую карточку, резервировал бы
+            // пустоту вокруг маленького клипа (стартовые 640×360 в карточке 760),
+            // а титр «из какого аниме» отклеивался от кадра.
             if (video && video.videoWidth > 0) {
-                h = Math.min(h, Math.ceil(w * video.videoHeight / video.videoWidth));
+                h = Math.min(h, Math.ceil(w * video.videoHeight / video.videoWidth), video.videoHeight);
             }
             h = Math.max(120, Math.floor(h));
 
