@@ -201,33 +201,33 @@ html, body {
 /* Рейтинг */
 .anime-card__score {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 9px;
+    right: 9px;
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 2px;
     background: rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     color: #ffd15c;
-    font-size: 12px;
+    font-size: 10.5px;
     font-weight: 700;
-    padding: 4px 9px;
+    padding: 2px 7px;
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* Тип (ТВ / Фильм / ONA ...) */
+/* Тип (ТВ / Фильм / ONA ...). Слева уступает место кружку сложности. */
 .anime-card__kind {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    max-width: 62%;
+    top: 9px;
+    left: 31px;
+    max-width: 56%;
     background: rgba(79, 70, 229, 0.92);
     color: #fff;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
-    padding: 3px 9px;
+    padding: 2px 8px;
     border-radius: 999px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -235,66 +235,46 @@ html, body {
     box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
 }
 
-/* Бейдж сложности языка: зелёный «полегче», жёлтый «средне», красный «сложный
-   язык». Есть у каждой карточки — светофор сложности с первого взгляда. */
+/* Сложность языка. Десктоп: цветной кружок-«светофор» в шапке карточки
+   (зелёный «полегче», жёлтый «средне», красный «сложный язык»).
+   Телефон: тонкая полоска по нижнему краю постера (см. медиазапрос ниже). */
 .anime-card__diff {
     position: absolute;
-    top: 38px;
+    top: 10px;
     left: 10px;
-    max-width: 80%;
-    font-size: 10.5px;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 999px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    font-size: 0;
+    color: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 
-.anime-card__diff--easy {
-    background: rgba(16, 185, 129, 0.92);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
-}
+.anime-card__diff--easy   { background: #10b981; }
+.anime-card__diff--medium { background: #f59e0b; }
+.anime-card__diff--hard   { background: #e0655f; }
 
-.anime-card__diff--medium {
-    background: rgba(245, 158, 11, 0.92);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-}
-
-.anime-card__diff--hard {
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    color: #f2b8b5;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-/* Телефон: текстовый бейдж загромождал узкую карточку (3 в ряд) — вместо него
-   тонкая цветная полоска по нижнему краю постера: зелёная «полегче», жёлтая
-   «средне», красная «сложный язык». Текст остаётся на десктопе. */
+/* Телефон: узкая карточка (3 в ряд) — кружок и текстовые бейджи тесно, поэтому
+   сложность показываем тонкой цветной полоской по нижнему краю постера, а тег
+   типа возвращаем к левому краю (кружка тут нет). */
 @media (max-width: 600px) {
     .anime-card__diff {
         top: auto;
         bottom: 0;
         left: 0;
         right: 0;
-        max-width: none;
+        width: auto;
         height: 3px;
-        padding: 0;
         border: none;
         border-radius: 0;
-        font-size: 0;         /* текст прячем — работает только цвет */
-        color: transparent;
         box-shadow: none;
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
     }
 
-    .anime-card__diff--easy { background: #10b981; }
-    .anime-card__diff--medium { background: #f59e0b; }
-    .anime-card__diff--hard { background: #e0655f; }
+    .anime-card__kind {
+        left: 9px;
+        max-width: 62%;
+    }
 }
 
 /* Чипы фильтра сложности и подборка простых тайтлов */
