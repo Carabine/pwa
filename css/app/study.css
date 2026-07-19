@@ -559,13 +559,35 @@
     border-radius: 14px;
 }
 
-/* Японская строка: резерв 2 строк (2×1.5em), однострочная центрируется.
+/* Японская строка — «цитата» (P2): чуть крупнее остального текста плашки,
+   резерв 2 строк (2×1.5em своего кегля), однострочная центрируется.
    .sentence--cells (ромадзи-ячейки, вешается на этот же элемент) переопределит
    display на flex — align-content центрирует ряды и там. */
 .sentence__jp {
+    font-size: 18px;
     min-height: 3em;
     display: grid;
     align-content: center;
+}
+
+/* Приглушённые японские кавычки 「…」 по краям цитаты. */
+.sentence__quote {
+    color: var(--text-dim);
+}
+
+/* Изучаемое слово подсвечено в фразе — мгновенно видно, ГДЕ оно в контексте. */
+.sentence__hl {
+    color: var(--primary-hover);
+    font-weight: 600;
+}
+
+/* Тающая линия между цитатой и переводом. */
+.sentence__divider {
+    height: 1px;
+    width: 180px;
+    max-width: 60%;
+    margin: 9px auto 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
 }
 
 /* Перевод — тот же принцип: резерв двух строк, чтобы длина перевода не меняла
@@ -582,11 +604,12 @@
     max-width: 440px;
 }
 
-/* Внутри плашки перевод мельче и жмётся к японской строке — читается как
-   вторая дорожка субтитров, а не отдельный блок. */
+/* Внутри плашки перевод мельче, без курсива (курсивная кириллица читается
+   хуже) и жмётся к разделителю — вторая дорожка субтитров, а не блок. */
 .sentence .translatedSentence {
     font-size: 13px;
-    margin-top: 6px;
+    font-style: normal;
+    margin-top: 8px;
     max-width: none;
 }
 
@@ -651,7 +674,7 @@
     align-items: flex-end;
     align-content: center;
     gap: 2px 7px;
-    min-height: 74px;
+    min-height: 76px;
 }
 
 .read-cell {
@@ -1352,7 +1375,9 @@
         font-size: 15px;
     }
 
-    .sentence--cells { min-height: 64px; }
+    .sentence__jp { font-size: 16px; }
+
+    .sentence--cells { min-height: 68px; }
 
     /* На телефоне компактный .sentence выше перебивал резерв под угловую кнопку
        ИИ — возвращаем боковые отступы, иначе текст фразы залезает под искорку. */
@@ -1423,7 +1448,7 @@
         padding-top: 7px;
         padding-bottom: 7px;
     }
-    .sentence--cells { min-height: 64px; }
+    .sentence--cells { min-height: 68px; }
     .translatedSentence { font-size: 12.5px; }
 }
 

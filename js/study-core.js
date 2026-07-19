@@ -1376,7 +1376,38 @@
             sentenceLine.className = 'sentence';
             const jpLine = document.createElement('div');
             jpLine.className = 'sentence__jp';
-            jpLine.textContent = w.sentence ?? '';
+            // Фраза — «цитатой» (P2 из галереи): приглушённые японские кавычки
+            // 「…」 по краям, изучаемое слово подсвечено акцентом. Всё внутри
+            // ОДНОГО инлайн-контейнера: jpLine — grid, и голые text+span стали
+            // бы отдельными грид-рядами. Строим DOM-ом (текст пользовательский,
+            // innerHTML нельзя).
+            if (w.sentence) {
+                const jpInner = document.createElement('span');
+                const quote = (ch) => {
+                    const q = document.createElement('span');
+                    q.className = 'sentence__quote';
+                    q.textContent = ch;
+                    return q;
+                };
+                jpInner.appendChild(quote('「'));
+                const target = String(w.word ?? w.kanji ?? '').trim();
+                const sentText = String(w.sentence);
+                if (target && sentText.includes(target)) {
+                    sentText.split(target).forEach((chunk, i) => {
+                        if (i > 0) {
+                            const hl = document.createElement('span');
+                            hl.className = 'sentence__hl';
+                            hl.textContent = target;
+                            jpInner.appendChild(hl);
+                        }
+                        if (chunk) jpInner.appendChild(document.createTextNode(chunk));
+                    });
+                } else {
+                    jpInner.appendChild(document.createTextNode(sentText));
+                }
+                jpInner.appendChild(quote('」'));
+                jpLine.appendChild(jpInner);
+            }
             sentenceLine.appendChild(jpLine);
             if (w.sentence) {
                 els.back.appendChild(sentenceLine);
@@ -1430,8 +1461,15 @@
                 const tr = document.createElement('div');
                 tr.className = 'translatedSentence';
                 tr.textContent = trText;
-                if (w.sentence) sentenceLine.appendChild(tr);
-                else els.back.appendChild(tr);
+                if (w.sentence) {
+                    // Тающая линия отделяет перевод от цитаты внутри плашки.
+                    const hr = document.createElement('div');
+                    hr.className = 'sentence__divider';
+                    sentenceLine.appendChild(hr);
+                    sentenceLine.appendChild(tr);
+                } else {
+                    els.back.appendChild(tr);
+                }
             }
 
             // В готовой колоде слово можно забрать к себе в коллекцию
