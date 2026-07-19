@@ -398,6 +398,21 @@
     margin: 0;
 }
 
+/* До загрузки метаданных у <video> нет своих размеров: держим клип стабильным
+   16:9-боксом во всю ширину, чтобы кадр не «прыгал», разрастаясь с дефолтных
+   300×150 до реального размера. На loadedmetadata класс снимается (study-core.js)
+   и размер отдаётся настоящему кадру — для 16:9-клипов он тот же, без скачка.
+   Двойной класс (.clip-player.clip-player--sizing) поднимает специфичность, чтобы
+   победить и мобильное правило width:fit-content ниже по файлу. max-height клипа
+   остаётся из базовых правил — потолок высоты соблюдается и в этом состоянии. */
+.card-area .clip-player.clip-player--sizing { width: 100%; }
+.card-area .clip-player.clip-player--sizing video {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+}
+
 .back-media .study-audio {
     width: 100%;
     max-width: 400px;

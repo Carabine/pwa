@@ -1060,9 +1060,18 @@
 
             const wrap = document.createElement('div');
             wrap.className = 'clip-player';
+            // Пока не пришли метаданные, у <video> нет своих размеров и браузер
+            // рисует его дефолтным блоком 300×150 — при загрузке кадр «прыгал»,
+            // разрастаясь до реального размера (и на миг вызывал скролл оборота).
+            // Держим клип стабильным 16:9-боксом на всю ширину (клипы аниме и так
+            // 16:9), а на loadedmetadata отдаём размер настоящему кадру — для 16:9
+            // тот же, поэтому появление кадра проходит без скачка.
+            wrap.classList.add('clip-player--sizing');
 
             const video = document.createElement('video');
             video.src = src;
+            video.addEventListener('loadedmetadata',
+                () => wrap.classList.remove('clip-player--sizing'), { once: true });
             // blob-URL из IndexedDB освобождаем, как только видео загрузило данные
             // (элемент дальше держит blob сам) — иначе URL'ы копились бы до
             // перезагрузки вкладки. Для http-ссылок revoke — безвредный no-op.
@@ -1406,7 +1415,11 @@
                 els.back.appendChild(btn);
             }
 
-            scheduleFitBack();
+            // Резервируем высоту слота СИНХРОННО, до первого кадра рендера: раньше
+            // это шло через requestAnimationFrame и один кадр оборот жил без
+            // зарезервированного места — мелькал скролл. Стабильный 16:9-бокс клипа
+            // (класс clip-player--sizing) + синхронная резервация = без прыжка.
+            fitBackMedia();
 
             const hints = ratingHints();
             els.buttons.innerHTML = '';
