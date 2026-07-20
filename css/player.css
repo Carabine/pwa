@@ -2145,6 +2145,16 @@ html, body {
     flex-direction: column;
 }
 
+/* Десктопный грид (min-width:901px) жёстко сажает .player-main во 2-ю колонку,
+   а .transcript — в 3-ю. В театре грид другой (2 колонки), и без сброса видео
+   попадало в узкую колонку субтитров, а сабы — в неявную третью: крошечный кадр
+   посреди чёрного экрана. Авторазмещение кладёт их в 1-ю и 2-ю как надо. */
+.player-layout.theater .player-main { grid-column: auto; }
+.player-layout.theater .transcript { grid-column: auto; }
+/* И не ограничиваем блоки под видео шириной --video-w: в театре колонка видео
+   шире, а сама переменная в театре не обновляется (см. matchVideoWidth). */
+.player-layout.theater .player-main > :not(.video-wrap) { max-width: none; }
+
 /* Лендскейп — «как на ПК»: видео + реплика слева, субтитры справа. */
 @media (orientation: landscape) {
     .player-layout.theater {

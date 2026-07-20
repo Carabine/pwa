@@ -2437,6 +2437,10 @@ setMobileTab('settings'); // по умолчанию — настройки (в�
     const layout = document.querySelector('.player-layout');
     if (!layout || !vw || !window.ResizeObserver) return;
     const ro = new ResizeObserver(() => {
+        // В театре свой грид, --video-w там не используется. Если записать замер
+        // театрального кадра, после выхода грид строится от него и видео залипает
+        // ужатым (колонка = ширина видео = колонка) до перезагрузки.
+        if (layout.classList.contains('theater')) return;
         layout.style.setProperty('--video-w', Math.round(vw.getBoundingClientRect().width) + 'px');
     });
     ro.observe(vw);
