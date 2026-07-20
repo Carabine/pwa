@@ -1520,7 +1520,11 @@ function updateCoverage() {
     if (bases.size < 30) { el.hidden = true; return; }
     let known = 0;
     for (const b of bases) if (state.knownWords.has(b)) known++;
-    const pct = Math.round((100 * known) / bases.size);
+    // Крайние значения не округляем до вырожденных: 2 из 417 — это «<1%»,
+    // а не обидный «0%»; и наоборот, 99.6% ещё не «100%».
+    let pct = Math.round((100 * known) / bases.size);
+    if (pct === 0 && known > 0) pct = '<1';
+    else if (pct === 100 && known < bases.size) pct = 99;
     el.textContent = t('player.coverage')
         .replace('{p}', pct)
         .replace('{k}', known)
@@ -1824,13 +1828,6 @@ function prevCue() {
     if (cue) seekToCue(cue);
 }
 
-// Кнопки ◀ ↻ ▶ в углу строки субтитров
-const cuePrevBtn = document.getElementById('cue-prev');
-const cueReplayBtn = document.getElementById('cue-replay');
-const cueNextBtn = document.getElementById('cue-next');
-if (cuePrevBtn) cuePrevBtn.addEventListener('click', prevCue);
-if (cueReplayBtn) cueReplayBtn.addEventListener('click', replayCue);
-if (cueNextBtn) cueNextBtn.addEventListener('click', nextCue);
 
 // Свайп по строке субтитров на телефоне: влево — следующая, вправо — предыдущая.
 let cueSwipe = null;
