@@ -18,7 +18,9 @@
 // Их показываем первыми и предлагаем добавить при пустой коллекции.
 // Остальные 35 — пока без видео (плашка «Видео пока нет» на обороте карточки).
 
-const STARTER_CORE_COUNT = 15;
+// Размер ядра. По умолчанию — 15 статичных карточек; если с сервера приехал фид
+// ядра (см. refreshStarterCore), значение подстраивается под число seed-карточек.
+let STARTER_CORE_COUNT = 15;
 
 const STARTER_DECK = [
     // ---- Ядро: 15 карточек с видеоклипами реальных сцен ----
@@ -197,62 +199,110 @@ function refreshStarterOrder() {
 }
 if (typeof window !== 'undefined') refreshStarterOrder();
 
-// ---- Синхронизация окон клипов с админкой (seed@animei.space) ----
-// Владелец правит окно воспроизведения карточки в админке (PATCH
-// /admin/seed-words/:id) → мы тянем его через публичный GET /api/v1/starter/timings
-// и подменяем ts/te (и ссылку на клип) у карточек ЯДРА по kanji. Без этого правки
-// таймингов не доезжали: колода держит захардкоженную копию карточек.
+// ---- Ядро колоды приезжает из админки (seed@animei.space) ----
+// Раньше наружу отдавались только порядок и тайминги, поэтому правка текста
+// карточки в админке (перевод, фраза, чтение) до учеников не доезжала вообще, а
+// добавленная/удалённая seed-карточка не меняла колоду: ядро жило захардкоженной
+// копией в STARTER_DECK. Теперь фронт строит ЯДРО из полного фида
+// GET /api/v1/starter/core, а статичные карточки остаются оффлайн-фолбэком и
+// источником переводов на uk/en (в seed-карточке перевод только один, русский).
 // Кэш в localStorage — применяем синхронно при загрузке (без мигания), с сервера
-// обновляем в фоне; колода строится по клику «Учить», так что свежие значения
-// обычно успевают. Нет сети/кэша — остаются значения из STARTER_DECK.
-const STARTER_TIMINGS_KEY = 'animei:starterTimings';
+// обновляем в фоне. Нет сети и кэша — колода целиком статичная, как раньше.
+const STARTER_CORE_KEY = 'animei:starterCore';
+const STATIC_CORE_COUNT = 15;
+const STATIC_CORE = STARTER_DECK.slice(0, STATIC_CORE_COUNT);
+const STATIC_EXTRA = STARTER_DECK.slice(STATIC_CORE_COUNT);
 
-function applyStarterTimings(list) {
-    if (!Array.isArray(list) || !list.length) return;
-    const byKanji = new Map();
-    for (const it of list) if (it && it.kanji) byKanji.set(it.kanji, it);
-    for (const card of STARTER_DECK) {
-        const it = byKanji.get(card.k);
-        if (!it) continue;
-        if (Number.isFinite(it.trimStart)) card.ts = it.trimStart;
-        if (Number.isFinite(it.trimEnd)) card.te = it.trimEnd;
-        if (it.clip) card.clip = it.clip;
+// Название аниме из подсказки seed-карточки. Формат подсказки —
+// «Атака титанов • S4E9 @ 21:59» (у части карточек — «Из аниме: X» или пусто):
+// берём кусок до разделителя серии и снимаем подпись-префикс.
+function animeFromHint(hint) {
+    let s = String(hint || '').split('•')[0].split('@')[0].trim();
+    const i = s.indexOf(':');
+    if (i >= 0) s = s.slice(i + 1).trim();
+    return s;
+}
+
+// Карточка ядра из seed-записи: тексты/чтение/клип/окно — из админки, переводы на
+// uk/en — из статичной карточки с тем же словом (в seed их просто нет). Карточки,
+// которой нет в STARTER_DECK (добавлена в админке), показываем на всех языках с
+// русским переводом — лучше, чем не показать её вовсе.
+function starterCoreCard(it, staticCard) {
+    const ru = [it.translation || '', it.sentenceTranslation || ''];
+    const t = {};
+    for (const lang of ['ru', 'uk', 'en']) {
+        const s = staticCard && staticCard.t[lang];
+        // Русский всегда из админки. Для uk/en берём статичный перевод, но только
+        // если фраза-пример не изменилась: иначе перевод будет не от той фразы.
+        const sameSentence = staticCard && staticCard.s === it.sentence;
+        t[lang] = (lang === 'ru' || !s || !sameSentence) ? ru : s.slice();
     }
+    return {
+        k: it.kanji,
+        r: it.kana || (staticCard ? staticCard.r : ''),
+        ro: it.romaji || (staticCard ? staticCard.ro : ''),
+        // Название аниме: у статичной карточки оно международное («Attack on Titan»),
+        // в seed-подсказке — русское, поэтому статичное в приоритете.
+        a: (staticCard ? staticCard.a : '') || animeFromHint(it.hint),
+        s: it.sentence || (staticCard ? staticCard.s : ''),
+        clip: it.clip || (staticCard ? staticCard.clip : ''),
+        len: staticCard ? staticCard.len : Math.ceil(Number(it.videoEnd) || 0),
+        ts: Number.isFinite(it.trimStart) ? it.trimStart : (staticCard ? staticCard.ts : 0),
+        te: Number.isFinite(it.trimEnd) ? it.trimEnd : (staticCard ? staticCard.te : 0),
+        t,
+    };
+}
+
+// Ядро из фида (null — фида нет, работаем на статичном массиве).
+let starterCore = null;
+
+function applyStarterCore(list) {
+    if (!Array.isArray(list) || !list.length) return;
+    const staticByKanji = new Map(STATIC_CORE.map((c) => [c.k, c]));
+    const cards = list
+        .filter((it) => it && it.kanji)
+        .map((it) => starterCoreCard(it, staticByKanji.get(it.kanji)));
+    if (!cards.length) return;
+    starterCore = cards;
+    STARTER_CORE_COUNT = cards.length;
 }
 
 try {
-    applyStarterTimings(JSON.parse(localStorage.getItem(STARTER_TIMINGS_KEY) || 'null'));
-} catch { /* приватный режим/битый кэш — остаются статичные значения */ }
+    applyStarterCore(JSON.parse(localStorage.getItem(STARTER_CORE_KEY) || 'null'));
+} catch { /* приватный режим/битый кэш — остаётся статичное ядро */ }
 
-function refreshStarterTimings() {
+function refreshStarterCore() {
     try {
-        fetch(starterApiBase() + '/api/v1/starter/timings')
+        fetch(starterApiBase() + '/api/v1/starter/core')
             .then((r) => (r.ok ? r.json() : null))
             .then((j) => {
                 if (!j || !Array.isArray(j.data) || !j.data.length) return;
-                applyStarterTimings(j.data);
-                try { localStorage.setItem(STARTER_TIMINGS_KEY, JSON.stringify(j.data)); } catch { /* приватный режим */ }
+                applyStarterCore(j.data);
+                try { localStorage.setItem(STARTER_CORE_KEY, JSON.stringify(j.data)); } catch { /* приватный режим */ }
             })
-            .catch(() => { /* оффлайн — оставляем кэш/статичные тайминги */ });
+            .catch(() => { /* оффлайн — оставляем кэш/статичное ядро */ });
     } catch { /* нет fetch/localStorage */ }
 }
-if (typeof window !== 'undefined') refreshStarterTimings();
+if (typeof window !== 'undefined') refreshStarterCore();
 
-// Ядро (первые STARTER_CORE_COUNT), переставленное по starterOrder (по kanji).
-// Карточки не из списка сохраняют исходный относительный порядок в хвосте ядра.
-// Некор (остальные 35) — как есть.
+// Ядро + дополнение (35 карточек без видео). Фид уже приходит в порядке админки,
+// поэтому переставлять его не нужно; на статичном ядре порядок применяем сами по
+// starterOrder (по kanji), карточки не из списка держатся в хвосте ядра.
 function orderedStarterDeck() {
+    if (starterCore) {
+        // Слово, добавленное в seed, могло уже лежать в дополнении — не дублируем.
+        const inCore = new Set(starterCore.map((c) => c.k));
+        return [...starterCore, ...STATIC_EXTRA.filter((c) => !inCore.has(c.k))];
+    }
     if (!starterOrder || !starterOrder.length) return STARTER_DECK;
-    const core = STARTER_DECK.slice(0, STARTER_CORE_COUNT);
-    const rest = STARTER_DECK.slice(STARTER_CORE_COUNT);
     const pos = new Map(starterOrder.map((k, i) => [k, i]));
-    const origIdx = new Map(core.map((c, i) => [c, i]));
-    const sortedCore = core.slice().sort((a, b) => {
+    const origIdx = new Map(STATIC_CORE.map((c, i) => [c, i]));
+    const sortedCore = STATIC_CORE.slice().sort((a, b) => {
         const pa = pos.has(a.k) ? pos.get(a.k) : Infinity;
         const pb = pos.has(b.k) ? pos.get(b.k) : Infinity;
         return pa !== pb ? pa - pb : origIdx.get(a) - origIdx.get(b);
     });
-    return [...sortedCore, ...rest];
+    return [...sortedCore, ...STATIC_EXTRA];
 }
 
 function starterMergedDeck() {
