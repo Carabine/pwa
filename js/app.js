@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.220';
+const APP_VERSION = 'v0.0.231';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -50,6 +50,56 @@ function addSidebarIcons() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
     sidebar.querySelectorAll('a[data-i18n]').forEach(iconifyLink);
+}
+
+// Ссылка «Админка» в сайдбаре — только для админ-аккаунта. Понять, админ ли
+// текущий пользователь, можно лишь у сервера (в токене только userId): дёргаем
+// /admin/whoami с Bearer-токеном. Кэш animei:isAdmin показывает ссылку мгновенно
+// (без мигания), фоновая проверка подтверждает/убирает. Сама админка всё равно
+// закрыта сервером, поэтому кэш — только для UI и не даёт лишнего доступа.
+function maybeAddAdminLink() {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar || typeof isSignedIn !== 'function' || !isSignedIn()) return;
+
+    const inPages = window.location.pathname.includes('/pages/');
+    const href = (inPages ? './' : './pages/') + 'admin.html';
+    const addLink = () => {
+        if (sidebar.querySelector('.sidebar__admin')) return;
+        const a = document.createElement('a');
+        a.className = 'sidebar__admin';
+        a.href = href;
+        a.insertAdjacentHTML('afterbegin',
+            '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5l-8-3z"/><path d="m9 12 2 2 4-4"/></svg>');
+        const span = document.createElement('span');
+        span.className = 'nav-label';
+        span.textContent = 'Админка';
+        a.appendChild(span);
+        const before = sidebar.querySelector('.sidebar__settings')
+            || sidebar.querySelector('.sidebar__site');
+        if (before) sidebar.insertBefore(a, before); else sidebar.appendChild(a);
+    };
+    let cached, token;
+    try { cached = localStorage.getItem('animei:isAdmin'); } catch { /* приватный режим */ }
+    try { token = localStorage.getItem('animei:accessToken'); } catch { /* приватный режим */ }
+    if (cached === 'yes') addLink();
+    if (!token) return;
+
+    const base = ['localhost', '127.0.0.1', ''].includes(location.hostname)
+        ? 'http://localhost:3005' : location.origin;
+    fetch(base + '/api/v1/admin/whoami', { headers: { Authorization: 'Bearer ' + token } })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => {
+            // whoami отдаёт 200 {admin:true} ТОЛЬКО админу; не-админ и протухший
+            // access-токен одинаково дают 403 → null. Поэтому при неуспехе ссылку
+            // НЕ снимаем и 'no' НЕ кэшируем — иначе у админа с протухшим токеном
+            // (его позже освежит axiosClient) ссылка пропадала навсегда. Показываем
+            // при подтверждении; снятие — только при логауте (чистит кэш isAdmin).
+            if (j && j.admin) {
+                try { localStorage.setItem('animei:isAdmin', 'yes'); } catch { /* приватный режим */ }
+                addLink();
+            }
+        })
+        .catch(() => { /* сеть недоступна — оставляем как есть */ });
 }
 
 // ========== Service Worker ==========
@@ -266,6 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // сайт», добавленные выше и из i18n.js). i18n.js регистрирует свой
     // DOMContentLoaded раньше — к этому моменту «На сайт» уже в DOM.
     addSidebarIcons();
+    maybeAddAdminLink();
 
     if (menuBtn && sidebar && overlay) {
         // Кнопка меню переключает .open. На телефоне это выезжающая шторка (с
@@ -458,10 +509,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Профиль: показываем «Войти» гостю и почту + «Выйти» вошедшему.
     renderAuthState();
 
-    // На главной — «Продолжить просмотр», слова прошлой сессии и живой счётчик
-    // учёбы на карточке «Учёба».
+    // На главной — «Продолжить просмотр», план дня и живой счётчик учёбы на
+    // карточке «Учёба». Блок «Слова из последнего просмотра» убран по просьбе.
     renderContinueCard();
-    renderSessionCard();
     renderDailyPlan();
     renderWeekActivity();
     // На iOS beforeinstallprompt не бывает — там строку показывает уже этот

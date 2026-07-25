@@ -145,14 +145,16 @@
 
         <aside class="transcript" id="transcript">
             <div class="transcript__header">
-                <span data-i18n="transcript.title">Субтитры</span>
+                <div class="transcript__header-left">
+                    <span data-i18n="transcript.title">Субтитры</span>
+                    <span class="episode-coverage" id="episode-coverage" hidden></span>
+                </div>
                 <div class="transcript__header-right">
                     <button class="transcript__fix" id="subs-fix" type="button" hidden
                             data-i18n="subs.wrong" data-i18n-title="subs.wrong.title"
                             title="Субтитры не совпадают со звуком? Синхронизировать точно">Не совпадают?</button>
                 </div>
             </div>
-            <div class="episode-coverage" id="episode-coverage" hidden></div>
             <div class="transcript__list" id="transcript-list">
                 <div class="transcript__status" id="subs-status" data-i18n="subs.searching">Ищем японские субтитры…</div>
             </div>

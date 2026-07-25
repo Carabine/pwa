@@ -1,153 +1,28 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<title>Статистика Animei</title>
-<link rel="icon" type="image/svg+xml" href="../favicon.svg">
-<link rel="icon" type="image/png" href="../img/favicon.png">
-<link rel="apple-touch-icon" href="../img/icons/180x180.png">
-<meta name="theme-color" content="#0a0a0f">
-<style>
-    :root {
-        --bg: #0f1115;
-        --card: #1a1d24;
-        --card2: #21252e;
-        --text: #e8eaed;
-        --muted: #9aa0a6;
-        --accent: #7c9cff;
-        --accent2: #3a4668;
-        --border: #2a2e37;
-    }
-    * { box-sizing: border-box; }
-    body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        padding: 24px 16px 48px;
-    }
-    .wrap { max-width: 900px; margin: 0 auto; }
-    h1 { font-size: 22px; margin: 0 0 4px; }
-    .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
-
-    .periods { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-    .periods button {
-        background: var(--card); color: var(--text); border: 1px solid var(--border);
-        padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
-    }
-    .periods button.active { background: var(--accent); border-color: var(--accent); color: #0f1115; font-weight: 600; }
-
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-    .card .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
-    .card .value { font-size: 28px; font-weight: 700; }
-
-    .section-title { font-size: 15px; margin: 0 0 12px; color: var(--text); }
-
-    .chart { display: flex; align-items: flex-end; gap: 3px; height: 180px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; }
-    .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-width: 16px; flex: 1; height: 100%; }
-    .bar { width: 70%; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 2px; transition: height .2s; }
-    .bar.empty { background: var(--accent2); }
-    .bar-date { color: var(--muted); font-size: 9px; margin-top: 6px; white-space: nowrap; transform: rotate(-60deg); transform-origin: center; height: 28px; }
-
-    table { width: 100%; border-collapse: collapse; margin-top: 28px; background: var(--card); border-radius: 12px; overflow: hidden; }
-    th, td { text-align: left; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border); }
-    th { color: var(--muted); font-weight: 500; background: var(--card2); }
-    td.num, th.num { text-align: right; }
-    tr:last-child td { border-bottom: none; }
-
-    .msg { color: var(--muted); padding: 40px 0; text-align: center; }
-
-    .visitor { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
-    .visitor__head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; flex-wrap: wrap; }
-    .visitor__head:hover { background: var(--card2); }
-    .visitor__ip { font-weight: 600; font-size: 14px; font-family: ui-monospace, monospace; }
-    .visitor__meta { color: var(--muted); font-size: 12px; }
-    .visitor__spacer { flex: 1; }
-    .visitor__caret { color: var(--accent); font-size: 12px; white-space: nowrap; }
-    .visitor__caret::after { content: ' ▾'; display: inline-block; transition: transform .15s; }
-    .visitor.open .visitor__caret::after { transform: rotate(180deg); }
-    .visitor__geo { color: var(--muted); font-size: 12px; }
-    .visitor__dev { color: var(--muted); font-size: 11px; font-family: ui-monospace, monospace; }
-    .visitor__body { display: none; padding: 4px 14px 14px; border-top: 1px solid var(--border); }
-    .visitor.open .visitor__body { display: block; }
-
-    /* Сводка «что делал» — вторая строка шапки посетителя, чипы по типам действий */
-    .visitor__digest { width: 100%; font-size: 12px; line-height: 2; }
-    .visitor__digest .dg {
-        background: var(--card2); border: 1px solid var(--border); color: var(--text);
-        padding: 2px 9px; border-radius: 20px; margin-right: 6px; display: inline-block;
-        max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom;
-    }
-    .visitor__digest .dg--idle { color: var(--muted); }
-
-    .tl { list-style: none; margin: 8px 0 0; padding: 0; }
-    .tl li { display: flex; gap: 10px; padding: 5px 0; font-size: 12px; border-bottom: 1px solid var(--border); }
-    .tl li:last-child { border-bottom: none; }
-    .tl__time { color: var(--muted); white-space: nowrap; min-width: 54px; }
-    .tl__act { color: var(--text); word-break: break-word; }
-    .tl__tag { display: inline-block; min-width: 92px; color: var(--accent); }
-    /* Открытия страниц приглушаем — глаз цепляется за реальные действия */
-    .tl li.pg .tl__tag, .tl li.pg .tl__act { color: var(--muted); }
-    .tl__rep { color: var(--accent); white-space: nowrap; }
-
-    /* Сессии посетителя: каждая — отдельный визит с путём (что куда нажимал). */
-    .session { border: 1px solid var(--border); border-radius: 10px; margin: 10px 0; overflow: hidden; }
-    .session__head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 8px 12px; background: var(--card2); font-size: 12px; }
-    .session__n { font-weight: 600; color: var(--text); }
-    .session__dev { font-family: ui-monospace, monospace; color: var(--muted); font-size: 11px; }
-    .session__time { color: var(--muted); }
-    .session__count { color: var(--accent); margin-left: auto; white-space: nowrap; }
-    .session .tl { margin: 0; padding: 4px 12px 8px; }
-    /* Итог сессии одной строкой: что реально сделал за визит */
-    .session__sum { padding: 8px 12px 0; font-size: 12px; color: var(--text); line-height: 1.6; }
-    /* Стрелка-путь: краткий маршрут по страницам вверху сессии */
-    .session__path { padding: 8px 12px 0; font-size: 12px; color: var(--muted); line-height: 1.7; }
-    .session__path b { color: var(--text); font-weight: 500; }
-    .session__path .arr { color: var(--accent2); margin: 0 5px; }
-</style>
-</head>
-<body>
-<div class="wrap">
-    <h1>Статистика Animei</h1>
-    <div class="sub" id="sub">Загрузка…</div>
-
-    <div class="periods">
-        <button data-days="7">7 дней</button>
-        <button data-days="30" class="active">30 дней</button>
-        <button data-days="90">90 дней</button>
-    </div>
-
-    <div class="periods" id="botFilter">
-        <button id="humansBtn" class="active">👤 Только люди</button>
-        <button id="allBtn">🤖 Показать ботов</button>
-    </div>
-
-    <div class="cards" id="cards"></div>
-
-    <h2 class="section-title" style="margin-top:28px">Здоровье сервиса</h2>
-    <div class="sub" id="health-sub"></div>
-    <div class="periods" id="health"></div>
-
-    <h2 class="section-title" style="margin-top:28px">Петля по неделям: смотрел + повторял</h2>
-    <div class="sub">Вошедшие пользователи · неделя с понедельника · «оба» — и смотрел аниме, и завершил повторение</div>
-    <div id="weekly"></div>
-
-    <h2 class="section-title" style="margin-top:28px">Открытия по дням</h2>
-    <div class="chart" id="chart"></div>
-
-    <h2 class="section-title" style="margin-top:28px">Топ страниц</h2>
-    <div id="pages"></div>
-
-    <h2 class="section-title" style="margin-top:28px">Посетители по IP</h2>
-    <div class="sub" id="visitors-sub"></div>
-    <div class="periods" id="countryFilter"></div>
-    <div id="visitors"></div>
-</div>
-
-<script>
+// Виджет статистики — монтируется в контейнер (в админке, без отдельной страницы
+// и без iframe). Вся вёрстка/логика перенесены из бывшей stats.html; DOM-запросы
+// scoped к root (gid/root.querySelectorAll), поэтому id/классы не конфликтуют с
+// хост-страницей. Доступ — по сессии админа (Bearer) или ключу STATS_KEY.
+(function () {
+    var CSS = ".statsview .wrap { max-width: 900px; margin: 0 auto; }\n.statsview h1 { font-size: 22px; margin: 0 0 4px; }\n.statsview .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }\n.statsview .periods { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }\n.statsview .periods button { background: var(--card); color: var(--text); border: 1px solid var(--border);\n        padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; }\n.statsview .periods button.active { background: var(--accent); border-color: var(--accent); color: #0f1115; font-weight: 600; }\n.statsview .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }\n.statsview .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }\n.statsview .card .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }\n.statsview .card .value { font-size: 28px; font-weight: 700; }\n.statsview .section-title { font-size: 15px; margin: 0 0 12px; color: var(--text); }\n.statsview .chart { display: flex; align-items: flex-end; gap: 3px; height: 180px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; }\n.statsview .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; min-width: 16px; flex: 1; height: 100%; }\n.statsview .bar { width: 70%; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 2px; transition: height .2s; }\n.statsview .bar.empty { background: var(--accent2); }\n.statsview .bar-date { color: var(--muted); font-size: 9px; margin-top: 6px; white-space: nowrap; transform: rotate(-60deg); transform-origin: center; height: 28px; }\n.statsview table { width: 100%; border-collapse: collapse; margin-top: 28px; background: var(--card); border-radius: 12px; overflow: hidden; }\n.statsview th, .statsview td { text-align: left; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border); }\n.statsview th { color: var(--muted); font-weight: 500; background: var(--card2); }\n.statsview td.num, .statsview th.num { text-align: right; }\n.statsview tr:last-child td { border-bottom: none; }\n.statsview .msg { color: var(--muted); padding: 40px 0; text-align: center; }\n.statsview .visitor { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }\n.statsview .visitor__head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer; flex-wrap: wrap; }\n.statsview .visitor__head:hover { background: var(--card2); }\n.statsview .visitor__ip { font-weight: 600; font-size: 14px; font-family: ui-monospace, monospace; }\n.statsview .visitor__meta { color: var(--muted); font-size: 12px; }\n.statsview .visitor__spacer { flex: 1; }\n.statsview .visitor__caret { color: var(--accent); font-size: 12px; white-space: nowrap; }\n.statsview .visitor__caret::after { content: ' ▾'; display: inline-block; transition: transform .15s; }\n.statsview .visitor.open .visitor__caret::after { transform: rotate(180deg); }\n.statsview .visitor__geo { color: var(--muted); font-size: 12px; }\n.statsview .visitor__dev { color: var(--muted); font-size: 11px; font-family: ui-monospace, monospace; }\n.statsview .visitor__body { display: none; padding: 4px 14px 14px; border-top: 1px solid var(--border); }\n.statsview .visitor.open .visitor__body { display: block; }\n.statsview /* Сводка «что делал» — вторая строка шапки посетителя, .statsview чипы по типам действий */\n    .visitor__digest { width: 100%; font-size: 12px; line-height: 2; }\n.statsview .visitor__digest .dg { background: var(--card2); border: 1px solid var(--border); color: var(--text);\n        padding: 2px 9px; border-radius: 20px; margin-right: 6px; display: inline-block;\n        max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }\n.statsview .visitor__digest .dg--idle { color: var(--muted); }\n.statsview .tl { list-style: none; margin: 8px 0 0; padding: 0; }\n.statsview .tl li { display: flex; gap: 10px; padding: 5px 0; font-size: 12px; border-bottom: 1px solid var(--border); }\n.statsview .tl li:last-child { border-bottom: none; }\n.statsview .tl__time { color: var(--muted); white-space: nowrap; min-width: 54px; }\n.statsview .tl__act { color: var(--text); word-break: break-word; }\n.statsview .tl__tag { display: inline-block; min-width: 92px; color: var(--accent); }\n.statsview /* Открытия страниц приглушаем — глаз цепляется за реальные действия */\n    .tl li.pg .tl__tag, .statsview .tl li.pg .tl__act { color: var(--muted); }\n.statsview .tl__rep { color: var(--accent); white-space: nowrap; }\n.statsview /* Сессии посетителя: каждая — отдельный визит с путём (что куда нажимал). */\n    .session { border: 1px solid var(--border); border-radius: 10px; margin: 10px 0; overflow: hidden; }\n.statsview .session__head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 8px 12px; background: var(--card2); font-size: 12px; }\n.statsview .session__n { font-weight: 600; color: var(--text); }\n.statsview .session__dev { font-family: ui-monospace, monospace; color: var(--muted); font-size: 11px; }\n.statsview .session__time { color: var(--muted); }\n.statsview .session__count { color: var(--accent); margin-left: auto; white-space: nowrap; }\n.statsview .session .tl { margin: 0; padding: 4px 12px 8px; }\n.statsview /* Итог сессии одной строкой: что реально сделал за визит */\n    .session__sum { padding: 8px 12px 0; font-size: 12px; color: var(--text); line-height: 1.6; }\n.statsview /* Стрелка-путь: краткий маршрут по страницам вверху сессии */\n    .session__path { padding: 8px 12px 0; font-size: 12px; color: var(--muted); line-height: 1.7; }\n.statsview .session__path b { color: var(--text); font-weight: 500; }\n.statsview .session__path .arr { color: var(--accent2); margin: 0 5px; }\n.statsview /* Ворота ключа: инлайн-поле вместо window.prompt (в PWA prompt ненадёжен). */\n    .key-gate { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(10, 12, 16, 0.94); padding: 20px; }\n.statsview .key-gate[hidden] { display: none; }\n.statsview .key-gate__box { width: 100%; max-width: 340px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 12px; }\n.statsview .key-gate__title { font-size: 18px; font-weight: 700; }\n.statsview .key-gate__hint { color: var(--muted); font-size: 13px; margin-top: -8px; }\n.statsview .key-gate__input { width: 100%; padding: 12px 14px; font-size: 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--card2); color: var(--text); }\n.statsview .key-gate__input:focus { outline: none; border-color: var(--accent); }\n.statsview .key-gate__btn { padding: 12px; font-size: 15px; font-weight: 600; border: none; border-radius: 10px; background: var(--accent); color: #0f1115; cursor: pointer; }\n.statsview .key-gate__err { color: #ff7b7b; font-size: 13px; }";
+    var MARKUP = '<div class="wrap">\n    <h1>Статистика Animei</h1>\n    <div class="sub" id="sub">Загрузка…</div>\n\n    <div class="periods">\n        <button data-days="7">7 дней</button>\n        <button data-days="30" class="active">30 дней</button>\n        <button data-days="90">90 дней</button>\n    </div>\n\n    <div class="periods" id="botFilter">\n        <button id="humansBtn" class="active">👤 Только люди</button>\n        <button id="allBtn">🤖 Показать ботов</button>\n    </div>\n\n    <div class="cards" id="cards"></div>\n\n    <h2 class="section-title" style="margin-top:28px">Здоровье сервиса</h2>\n    <div class="sub" id="health-sub"></div>\n    <div class="periods" id="health"></div>\n\n    <h2 class="section-title" style="margin-top:28px">Петля по неделям: смотрел + повторял</h2>\n    <div class="sub">Вошедшие пользователи · неделя с понедельника · «оба» — и смотрел аниме, и завершил повторение</div>\n    <div id="weekly"></div>\n\n    <h2 class="section-title" style="margin-top:28px">Открытия по дням</h2>\n    <div class="chart" id="chart"></div>\n\n    <h2 class="section-title" style="margin-top:28px">Топ страниц</h2>\n    <div id="pages"></div>\n\n    <h2 class="section-title" style="margin-top:28px">Посетители по IP</h2>\n    <div class="sub" id="visitors-sub"></div>\n    <div class="periods" id="countryFilter"></div>\n    <div id="visitors"></div>\n</div>\n\n<div id="keyGate" class="key-gate" hidden>\n    <form class="key-gate__box" id="keyForm">\n        <div class="key-gate__title">🔑 Ключ владельца</div>\n        <div class="key-gate__hint">Введите ключ, чтобы открыть статистику</div>\n        <input id="keyInput" class="key-gate__input" type="text" inputmode="text"\n               autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false"\n               placeholder="ключ">\n        <button type="submit" class="key-gate__btn">Открыть</button>\n        <div class="key-gate__err" id="keyErr" hidden>Неверный ключ — попробуй ещё раз</div>\n    </form>\n</div>';
+    window.StatsView = {
+        mount: function (root) {
+            if (!root || root.__statsMounted) return;
+            root.__statsMounted = true;
+            if (!document.getElementById('statsview-css')) {
+                var st = document.createElement('style');
+                st.id = 'statsview-css'; st.textContent = CSS +
+                    '\n.statsview .session__steps { margin: 0; }' +
+                    '\n.statsview .session__steps > summary { list-style: none; cursor: pointer; padding: 8px 12px; color: var(--muted); font-size: 12px; user-select: none; }' +
+                    '\n.statsview .session__steps > summary::-webkit-details-marker { display: none; }' +
+                    '\n.statsview .session__steps[open] > summary { color: var(--accent); }' +
+                    '\n.statsview .session__steps > summary:hover { color: var(--text); }';
+                document.head.appendChild(st);
+            }
+            root.classList.add('statsview');
+            root.innerHTML = MARKUP;
+            var gid = function (id) { return root.querySelector('#' + id); };
+            (function () {
     // Тот же хост, что и приложение (nginx проксирует /api на бэкенд).
     var apiBase = ['localhost', '127.0.0.1', ''].includes(location.hostname)
         ? 'http://localhost:3005'
@@ -160,24 +35,39 @@
     var statsKey = urlKey || (function () { try { return localStorage.getItem('animei:statsKey') || ''; } catch (e) { return ''; } })();
     function keyQ() { return statsKey ? '&key=' + encodeURIComponent(statsKey) : ''; }
 
-    // Бэкенд ответил 403 — ключа нет или он неверный. Спрашиваем один раз,
-    // сохраняем и перезагружаем; отказ — понятная подсказка вместо пустой страницы.
-    var keyAsked = false;
+    // Владелец мог войти в приложение как админ (admin@animei.space) — тогда ключ
+    // не нужен: шлём Bearer-токен, сервер пускает по сессии админа. Так вкладка
+    // «Статистика» в админке больше не просит ключ.
+    function statsAuth() {
+        try {
+            var t = localStorage.getItem('animei:accessToken');
+            if (t) return { Authorization: 'Bearer ' + t };
+        } catch (e) {}
+        return {};
+    }
+
+    // Бэкенд ответил 403 — нет доступа (ни сессии админа, ни ключа). Показываем
+    // инлайн-поле ключа (window.prompt в PWA ненадёжен). Сама админ-сессия ключа
+    // не требует — сюда попадаем, только если пользователь не админ и без ключа.
+    function showKeyGate(wrong) {
+        var gate = gid('keyGate');
+        var wasHidden = gate.hidden;
+        gate.hidden = false;
+        if (wrong) gid('keyErr').hidden = false;
+        if (wasHidden) { var i = gid('keyInput'); i.value = ''; i.focus(); }
+    }
     function requireKey(r) {
         if (r.status !== 403) return r.json();
-        if (!keyAsked) {
-            keyAsked = true;
-            var k = window.prompt('Статистика закрыта ключом владельца. Введи ключ:');
-            if (k && k.trim()) {
-                try { localStorage.setItem('animei:statsKey', k.trim()); } catch (e) {}
-                location.reload();
-            } else {
-                document.getElementById('sub').textContent =
-                    'Нужен ключ владельца: открой страницу как stats.html?key=<ключ>';
-            }
-        }
+        showKeyGate(!!statsKey);
         throw new Error('403');
     }
+    gid('keyForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var k = gid('keyInput').value.trim();
+        if (!k) return;
+        try { localStorage.setItem('animei:statsKey', k); } catch (e2) {}
+        location.reload();
+    });
 
     var currentDays = 30;
     var showBots = false;   // по умолчанию — только люди; кнопка включает ботов
@@ -191,10 +81,10 @@
     function render(data) {
         var mode = data.withBots ? 'с ботами' : 'только люди';
         var hidden = (!data.withBots && data.botHits) ? ' · скрыто ботов: ' + fmt(data.botHits) : '';
-        document.getElementById('sub').textContent =
+        gid('sub').textContent =
             'За ' + data.days + ' дн. · ' + mode + hidden + ' · обновлено ' + new Date().toLocaleString('ru-RU');
 
-        document.getElementById('cards').innerHTML =
+        gid('cards').innerHTML =
             card('Всего открытий', data.totalHits) +
             card('Уникальных посетителей', data.totalVisitors) +
             card('Сегодня открытий', data.today.hits) +
@@ -202,7 +92,7 @@
 
         // График по дням
         var max = Math.max(1, ...data.perDay.map(function (d) { return d.hits; }));
-        document.getElementById('chart').innerHTML = data.perDay.map(function (d) {
+        gid('chart').innerHTML = data.perDay.map(function (d) {
             var h = Math.round((d.hits / max) * 100);
             var cls = d.hits === 0 ? 'bar empty' : 'bar';
             var label = d.date.slice(5); // ММ-ДД
@@ -213,13 +103,13 @@
 
         // Топ страниц
         if (!data.topPages.length) {
-            document.getElementById('pages').innerHTML = '<div class="msg">Пока нет данных</div>';
+            gid('pages').innerHTML = '<div class="msg">Пока нет данных</div>';
         } else {
             var rows = data.topPages.map(function (p) {
                 return '<tr><td>' + p.page + '</td><td class="num">' + fmt(p.hits) +
                        '</td><td class="num">' + fmt(p.visitors) + '</td></tr>';
             }).join('');
-            document.getElementById('pages').innerHTML =
+            gid('pages').innerHTML =
                 '<table><thead><tr><th>Страница</th><th class="num">Открытия</th><th class="num">Посетители</th></tr></thead><tbody>' +
                 rows + '</tbody></table>';
         }
@@ -370,7 +260,7 @@
 
     // Кнопки-фильтр: «Все» + каждая страна, встретившаяся в списке, с числом IP.
     function renderCountryFilter() {
-        var el = document.getElementById('countryFilter');
+        var el = gid('countryFilter');
         if (!visitorsData || !visitorsData.visitors.length) { el.innerHTML = ''; return; }
 
         var byCode = new Map();
@@ -484,14 +374,20 @@
         var sum = buildDigest(s.events || [], null).join(' · ');
         var sumHtml = sum ? '<div class="session__sum">' + esc(sum) + '</div>' : '';
 
-        var pages = (s.events || [])
-            .filter(function (e) { return e.event === 'page'; })
-            .map(function (e) { return '<b>' + esc(PAGE_LABELS[e.page] || e.page) + '</b>'; });
-        var path = pages.length
-            ? '<div class="session__path">' + pages.join('<span class="arr">→</span>') + '</div>'
+        // Путь по страницам: подряд идущие одинаковые страницы схлопываем, чтобы
+        // маршрут читался (главная → каталог → плеер), а не «главная ×5».
+        var pageSeq = [];
+        (s.events || []).forEach(function (e) {
+            if (e.event !== 'page') return;
+            var lbl = PAGE_LABELS[e.page] || e.page;
+            if (pageSeq[pageSeq.length - 1] !== lbl) pageSeq.push(lbl);
+        });
+        var path = pageSeq.length
+            ? '<div class="session__path">' + pageSeq.map(function (x) { return '<b>' + esc(x) + '</b>'; }).join('<span class="arr">→</span>') + '</div>'
             : '';
 
-        var steps = collapseEvents(s.events || []).map(function (item) {
+        var collapsed = collapseEvents(s.events || []);
+        var steps = collapsed.map(function (item) {
             var verb = EVENT_LABELS[item.event] || item.event;
             var rep = '';
             if (item.n > 1) {
@@ -518,7 +414,10 @@
                 '<span class="session__time">' + range + '</span>' +
                 '<span class="session__count">' + (s.count || 0) + ' шаг.</span>' +
             '</div>' + sumHtml + path +
-            '<ul class="tl">' + steps + '</ul></div>';
+            // Подробную хронологию прячем под спойлер — на виду остаётся итог и путь,
+            // чтобы «что делал» читалось сразу, а не тонуло в стене шагов.
+            (steps ? '<details class="session__steps"><summary>▸ по шагам (' + collapsed.length + ')</summary><ul class="tl">' + steps + '</ul></details>' : '') +
+            '</div>';
     }
 
     // Список посетителей с учётом фильтра по стране.
@@ -530,17 +429,17 @@
             return !countryFilter || countryOf(v.ip).code === countryFilter;
         });
 
-        var subEl = document.getElementById('visitors-sub');
+        var subEl = gid('visitors-sub');
         subEl.textContent = data.count + ' уникальных IP за ' + data.days + ' дн.' +
             (countryFilter ? ' · по фильтру: ' + list.length + '.' : '') +
             ' Клик по строке раскрывает сессии: итог, путь по страницам и действия по порядку.';
 
         if (!list.length) {
-            document.getElementById('visitors').innerHTML = '<div class="msg">Пока нет данных</div>';
+            gid('visitors').innerHTML = '<div class="msg">Пока нет данных</div>';
             return;
         }
 
-        document.getElementById('visitors').innerHTML = list.map(function (v) {
+        gid('visitors').innerHTML = list.map(function (v) {
             var sessions = (v.sessions || []);
             var body = sessions.length
                 ? sessions.map(function (s, si) { return renderSession(s, si); }).join('')
@@ -587,32 +486,32 @@
 
     function load(days) {
         currentDays = days;
-        document.querySelectorAll('.periods button[data-days]').forEach(function (b) {
+        root.querySelectorAll('.periods button[data-days]').forEach(function (b) {
             b.classList.toggle('active', Number(b.dataset.days) === days);
         });
-        document.getElementById('sub').textContent = 'Загрузка…';
+        gid('sub').textContent = 'Загрузка…';
 
         var botsQ = showBots ? '&bots=1' : '';
 
-        fetch(apiBase + '/api/v1/stats/summary?days=' + days + botsQ + keyQ())
+        fetch(apiBase + '/api/v1/stats/summary?days=' + days + botsQ + keyQ(), { headers: statsAuth() })
             .then(requireKey)
             .then(render)
             .catch(function () {
-                document.getElementById('sub').textContent = 'Не удалось загрузить статистику';
+                gid('sub').textContent = 'Не удалось загрузить статистику';
             });
 
-        fetch(apiBase + '/api/v1/stats/visitors?days=' + days + botsQ + keyQ())
+        fetch(apiBase + '/api/v1/stats/visitors?days=' + days + botsQ + keyQ(), { headers: statsAuth() })
             .then(requireKey)
             .then(renderVisitors)
             .catch(function () {
-                document.getElementById('visitors').innerHTML = '<div class="msg">Не удалось загрузить посетителей</div>';
+                gid('visitors').innerHTML = '<div class="msg">Не удалось загрузить посетителей</div>';
             });
     }
 
     // Недельная петля «смотрел + повторял»: главная продуктовая метрика.
     // Абсолютные числа и поимённый список — не проценты (людей пока десятки).
     function renderWeekly(data) {
-        var el = document.getElementById('weekly');
+        var el = gid('weekly');
         if (!data.rows || !data.rows.length) {
             el.innerHTML = '<div class="msg">Пока нет данных</div>';
             return;
@@ -631,11 +530,11 @@
             rows + '</tbody></table>';
     }
 
-    fetch(apiBase + '/api/v1/stats/weekly?weeks=8' + keyQ())
+    fetch(apiBase + '/api/v1/stats/weekly?weeks=8' + keyQ(), { headers: statsAuth() })
         .then(requireKey)
         .then(renderWeekly)
         .catch(function () {
-            document.getElementById('weekly').innerHTML = '<div class="msg">Не удалось загрузить</div>';
+            gid('weekly').innerHTML = '<div class="msg">Не удалось загрузить</div>';
         });
 
     // Здоровье сервиса: сводку пишет cron на VPS (healthcheck.sh) в
@@ -652,31 +551,32 @@
             var bk = (h.backupAgeHours != null && h.backupAgeHours >= 0)
                 ? '💾 бэкап ' + h.backupAgeHours + ' ч назад' : '💾 бэкапа нет';
             chips += '<button style="cursor:default">' + bk + '</button>';
-            document.getElementById('health').innerHTML = chips;
-            document.getElementById('health-sub').textContent =
+            gid('health').innerHTML = chips;
+            gid('health-sub').textContent =
                 'Проверка каждые 15 мин · последняя: ' + new Date(h.at).toLocaleString('ru-RU') +
                 (h.overall === 'ok' ? '' : ' · ЕСТЬ ПРОБЛЕМЫ');
         })
         .catch(function () {
-            document.getElementById('health-sub').textContent = 'Статус недоступен (cron ещё не отработал?)';
+            gid('health-sub').textContent = 'Статус недоступен (cron ещё не отработал?)';
         });
 
     // Период (7/30/90 дней)
-    document.querySelectorAll('.periods button[data-days]').forEach(function (b) {
+    root.querySelectorAll('.periods button[data-days]').forEach(function (b) {
         b.addEventListener('click', function () { load(Number(b.dataset.days)); });
     });
 
     // Фильтр люди / боты
     function setBots(on) {
         showBots = on;
-        document.getElementById('humansBtn').classList.toggle('active', !on);
-        document.getElementById('allBtn').classList.toggle('active', on);
+        gid('humansBtn').classList.toggle('active', !on);
+        gid('allBtn').classList.toggle('active', on);
         load(currentDays);
     }
-    document.getElementById('humansBtn').addEventListener('click', function () { setBots(false); });
-    document.getElementById('allBtn').addEventListener('click', function () { setBots(true); });
+    gid('humansBtn').addEventListener('click', function () { setBots(false); });
+    gid('allBtn').addEventListener('click', function () { setBots(true); });
 
     load(30);
-</script>
-</body>
-</html>
+            })();
+        }
+    };
+})();

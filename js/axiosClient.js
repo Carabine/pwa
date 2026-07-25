@@ -117,6 +117,7 @@ function logout() {
     storageRemove(refreshTokenKey);
     storageRemove(accessTokenKey);
     storageRemove('animei:email');
+    storageRemove('animei:isAdmin'); // чтобы у следующего юзера не мигала ссылка «Админка»
 }
 
 function sleep(ms) {

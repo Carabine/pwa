@@ -743,12 +743,7 @@
 
             els.buttons.innerHTML = '';
             els.buttons.appendChild(makeButton(t('study.showAnswer'), 'show-btn', renderBack));
-
-            // Новая, ещё не тронутая карточка в SRS-режиме: даём отсеять уже
-            // знакомое слово одним тапом, не проходя учебные шаги.
-            if (scheduled && current.isNew && !current.seen) {
-                els.buttons.appendChild(makeButton(t('study.alreadyKnow'), 'know-btn', answerKnown));
-            }
+            // Кнопка «Уже знаю это слово» убрана по просьбе.
         }
 
         function addLine(cls, text) {

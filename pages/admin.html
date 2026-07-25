@@ -87,6 +87,7 @@
     .seed__meta { color: var(--muted); font-size: 11px; font-family: ui-monospace, monospace; }
     .seed__actions { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; margin-top: 4px; }
     .btn {
+        display: inline-block; text-decoration: none;
         background: var(--card2); color: var(--text); border: 1px solid var(--border);
         padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
     }
@@ -99,8 +100,18 @@
     .trims { display: flex; gap: 8px; }
     .trims > div { flex: 1; }
 
-    /* Вкладка статистики */
-    #statsFrame { width: 100%; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); }
+
+    /* Ворота ключа: инлайн-поле вместо window.prompt (в PWA prompt ненадёжен). */
+    .key-gate { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(10, 12, 16, 0.94); padding: 20px; }
+    .key-gate[hidden] { display: none; }
+    .key-gate__box { width: 100%; max-width: 340px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+    .key-gate__title { font-size: 18px; font-weight: 700; }
+    .key-gate__hint { color: var(--muted); font-size: 13px; margin-top: -8px; }
+    /* 16px, чтобы iOS не зумил при фокусе. autocapitalize=off — без заглавной. */
+    .key-gate__input { width: 100%; padding: 12px 14px; font-size: 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--card2); color: var(--text); }
+    .key-gate__input:focus { outline: none; border-color: var(--accent); }
+    .key-gate__btn { padding: 12px; font-size: 15px; font-weight: 600; border: none; border-radius: 10px; background: var(--accent); color: #0f1115; cursor: pointer; }
+    .key-gate__err { color: var(--bad); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -135,7 +146,7 @@
     </div>
 
     <div class="tab" id="tab-stats">
-        <iframe id="statsFrame" src="about:blank" title="Статистика"></iframe>
+        <div id="statsRoot"></div>
     </div>
 
     <div class="tab" id="tab-users">
@@ -143,6 +154,19 @@
     </div>
 </div>
 
+<div id="keyGate" class="key-gate" hidden>
+    <form class="key-gate__box" id="keyForm">
+        <div class="key-gate__title">🔑 Вход в админку</div>
+        <div class="key-gate__hint">Введите ключ владельца</div>
+        <input id="keyInput" class="key-gate__input" type="text" inputmode="text"
+               autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false"
+               placeholder="ключ">
+        <button type="submit" class="key-gate__btn">Войти</button>
+        <div class="key-gate__err" id="keyErr" hidden>Неверный ключ — попробуй ещё раз</div>
+    </form>
+</div>
+
+<script src="../js/stats-view.js"></script>
 <script>
     // Тот же хост, что и приложение (nginx проксирует /api на бэкенд).
     var apiBase = ['localhost', '127.0.0.1', ''].includes(location.hostname)
@@ -156,26 +180,49 @@
     var adminKey = urlKey || (function () { try { return localStorage.getItem('animei:statsKey') || ''; } catch (e) { return ''; } })();
     function keyQ() { return 'key=' + encodeURIComponent(adminKey); }
 
-    var keyAsked = false;
+    // Если владелец вошёл в приложение как админ (admin@animei.space) — админка
+    // пускает по его сессии, ключ не нужен. Шлём Bearer-токен приложения; сервер
+    // принимает либо ключ, либо токен админа из allowlist.
+    function authHeaders(extra) {
+        var h = extra || {};
+        try {
+            var t = localStorage.getItem('animei:accessToken');
+            if (t) h.Authorization = 'Bearer ' + t;
+        } catch (e) {}
+        return h;
+    }
+
+    // Ключ спрашиваем инлайн-полем, а не window.prompt: в установленном PWA
+    // prompt() ненадёжен (местами не показывается вовсе). Поле с
+    // autocapitalize=off не подставляет заглавную, из-за которой ключ «не работал».
+    function showKeyGate(wrong) {
+        var gate = document.getElementById('keyGate');
+        var wasHidden = gate.hidden;
+        gate.hidden = false;
+        if (wrong) document.getElementById('keyErr').hidden = false;
+        if (wasHidden) {
+            var i = document.getElementById('keyInput');
+            i.value = '';
+            i.focus();
+        }
+    }
     function requireKey(r) {
         if (r.status !== 403) return r.json();
-        if (!keyAsked) {
-            keyAsked = true;
-            var k = window.prompt('Админка закрыта ключом владельца. Введи ключ:');
-            if (k && k.trim()) {
-                try { localStorage.setItem('animei:statsKey', k.trim()); } catch (e) {}
-                location.reload();
-            } else {
-                document.getElementById('sub').textContent =
-                    'Нужен ключ владельца: открой страницу как admin.html?key=<ключ>';
-            }
-        }
+        // Был сохранённый ключ, но сервер его отклонил → это неверный ключ.
+        showKeyGate(!!adminKey);
         throw new Error('403');
     }
+    document.getElementById('keyForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var k = document.getElementById('keyInput').value.trim();
+        if (!k) return;
+        try { localStorage.setItem('animei:statsKey', k); } catch (e2) {}
+        location.reload();
+    });
 
     function api(path) {
         var sep = path.includes('?') ? '&' : '?';
-        return fetch(apiBase + '/api/v1/admin' + path + sep + keyQ()).then(requireKey);
+        return fetch(apiBase + '/api/v1/admin' + path + sep + keyQ(), { headers: authHeaders() }).then(requireKey);
     }
 
     function esc(s) {
@@ -203,11 +250,9 @@
         loaded[name] = true;
         if (name === 'seed') loadSeed();
         if (name === 'users') loadUsers();
-        if (name === 'stats') {
-            var f = document.getElementById('statsFrame');
-            f.style.height = Math.max(600, window.innerHeight - 180) + 'px';
-            f.src = 'stats.html'; // ключ у него общий с нами (animei:statsKey)
-        }
+        // Статистика встроена прямо здесь (без отдельной страницы/iframe): виджет
+        // из stats-view.js монтируется в контейнер, использует ту же сессию/ключ.
+        if (name === 'stats' && window.StatsView) StatsView.mount(document.getElementById('statsRoot'));
     }
 
     // ---------- Обзор ----------
@@ -283,7 +328,7 @@
             function (el) { return el.getAttribute('data-kanji'); });
         fetch(apiBase + '/api/v1/admin/seed-order?' + keyQ(), {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ order: order }),
         }).then(requireKey).catch(function () { alert('Порядок не сохранился — проверь ключ/сеть'); });
     }
@@ -363,7 +408,7 @@
             });
             fetch(apiBase + '/api/v1/admin/seed-words/' + w.id + '?' + keyQ(), {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify(body),
             }).then(requireKey).then(function () {
                 var s = el.querySelector('.saved');
@@ -375,7 +420,7 @@
 
         el.querySelector('[data-act="del"]').addEventListener('click', function () {
             if (!confirm('Удалить карточку «' + w.kanji + '» из seed-аккаунта?\nФайл клипа в /storage останется (он общий для стартовой колоды).')) return;
-            fetch(apiBase + '/api/v1/admin/seed-words/' + w.id + '?' + keyQ(), { method: 'DELETE' })
+            fetch(apiBase + '/api/v1/admin/seed-words/' + w.id + '?' + keyQ(), { method: 'DELETE', headers: authHeaders() })
                 .then(requireKey)
                 .then(function () { el.remove(); })
                 .catch(function () { alert('Не удалилось — проверь ключ/сеть'); });

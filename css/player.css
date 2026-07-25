@@ -51,12 +51,20 @@ html, body {
     inset: 0;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted);
-    background: rgba(0, 0, 0, 0.6);
+    text-align: center;
+    padding: 0 28px;
+    color: #e8eaf3;
     font-size: 15px;
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: 0.2px;
+    /* Мягкий градиент вместо плоской заливки — читаемее и аккуратнее. */
+    background: radial-gradient(120% 90% at 50% 45%, rgba(18, 20, 32, 0.72), rgba(6, 7, 12, 0.9));
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
     z-index: 6;
 }
 
@@ -68,6 +76,26 @@ html, body {
     border: 3px solid rgba(255, 255, 255, 0.15);
     border-top-color: var(--pink);
     animation: player-spin 0.9s linear infinite;
+}
+
+/* Ошибка — не «крутится» (это не загрузка): вместо спиннера кружок с «!»,
+   текст ярче с лёгким красным акцентом. Класс is-error ставит player.js. */
+.video-loading.is-error::before {
+    content: '!';
+    width: 46px;
+    height: 46px;
+    border: 2px solid rgba(255, 123, 123, 0.6);
+    border-top-color: rgba(255, 123, 123, 0.6);
+    color: #ff9b9b;
+    font-size: 26px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: none;
+}
+.video-loading.is-error {
+    color: #f2d6d6;
 }
 
 @keyframes player-spin {
@@ -89,7 +117,9 @@ html, body {
     display: none;
     align-items: center;
     justify-content: center;
-    box-shadow: var(--shadow-pink);
+    /* Премиальнее: цветное свечение + тонкий полупрозрачный ореол-кольцо, чтобы
+       кнопка «читалась» на любом кадре и выглядела объёмной. */
+    box-shadow: 0 8px 30px -2px rgba(124, 140, 248, 0.6), 0 0 0 10px rgba(124, 140, 248, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.25);
     z-index: 4;
     transition: transform 0.2s ease, box-shadow 0.25s ease;
 }
@@ -104,7 +134,7 @@ html, body {
 
 .player-ui__bigplay:hover {
     transform: translate(-50%, -50%) scale(1.07);
-    box-shadow: 0 10px 36px -6px rgba(124, 140, 248, 0.7);
+    box-shadow: 0 12px 40px -4px rgba(124, 140, 248, 0.75), 0 0 0 14px rgba(124, 140, 248, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .video-wrap.is-paused .player-ui__bigplay {
@@ -582,12 +612,21 @@ html, body {
 
 /* «Ты знаешь N% слов этой серии» — тихая строка под шапкой списка субтитров.
    Из полоски текущей реплики убрана: там мало места. */
+/* Прогресс знания слов — тихой подписью рядом с заголовком «Субтитры», НЕ
+   отдельной строкой и не броской пилюлей. Полный текст — в title (подсказке). */
+.transcript__header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
 .episode-coverage {
-    padding: 6px 16px;
+    flex: 0 0 auto;
     font-size: 11.5px;
-    font-weight: 400;
+    font-weight: 500;
     color: var(--text-dim);
-    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: default;
 }
 
 .now-cue__jp {
@@ -1955,7 +1994,9 @@ html, body {
     }
 
     .control-group select {
-        padding: 5px 8px;
+        /* Правый отступ ОБЯЗАТЕЛЬНО оставляем под шеврон (28px) — иначе длинное
+           название дорожки залезает под стрелку. Раньше здесь было 8px справа. */
+        padding: 5px 28px 5px 9px;
         font-size: 13px;
         /* Длинное название дорожки (напр. японская озвучка «Тетради смерти»)
            не должно распирать страницу — режем по ширине контейнера. */
@@ -2233,3 +2274,4 @@ html, body {
 .player-layout.theater .cue__jp { font-size: 13px; line-height: 1.4; }
 .player-layout.theater .cue__ru { font-size: 11px; }
 .player-layout.theater .cue__time { font-size: 9.5px; }
+

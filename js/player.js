@@ -121,7 +121,7 @@ if (window.AnimeiSettings) {
 
 async function init() {
     if (!shikimoriId) {
-        videoLoading.textContent = t('player.noTitle');
+        videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.noTitle');
         return;
     }
 
@@ -153,7 +153,7 @@ async function init() {
         });
 
         if (!state.translations.length) {
-            videoLoading.textContent = t('player.noPlayers');
+            videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.noPlayers');
             return;
         }
 
@@ -161,7 +161,7 @@ async function init() {
         await selectTranslation(0);
     } catch (err) {
         console.error(err);
-        videoLoading.textContent = t('player.notFound');
+        videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.notFound');
     }
 }
 
@@ -658,7 +658,7 @@ async function selectEpisode(index) {
 
     if (window.animeiTrack) window.animeiTrack('play', (titleRu || titleRomaji || 'аниме') + ' · эп ' + (ep.number ?? index + 1));
     videoLoading.style.display = 'flex';
-    videoLoading.textContent = t('player.videoLoading');
+    videoLoading.classList.remove('is-error'); videoLoading.textContent = t('player.videoLoading');
 
     // Новая серия: адрес старого видео больше не актуален — обнуляем ЕГО ДО загрузки
     // нового потока. Иначе автосинк, который запускает loadSubtitles ниже, успеет
@@ -688,7 +688,7 @@ async function selectEpisode(index) {
             state.syncPromise = maybeAutoSync();
         } catch (err) {
             console.error(err);
-            videoLoading.textContent = t('player.streamError');
+            videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.streamError');
         }
         return;
     }
@@ -710,7 +710,7 @@ async function selectEpisode(index) {
         state.syncPromise = maybeAutoSync();   // видео готово — пробуем автосинк (ждёт ещё и субтитры)
     } catch (err) {
         console.error(err);
-        videoLoading.textContent = t('player.streamError');
+        videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.streamError');
     }
 }
 
@@ -735,7 +735,7 @@ function attachVideo(hlsUrl) {
         state.hls.on(Hls.Events.ERROR, (_, data) => {
             if (data.fatal) {
                 videoLoading.style.display = 'flex';
-                videoLoading.textContent = t('player.videoError') + data.type;
+                videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.videoError') + data.type;
             }
         });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -745,7 +745,7 @@ function attachVideo(hlsUrl) {
             resumeAfterAttach();
         }, { once: true });
     } else {
-        videoLoading.textContent = t('player.noHls');
+        videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.noHls');
     }
     // Стандартные кнопки браузера не включаем — управление своё (player-ui.js)
 }
@@ -810,7 +810,7 @@ function switchQuality(key) {
     localStorage.setItem('animei:quality', key);
     state.pendingSeek = { time: video.currentTime, playing: !video.paused };
     videoLoading.style.display = 'flex';
-    videoLoading.textContent = t('player.videoLoading');
+    videoLoading.classList.remove('is-error'); videoLoading.textContent = t('player.videoLoading');
     state.currentVideoUrl = apiOrigin() + state.qualities[key];
     attachVideo(state.currentVideoUrl);
     updateQualityUI();
@@ -1525,7 +1525,10 @@ function updateCoverage() {
     let pct = Math.round((100 * known) / bases.size);
     if (pct === 0 && known > 0) pct = '<1';
     else if (pct === 100 && known < bases.size) pct = 99;
-    el.textContent = t('player.coverage')
+    // Компактно: в шапке — короткий значок «📖 N%», полный текст «Ты знаешь N%
+    // слов этой серии (K из N)» — в подсказке (title), чтобы не занимать строку.
+    el.textContent = '📖 ' + pct + '%';
+    el.title = t('player.coverage')
         .replace('{p}', pct)
         .replace('{k}', known)
         .replace('{n}', bases.size);
