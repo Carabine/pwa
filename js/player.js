@@ -143,8 +143,10 @@ async function init() {
             // сабная дорожка (Crunchyroll «Субтитры»), она приоритетнее и идёт по
             // умолчанию — её субтитры совпадают с видео (MegaPlay — другой монтаж,
             // из-за чего сабы «уезжали»).
-            const aMp = a.provider === 'megaplay' ? 1 : 0;
-            const bMp = b.provider === 'megaplay' ? 1 : 0;
+            // AllAnime — тоже ЗАПАСНОЙ оригинал (у него вжат англ. саб): если у
+            // Kodik есть родная JP-дорожка, она приоритетнее и идёт по умолчанию.
+            const aMp = (a.provider === 'megaplay' || a.provider === 'allanime') ? 1 : 0;
+            const bMp = (b.provider === 'megaplay' || b.provider === 'allanime') ? 1 : 0;
             if (aMp !== bMp) return aMp - bMp;
             const aCr = /crunchyroll|субтитр/i.test(a.title) ? 0 : 1;
             const bCr = /crunchyroll|субтитр/i.test(b.title) ? 0 : 1;
@@ -202,8 +204,10 @@ async function selectTranslation(index) {
     translationSelect.value = index;
     state.provider = t.provider || 'kodik';
     if (window.animeiTrack) window.animeiTrack('voiceover', (isJpTrack(t) ? '🇯🇵 ' : '') + (t.title || ''));
-    // Новая дорожка — свои сезоны/серии; сброс запомненного сезона обязателен
-    if (state.provider === 'megaplay') {
+    // Новая дорожка — свои сезоны/серии; сброс запомненного сезона обязателен.
+    // AllAnime, как и MegaPlay, — оригинальная дорожка без Kodik-машинерии серий:
+    // рисуем 1..N по числу серий тайтла.
+    if (state.provider === 'megaplay' || state.provider === 'allanime') {
         await loadMegaplayEpisodes(t, true);
     } else {
         await loadEpisodes({ mediaType: t.mediaType, mediaId: t.mediaId, mediaHash: t.mediaHash }, true);
@@ -671,6 +675,28 @@ async function selectEpisode(index) {
 
     // Сабы под номер серии
     loadSubtitles(ep.number);
+
+    // AllAnime — оригинальная японская дорожка: свой эндпоинт (маппинг shikimori→
+    // showId → wixmp через наш прокси), без выбора качества (мастер-плейлист сам).
+    if (state.provider === 'allanime') {
+        try {
+            const { data: res } = await client.get('catalog/allanime-stream', {
+                params: { shikimoriId, ep: ep.number },
+            });
+            state.qualities = {};
+            state.megaIntro = null;
+            state.pendingSeek = null;
+            state.currentVideoUrl = apiOrigin() + res.data.hls;
+            attachVideo(state.currentVideoUrl);
+            updateQualityUI();
+            state.syncPromise = maybeAutoSync();
+        } catch (err) {
+            console.error(err);
+            videoLoading.classList.add('is-error');
+            videoLoading.textContent = t('player.streamError');
+        }
+        return;
+    }
 
     // MegaPlay — оригинальная японская дорожка: свой эндпоинт, без выбора качества
     // (в мастер-плейлисте свои варианты, hls.js выберет сам).
