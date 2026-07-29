@@ -135,7 +135,13 @@ async function init() {
         // Дорожки с оригинальной японской озвучкой (субтитры) — наверх.
         // Kodik не всегда помечает их type='subtitles' (у «Тетради смерти»
         // японская дорожка так и терялась), поэтому распознаём ещё и по названию.
-        state.translations = [...info.translations].sort((a, b) => {
+        // Оставляем только японскую речь (оригинал + сабовые дорожки Kodik/
+        // AllAnime) — русские дубляжи для изучения языка бесполезны, убираем их
+        // из выбора. Фолбэк: если у тайтла ВООБЩЕ нет японской дорожки, оставляем
+        // что есть, чтобы не оставить пользователя без видео.
+        let tracks = info.translations.filter(isJpTrack);
+        if (!tracks.length) tracks = [...info.translations];
+        state.translations = tracks.sort((a, b) => {
             const aJp = isJpTrack(a), bJp = isJpTrack(b);
             if (aJp !== bJp) return aJp ? -1 : 1;
             // MegaPlay — ЗАПАСНОЙ оригинал: он для тайтлов, где у Kodik нет своей
@@ -193,10 +199,11 @@ function renderTranslations() {
     state.translations.forEach((tr, i) => {
         const opt = document.createElement('option');
         opt.value = i;
-        const label = isJpTrack(tr) ? '🇯🇵 ' + window.t('player.jpAudio') + ' · ' : '🎙 ';
+        // Все дорожки теперь японские (дубляжи отфильтрованы) → флаг 🇯🇵 без
+        // «озвучки»; 🎙 остаётся только для фолбэка (тайтл без японской дорожки).
+        const label = isJpTrack(tr) ? '🇯🇵 ' : '🎙 ';
         // Заголовок оригинальной дорожки (AllAnime/MegaPlay) приходит с бэкенда
-        // по-русски — локализуем через i18n; остальные дорожки — названия фансаб-
-        // студий (не переводим).
+        // по-русски — локализуем через i18n; остальные — названия сабтитр-студий.
         const isOrig = tr.id === 'allanime-sub' || tr.id === 'megaplay-sub' || tr.title === 'Оригинал (яп.)';
         opt.textContent = label + (isOrig ? window.t('player.origJp') : tr.title);
         translationSelect.appendChild(opt);
