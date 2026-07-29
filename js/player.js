@@ -166,7 +166,12 @@ async function init() {
         }
 
         renderTranslations();
-        await selectTranslation(0);
+        // По умолчанию — источник с сабами на языке интерфейса (EN → AllAnime англ.,
+        // иначе → рус. дорожка Kodik). Если такого нет — первый в списке.
+        const wantSub = getLang() === 'en' ? 'en' : 'ru';
+        let pref = state.translations.findIndex((tr) => subBurnLang(tr) === wantSub);
+        if (pref < 0) pref = 0;
+        await selectTranslation(pref);
     } catch (err) {
         console.error(err);
         videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.notFound');
@@ -194,6 +199,16 @@ function trackAudioLang(tr) {
     return subsLang();
 }
 
+// Язык ВЖАТЫХ в видео субтитров источника (метаданных нет — выводим по провайдеру,
+// для наших источников надёжно): AllAnime — английские, сабовые/оригинальные
+// дорожки Kodik — русские. Дубляж (в фолбэке) вжатых сабов не несёт → null.
+function subBurnLang(tr) {
+    if (!tr) return null;
+    if (tr.provider === 'allanime') return 'en';
+    if (isJpTrack(tr)) return 'ru';
+    return null;
+}
+
 function renderTranslations() {
     translationSelect.innerHTML = '';
     state.translations.forEach((tr, i) => {
@@ -205,7 +220,10 @@ function renderTranslations() {
         // Заголовок оригинальной дорожки (AllAnime/MegaPlay) приходит с бэкенда
         // по-русски — локализуем через i18n; остальные — названия сабтитр-студий.
         const isOrig = tr.id === 'allanime-sub' || tr.id === 'megaplay-sub' || tr.title === 'Оригинал (яп.)';
-        opt.textContent = label + (isOrig ? window.t('player.origJp') : tr.title);
+        // Метка языка вжатых субтитров источника (· рус./англ. сабы).
+        const sl = subBurnLang(tr);
+        const subTag = sl ? ' · ' + window.t(sl === 'en' ? 'player.subLangEn' : 'player.subLangRu') : '';
+        opt.textContent = label + (isOrig ? window.t('player.origJp') : tr.title) + subTag;
         translationSelect.appendChild(opt);
     });
 }
