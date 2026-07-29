@@ -3,6 +3,23 @@
 
 const I18N = {
     ru: {
+        'page.catalog': 'Каталог — Animei',
+        'page.beginner': 'Для новичков — Animei',
+        'page.player': 'Плеер — Animei',
+        'watch.prep': 'Подготовка…',
+        'watch.step.download': 'Скачивание видео',
+        'watch.step.audio': 'Извлечение аудио из потока',
+        'watch.step.transcribe': 'Транскрипция (Whisper)',
+        'watch.step.tokenize': 'Токенизация (MeCab)',
+        'watch.step.translate': 'Перевод',
+        'watch.loadingFile': 'Загрузка файла…',
+        'watch.doneSegs': 'Готово — %n сегментов',
+        'watch.errorPrefix': 'Ошибка: ',
+        'watch.back': 'Назад',
+        'player.origJp': 'Оригинал (яп.)',
+        'nav.admin': 'Админка',
+        'decks.untitled': 'Колода',
+        'clip.sec': 'с',
         'session.title': 'Слова из последнего просмотра',
         'session.pick': 'Выбери, что учить сегодня — остальные останутся в «Моих словах»',
         'session.study': 'Учить выбранные',
@@ -371,6 +388,23 @@ const I18N = {
     },
 
     uk: {
+        'page.catalog': 'Каталог — Animei',
+        'page.beginner': 'Для початківців — Animei',
+        'page.player': 'Плеєр — Animei',
+        'watch.prep': 'Підготовка…',
+        'watch.step.download': 'Завантаження відео',
+        'watch.step.audio': 'Вилучення аудіо з потоку',
+        'watch.step.transcribe': 'Транскрипція (Whisper)',
+        'watch.step.tokenize': 'Токенізація (MeCab)',
+        'watch.step.translate': 'Переклад',
+        'watch.loadingFile': 'Завантаження файлу…',
+        'watch.doneSegs': 'Готово — %n сегментів',
+        'watch.errorPrefix': 'Помилка: ',
+        'watch.back': 'Назад',
+        'player.origJp': 'Оригінал (яп.)',
+        'nav.admin': 'Адмінка',
+        'decks.untitled': 'Колода',
+        'clip.sec': 'с',
         'session.title': 'Слова з останнього перегляду',
         'session.pick': 'Вибери, що вчити сьогодні — решта залишиться в «Моїх словах»',
         'session.study': 'Вчити вибрані',
@@ -739,6 +773,23 @@ const I18N = {
     },
 
     en: {
+        'page.catalog': 'Catalog — Animei',
+        'page.beginner': 'For beginners — Animei',
+        'page.player': 'Player — Animei',
+        'watch.prep': 'Preparing…',
+        'watch.step.download': 'Downloading video',
+        'watch.step.audio': 'Extracting audio from stream',
+        'watch.step.transcribe': 'Transcription (Whisper)',
+        'watch.step.tokenize': 'Tokenization (MeCab)',
+        'watch.step.translate': 'Translation',
+        'watch.loadingFile': 'Loading file…',
+        'watch.doneSegs': 'Done — %n segments',
+        'watch.errorPrefix': 'Error: ',
+        'watch.back': 'Back',
+        'player.origJp': 'Original (JP)',
+        'nav.admin': 'Admin',
+        'decks.untitled': 'Deck',
+        'clip.sec': 's',
         'session.title': 'Words from your last session',
         'session.pick': 'Pick what to study today — the rest stay in “My words”',
         'session.study': 'Study selected',
@@ -1166,6 +1217,14 @@ function getLang() {
 
 function t(key) {
     return I18N[getLang()][key] ?? I18N.ru[key] ?? key;
+}
+
+// Название тайтла по локали: для RU — русское (Shikimori.russian), для остальных
+// (uk/en) — ромадзи (Shikimori.name), т.к. украинских/английских названий у нас
+// нет, а ромадзи — международный стандарт (лучше, чем показывать русское).
+function animeTitle(a) {
+    if (!a) return '';
+    return getLang() === 'ru' ? (a.russian || a.name || '') : (a.name || a.russian || '');
 }
 
 // Язык перевода субтитров и фраз следует за языком интерфейса

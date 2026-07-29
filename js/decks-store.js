@@ -32,7 +32,7 @@
             const ids = Array.isArray(d.wordIds) ? d.wordIds.filter(x => typeof x === 'string') : [];
             out.push({
                 id: d.id,
-                name: normalizeName(d.name) || 'Колода',
+                name: normalizeName(d.name) || (typeof t === 'function' ? t('decks.untitled') : 'Deck'),
                 emoji: EMOJIS.includes(d.emoji) ? d.emoji : EMOJIS[0],
                 wordIds: [...new Set(ids)],          // без дублей
                 createdAt: Number(d.createdAt) || Date.now(),
@@ -67,7 +67,7 @@
             const now = Date.now();
             const deck = {
                 id: makeId(),
-                name: normalizeName(name) || 'Колода',
+                name: normalizeName(name) || (typeof t === 'function' ? t('decks.untitled') : 'Deck'),
                 emoji: EMOJIS.includes(emoji) ? emoji : EMOJIS[0],
                 wordIds: [],
                 createdAt: now,

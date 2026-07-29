@@ -140,7 +140,7 @@
         box.className = 'clip-trim';
 
         // Секунды -> «2.5с» (без лишнего .0).
-        const fmt = (n) => (Number.isFinite(n) ? n.toFixed(1).replace(/\.0$/, '') : '—') + 'с';
+        const fmt = (n) => (Number.isFinite(n) ? n.toFixed(1).replace(/\.0$/, '') : '—') + tr('clip.sec');
 
         let startVal = null, endVal = null, lenVal = null;
 
@@ -189,13 +189,13 @@
             const minus = document.createElement('button');
             minus.type = 'button';
             minus.className = 'clip-trim__btn';
-            minus.textContent = '−1с';
+            minus.textContent = '−1' + tr('clip.sec');
             minus.title = tr('clip.earlier.title');
             minus.addEventListener('click', (ev) => { ev.stopPropagation(); onMinus(); });
             const plus = document.createElement('button');
             plus.type = 'button';
             plus.className = 'clip-trim__btn';
-            plus.textContent = '+1с';
+            plus.textContent = '+1' + tr('clip.sec');
             plus.title = tr('clip.later.title');
             plus.addEventListener('click', (ev) => { ev.stopPropagation(); onPlus(); });
             g.append(lbl, val, minus, plus);

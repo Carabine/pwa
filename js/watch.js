@@ -139,7 +139,7 @@ async function transcribe() {
     if (currentVideoUrl) {
       result = await transcribeByUrl(currentVideoUrl);
     } else if (currentVideoFile) {
-      loadingStatus.textContent = "Загрузка файла...";
+      loadingStatus.textContent = window.t("watch.loadingFile");
       result = await transcribeByFile(currentVideoFile);
     } else {
       throw new Error("No video loaded");
@@ -153,7 +153,7 @@ async function transcribe() {
     }
 
     setLoadingProgress(100);
-    loadingStatus.textContent = `Готово — ${segments.length} сегментов`;
+    loadingStatus.textContent = window.t("watch.doneSegs").replace("%n", segments.length);
     loadingSteps.querySelectorAll(".loading-step").forEach(s => {
       s.classList.remove("active");
       s.classList.add("done");
@@ -163,12 +163,12 @@ async function transcribe() {
     liveSubsEl.classList.remove("hidden");
     setTimeout(() => hideLoading(), 800);
   } catch (err) {
-    loadingStatus.textContent = "Ошибка: " + err.message;
+    loadingStatus.textContent = window.t("watch.errorPrefix") + err.message;
     loadingProgressFill.style.background = "#ef4444";
     loadingOverlay.querySelector(".loading-spinner").style.display = "none";
     const retryBtn = document.createElement("button");
     retryBtn.className = "btn btn--ghost loading-retry";
-    retryBtn.textContent = "Назад";
+    retryBtn.textContent = window.t("watch.back");
     retryBtn.addEventListener("click", () => {
       hideLoading();
       watchArea.classList.add("hidden");
@@ -507,7 +507,7 @@ const loadingProgressFill = document.getElementById("loading-progress-fill");
 
 function showLoading(text) {
   loadingOverlay.classList.remove("hidden");
-  loadingStatus.textContent = text || "Подготовка...";
+  loadingStatus.textContent = text || window.t("watch.prep");
   loadingProgressFill.style.width = "0%";
   loadingProgressFill.style.background = "";
   loadingOverlay.querySelector(".loading-spinner").style.display = "";

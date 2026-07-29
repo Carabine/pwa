@@ -194,7 +194,11 @@ function renderTranslations() {
         const opt = document.createElement('option');
         opt.value = i;
         const label = isJpTrack(tr) ? '🇯🇵 ' + window.t('player.jpAudio') + ' · ' : '🎙 ';
-        opt.textContent = label + tr.title;
+        // Заголовок оригинальной дорожки (AllAnime/MegaPlay) приходит с бэкенда
+        // по-русски — локализуем через i18n; остальные дорожки — названия фансаб-
+        // студий (не переводим).
+        const isOrig = tr.id === 'allanime-sub' || tr.id === 'megaplay-sub' || tr.title === 'Оригинал (яп.)';
+        opt.textContent = label + (isOrig ? window.t('player.origJp') : tr.title);
         translationSelect.appendChild(opt);
     });
 }
@@ -392,7 +396,7 @@ function renderSeasons() {
     if (state.franchiseSeasons.length >= 2) {
         state.seasonMode = 'franchise';
         const cur = state.franchiseSeasons.findIndex(s => String(s.shikimoriId) === String(shikimoriId));
-        fillSeasonSelect(state.franchiseSeasons.map(s => s.russian || s.name), cur >= 0 ? cur : undefined);
+        fillSeasonSelect(state.franchiseSeasons.map(s => animeTitle(s)), cur >= 0 ? cur : undefined);
         return;
     }
     if (state.episodeGroups.length >= 2) {
@@ -458,7 +462,7 @@ function navigateToSeason(season) {
     if (!season || String(season.shikimoriId) === String(shikimoriId)) return;
     const params = new URLSearchParams({
         id: season.shikimoriId,
-        title: season.russian || season.name || '',
+        title: animeTitle(season),
         name: season.name || '',
     });
     window.location.href = 'player.html?' + params.toString();

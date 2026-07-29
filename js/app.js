@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.233';
+const APP_VERSION = 'v0.0.234';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -72,7 +72,7 @@ function maybeAddAdminLink() {
             '<svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5l-8-3z"/><path d="m9 12 2 2 4-4"/></svg>');
         const span = document.createElement('span');
         span.className = 'nav-label';
-        span.textContent = 'Админка';
+        span.textContent = (typeof t === 'function' ? t('nav.admin') : 'Admin');
         a.appendChild(span);
         const before = sidebar.querySelector('.sidebar__settings')
             || sidebar.querySelector('.sidebar__site');
@@ -412,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const playerHref = (anime) => {
             const params = new URLSearchParams({
                 id: anime.shikimoriId,
-                title: anime.russian || anime.name,
+                title: animeTitle(anime),
                 name: anime.name,
             });
             return (inPages ? './' : './pages/') + 'player.html?' + params.toString();
@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ? '<img src="' + anime.posterPreview + '" alt="" loading="lazy">'
                         : '<span class="header__search-ac-noimg"></span>') +
                     '<span class="header__search-ac-txt"><span class="header__search-ac-title"></span><span class="header__search-ac-meta"></span></span>';
-                a.querySelector('.header__search-ac-title').textContent = anime.russian || anime.name;
+                a.querySelector('.header__search-ac-title').textContent = animeTitle(anime);
                 a.querySelector('.header__search-ac-meta').textContent = [anime.year, kind].filter(Boolean).join(' · ');
                 // Постер кэшируем для карточки «Продолжить» на главной.
                 a.addEventListener('click', () => {

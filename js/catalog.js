@@ -77,7 +77,7 @@ function buildCard(anime, i) {
 
     if (kind) card.querySelector('.anime-card__kind').textContent = kind;
     card.querySelector('.anime-card__diff').textContent = t('catalog.diff.' + diff);
-    card.querySelector('.anime-card__title').textContent = anime.russian || anime.name;
+    card.querySelector('.anime-card__title').textContent = animeTitle(anime);
     card.querySelector('.anime-card__meta').textContent = [
         anime.year,
         anime.episodes ? tEpisodes(anime.episodes) : null,
@@ -91,7 +91,7 @@ function buildCard(anime, i) {
         } catch { /* localStorage может быть недоступен */ }
         const params = new URLSearchParams({
             id: anime.shikimoriId,
-            title: anime.russian || anime.name,
+            title: animeTitle(anime),
             name: anime.name,
         });
         window.location.href = './player.html?' + params.toString();
@@ -313,7 +313,7 @@ if (picksEl && window.AnimeDifficulty) {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'pick-chip';
-        b.textContent = pick.label;
+        b.textContent = getLang() === 'ru' ? pick.label : (pick.en || pick.q);
         b.addEventListener('click', () => {
             // Пилюля — навигация к конкретному тайтлу: фильтр снимаем, чтобы
             // сезоны/фильмы франшизы не прятались из-за неразмеченных id.
