@@ -1819,6 +1819,10 @@ document.querySelectorAll('#reading-toggle .reading-seg__btn').forEach((btn) => 
     });
 });
 
+// Лейбл кнопки перевода = язык перевода сабов (subsLang следует за интерфейсом):
+// у EN-интерфейса перевод английский, поэтому «EN», а не всегда «RU».
+ruToggle.textContent = ({ ru: 'RU', uk: 'UA', en: 'EN' })[subsLang()] || 'RU';
+
 // Стартовое состояние переключателей из глобальных настроек (перевод, авто-пауза).
 ruToggle.classList.toggle('chip-btn--active', state.showRu);
 transcriptList.classList.toggle('hide-ru', !state.showRu);
