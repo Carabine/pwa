@@ -1449,11 +1449,14 @@
     .app:has(.main.study) .header { padding-top: 7px; padding-bottom: 7px; }
     .main.study { gap: 4px; padding-top: 5px; }
     .main.study .study-stats { display: none; }
-    /* Со спрятанной капсулой шестерёнка настроек опускается на угол карточки —
-       уводим карандаш правки в ЛЕВЫЙ угол, чтобы не наслаивались; прогресс-бар
-       чуть уже, чтобы правый край не уходил под шестерёнку. */
+    /* Со спрятанной капсулой шестерёнка настроек лежала бы на границе карточки —
+       сажаем её ВНУТРЬ карточки, зеркально карандашу правки: карандаш в левом
+       углу, шестерёнка в правом, на одной высоте. Координаты от .main: боковое
+       поле 8 + отступ угла 10 = right 18; верх карточки = padding-top 5 +
+       прогресс 4 + gap 4 = 13, плюс те же 10 внутрь = top 23. */
     .card-edit-btn { right: auto; left: 10px; }
-    .study-progress { max-width: calc(100% - 96px); }
+    .study-settings-btn { top: 23px; right: 18px; }
+    .study-settings-panel { top: 59px; right: 18px; }
     .card-area { padding-top: 8px; padding-bottom: 8px; }
     .back-side { gap: 6px; }
     .card-area:has(.back-side--visible) .front-side {
