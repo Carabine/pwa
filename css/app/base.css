@@ -87,14 +87,17 @@ html, body {
     overflow: hidden;
 }
 
-/* iOS, в т.ч. установленное PWA (standalone): у `%`/`vh`/`svh` высота при запуске
+/* Установленное iOS PWA (standalone): у `%`/`vh`/`svh` высота при запуске
    считается от ПОЛНОГО экрана, низ страницы на пару секунд уходит под системные
    зоны → появляется скролл, пока WebKit не устаканит вьюпорт. -webkit-fill-available
-   даёт реальную доступную высоту сразу. Скоуп — только iOS Safari/standalone
-   (@supports touch-callout), чтобы не трогать десктоп/Android. */
-@supports (-webkit-touch-callout: none) {
-    html, body { height: -webkit-fill-available; }
-    .app { height: -webkit-fill-available; }
+   даёт реальную доступную высоту сразу. Скоуп — ТОЛЬКО standalone: в браузерном
+   Safari это значение не вычитает нижнюю панель — приложение выходило выше
+   видимой зоны и кнопки оценки в карточках уезжали под панель; там работает svh. */
+@media (display-mode: standalone) {
+    @supports (-webkit-touch-callout: none) {
+        html, body { height: -webkit-fill-available; }
+        .app { height: -webkit-fill-available; }
+    }
 }
 
 a {
