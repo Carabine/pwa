@@ -1438,24 +1438,49 @@
     .study-settings-panel { top: 44px; right: 10px; }
 }
 
-/* Маленькие телефоны в ландшафте и старые экраны: ещё чуть уплотняем только
-   второстепенные детали, не скрывая слово, перевод, фразу или элементы оценки. */
-@media (max-width: 480px) and (max-height: 640px) {
-    .card-area { padding-top: 9px; padding-bottom: 9px; }
+/* Невысокий вьюпорт телефона — прежде всего сайт В БРАУЗЕРЕ (адресная строка
+   и панели съедают ~100-160px против установленного PWA), а также просто мелкие
+   экраны. Клип НЕ ужимаем — жертвуем второстепенным: капсула счётчиков прячется
+   (прогресс-бар остаётся), подсказки «через N дн» на кнопках прячутся, шапка,
+   отступы и текст плотнее. Освобождённая высота уходит клипу: его потолок здесь
+   ВЫШЕ базового мобильного (26dvh) — остальной контент гарантированно компактен,
+   и внутренний скролл оборота не возвращается. */
+@media (max-width: 480px) and (max-height: 700px) {
+    .app:has(.main.study) .header { padding-top: 7px; padding-bottom: 7px; }
+    .main.study { gap: 4px; padding-top: 5px; }
+    .main.study .study-stats { display: none; }
+    /* Со спрятанной капсулой шестерёнка настроек опускается на угол карточки —
+       уводим карандаш правки в ЛЕВЫЙ угол, чтобы не наслаивались; прогресс-бар
+       чуть уже, чтобы правый край не уходил под шестерёнку. */
+    .card-edit-btn { right: auto; left: 10px; }
+    .study-progress { max-width: calc(100% - 96px); }
+    .card-area { padding-top: 8px; padding-bottom: 8px; }
     .back-side { gap: 6px; }
     .card-area:has(.back-side--visible) .front-side {
-        padding-bottom: 8px;
-        margin-bottom: 8px;
+        padding-bottom: 6px;
+        margin-bottom: 6px;
     }
-    .card-area:has(.back-side--visible) .word { font-size: 24px; }
-    .meaning { font-size: 18px; }
+    .card-area:has(.back-side--visible) .word { font-size: 22px; }
+    .meaning { font-size: 17px; }
     .sentence {
-        padding-top: 7px;
-        padding-bottom: 7px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        font-size: 14px;
     }
-    .sentence--cells { min-height: 68px; }
-    .sentence__jp--cells-reserve { min-height: 68px; }
-    .translatedSentence { font-size: 12.5px; }
+    .sentence__jp { font-size: 15px; }
+    .sentence--cells { min-height: 56px; }
+    .sentence__jp--cells-reserve { min-height: 56px; }
+    .translatedSentence { font-size: 12px; }
+    .main.study .buttons {
+        min-height: 46px;
+        margin-top: 2px;
+        gap: 8px;
+    }
+    .main.study .show-btn,
+    .main.study .keep-word-btn,
+    .main.study .bury-word-btn { padding: 10px 16px; }
+    .rate__hint { display: none; }
+    .card-area .clip-player video { max-height: clamp(140px, 36dvh, 260px); }
 }
 
 /* Должно идти ПОСЛЕ базового правила .clip-player video: иначе его max-height
