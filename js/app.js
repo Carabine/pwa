@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.240';
+const APP_VERSION = 'v0.0.241';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -152,6 +152,19 @@ if ('serviceWorker' in navigator) {
 let deferredPrompt;
 
 const INSTALL_DISMISS_KEY = 'animei:installDismissed';
+// Скрытие по крестику — НЕ навсегда: раньше писали '1' и плашка пропадала
+// безвозвратно (один случайный тап — и предложения установить больше нет).
+// Теперь запоминаем момент отказа и через INSTALL_DISMISS_DAYS показываем снова.
+const INSTALL_DISMISS_DAYS = 14;
+
+function installDismissedRecently() {
+    const raw = localStorage.getItem(INSTALL_DISMISS_KEY);
+    if (!raw) return false;
+    const ts = parseInt(raw, 10);
+    // Легаси-значение '1' (бессрочное скрытие) не поддерживаем — покажем снова.
+    if (!Number.isFinite(ts) || String(ts) !== raw) return false;
+    return (Date.now() - ts) < INSTALL_DISMISS_DAYS * 864e5;
+}
 
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -191,7 +204,7 @@ function isIOS() {
 function renderInstallHint() {
     const el = document.getElementById('install-hint');
     if (!el || isAppInstalled()) return;
-    if (localStorage.getItem(INSTALL_DISMISS_KEY) === '1') return;
+    if (installDismissedRecently()) return;
 
     const ios = isIOS();
     if (!deferredPrompt && !ios) return; // установка недоступна — молчим
@@ -223,7 +236,7 @@ function renderInstallHint() {
     });
 
     document.getElementById('install-hint-close').addEventListener('click', () => {
-        try { localStorage.setItem(INSTALL_DISMISS_KEY, '1'); } catch { /* недоступен */ }
+        try { localStorage.setItem(INSTALL_DISMISS_KEY, String(Date.now())); } catch { /* недоступен */ }
         el.hidden = true;
         if (window.animeiTrack) window.animeiTrack('install', 'dismiss');
     });

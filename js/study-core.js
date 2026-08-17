@@ -126,10 +126,20 @@
 
         const body = overlay.querySelector('.explain-modal__body');
         const onKey = (e) => { if (e.key === 'Escape') close(); };
-        function close() {
+        // Кнопка «Назад» (в т.ч. системная на Android) должна закрывать разбор, а не
+        // уводить со страницы. Открытие кладёт запись в history, закрытие — снимает.
+        let histOpen = false;
+        function doClose() {
             overlay.hidden = true;
             document.removeEventListener('keydown', onKey);
         }
+        function close() {
+            if (histOpen) history.back();   // popstate ниже спрячет модалку
+            else doClose();
+        }
+        window.addEventListener('popstate', () => {
+            if (histOpen) { histOpen = false; doClose(); }
+        });
         // Клик по затемнённому фону (но не по диалогу) — закрыть.
         overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
         overlay.querySelector('.explain-modal__close').addEventListener('click', close);
@@ -140,6 +150,7 @@
                 overlay.hidden = false;
                 body.scrollTop = 0;
                 document.addEventListener('keydown', onKey);
+                if (!histOpen) { histOpen = true; history.pushState({ animeiExplain: 1 }, ''); }
             },
         };
         return explainModal;

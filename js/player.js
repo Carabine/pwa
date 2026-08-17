@@ -140,7 +140,15 @@ async function init() {
         // из выбора. Фолбэк: если у тайтла ВООБЩЕ нет японской дорожки, оставляем
         // что есть, чтобы не оставить пользователя без видео.
         let tracks = info.translations.filter(isJpTrack);
-        if (!tracks.length) tracks = [...info.translations];
+        // Если единственные «японские» дорожки — ЗАПАСНЫЕ провайдеры (AllAnime/
+        // MegaPlay), которые бывают временно недоступны, оставляем в списке и дубляжи
+        // как аварийный запасной вариант. Иначе при падении оригинала у таких тайтлов
+        // (напр. ДжоДжо 5, Токийский гуль — у Kodik только озвучки) вообще нет
+        // рабочей дорожки и тайтл «не открывается». Оригинал остаётся выбран по
+        // умолчанию (см. сортировку и выбор pref ниже).
+        const onlyFallbackJp = tracks.length
+            && tracks.every((tr) => tr.provider === 'allanime' || tr.provider === 'megaplay');
+        if (!tracks.length || onlyFallbackJp) tracks = [...info.translations];
         state.translations = tracks.sort((a, b) => {
             const aJp = isJpTrack(a), bJp = isJpTrack(b);
             if (aJp !== bJp) return aJp ? -1 : 1;
@@ -1947,6 +1955,31 @@ const popupExplainBtn = document.getElementById('popup-explain-btn');
 // Меняем только текстовую подпись, чтобы иконка ИИ в кнопке не пропадала.
 const popupExplainLabel = popupExplainBtn.querySelector('.btn-label') || popupExplainBtn;
 
+// Кнопка «Назад» (в т.ч. системная на Android/жест) должна закрывать открытую
+// словарную карточку / разбор предложения, а не уводить со страницы просмотра.
+// Открытие карточки кладёт одну запись в history, закрытие — снимает её; системный
+// «назад» ловим через popstate и просто прячем карточку, никуда не переходя.
+let popupHistoryOpen = false;
+function markPopupOpen() {
+    if (popupHistoryOpen) return;
+    popupHistoryOpen = true;
+    history.pushState({ animeiPopup: 1 }, '');
+}
+function closeWordPopup() {
+    if (popup.hidden) return;
+    if (popupHistoryOpen) {
+        history.back();           // снимет нашу запись → popstate спрячет карточку
+    } else {
+        popup.hidden = true;
+    }
+}
+window.addEventListener('popstate', () => {
+    if (popupHistoryOpen) {
+        popupHistoryOpen = false;
+        popup.hidden = true;
+    }
+});
+
 // Узнаём один раз, настроен ли на сервере ИИ; если нет — кнопки разбора не будет
 client.get('explain/status')
     .then(({ data: res }) => {
@@ -1984,6 +2017,7 @@ async function openWordPopup(tok, cue, event) {
     popupExplainLabel.textContent = t('popup.explain');
 
     popup.hidden = false;
+    markPopupOpen();
     positionPopup(event);
 
     try {
@@ -2201,6 +2235,7 @@ async function openSentenceExplain(cue, event) {
     popupExplain.firstChild.textContent = t('popup.explaining');
 
     popup.hidden = false;
+    markPopupOpen();
     positionPopup(event);
     if (window.animeiTrack) window.animeiTrack('explain', 'player_cue');
 
@@ -2246,11 +2281,11 @@ function positionPopup(event) {
     popup.style.top = y + 'px';
 }
 
-document.getElementById('popup-close').addEventListener('click', () => { popup.hidden = true; });
+document.getElementById('popup-close').addEventListener('click', () => { closeWordPopup(); });
 
 document.addEventListener('click', (e) => {
     if (!popup.hidden && !popup.contains(e.target) && !e.target.classList.contains('tok--learnable')) {
-        popup.hidden = true;
+        closeWordPopup();
     }
 });
 
