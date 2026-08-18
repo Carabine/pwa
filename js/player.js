@@ -251,15 +251,39 @@ function pictureSubLang(tr) {
 // вшитыми сабами второй слой поверх был бы кашей. «Оригинал» ничего не
 // накладывает: показываем видео как его отдаёт источник.
 // Недоступные языки в список не попадают — незачем вести пользователя в пустоту.
+// Лучшая дорожка с ВШИТЫМИ русскими субтитрами среди обычных источников.
+// Предпочитаем самую полную по числу серий: у одного тайтла бывает и полный
+// сабовый релиз на 74 серии, и огрызок на 7.
+function bestBurnedRuTrack() {
+    return state.translations
+        .filter((t) => t.provider !== 'kickassanime' && pictureSubLang(t) === 'ru')
+        .sort((a, b) => (b.episodeCount || 0) - (a.episodeCount || 0))[0] || null;
+}
+
 function buildSubOptions() {
     const kaa = state.translations.find((t) => t.provider === 'kickassanime');
     const langs = (kaa && kaa.subLangs) || [];
     const opts = [];
+
+    // Английские — только мягким слоем поверх чистой картинки.
     if (kaa && langs.includes('en')) opts.push({ lang: 'en', track: kaa });
-    if (kaa && langs.includes('ru')) opts.push({ lang: 'ru', track: kaa });
-    // Для «оригинала» чистая картинка приятнее, но сойдёт любая рабочая дорожка.
+
+    // Русские: если у KickAssAnime есть своя дорожка — берём её (чистый кадр +
+    // наш слой). Иначе НЕ теряем русские субтитры: у Kodik они вшиты в видео, и
+    // раньше пользователь смотрел именно их. Первая версия этого селекта
+    // выбрасывала такие дорожки целиком — так пропали русские сабы у «Монстра».
+    if (kaa && langs.includes('ru')) {
+        opts.push({ lang: 'ru', track: kaa });
+    } else {
+        const ru = bestBurnedRuTrack();
+        if (ru) opts.push({ lang: null, track: ru, burned: 'ru' });
+    }
+
+    // «Оригинал» — без наложения. Чистая картинка приятнее, но сойдёт любая.
     const orig = kaa || state.translations[0];
-    if (orig) opts.push({ lang: null, track: orig });
+    if (orig && !opts.some((o) => o.track === orig && !o.lang)) {
+        opts.push({ lang: null, track: orig });
+    }
     return opts;
 }
 
@@ -273,7 +297,12 @@ function renderTranslations() {
         let name;
         if (o.lang === 'en') name = window.t('subs.langEn');
         else if (o.lang === 'ru') name = window.t('subs.langRu');
-        else {
+        else if (o.burned === 'ru') {
+            // Русские субтитры, но вшитые в картинку — не наш слой. Для
+            // пользователя это всё равно «русские», поэтому и называем так,
+            // уточняя, что текст в самом видео.
+            name = window.t('subs.langRuBurned');
+        } else {
             // «Оригинал» = мы ничего не накладываем. Но в самом видео субтитры
             // могут быть ВШИТЫ (AnimeJoy/Sibnet — русские), и тогда обещание
             // «оригинал» вводило бы в заблуждение: текст на экране всё равно
