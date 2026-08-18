@@ -48,6 +48,11 @@
                 <video id="video" playsinline></video>
                 <div class="video-loading" id="video-loading" data-i18n="player.videoLoading">Загружаем видео…</div>
 
+                <!-- Субтитры источника поверх картинки. Показываем только там, где
+                     видео чистое (KickAssAnime): рисуем «как вжатые» — белый текст
+                     с чёрной обводкой по нижнему центру, без плашки. -->
+                <div class="burned-sub" id="burned-sub" aria-hidden="true"></div>
+
                 <!-- Своё управление видео вместо стандартного браузерного -->
                 <div class="player-ui" id="player-ui">
                     <button class="player-ui__bigplay" id="big-play" aria-label="Играть">

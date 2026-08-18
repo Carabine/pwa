@@ -43,6 +43,7 @@ const titleRomaji = params.get('name') || titleRu;
 })();
 
 const video = document.getElementById('video');
+const burnedSub = document.getElementById('burned-sub');
 const videoLoading = document.getElementById('video-loading');
 const translationSelect = document.getElementById('translation-select');
 const episodeSelect = document.getElementById('episode-select');
@@ -63,6 +64,10 @@ const state = {
     franchiseSeasons: [],  // другие тайтлы-сезоны франшизы (каждый сезон — свой тайтл)
     seasonMode: 'single',  // 'franchise' | 'groups' | 'single'
     seasonIndex: 0,
+    burnedCues: [],        // субтитры источника, рисуемые поверх видео как «вжатые»
+    burnedIndex: -1,
+    subOptions: [],        // варианты селекта: { lang: 'en'|'ru'|null, track }
+    subLang: null,         // выбранный язык субтитров; null = «оригинал», без наложения
     provider: 'kodik',     // источник текущей дорожки: 'kodik' | 'megaplay'
     megaMal: null,         // MAL id для MegaPlay-дорожки (оригинальное аудио)
     megaIntro: null,       // { start, end } интро потока MegaPlay — помогает автосинку
@@ -140,16 +145,13 @@ async function init() {
         // из выбора. Фолбэк: если у тайтла ВООБЩЕ нет японской дорожки, оставляем
         // что есть, чтобы не оставить пользователя без видео.
         let tracks = info.translations.filter(isJpTrack);
-        // Если единственные «японские» дорожки — ЗАПАСНЫЕ провайдеры (AllAnime/
-        // MegaPlay), которые бывают временно недоступны, оставляем в списке и дубляжи
-        // как аварийный запасной вариант. Иначе при падении оригинала у таких тайтлов
-        // (напр. ДжоДжо 5, Токийский гуль — у Kodik только озвучки) вообще нет
-        // рабочей дорожки и тайтл «не открывается». Оригинал остаётся выбран по
-        // умолчанию (см. сортировку и выбор pref ниже).
-        const onlyFallbackJp = tracks.length
-            && tracks.every((tr) => tr.provider === 'allanime' || tr.provider === 'megaplay'
-                || tr.provider === 'animejoy' || tr.provider === 'kickassanime');
-        if (!tracks.length || onlyFallbackJp) tracks = [...info.translations];
+        // Раньше дубляжи возвращались в список ещё и тогда, когда японские дорожки
+        // были только от запасных провайдеров: AllAnime и MegaPlay часто отваливались,
+        // и без этого тайтл вообще не открывался. После подключения AnimeJoy + Sibnet
+        // + KickAssAnime такие тайтлы (Гуль, ДжоДжо 5) играют сами, и десяток озвучек
+        // в списке остался просто мусором. Теперь дубляжи показываем ТОЛЬКО когда
+        // японской дорожки нет вовсе — чтобы не оставить пользователя без видео.
+        if (!tracks.length) tracks = [...info.translations];
         state.translations = tracks.sort((a, b) => {
             const aJp = isJpTrack(a), bJp = isJpTrack(b);
             if (aJp !== bJp) return aJp ? -1 : 1;
@@ -182,8 +184,10 @@ async function init() {
         renderTranslations();
         // По умолчанию — источник с сабами на языке интерфейса (EN → AllAnime англ.,
         // иначе → рус. дорожка Kodik). Если такого нет — первый в списке.
+        // По умолчанию — субтитры на языке интерфейса, если они есть у тайтла;
+        // иначе первый доступный вариант (обычно английский, реже «оригинал»).
         const wantSub = getLang() === 'en' ? 'en' : 'ru';
-        let pref = state.translations.findIndex((tr) => subBurnLang(tr) === wantSub);
+        let pref = state.subOptions.findIndex((o) => o.lang === wantSub);
         if (pref < 0) pref = 0;
         await selectTranslation(pref);
     } catch (err) {
@@ -218,15 +222,50 @@ function trackAudioLang(tr) {
 // дорожки Kodik — русские. Дубляж (в фолбэке) вжатых сабов не несёт → null.
 function subBurnLang(tr) {
     if (!tr) return null;
-    // KickAssAnime отдаёт ЧИСТУЮ картинку — вшитых субтитров нет вообще, поэтому
-    // и метки быть не должно (иначе обещаем текст, которого на экране не будет).
-    if (tr.provider === 'kickassanime') return null;
+    // У KickAssAnime картинка чистая, но английские сабы мы накладываем сверху
+    // сами (см. loadBurnedSubs) — на экране пользователь увидит именно их,
+    // поэтому метку ставим по тому, что реально будет видно, а не по тому,
+    // вжат текст в кадр или нарисован слоем.
+    if (tr.provider === 'kickassanime') return 'en';
     if (tr.provider === 'allanime') return 'en';
     if (isJpTrack(tr)) return 'ru';
     return null;
 }
 
+// Селект «Субтитры» — это выбор ЯЗЫКА, а не источника: источник подбираем сами.
+// Английский и русский требуют чистой картинки (KickAssAnime) — на видео с
+// вшитыми сабами второй слой поверх был бы кашей. «Оригинал» ничего не
+// накладывает: показываем видео как его отдаёт источник.
+// Недоступные языки в список не попадают — незачем вести пользователя в пустоту.
+function buildSubOptions() {
+    const kaa = state.translations.find((t) => t.provider === 'kickassanime');
+    const langs = (kaa && kaa.subLangs) || [];
+    const opts = [];
+    if (kaa && langs.includes('en')) opts.push({ lang: 'en', track: kaa });
+    if (kaa && langs.includes('ru')) opts.push({ lang: 'ru', track: kaa });
+    // Для «оригинала» чистая картинка приятнее, но сойдёт любая рабочая дорожка.
+    const orig = kaa || state.translations[0];
+    if (orig) opts.push({ lang: null, track: orig });
+    return opts;
+}
+
 function renderTranslations() {
+    state.subOptions = buildSubOptions();
+    translationSelect.innerHTML = '';
+    state.subOptions.forEach((o, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        const q = o.track.maxHeight ? ' · ' + o.track.maxHeight + 'p' : '';
+        opt.textContent = (o.lang === 'en' ? window.t('subs.langEn')
+            : o.lang === 'ru' ? window.t('subs.langRu')
+                : window.t('subs.langOriginal')) + q;
+        translationSelect.appendChild(opt);
+    });
+}
+
+// Старый рендер по источникам оставлен на случай отката: если у тайтла нет
+// чистого видео вовсе, выбор языков вырождается в единственный «оригинал».
+function renderTranslationsBySource() {
     translationSelect.innerHTML = '';
     state.translations.forEach((tr, i) => {
         const opt = document.createElement('option');
@@ -239,26 +278,28 @@ function renderTranslations() {
         // AnimeJoy — тоже оригинал, но с отдельной подписью: он может стоять в
         // списке рядом с AllAnime, и одинаковый ярлык на двух строках сбивал бы.
         const isDirectOrig = tr.id === 'animejoy-sub';
-        const isClean = tr.id === 'kickassanime-sub';
-        const isOrig = tr.id === 'allanime-sub' || tr.id === 'megaplay-sub' || tr.title === 'Оригинал (яп.)';
+        const isOrig = tr.id === 'kickassanime-sub' || tr.id === 'allanime-sub'
+            || tr.id === 'megaplay-sub' || tr.title === 'Оригинал (яп.)';
         // Метка языка вжатых субтитров источника (· рус./англ. сабы).
         const sl = subBurnLang(tr);
         const subTag = sl ? ' · ' + window.t(sl === 'en' ? 'player.subLangEn' : 'player.subLangRu') : '';
         // Максимальное качество показываем прямо в списке: у KickAssAnime оно
         // гуляет от тайтла к тайтлу, и юзер должен видеть это ДО выбора дорожки.
         const qTag = tr.maxHeight ? ' · ' + tr.maxHeight + 'p' : '';
-        const name = isClean ? window.t('player.origJpClean')
-            : isDirectOrig ? window.t('player.origJpDirect')
-                : isOrig ? window.t('player.origJp')
-                    : tr.title;
+        const name = isDirectOrig ? window.t('player.origJpDirect')
+            : isOrig ? window.t('player.origJp')
+                : tr.title;
         opt.textContent = label + name + subTag + qTag;
         translationSelect.appendChild(opt);
     });
 }
 
 async function selectTranslation(index) {
-    const t = state.translations[index];
-    translationSelect.value = index;
+    const opt = state.subOptions[index] || state.subOptions[0];
+    if (!opt) return;
+    const t = opt.track;
+    state.subLang = opt.lang;
+    translationSelect.value = String(state.subOptions.indexOf(opt));
     state.provider = t.provider || 'kodik';
     if (window.animeiTrack) window.animeiTrack('voiceover', (isJpTrack(t) ? '🇯🇵 ' : '') + (t.title || ''));
     // Новая дорожка — свои сезоны/серии; сброс запомненного сезона обязателен.
@@ -730,6 +771,9 @@ async function selectEpisode(index) {
     // вызов выйдет по guard'у, а синк сделает вызов после setState нового видео.
     state.currentVideoUrl = '';
     state.autoSyncKey = null;
+    // Сабы источника принадлежат конкретной дорожке — при смене серии или
+    // провайдера гасим их, иначе поверх нового видео висел бы старый текст.
+    clearBurnedSubs();
 
     // Сабы под номер серии
     loadSubtitles(ep.number);
@@ -763,7 +807,7 @@ async function selectEpisode(index) {
     if (state.provider === 'kickassanime') {
         try {
             const { data: res } = await client.get('catalog/kickassanime-stream', {
-                params: { shikimoriId, ep: ep.number },
+                params: { shikimoriId, ep: ep.number, sub: state.subLang || 'en' },
             });
             state.qualities = res.data.qualities || {};
             state.megaIntro = null;
@@ -772,6 +816,8 @@ async function selectEpisode(index) {
             state.currentVideoUrl = apiOrigin() + (chosen.url || Object.values(state.qualities)[0]);
             attachVideo(state.currentVideoUrl);
             updateQualityUI();
+            // «Оригинал» — ничего не накладываем, показываем как отдал источник.
+            if (state.subLang) loadBurnedSubs(res.data.subtitle);
             state.syncPromise = maybeAutoSync();
         } catch (err) {
             console.error(err);
@@ -1741,6 +1787,75 @@ function countSeenWords(cue) {
     }, 1500);
 }
 
+// ---------- Субтитры источника поверх видео ----------
+// Нужны там, где картинка чистая (KickAssAnime): у остальных источников сабы
+// вжаты в кадр, и второй слой поверх превратился бы в кашу.
+
+function parseVttCues(text) {
+    const out = [];
+    const ts = (v) => {
+        const m = String(v).trim().match(/(?:(\d+):)?(\d{1,2}):(\d{2})[.,](\d{1,3})/);
+        if (!m) return null;
+        return (Number(m[1] || 0)) * 3600 + Number(m[2]) * 60 + Number(m[3]) + Number(m[4]) / 1000;
+    };
+    const blocks = String(text).split(/\n\s*\n/);
+    for (const raw of blocks) {
+        const lines = raw.split(/\n/).map((l) => l.trim()).filter(Boolean);
+        const tl = lines.find((l) => l.includes('-->'));
+        if (!tl) continue;
+        const parts = tl.split('-->');
+        const start = ts(parts[0]);
+        const end = ts(parts[1]);
+        if (start === null || end === null) continue;
+        // Теги оформления (<i>, <c.name>) и позиционные настройки не рисуем.
+        const body = lines.slice(lines.indexOf(tl) + 1).join('\n').replace(/<[^>]+>/g, '').trim();
+        if (body) out.push({ start, end, text: body });
+    }
+    return out.sort((a, b) => a.start - b.start);
+}
+
+async function loadBurnedSubs(url) {
+    clearBurnedSubs();
+    if (!url) return;
+    try {
+        const r = await fetch(apiOrigin() + url);
+        if (!r.ok) return;
+        state.burnedCues = parseVttCues(await r.text());
+    } catch (err) {
+        console.log('[burned-sub]', err.message);
+    }
+}
+
+function clearBurnedSubs() {
+    state.burnedCues = [];
+    state.burnedIndex = -1;
+    if (burnedSub) {
+        burnedSub.textContent = '';
+        burnedSub.classList.remove('is-on');
+    }
+}
+
+// Отдельный цикл: учебные реплики (state.cues) и сабы источника живут независимо —
+// у них разные тайминги и разные источники, одно не должно гасить другое.
+function syncBurnedSub() {
+    if (!burnedSub || !state.burnedCues.length) return;
+    const t = video.currentTime;
+    let idx = -1;
+    for (let i = 0; i < state.burnedCues.length; i++) {
+        const c = state.burnedCues[i];
+        if (t >= c.start && t <= c.end) { idx = i; break; }
+        if (c.start > t) break;   // список отсортирован — дальше только позже
+    }
+    if (idx === state.burnedIndex) return;
+    state.burnedIndex = idx;
+    if (idx < 0) {
+        burnedSub.classList.remove('is-on');
+        return;
+    }
+    burnedSub.textContent = state.burnedCues[idx].text;
+    burnedSub.classList.add('is-on');
+}
+
 function syncCues() {
     if (!state.cues.length) return;
     const t = video.currentTime;
@@ -1782,9 +1897,9 @@ function syncCues() {
 // до четверти секунды (а с тормозами браузера и больше). Во время воспроизведения
 // сверяемся с currentTime каждый кадр (как в watch.js); timeupdate оставляем для
 // перемотки на паузе. syncCues дешёвый: при том же индексе выходит сразу.
-video.addEventListener('timeupdate', syncCues);
+video.addEventListener('timeupdate', () => { syncCues(); syncBurnedSub(); });
 (function cueSyncLoop() {
-    if (!video.paused && !video.ended) syncCues();
+    if (!video.paused && !video.ended) { syncCues(); syncBurnedSub(); }
     requestAnimationFrame(cueSyncLoop);
 })();
 

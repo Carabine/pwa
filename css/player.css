@@ -2320,3 +2320,70 @@ html, body {
 .player-layout.theater .cue__ru { font-size: 11px; }
 .player-layout.theater .cue__time { font-size: 9.5px; }
 
+
+/* ---------- Субтитры источника поверх видео ---------- */
+/* Рисуем так, чтобы читалось как вжатый в картинку хардсаб: белый текст с
+   чёрной обводкой, по нижнему центру, без плашки и рамки. Обводку делаем
+   тенями в 8 направлений — text-stroke обрезает внутренние контуры и на
+   тонких шрифтах текст «худеет». Размер привязан к ширине плеера, поэтому
+   одинаково смотрится и в окне, и на весь экран. */
+.burned-sub {
+    position: absolute;
+    left: 50%;
+    bottom: 5.5%;
+    transform: translateX(-50%);
+    z-index: 3;
+    max-width: 88%;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    pointer-events: none;      /* клики уходят в видео, а не в текст */
+    user-select: none;
+    white-space: pre-wrap;
+    font-family: var(--sub-font, 'Inter', system-ui, sans-serif);
+    font-weight: 600;
+    font-size: clamp(15px, 3.4cqw, 34px);
+    line-height: 1.28;
+    letter-spacing: 0.01em;
+    color: #fff;
+    text-shadow:
+        -2px -2px 0 #000, 0 -2px 0 #000, 2px -2px 0 #000,
+        -2px  0   0 #000,               2px  0   0 #000,
+        -2px  2px 0 #000, 0  2px 0 #000, 2px  2px 0 #000,
+         0    2px 6px rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+.burned-sub.is-on {
+    opacity: 1;
+}
+
+/* Когда показана панель управления, поднимаем строку над ней — иначе текст
+   ложится прямо на полосу перемотки и кнопки. Двигаем плавно, чтобы это не
+   выглядело как рывок при каждом движении мыши. */
+.burned-sub {
+    transition: opacity 0.12s ease, bottom 0.18s ease;
+}
+
+.video-wrap.show-ui .burned-sub,
+.video-wrap.is-paused .burned-sub {
+    bottom: 15%;
+}
+
+/* Контейнерные единицы (cqw) считаются от ширины плеера, а не окна —
+   иначе в оконном режиме шрифт был бы такой же, как на весь экран. */
+.video-wrap {
+    container-type: inline-size;
+}
+
+/* На весь экран поднимаем чуть выше, чтобы не налезало на панель управления,
+   когда она показана. */
+.video-wrap.is-fs .burned-sub {
+    bottom: 7%;
+}
+
+.video-wrap.is-fs.show-ui .burned-sub,
+.video-wrap.is-fs.is-paused .burned-sub {
+    bottom: 13%;
+}
