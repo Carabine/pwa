@@ -147,7 +147,8 @@ async function init() {
         // рабочей дорожки и тайтл «не открывается». Оригинал остаётся выбран по
         // умолчанию (см. сортировку и выбор pref ниже).
         const onlyFallbackJp = tracks.length
-            && tracks.every((tr) => tr.provider === 'allanime' || tr.provider === 'megaplay' || tr.provider === 'animejoy');
+            && tracks.every((tr) => tr.provider === 'allanime' || tr.provider === 'megaplay'
+                || tr.provider === 'animejoy' || tr.provider === 'kickassanime');
         if (!tracks.length || onlyFallbackJp) tracks = [...info.translations];
         state.translations = tracks.sort((a, b) => {
             const aJp = isJpTrack(a), bJp = isJpTrack(b);
@@ -162,7 +163,8 @@ async function init() {
             // AnimeJoy тоже запасной оригинал: прямой mp4 удобен пайплайну, но у
             // него вжат русский саб, а родная сабная дорожка Kodik точнее совпадает
             // с видео — поэтому Kodik остаётся приоритетнее.
-            const isFallbackOrig = (p) => p === 'megaplay' || p === 'allanime' || p === 'animejoy';
+            const isFallbackOrig = (p) => p === 'megaplay' || p === 'allanime'
+                || p === 'animejoy' || p === 'kickassanime';
             const aMp = isFallbackOrig(a.provider) ? 1 : 0;
             const bMp = isFallbackOrig(b.provider) ? 1 : 0;
             if (aMp !== bMp) return aMp - bMp;
@@ -216,6 +218,9 @@ function trackAudioLang(tr) {
 // дорожки Kodik — русские. Дубляж (в фолбэке) вжатых сабов не несёт → null.
 function subBurnLang(tr) {
     if (!tr) return null;
+    // KickAssAnime отдаёт ЧИСТУЮ картинку — вшитых субтитров нет вообще, поэтому
+    // и метки быть не должно (иначе обещаем текст, которого на экране не будет).
+    if (tr.provider === 'kickassanime') return null;
     if (tr.provider === 'allanime') return 'en';
     if (isJpTrack(tr)) return 'ru';
     return null;
@@ -234,14 +239,19 @@ function renderTranslations() {
         // AnimeJoy — тоже оригинал, но с отдельной подписью: он может стоять в
         // списке рядом с AllAnime, и одинаковый ярлык на двух строках сбивал бы.
         const isDirectOrig = tr.id === 'animejoy-sub';
+        const isClean = tr.id === 'kickassanime-sub';
         const isOrig = tr.id === 'allanime-sub' || tr.id === 'megaplay-sub' || tr.title === 'Оригинал (яп.)';
         // Метка языка вжатых субтитров источника (· рус./англ. сабы).
         const sl = subBurnLang(tr);
         const subTag = sl ? ' · ' + window.t(sl === 'en' ? 'player.subLangEn' : 'player.subLangRu') : '';
-        const name = isDirectOrig ? window.t('player.origJpDirect')
-            : isOrig ? window.t('player.origJp')
-                : tr.title;
-        opt.textContent = label + name + subTag;
+        // Максимальное качество показываем прямо в списке: у KickAssAnime оно
+        // гуляет от тайтла к тайтлу, и юзер должен видеть это ДО выбора дорожки.
+        const qTag = tr.maxHeight ? ' · ' + tr.maxHeight + 'p' : '';
+        const name = isClean ? window.t('player.origJpClean')
+            : isDirectOrig ? window.t('player.origJpDirect')
+                : isOrig ? window.t('player.origJp')
+                    : tr.title;
+        opt.textContent = label + name + subTag + qTag;
         translationSelect.appendChild(opt);
     });
 }
@@ -254,7 +264,8 @@ async function selectTranslation(index) {
     // Новая дорожка — свои сезоны/серии; сброс запомненного сезона обязателен.
     // AllAnime, как и MegaPlay, — оригинальная дорожка без Kodik-машинерии серий:
     // рисуем 1..N по числу серий тайтла.
-    if (state.provider === 'megaplay' || state.provider === 'allanime' || state.provider === 'animejoy') {
+    if (state.provider === 'megaplay' || state.provider === 'allanime'
+        || state.provider === 'animejoy' || state.provider === 'kickassanime') {
         await loadMegaplayEpisodes(t, true);
     } else {
         await loadEpisodes({ mediaType: t.mediaType, mediaId: t.mediaId, mediaHash: t.mediaHash }, true);
@@ -734,6 +745,31 @@ async function selectEpisode(index) {
             state.megaIntro = null;
             state.pendingSeek = null;
             state.currentVideoUrl = apiOrigin() + res.data.hls;
+            attachVideo(state.currentVideoUrl);
+            updateQualityUI();
+            state.syncPromise = maybeAutoSync();
+        } catch (err) {
+            console.error(err);
+            videoLoading.classList.add('is-error');
+            videoLoading.textContent = t('player.streamError');
+        }
+        return;
+    }
+
+    // KickAssAnime — чистое видео без вшитых субтитров, японская дорожка отдельно.
+    // Качество НЕ прячем: отдаём весь список как есть, чтобы в переключателе было
+    // честно видно, что доступно у этого источника (у них бывает и 1080p, и только
+    // 360p — молчаливая подмена выглядела бы как поломка).
+    if (state.provider === 'kickassanime') {
+        try {
+            const { data: res } = await client.get('catalog/kickassanime-stream', {
+                params: { shikimoriId, ep: ep.number },
+            });
+            state.qualities = res.data.qualities || {};
+            state.megaIntro = null;
+            state.pendingSeek = null;
+            const chosen = pickQuality();
+            state.currentVideoUrl = apiOrigin() + (chosen.url || Object.values(state.qualities)[0]);
             attachVideo(state.currentVideoUrl);
             updateQualityUI();
             state.syncPromise = maybeAutoSync();
