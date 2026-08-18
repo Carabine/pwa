@@ -327,9 +327,10 @@ html, body {
 .player-ui__vol.is-open .player-ui__vol-popup {
     position: absolute;
     bottom: calc(100% + 8px);
-    /* Прижат к левому краю группы, а не по центру кнопки: кнопка звука у левого
-       края панели, и центрированный широкий попап уезжал бы за экран. */
-    left: 0;
+    /* Сдвинут влево до кнопки Play (−ширина Play − gap ряда): по центру кнопки
+       звука широкий попап уезжал бы за экран, а от её левого края висел слишком
+       правее. На телефоне кнопки/gap меньше — своя поправка в @media ниже. */
+    left: -42px;
     width: auto;
     overflow: visible;
     opacity: 1;
@@ -2100,6 +2101,11 @@ html, body {
     .player-ui__row {
         gap: 3px;
         margin-top: 4px;
+    }
+
+    /* Кнопки 32px и gap 3px — попап громкости доводим до кнопки Play */
+    .player-ui__vol.is-open .player-ui__vol-popup {
+        left: -35px;
     }
 
     .player-ui__btn {
