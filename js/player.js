@@ -1850,6 +1850,9 @@ function syncBurnedSub() {
     state.burnedIndex = idx;
     if (idx < 0) {
         burnedSub.classList.remove('is-on');
+        // Текст тоже чистим: невидимый остаток мешал отладке и мог мигнуть
+        // при следующем показе до подстановки новой реплики.
+        burnedSub.textContent = '';
         return;
     }
     burnedSub.textContent = state.burnedCues[idx].text;
