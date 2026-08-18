@@ -42,7 +42,12 @@
     // и центр всего кадра казался смещённым вниз.
     const bottomPanel = ui.querySelector('.player-ui__bottom');
     if (bottomPanel) {
-        const syncControlsH = () => wrap.style.setProperty('--controls-h', bottomPanel.offsetHeight + 'px');
+        const syncControlsH = () => {
+            // Считаем только видимую часть панели (без прозрачного паддинга под
+            // градиент сверху) — с полной высотой кнопка задиралась слишком высоко.
+            const pad = parseFloat(getComputedStyle(bottomPanel).paddingTop) || 0;
+            wrap.style.setProperty('--controls-h', (bottomPanel.offsetHeight - pad) + 'px');
+        };
         if (window.ResizeObserver) new ResizeObserver(syncControlsH).observe(bottomPanel);
         else syncControlsH();
     }
