@@ -135,7 +135,10 @@ html, body {
 .player-ui__bigplay {
     position: absolute;
     left: 50%;
-    top: 50%;
+    /* Центр по области НАД нижними контролами, а не по всему кадру: панель
+       видна одновременно с кнопкой (пауза) и «съедает» низ. --controls-h
+       ставит JS по фактической высоте .player-ui__bottom. */
+    top: calc((100% - var(--controls-h, 0px)) / 2);
     transform: translate(-50%, -50%);
     width: 76px;
     height: 76px;

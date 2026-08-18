@@ -37,6 +37,16 @@
     const VOLUME_KEY = 'animei:volume';
     const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5];
 
+    // Большая кнопка Play центрируется по области НАД нижними контролами
+    // (top: calc(...) c --controls-h в css) — панель видна вместе с кнопкой
+    // и центр всего кадра казался смещённым вниз.
+    const bottomPanel = ui.querySelector('.player-ui__bottom');
+    if (bottomPanel) {
+        const syncControlsH = () => wrap.style.setProperty('--controls-h', bottomPanel.offsetHeight + 'px');
+        if (window.ResizeObserver) new ResizeObserver(syncControlsH).observe(bottomPanel);
+        else syncControlsH();
+    }
+
     // ---------- Время ----------
 
     function fmt(sec) {
