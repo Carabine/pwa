@@ -147,7 +147,7 @@ async function init() {
         // рабочей дорожки и тайтл «не открывается». Оригинал остаётся выбран по
         // умолчанию (см. сортировку и выбор pref ниже).
         const onlyFallbackJp = tracks.length
-            && tracks.every((tr) => tr.provider === 'allanime' || tr.provider === 'megaplay');
+            && tracks.every((tr) => tr.provider === 'allanime' || tr.provider === 'megaplay' || tr.provider === 'animejoy');
         if (!tracks.length || onlyFallbackJp) tracks = [...info.translations];
         state.translations = tracks.sort((a, b) => {
             const aJp = isJpTrack(a), bJp = isJpTrack(b);
@@ -159,8 +159,12 @@ async function init() {
             // из-за чего сабы «уезжали»).
             // AllAnime — тоже ЗАПАСНОЙ оригинал (у него вжат англ. саб): если у
             // Kodik есть родная JP-дорожка, она приоритетнее и идёт по умолчанию.
-            const aMp = (a.provider === 'megaplay' || a.provider === 'allanime') ? 1 : 0;
-            const bMp = (b.provider === 'megaplay' || b.provider === 'allanime') ? 1 : 0;
+            // AnimeJoy тоже запасной оригинал: прямой mp4 удобен пайплайну, но у
+            // него вжат русский саб, а родная сабная дорожка Kodik точнее совпадает
+            // с видео — поэтому Kodik остаётся приоритетнее.
+            const isFallbackOrig = (p) => p === 'megaplay' || p === 'allanime' || p === 'animejoy';
+            const aMp = isFallbackOrig(a.provider) ? 1 : 0;
+            const bMp = isFallbackOrig(b.provider) ? 1 : 0;
             if (aMp !== bMp) return aMp - bMp;
             const aCr = /crunchyroll|субтитр/i.test(a.title) ? 0 : 1;
             const bCr = /crunchyroll|субтитр/i.test(b.title) ? 0 : 1;
@@ -227,11 +231,17 @@ function renderTranslations() {
         const label = isJpTrack(tr) ? '🇯🇵 ' : '🎙 ';
         // Заголовок оригинальной дорожки (AllAnime/MegaPlay) приходит с бэкенда
         // по-русски — локализуем через i18n; остальные — названия сабтитр-студий.
+        // AnimeJoy — тоже оригинал, но с отдельной подписью: он может стоять в
+        // списке рядом с AllAnime, и одинаковый ярлык на двух строках сбивал бы.
+        const isDirectOrig = tr.id === 'animejoy-sub';
         const isOrig = tr.id === 'allanime-sub' || tr.id === 'megaplay-sub' || tr.title === 'Оригинал (яп.)';
         // Метка языка вжатых субтитров источника (· рус./англ. сабы).
         const sl = subBurnLang(tr);
         const subTag = sl ? ' · ' + window.t(sl === 'en' ? 'player.subLangEn' : 'player.subLangRu') : '';
-        opt.textContent = label + (isOrig ? window.t('player.origJp') : tr.title) + subTag;
+        const name = isDirectOrig ? window.t('player.origJpDirect')
+            : isOrig ? window.t('player.origJp')
+                : tr.title;
+        opt.textContent = label + name + subTag;
         translationSelect.appendChild(opt);
     });
 }
@@ -244,7 +254,7 @@ async function selectTranslation(index) {
     // Новая дорожка — свои сезоны/серии; сброс запомненного сезона обязателен.
     // AllAnime, как и MegaPlay, — оригинальная дорожка без Kodik-машинерии серий:
     // рисуем 1..N по числу серий тайтла.
-    if (state.provider === 'megaplay' || state.provider === 'allanime') {
+    if (state.provider === 'megaplay' || state.provider === 'allanime' || state.provider === 'animejoy') {
         await loadMegaplayEpisodes(t, true);
     } else {
         await loadEpisodes({ mediaType: t.mediaType, mediaId: t.mediaId, mediaHash: t.mediaHash }, true);
@@ -735,6 +745,29 @@ async function selectEpisode(index) {
         return;
     }
 
+    // AnimeJoy — японская дорожка прямым mp4 (не HLS). Качество выбирает бэкенд
+    // (берёт максимальное из списка PlayerJS), поэтому переключателя качества нет.
+    // intro приходит с готовыми таймингами опенинга — их размечает сам AnimeJoy.
+    if (state.provider === 'animejoy') {
+        try {
+            const { data: res } = await client.get('catalog/animejoy-stream', {
+                params: { shikimoriId, ep: ep.number },
+            });
+            state.qualities = {};
+            state.megaIntro = res.data.intro || null;
+            state.pendingSeek = null;
+            state.currentVideoUrl = apiOrigin() + res.data.video;
+            attachDirectVideo(state.currentVideoUrl);
+            updateQualityUI();
+            state.syncPromise = maybeAutoSync();
+        } catch (err) {
+            console.error(err);
+            videoLoading.classList.add('is-error');
+            videoLoading.textContent = t('player.streamError');
+        }
+        return;
+    }
+
     // MegaPlay — оригинальная японская дорожка: свой эндпоинт, без выбора качества
     // (в мастер-плейлисте свои варианты, hls.js выберет сам).
     if (state.provider === 'megaplay') {
@@ -779,6 +812,27 @@ async function selectEpisode(index) {
 
 function apiOrigin() {
     return client.defaults.baseURL.replace(/\/api\/v1\/?$/, '');
+}
+
+// AnimeJoy отдаёт не плейлист, а готовый mp4 — hls.js тут не нужен и только
+// сломает загрузку. Отдаём файл нативному <video>: Range наш прокси проксирует,
+// так что перемотка работает. Файлы не faststart (moov в хвосте), поэтому до
+// первого кадра браузер делает лишний запрос к концу файла — это нормально.
+function attachDirectVideo(url) {
+    if (state.hls) {
+        state.hls.destroy();
+        state.hls = null;
+    }
+    video.src = url;
+    video.addEventListener('loadedmetadata', () => {
+        videoLoading.style.display = 'none';
+        resumeAfterAttach();
+    }, { once: true });
+    video.addEventListener('error', () => {
+        videoLoading.style.display = 'flex';
+        videoLoading.classList.add('is-error');
+        videoLoading.textContent = t('player.videoError') + (video.error?.code || '');
+    }, { once: true });
 }
 
 function attachVideo(hlsUrl) {
