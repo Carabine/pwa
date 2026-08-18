@@ -44,6 +44,7 @@ const titleRomaji = params.get('name') || titleRu;
 
 const video = document.getElementById('video');
 const burnedSub = document.getElementById('burned-sub');
+const videoWrap = document.getElementById('video-wrap');
 const videoLoading = document.getElementById('video-loading');
 const translationSelect = document.getElementById('translation-select');
 const episodeSelect = document.getElementById('episode-select');
@@ -1821,6 +1822,9 @@ async function loadBurnedSubs(url) {
         const r = await fetch(apiOrigin() + url);
         if (!r.ok) return;
         state.burnedCues = parseVttCues(await r.text());
+        // Реплики есть — помечаем контейнер, чтобы в полноэкранном режиме CSS
+        // спрятал учебный оверлей и в кадре осталась одна строка текста.
+        if (state.burnedCues.length) videoWrap?.classList.add('has-burned-sub');
     } catch (err) {
         console.log('[burned-sub]', err.message);
     }
@@ -1833,6 +1837,9 @@ function clearBurnedSubs() {
         burnedSub.textContent = '';
         burnedSub.classList.remove('is-on');
     }
+    // Флаг на контейнере: по нему CSS убирает учебный оверлей в полноэкранном
+    // режиме, чтобы в кадре не было двух блоков текста друг на друге.
+    videoWrap?.classList.remove('has-burned-sub');
 }
 
 // Отдельный цикл: учебные реплики (state.cues) и сабы источника живут независимо —
