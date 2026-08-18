@@ -2329,15 +2329,19 @@ html, body {
    одинаково смотрится и в окне, и на весь экран. */
 .burned-sub {
     position: absolute;
-    left: 50%;
+    /* Растягиваем от края до края вместо left:50% + translateX(-50%): у
+       абсолютно позиционированного элемента доступная ширина считается от точки
+       left до правого края, то есть при left:50% это ровно ПОЛОВИНА плеера.
+       max-width при этом недостижим, и длинная реплика ломалась на две строки
+       на пустом месте (на телефоне блок выходил 205px при 410px плеера). */
+    left: 2.5%;
+    right: 2.5%;
     bottom: 5.5%;
-    transform: translateX(-50%);
     /* Выше панели управления (z-index 5): её градиент идёт во всю ширину и
        накрывал субтитр, стоило показать контролы — то есть при любом движении
        мыши. Перекрытия кнопок не будет: строка уезжает вверх (см. show-ui ниже),
        а pointer-events: none пропускает клики насквозь. */
     z-index: 6;
-    max-width: 88%;
     margin: 0;
     padding: 0;
     text-align: center;
@@ -2346,7 +2350,7 @@ html, body {
     white-space: pre-wrap;
     font-family: var(--sub-font, 'Inter', system-ui, sans-serif);
     font-weight: 600;
-    font-size: clamp(15px, 3.4cqw, 34px);
+    font-size: clamp(12px, 2cqw, 22px);
     line-height: 1.28;
     letter-spacing: 0.01em;
     color: #fff;
