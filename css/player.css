@@ -2407,3 +2407,211 @@ html, body {
 .video-wrap.is-fs .now-cue {
     display: none;
 }
+
+/* ---------- Колода из серии (js/episode-deck.js) ---------- */
+/* Кнопка в шапке субтитров — как «Не совпадают?», но с акцентом: это основное
+   действие панели, а не служебная починка. */
+.transcript__deck {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 11.5px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.transcript__deck:hover:not(:disabled) {
+    border-color: var(--pink);
+}
+
+.transcript__deck:disabled { opacity: 0.6; }
+
+.edeck-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 400;                 /* поверх театра (200) и его попапов (300) */
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.edeck {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: min(480px, 100%);
+    max-height: min(640px, calc(100dvh - 32px));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.edeck__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.edeck__title {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.edeck__sub {
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.35;
+}
+
+.edeck__close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+}
+
+.edeck__close:hover:not(:disabled) { color: var(--text); }
+
+.edeck__toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12.5px;
+}
+
+.edeck__all {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+/* Строки и «Выбрать все» — это <label>, а глобальный стиль лейблов в плеере
+   капсит текст (SEASON/MODE). Внутри модалки — обычный регистр. */
+.edeck__all,
+.edeck-row {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+}
+
+.edeck__count { color: var(--text-muted); }
+
+.edeck__list {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.edeck-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+}
+
+.edeck-row:hover { background: rgba(255, 255, 255, 0.03); }
+
+.edeck-row input {
+    margin-top: 4px;
+    flex-shrink: 0;
+    accent-color: var(--pink);
+    width: 15px;
+    height: 15px;
+}
+
+.edeck-row__main { min-width: 0; }
+
+.edeck-row__top {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.edeck-row__word {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.edeck-row__read {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.edeck-row__badge {
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 1px 6px;
+    background: rgba(110, 231, 183, 0.14);
+    color: #6ee7b7;
+}
+
+.edeck-row__badge--n4 {
+    background: rgba(147, 197, 253, 0.14);
+    color: #93c5fd;
+}
+
+.edeck-row__freq {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.edeck-row__tr {
+    font-size: 12.5px;
+    line-height: 1.35;
+    margin-top: 1px;
+}
+
+.edeck-row__tr--loading { color: var(--text-muted); }
+
+.edeck-row__sent {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.edeck__foot {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+}
+
+.edeck__create {
+    width: 100%;
+    background: var(--grad);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 11px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.edeck__create:disabled { opacity: 0.6; }
+
+/* Во время сохранения список «замирает» — видно, что идёт работа. */
+.edeck--busy .edeck__list { opacity: 0.55; pointer-events: none; }
