@@ -1,6 +1,6 @@
 // Пути относительные — SW живёт в /app/, поэтому './' указывает на /app/.
 // ВАЖНО: меняй номер версии при каждом деплое — иначе старый кеш не сбросится.
-const CACHE_NAME = 'animei-cache-v0.0.242';
+const CACHE_NAME = 'animei-cache-v0.0.243';
 const urlsToCache = [
     './',
     './index.html',
@@ -62,6 +62,18 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     if (request.method !== 'GET') return;
+
+    // Медиа-потоки (/proxy/…) отдаём мимо воркера. Chrome добавляет Range к
+    // запросам <video> на сетевом уровне, и в обработчике его в request.headers
+    // не видно — пересоздание Request ниже этот Range теряет, сервер отвечает
+    // полными 200, и прямой mp4 не стартует (браузер не может дотянуться до moov
+    // в хвосте у не-faststart файла). Кэшировать поток всё равно незачем, а
+    // cache.put() на 206 просто бросает исключение.
+    const url = new URL(request.url);
+    if (url.pathname.startsWith('/proxy/') || request.destination === 'video'
+        || request.destination === 'audio' || request.headers.has('range')) {
+        return;
+    }
 
     // cache: 'no-cache' — всегда спрашиваем сервер (ревалидация по ETag), а не
     // берём ресурс из HTTP-кеша браузера. Иначе «сеть в первую очередь» по факту
