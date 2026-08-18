@@ -95,6 +95,7 @@ const state = {
     knownWords: new Set(),
     hls: null,
     qualities: {},         // { '720': '/proxy/hls?url=…', '480': …, '360': … } — по одному плейлисту на качество
+    masterUrl: null,       // мастер-манифест со всеми качествами — режим «Авто» (ABR под скорость сети)
     pendingSeek: null,     // { time, playing } — восстановить позицию после смены качества
     resumeTime: null,      // сек — продолжить серию с сохранённой позиции просмотра
     currentVideoUrl: '',   // адрес текущего HLS-потока — уходит в слово, чтобы сервер нарезал клип
@@ -233,6 +234,18 @@ function subBurnLang(tr) {
     return null;
 }
 
+// Что ВШИТО в саму картинку источника — независимо от того, накладываем мы
+// что-то сверху или нет. Нужно для честной подписи варианта «оригинал»:
+// у KickAssAnime кадр чистый, а у AnimeJoy/Sibnet и сабовых дорожек Kodik
+// русский текст вжат в видео и никуда не денется.
+function pictureSubLang(tr) {
+    if (!tr) return null;
+    if (tr.provider === 'kickassanime') return null;   // чистый кадр
+    if (tr.provider === 'animejoy') return 'ru';
+    if (isJpTrack(tr)) return 'ru';
+    return null;
+}
+
 // Селект «Субтитры» — это выбор ЯЗЫКА, а не источника: источник подбираем сами.
 // Английский и русский требуют чистой картинки (KickAssAnime) — на видео с
 // вшитыми сабами второй слой поверх был бы кашей. «Оригинал» ничего не
@@ -257,9 +270,20 @@ function renderTranslations() {
         const opt = document.createElement('option');
         opt.value = i;
         const q = o.track.maxHeight ? ' · ' + o.track.maxHeight + 'p' : '';
-        opt.textContent = (o.lang === 'en' ? window.t('subs.langEn')
-            : o.lang === 'ru' ? window.t('subs.langRu')
-                : window.t('subs.langOriginal')) + q;
+        let name;
+        if (o.lang === 'en') name = window.t('subs.langEn');
+        else if (o.lang === 'ru') name = window.t('subs.langRu');
+        else {
+            // «Оригинал» = мы ничего не накладываем. Но в самом видео субтитры
+            // могут быть ВШИТЫ (AnimeJoy/Sibnet — русские), и тогда обещание
+            // «оригинал» вводило бы в заблуждение: текст на экране всё равно
+            // будет. Пишем как есть.
+            const burned = pictureSubLang(o.track);
+            name = burned === 'ru' ? window.t('subs.originalBurnedRu')
+                : burned === 'en' ? window.t('subs.originalBurnedEn')
+                    : window.t('subs.originalClean');
+        }
+        opt.textContent = name + q;
         translationSelect.appendChild(opt);
     });
 }
@@ -787,6 +811,7 @@ async function selectEpisode(index) {
                 params: { shikimoriId, ep: ep.number },
             });
             state.qualities = {};
+            state.masterUrl = null;
             state.megaIntro = null;
             state.pendingSeek = null;
             state.currentVideoUrl = apiOrigin() + res.data.hls;
@@ -811,6 +836,7 @@ async function selectEpisode(index) {
                 params: { shikimoriId, ep: ep.number, sub: state.subLang || 'en' },
             });
             state.qualities = res.data.qualities || {};
+            state.masterUrl = res.data.auto || null;
             state.megaIntro = null;
             state.pendingSeek = null;
             const chosen = pickQuality();
@@ -837,6 +863,7 @@ async function selectEpisode(index) {
                 params: { shikimoriId, ep: ep.number },
             });
             state.qualities = {};
+            state.masterUrl = null;
             state.megaIntro = res.data.intro || null;
             state.pendingSeek = null;
             state.currentVideoUrl = apiOrigin() + res.data.video;
@@ -859,6 +886,7 @@ async function selectEpisode(index) {
                 params: { mal: state.megaMal, ep: ep.number, type: 'sub' },
             });
             state.qualities = {};
+            state.masterUrl = null;
             state.megaIntro = res.data.intro || null;
             state.pendingSeek = null;
             state.currentVideoUrl = apiOrigin() + res.data.hls;
@@ -878,8 +906,10 @@ async function selectEpisode(index) {
         });
 
         // Kodik отдаёт по ссылке на каждое качество (360/480/720). По умолчанию
-        // берём лучшее или запомненный пользователем выбор; сменить можно кнопкой.
+        // «Авто» (мастер-манифест, hls.js подстраивает уровень под скорость);
+        // запомненный ручной выбор уважаем, сменить можно кнопкой.
         state.qualities = res.data.qualities || {};
+        state.masterUrl = res.data.master || null;
         const chosen = pickQuality();
         const hlsUrl = apiOrigin() + (chosen.url || res.data.hls);
         state.pendingSeek = null;   // новая серия — с начала
@@ -925,18 +955,84 @@ function attachVideo(hlsUrl) {
     }
 
     if (Hls.isSupported()) {
-        state.hls = new Hls({ maxBufferLength: 60 });
-        state.hls.loadSource(hlsUrl);
-        state.hls.attachMedia(video);
-        state.hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        const hls = new Hls({
+            maxBufferLength: 60,
+            // Плохой интернет: стартуем с осторожной оценки скорости (~1.2 Мбит),
+            // чтобы первый сегмент в «Авто» не оказался 720p на еле живой сети —
+            // дальше ABR меряет реальную скорость и поднимает уровень сам.
+            abrEwmaDefaultEstimate: 1200000,
+            // Наш прокси тянет холодные сегменты с CDN источника — первый байт
+            // может прийти сильно позже дефолтных 10с; не считаем это таймаутом.
+            fragLoadPolicy: {
+                default: {
+                    maxTimeToFirstByteMs: 20000,
+                    maxLoadTimeMs: 120000,
+                    timeoutRetry: { maxNumRetry: 4, retryDelayMs: 0, maxRetryDelayMs: 0 },
+                    errorRetry: { maxNumRetry: 6, retryDelayMs: 1000, maxRetryDelayMs: 8000 },
+                },
+            },
+            manifestLoadPolicy: {
+                default: {
+                    maxTimeToFirstByteMs: 20000,
+                    maxLoadTimeMs: 30000,
+                    timeoutRetry: { maxNumRetry: 2, retryDelayMs: 0, maxRetryDelayMs: 0 },
+                    errorRetry: { maxNumRetry: 4, retryDelayMs: 1000, maxRetryDelayMs: 8000 },
+                },
+            },
+            playlistLoadPolicy: {
+                default: {
+                    maxTimeToFirstByteMs: 20000,
+                    maxLoadTimeMs: 30000,
+                    timeoutRetry: { maxNumRetry: 2, retryDelayMs: 0, maxRetryDelayMs: 0 },
+                    errorRetry: { maxNumRetry: 4, retryDelayMs: 1000, maxRetryDelayMs: 8000 },
+                },
+            },
+        });
+        state.hls = hls;
+        hls.loadSource(hlsUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
             videoLoading.style.display = 'none';
             resumeAfterAttach();
         });
-        state.hls.on(Hls.Events.ERROR, (_, data) => {
-            if (data.fatal) {
+        // В «Авто» показываем на кнопке фактический уровень — на слабой сети
+        // видно, что плеер честно опустился на 360p, а не «сломалось».
+        hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
+            if (currentQualityKey() !== 'auto') return;
+            const btn = document.getElementById('ctrl-quality');
+            const h = hls.levels?.[data.level]?.height;
+            if (btn && h) btn.textContent = t('ui.quality.auto') + ' · ' + h + 'p';
+        });
+        // Обрывы сети лечим сами: hls.js после исчерпания ретраев останавливает
+        // загрузку насовсем — перезапускаем её с растущей паузой, а не хороним
+        // просмотр табличкой «ошибка». Ошибки декодера — recoverMediaError().
+        let netRetries = 0;
+        let mediaRetries = 0;
+        hls.on(Hls.Events.FRAG_BUFFERED, () => {
+            netRetries = 0;
+            if (!videoLoading.classList.contains('is-error')) videoLoading.style.display = 'none';
+        });
+        hls.on(Hls.Events.ERROR, (_, data) => {
+            if (!data.fatal) return;
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR && netRetries < 6) {
+                netRetries += 1;
                 videoLoading.style.display = 'flex';
-                videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.videoError') + data.type;
+                videoLoading.classList.remove('is-error');
+                videoLoading.textContent = t('player.reconnecting');
+                const delay = Math.min(1000 * 2 ** (netRetries - 1), 15000);
+                setTimeout(() => {
+                    if (state.hls === hls) hls.startLoad(video.currentTime || -1);
+                }, delay);
+                return;
             }
+            if (data.type === Hls.ErrorTypes.MEDIA_ERROR && mediaRetries < 2) {
+                mediaRetries += 1;
+                if (mediaRetries === 2) hls.swapAudioCodec();
+                hls.recoverMediaError();
+                return;
+            }
+            videoLoading.style.display = 'flex';
+            videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.videoError') + data.type;
         });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = hlsUrl;
@@ -977,15 +1073,24 @@ function qualityKeys() {
     return Object.keys(state.qualities).sort((a, b) => Number(b) - Number(a));
 }
 
+// «Авто» доступно, когда бэкенд дал мастер-манифест и есть из чего выбирать.
+function hasAutoQuality() {
+    return !!state.masterUrl && qualityKeys().length > 1;
+}
+
 function currentQualityKey() {
     const keys = qualityKeys();
     if (!keys.length) return null;
     const pref = localStorage.getItem('animei:quality');
-    return (pref && state.qualities[pref]) ? pref : keys[0];
+    if (pref && state.qualities[pref]) return pref;
+    // Не выбирал / выбрал «Авто» / выбор не существует у этого источника —
+    // авто-качество, а без мастера по-старому лучшее из доступного.
+    return hasAutoQuality() ? 'auto' : keys[0];
 }
 
 function pickQuality() {
     const key = currentQualityKey();
+    if (key === 'auto') return { key, url: state.masterUrl };
     return key ? { key, url: state.qualities[key] } : { key: null, url: '' };
 }
 
@@ -998,20 +1103,22 @@ function updateQualityUI() {
     wrap.style.display = show ? '' : 'none';
     if (!show) return;
     const cur = currentQualityKey();
-    btn.textContent = cur + 'p';
-    btn.classList.toggle('is-custom', cur !== keys[0]);
+    btn.textContent = cur === 'auto' ? t('ui.quality.auto') : cur + 'p';
+    btn.classList.toggle('is-custom', hasAutoQuality() ? cur !== 'auto' : cur !== keys[0]);
 }
 
 // Смена качества на лету: запоминаем позицию/состояние и перегружаем поток
 // с URL нужного качества (у Kodik это отдельный плейлист на каждое качество,
-// поэтому переключаем источник, а не уровень внутри hls.js).
+// поэтому переключаем источник, а не уровень внутри hls.js). 'auto' — мастер-
+// манифест со всеми качествами, уровень дальше выбирает сам hls.js.
 function switchQuality(key) {
-    if (!state.qualities[key]) return;
+    const url = key === 'auto' ? state.masterUrl : state.qualities[key];
+    if (!url) return;
     localStorage.setItem('animei:quality', key);
     state.pendingSeek = { time: video.currentTime, playing: !video.paused };
     videoLoading.style.display = 'flex';
     videoLoading.classList.remove('is-error'); videoLoading.textContent = t('player.videoLoading');
-    state.currentVideoUrl = apiOrigin() + state.qualities[key];
+    state.currentVideoUrl = apiOrigin() + url;
     attachVideo(state.currentVideoUrl);
     updateQualityUI();
 }
@@ -1038,11 +1145,12 @@ function switchQuality(key) {
     function buildMenu() {
         menu.innerHTML = '';
         const cur = currentQualityKey();
-        qualityKeys().forEach((k) => {
+        const keys = hasAutoQuality() ? ['auto', ...qualityKeys()] : qualityKeys();
+        keys.forEach((k) => {
             const opt = document.createElement('button');
             opt.type = 'button';
             opt.className = 'player-ui__quality-opt' + (k === cur ? ' is-active' : '');
-            opt.textContent = k + 'p';
+            opt.textContent = k === 'auto' ? t('ui.quality.auto') : k + 'p';
             opt.addEventListener('click', (e) => {
                 e.stopPropagation();
                 closeMenu();
