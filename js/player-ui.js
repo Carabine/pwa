@@ -79,8 +79,6 @@
 
     playBtn.addEventListener('click', togglePlay);
     bigPlay.addEventListener('click', togglePlay);
-    video.addEventListener('click', togglePlay);
-    video.addEventListener('dblclick', toggleFullscreen);
     video.addEventListener('play', updatePlayState);
     video.addEventListener('pause', updatePlayState);
     video.addEventListener('timeupdate', updateTime);
@@ -122,6 +120,72 @@
         video.currentTime = Math.min(video.duration, Math.max(0, video.currentTime + delta));
         showUi();
     }
+
+    // ---------- Клики и тапы по видео ----------
+    // Одиночный — плей/пауза (с задержкой TAP_WINDOW, чтобы не мигать паузой при
+    // двойном), двойной по левой/правой трети — перемотка ±10 сек, по центру —
+    // полный экран. Серия тапов по тому же краю продолжает мотать без пауз между
+    // «двойными» (как в YouTube), надпись копит сумму. Свой детектор вместо
+    // dblclick — на iOS dblclick по <video> приходит нестабильно.
+
+    const DBLTAP_SEEK = 10; // сек за один двойной тап
+    const TAP_WINDOW = 350; // мс между тапами одной серии
+
+    function makeSeekFlash(side) {
+        const el = document.createElement('div');
+        el.className = 'player-ui__seek-flash player-ui__seek-flash--' + (side < 0 ? 'left' : 'right');
+        wrap.appendChild(el);
+        return el;
+    }
+    const flashLeft = makeSeekFlash(-1);
+    const flashRight = makeSeekFlash(1);
+
+    let tapTime = 0;
+    let tapTimer = null;
+    let streakSide = 0;  // −1/1 — идёт серия перемоток в эту сторону
+    let streakTotal = 0; // сумма секунд за серию (для надписи)
+    let flashTimer = null;
+
+    function flashSeek(side) {
+        streakTotal += DBLTAP_SEEK;
+        seekBy(side * DBLTAP_SEEK);
+        const el = side < 0 ? flashLeft : flashRight;
+        (side < 0 ? flashRight : flashLeft).classList.remove('is-on');
+        el.textContent = (side < 0 ? '−' : '+') + streakTotal + ' сек';
+        el.classList.add('is-on');
+        clearTimeout(flashTimer);
+        flashTimer = setTimeout(() => el.classList.remove('is-on'), 700);
+    }
+
+    function tapSide(e) {
+        const rect = video.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        return x < 1 / 3 ? -1 : x > 2 / 3 ? 1 : 0;
+    }
+
+    video.addEventListener('click', (e) => {
+        const now = performance.now();
+        const side = tapSide(e);
+        const inSeries = now - tapTime < TAP_WINDOW;
+        tapTime = now;
+        if (inSeries) {
+            clearTimeout(tapTimer);
+            tapTimer = null;
+            if (streakSide) {
+                // Серию продолжает только тап по тому же краю, чужой — гасит её
+                if (side === streakSide) flashSeek(side);
+                else { streakSide = 0; streakTotal = 0; }
+                return;
+            }
+            if (side) { streakSide = side; streakTotal = 0; flashSeek(side); }
+            else toggleFullscreen();
+            return;
+        }
+        streakSide = 0;
+        streakTotal = 0;
+        clearTimeout(tapTimer);
+        tapTimer = setTimeout(togglePlay, TAP_WINDOW);
+    });
 
     // ---------- Громкость ----------
     // Без всплывающей панели: ползунок сидит в одном ряду с кнопкой звука и просто

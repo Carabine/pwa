@@ -44,6 +44,34 @@ html, body {
     /* Кадр всегда 16:9 (см. .video-wrap), а само видео вписываем без искажений —
        так размер плеера стандартный независимо от исходного соотношения серии */
     object-fit: contain;
+    /* Двойной тап по видео — перемотка, а не браузерный double-tap zoom */
+    touch-action: manipulation;
+}
+
+/* Индикатор перемотки дабл-тапом: пилюля «±10 сек» у края, куда тапнули */
+.player-ui__seek-flash {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(15, 17, 25, 0.7);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.player-ui__seek-flash--left { left: 10%; }
+.player-ui__seek-flash--right { right: 10%; }
+
+.player-ui__seek-flash.is-on {
+    opacity: 1;
+    transition: none;
 }
 
 .video-loading {
@@ -299,18 +327,26 @@ html, body {
 .player-ui__vol.is-open .player-ui__vol-popup {
     position: absolute;
     bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
+    /* Прижат к левому краю группы, а не по центру кнопки: кнопка звука у левого
+       края панели, и центрированный широкий попап уезжал бы за экран. */
+    left: 0;
     width: auto;
     overflow: visible;
     opacity: 1;
     margin: 0;
-    padding: 9px 12px;
+    padding: 4px 10px;
     background: rgba(15, 17, 25, 0.96);
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     z-index: 6;
+}
+
+/* В попапе ползунок длиннее (пальцем по 78px не попасть) и выше — вся высота
+   строки ловит касание, дорожка/бегунок при этом остаются прежними. */
+.player-ui__vol.is-open .player-ui__vol-popup input[type="range"] {
+    width: 160px;
+    height: 30px;
 }
 
 /* Свой ползунок громкости: дорожка во всю ширину + заливка от 0 до бегунка и сам
