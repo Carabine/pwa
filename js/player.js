@@ -2885,14 +2885,34 @@ setMobileTab('settings'); // по умолчанию — настройки (в�
     const vw = document.querySelector('.video-wrap');
     const layout = document.querySelector('.player-layout');
     if (!layout || !vw || !window.ResizeObserver) return;
-    const ro = new ResizeObserver(() => {
+    let raf = 0;
+    const remeasure = () => {
+        raf = 0;
         // В театре свой грид, --video-w там не используется. Если записать замер
         // театрального кадра, после выхода грид строится от него и видео залипает
         // ужатым (колонка = ширина видео = колонка) до перезагрузки.
         if (layout.classList.contains('theater')) return;
-        layout.style.setProperty('--video-w', Math.round(vw.getBoundingClientRect().width) + 'px');
-    });
+        // Перед замером снимаем прошлое значение: колонка грида и max-width кадра
+        // сами сделаны из --video-w, поэтому замер «с ограничителем» всегда ≤
+        // прошлого — храповик: после уменьшения окна (или ранних reflow при
+        // загрузке) видео не могло вырасти обратно и залипало ужатым.
+        layout.style.removeProperty('--video-w');
+        // Пол в 320px: в очень низком окне кадр схлопывается и без пола замер
+        // ужимал бы до этой же ширины настройки/подсказки под видео (max-width).
+        const w = Math.max(320, Math.round(vw.getBoundingClientRect().width));
+        layout.style.setProperty('--video-w', w + 'px');
+    };
+    // Через rAF: и чтобы не ловить «ResizeObserver loop» от синхронной правки
+    // стилей в колбэке, и как дедуп двух наблюдателей.
+    const schedule = () => { if (!raf) raf = requestAnimationFrame(remeasure); };
+    const ro = new ResizeObserver(schedule);
     ro.observe(vw);
+    // Смотрим и за раскладкой: когда окно растёт, зажатый старым --video-w кадр
+    // сам не меняется — без этого перезамер не случился бы вовсе.
+    ro.observe(layout);
+    // Поздние шрифты меняют высоту блоков под видео — перемеряем, не дожидаясь
+    // случайного resize (в Firefox стартовый замер до шрифтов заметно уже).
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
 })();
 
 applyReadingPref();
