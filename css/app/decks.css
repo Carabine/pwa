@@ -37,12 +37,17 @@
 .deck-chips__scroll {
     display: flex;
     gap: 8px;
-    flex: 1 1 auto;
+    /* Ужимается до содержимого: пока колод мало, «＋» стоит сразу за чипами,
+       а не одиноко у правого края экрана. При переполнении — скролл. */
+    flex: 0 1 auto;
     min-width: 0;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
-    /* Лёгкое затухание у правого края — намёк, что ряд листается. */
+}
+/* Лёгкое затухание у правого края — намёк, что ряд листается. Класс вешает
+   decks-ui.js только когда чипы реально не влезли (иначе гасли бы и без скролла). */
+.deck-chips__scroll.is-scrollable {
     -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
     mask-image: linear-gradient(to right, #000 88%, transparent 100%);
 }

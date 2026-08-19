@@ -99,6 +99,11 @@
             add.addEventListener('click', () => this._openEditor({ mode: 'create' }));
             box.appendChild(add);
             box.hidden = false;
+
+            // Затухание правого края — только когда чипы реально скроллятся.
+            requestAnimationFrame(() => {
+                scroll.classList.toggle('is-scrollable', scroll.scrollWidth > scroll.clientWidth + 1);
+            });
         },
 
         _setActive(id) {

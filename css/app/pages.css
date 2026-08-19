@@ -118,6 +118,9 @@
     align-items: center;
     flex: 1;
     min-width: 220px;
+    /* Глобальный label даёт margin-bottom: 4px — здесь он ронял выравнивание
+       тулбара (поле поиска вставало на 2px выше соседей). */
+    margin-bottom: 0;
 }
 
 .words-filter svg {
@@ -130,17 +133,26 @@
 .words-filter input {
     padding-left: 40px;
     border-radius: 999px;
+    height: 42px;
 }
 
-/* Компактные инструменты справа от поиска: сортировка, вид, выбор, меню «⋯». */
+/* Компактные инструменты справа от поиска: сортировка, вид, выбор, меню «⋯».
+   Высота у всех одна (42px, как у поля поиска) — иначе ряд «пляшет». */
 .words-toolbar__controls {
     position: relative;
     display: flex;
     gap: 8px;
-    align-items: stretch;
+    align-items: center;
+}
+
+.words-toolbar__controls .btn {
+    height: 42px;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 .words-sort {
+    height: 42px;
     padding: 0 12px;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -267,9 +279,13 @@
 }
 .word-row:hover { border-color: var(--primary); }
 
+/* Фиксированная колонка под слово+чтение: переводы выстраиваются в ровный
+   столбец, а длинный перевод не выдавливает японский текст (раньше кандзи
+   обрезался посередине глифа). Длинное слово усекается многоточием. */
 .word-row__jp {
-    flex: 0 1 auto;
+    flex: 0 0 230px;
     min-width: 0;
+    overflow: hidden;
     display: flex;
     align-items: baseline;
     gap: 8px;
@@ -281,12 +297,14 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 11em;
 }
 .word-row__kana {
+    flex: 0 1 auto;
     font-size: 12.5px;
     color: var(--text-muted);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .word-row__tr {
     flex: 1 1 auto;
@@ -304,6 +322,8 @@
     gap: 4px;
     font-size: 13px;
 }
+/* Нет ни клипа, ни колод — пустой блок не должен добавлять лишние отступы. */
+.word-row__badges:empty { display: none; }
 .word-row__more,
 .word-row__x {
     flex: 0 0 auto;
@@ -770,16 +790,17 @@
     .words-sort {
         flex: 1 1 auto;
         min-width: 0;
-        padding: 10px 12px;
     }
-    #select-btn { padding: 10px 12px; }
+    #select-btn { padding: 0 12px; }
 
     /* Строки списка: слово+чтение и значки в первой строке, перевод — во второй. */
     .word-row {
         flex-wrap: wrap;
         row-gap: 2px;
     }
-    .word-row__jp { order: 1; flex: 1 1 auto; }
+    /* basis 0 — длинное слово ужимается (ellipsis), а не выталкивает ⋯/× на
+       отдельную строку. */
+    .word-row__jp { order: 1; flex: 1 1 0; }
     .word-row__badges { order: 2; }
     .word-row__more { order: 3; }
     .word-row__x { order: 4; }
