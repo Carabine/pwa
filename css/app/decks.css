@@ -80,6 +80,14 @@
 }
 .deck-chip--add { color: var(--text-muted); border-style: dashed; }
 .deck-chip__emoji { font-size: 14px; }
+/* Длинное имя колоды усекается многоточием, а не вылезает из чипа. */
+.deck-chip__name {
+    min-width: 0;
+    flex: 0 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 .deck-chip__count {
     font-size: 11px;
     padding: 1px 6px;
@@ -99,12 +107,14 @@
 .deck-study__go { flex: 1 1 auto; }
 .deck-study__more { flex: 0 0 auto; width: 46px; padding: 0; font-size: 18px; line-height: 1; }
 
-/* Мини-чипы колод на карточке словаря (какие колоды содержат слово). */
+/* Мини-чипы колод на карточке словаря (какие колоды содержат слово).
+   margin-top: auto прижимает их к низу — карточки в сетке ровные. */
 .word-card__decks {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-top: 8px;
+    margin-top: auto;
+    padding-top: 10px;
 }
 .word-deck-chip {
     display: inline-flex;
@@ -123,16 +133,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 120px;
-}
-
-/* Небольшая нейтральная кнопка «в колоды» рядом с «Изменить» — не тянется. */
-.word-card__actions .word-card__decks-btn {
-    flex: 0 0 auto;
-    width: 42px;
-    min-width: 42px;
-    padding: 0;
-    font-size: 18px;
-    line-height: 1;
 }
 
 /* ---- Общий оверлей для bottom sheet и редактора ---- */

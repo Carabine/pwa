@@ -91,7 +91,8 @@
             for (const d of decks) {
                 const active = d.id === this._activeId;
                 const chip = h('button', 'deck-chip' + (active ? ' deck-chip--active' : ''),
-                    `<span class="deck-chip__emoji">${d.emoji}</span>${esc(d.name)}` +
+                    `<span class="deck-chip__emoji">${d.emoji}</span>` +
+                    `<span class="deck-chip__name">${esc(d.name)}</span>` +
                     `<span class="deck-chip__count">${d.wordIds.length}</span>`);
                 chip.addEventListener('click', () => this._setActive(active ? null : d.id));
                 scroll.appendChild(chip);
@@ -103,7 +104,8 @@
             if (loose > 0) {
                 const noneActive = this._activeId === '__none__';
                 const none = h('button', 'deck-chip' + (noneActive ? ' deck-chip--active' : ''),
-                    esc(t('decks.noDeck')) + `<span class="deck-chip__count">${loose}</span>`);
+                    `<span class="deck-chip__name">${esc(t('decks.noDeck'))}</span>` +
+                    `<span class="deck-chip__count">${loose}</span>`);
                 none.addEventListener('click', () => this._setActive(noneActive ? null : '__none__'));
                 scroll.appendChild(none);
             } else if (this._activeId === '__none__') {
@@ -163,29 +165,22 @@
             if (show) el.textContent = t('decks.hint');
         },
 
-        // ---- Украшаем карточку словаря ----------------------------------------
+        // ---- Украшаем карточку словаря: мини-чипы колод внизу карточки.
+        // Кнопки здесь больше нет — действия живут в меню «⋯» самой карточки.
         decorateCard(wordEl, word) {
             if (!window.Decks) return;
             const card = wordEl.querySelector('.word-card');
-            const actions = card && card.querySelector('.word-card__actions');
-            if (!actions) return;
+            if (!card) return;
 
             const member = Decks.decksOf(word.id);
-            if (member.length) {
-                const wrap = h('div', 'word-card__decks');
-                for (const d of member) {
-                    const chip = h('span', 'word-deck-chip', `${d.emoji}<span>${esc(d.name)}</span>`);
-                    chip.title = d.name;
-                    wrap.appendChild(chip);
-                }
-                card.insertBefore(wrap, actions);
+            if (!member.length) return;
+            const wrap = h('div', 'word-card__decks');
+            for (const d of member) {
+                const chip = h('span', 'word-deck-chip', `${d.emoji}<span>${esc(d.name)}</span>`);
+                chip.title = d.name;
+                wrap.appendChild(chip);
             }
-
-            const btn = h('button', 'btn btn--ghost word-card__decks-btn', '⋯');
-            btn.title = t('decks.add');
-            btn.setAttribute('aria-label', t('decks.add'));
-            btn.addEventListener('click', () => this._openSheet(word));
-            actions.appendChild(btn);
+            card.appendChild(wrap);
         },
 
         // Публичная обёртка для words.js (компактный список зовёт sheet сам).

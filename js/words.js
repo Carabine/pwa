@@ -141,14 +141,102 @@ function toggleSelected(id) {
     renderWords();
 }
 
+// ---------- Меню действий слова («⋯») ----------
+
+// Текст для копирования: «слово（чтение） — перевод» + пример с переводом.
+async function copyWordText(w) {
+    const head = `${w.kanji || ''}${w.kana ? `（${w.kana}）` : ''}${w.translation ? ` — ${w.translation}` : ''}`;
+    const lines = [head];
+    if (w.sentence) lines.push(w.sentence);
+    if (w.sentenceTranslation) lines.push(w.sentenceTranslation);
+    const text = lines.join('\n');
+    try {
+        await navigator.clipboard.writeText(text);
+    } catch {
+        // Старый запасной путь: скрытая textarea + execCommand.
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+    }
+    showSnackbar(t('words.copied'), { duration: 2000 });
+}
+
+// Всплывающее меню у «⋯» слова: Изменить / В колоды / Скопировать / Удалить.
+// Живёт в body (список обрезал бы его overflow'ом), позиционируется у кнопки.
+let wordActionsEl = null;
+let wordActionsCleanup = null;
+
+function closeWordActions() {
+    if (wordActionsCleanup) wordActionsCleanup();
+    wordActionsCleanup = null;
+    if (wordActionsEl) wordActionsEl.remove();
+    wordActionsEl = null;
+}
+
+function openWordActions(anchor, wordData) {
+    closeWordActions();
+    const menu = document.createElement('div');
+    menu.className = 'words-menu word-actions';
+    menu.innerHTML = `
+        <button data-act="edit">${esc(t('words.edit'))}</button>
+        <button data-act="decks">${esc(t('decks.add'))}</button>
+        <button data-act="copy">${esc(t('words.copy'))}</button>
+        <hr class="words-menu__hr">
+        <button data-act="del" class="word-actions__danger">${esc(t('words.bulkDelete'))}</button>
+    `;
+    document.body.appendChild(menu);
+    wordActionsEl = menu;
+
+    // Правым краем к кнопке, вниз; если не влезает — вверх и в пределах экрана.
+    const r = anchor.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.right = 'auto';
+    let left = Math.max(8, Math.min(r.right - menu.offsetWidth, window.innerWidth - menu.offsetWidth - 8));
+    let top = r.bottom + 6;
+    if (top + menu.offsetHeight > window.innerHeight - 8) top = Math.max(8, r.top - menu.offsetHeight - 6);
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+
+    menu.addEventListener('click', (e) => {
+        const act = e.target.closest('[data-act]')?.dataset.act;
+        closeWordActions();
+        if (act === 'edit') openWord(wordData);
+        else if (act === 'decks' && window.DecksUI) DecksUI.openSheet(wordData);
+        else if (act === 'copy') copyWordText(wordData);
+        else if (act === 'del') confirmRemove(wordData);
+    });
+
+    const onDoc = (e) => { if (!menu.contains(e.target)) closeWordActions(); };
+    const onEsc = (e) => { if (e.key === 'Escape') closeWordActions(); };
+    const onAway = () => closeWordActions();
+    // click дойдёт до document уже после открытия — вешаемся асинхронно.
+    setTimeout(() => {
+        document.addEventListener('click', onDoc);
+        document.addEventListener('keydown', onEsc);
+        document.addEventListener('scroll', onAway, true);
+        window.addEventListener('resize', onAway);
+    }, 0);
+    wordActionsCleanup = () => {
+        document.removeEventListener('click', onDoc);
+        document.removeEventListener('keydown', onEsc);
+        document.removeEventListener('scroll', onAway, true);
+        window.removeEventListener('resize', onAway);
+    };
+}
+
 // ---------- Отрисовка ----------
 
-// Карточка (прежний подробный вид). Возвращает корневой элемент.
+// Карточка (подробный вид): тап — открыть слово, «⋯» в углу — меню действий.
 function buildCard(wordData) {
     const wordEl = document.createElement('div');
     wordEl.innerHTML = `
         <div class="word-card word-read-content${selected.has(wordData.id) ? ' is-selected' : ''}">
-            <button class="word-card__delete" title="${esc(t('words.delete.title'))}">&times;</button>
+            <button class="word-card__menu" title="${esc(t('words.actions'))}" aria-label="${esc(t('words.actions'))}">⋯</button>
             <div class="word-card__head">
                 <span class="word-card__kanji">${esc(wordData.kanji)}</span>
                 ${wordData.kana ? `<span class="word-card__kana">${esc(wordData.kana)}</span>` : ''}
@@ -159,25 +247,29 @@ function buildCard(wordData) {
                 wordData.sentenceTranslation ? `<span class="word-card__sentence-tr">${esc(wordData.sentenceTranslation)}</span>` : ''
             }</div>` : ''}
             ${wordData.hint ? `<div class="word-card__tag">${esc(wordData.hint)}</div>` : ''}
-            <div class="word-card__actions">
-                <button class="btn btn--ghost edit-btn">${t('words.edit')}</button>
-            </div>
         </div>
     `;
 
+    const card = wordEl.querySelector('.word-card');
     if (selectMode) {
         // В режиме выбора карточка целиком — переключатель отметки.
-        const card = wordEl.querySelector('.word-card');
         card.insertAdjacentHTML('afterbegin',
             `<span class="word-check${selected.has(wordData.id) ? ' is-on' : ''}">✓</span>`);
         card.addEventListener('click', () => toggleSelected(wordData.id));
         return wordEl;
     }
 
-    wordEl.querySelector('.word-card__delete').addEventListener('click', () => confirmRemove(wordData));
-    wordEl.querySelector('.edit-btn').addEventListener('click', () => openWord(wordData));
+    card.addEventListener('click', (e) => {
+        if (e.target.closest('.word-card__menu')) return;
+        openWord(wordData);
+    });
+    card.querySelector('.word-card__menu').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openWordActions(e.currentTarget, wordData);
+    });
+    attachLongPress(card, wordData);
 
-    // Мини-чипы колод + кнопка «в колоды» на карточке.
+    // Мини-чипы колод внизу карточки.
     if (window.DecksUI) DecksUI.decorateCard(wordEl, wordData);
     return wordEl;
 }
@@ -202,8 +294,7 @@ function buildRow(wordData) {
         <div class="word-row__tr">${esc(wordData.translation || '')}</div>
         <div class="word-row__badges">${clipBadgeHtml(wordData)}${deckEmojis}</div>
         ${selectMode ? '' : `<span class="word-row__hover">
-            <button class="word-row__more" title="${esc(t('decks.add'))}" aria-label="${esc(t('decks.add'))}">⋯</button>
-            <button class="word-row__x" title="${esc(t('words.delete.title'))}" aria-label="${esc(t('words.delete.title'))}">×</button>
+            <button class="word-row__more" title="${esc(t('words.actions'))}" aria-label="${esc(t('words.actions'))}">⋯</button>
         </span>`}
     `;
 
@@ -217,10 +308,10 @@ function buildRow(wordData) {
         if (e.target.closest('.word-row__hover')) return;
         openWord(wordData);
     });
-    row.querySelector('.word-row__more').addEventListener('click', () => {
-        if (window.DecksUI) DecksUI.openSheet(wordData);
+    row.querySelector('.word-row__more').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openWordActions(e.currentTarget, wordData);
     });
-    row.querySelector('.word-row__x').addEventListener('click', () => confirmRemove(wordData));
     attachLongPress(row, wordData);
     return row;
 }
@@ -266,6 +357,7 @@ function attachLongPress(row, wordData) {
 }
 
 function renderWords() {
+    closeWordActions();   // меню могло висеть у строки, которой больше нет
     const wordsListEl = document.querySelector('.words-list');
     updateCount(allWords.length);
     updateKnownMenuLabel();

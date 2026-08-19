@@ -346,8 +346,7 @@
     .word-row:hover .word-row__hover,
     .word-row:focus-within .word-row__hover { visibility: visible; }
 }
-.word-row__more,
-.word-row__x {
+.word-row__more {
     background: none;
     border: none;
     cursor: pointer;
@@ -358,8 +357,10 @@
     border-radius: 8px;
 }
 .word-row__more:hover { color: var(--text); background: var(--card); }
-.word-row__x { color: var(--danger); opacity: 0.55; }
-.word-row__x:hover { opacity: 1; }
+
+/* Всплывающее меню действий слова (живёт в body, позиция ставится из JS). */
+.word-actions { min-width: 180px; }
+.word-actions .word-actions__danger { color: var(--danger); }
 
 /* ---- Режим выбора ---- */
 .word-check {
@@ -398,9 +399,8 @@
     z-index: 2;
 }
 .word-card .word-check.is-on { background: var(--primary); }
-/* В режиме выбора карточка — только переключатель: прячем её кнопки. */
-.words-list.is-selecting .word-card__delete,
-.words-list.is-selecting .word-card__actions { display: none; }
+/* В режиме выбора карточка — только переключатель: прячем её меню. */
+.words-list.is-selecting .word-card__menu { display: none; }
 .words-list.is-selecting .word-card { cursor: pointer; }
 
 /* Плавающая панель массовых действий. */
@@ -565,7 +565,12 @@
     border-radius: var(--radius);
     padding: 16px 16px 14px;
     position: relative;
+    cursor: pointer;
     transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+    /* Тап открывает слово, лонг-тап — выбор; выделение текста тут мешает. */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 /* Карточки словаря — одного размера: фиксируем минимальную высоту и
@@ -575,7 +580,7 @@
 .word-read-content {
     display: flex;
     flex-direction: column;
-    min-height: 200px;
+    min-height: 168px;
 }
 
 .word-read-content:hover {
@@ -590,7 +595,7 @@
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 8px;
-    padding-right: 20px;   /* место под крестик удаления */
+    padding-right: 28px;   /* место под «⋯» в углу */
 }
 
 .word-card__kanji {
@@ -652,42 +657,22 @@
     padding: 3px 10px;
 }
 
-.word-card__actions {
-    display: flex;
-    gap: 8px;
-    /* auto — прижимает кнопки к низу карточки (высота у всех одинаковая),
-       padding-top держит отступ от контента, когда его мало. */
-    margin-top: auto;
-    padding-top: 12px;
-    justify-content: flex-end;
-    /* Длинные подписи (напр. «ИИ-разбор предложения») не должны вылезать за
-       край карточки: разрешаем перенос кнопок и сжатие текста внутри них. */
-    flex-wrap: wrap;
-}
-
-.word-card__actions .btn {
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-.word-card__delete {
+/* «⋯» в углу карточки — единственная кнопка; остальное открывается тапом. */
+.word-card__menu {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    color: var(--danger);
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 700;
-    opacity: 0.5;
-    transition: opacity var(--transition);
+    top: 8px;
+    right: 8px;
     background: none;
     border: none;
+    cursor: pointer;
+    font-size: 16px;
     line-height: 1;
+    padding: 4px 8px;
+    color: var(--text-muted);
+    border-radius: 8px;
+    transition: color var(--transition), background var(--transition);
 }
-
-.word-card__delete:hover {
-    opacity: 1;
-}
+.word-card__menu:hover { color: var(--text); background: var(--surface); }
 
 .word-edit {
     display: flex;
