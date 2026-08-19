@@ -127,6 +127,9 @@
         return [...new Set([...clean, ...qualified].filter(Boolean))].slice(0, 2).join('; ');
     }
 
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const is429 = (err) => err && err.response && err.response.status === 429;
+
     async function fetchDict(entry) {
         const { data: res } = await client.get('dictionary', {
             params: { q: entry.base, lang: (typeof getLang === 'function') ? getLang() : 'ru' },
@@ -316,7 +319,16 @@
 
     async function saveEntry(entry) {
         if (entry.dict === undefined) {
-            try { await fetchDict(entry); } catch { /* сохраним без перевода */ }
+            try {
+                await fetchDict(entry);
+            } catch (err) {
+                // На лимите (429) не спешим сохранять карточку без перевода —
+                // подождём окно и попробуем ещё раз; иначе сохраняем как есть.
+                if (is429(err)) {
+                    await sleep(10000);
+                    try { await fetchDict(entry); } catch { /* без перевода */ }
+                }
+            }
         }
         const dict = entry.dict || null;
         const cue = entry.cue;
@@ -361,13 +373,25 @@
         const worker = async () => {
             while (idx < picked.length) {
                 const entry = picked[idx++];
-                try {
-                    const word = await saveEntry(entry);
-                    if (word && word.id) window.Decks.toggle(deck.id, word.id);
-                    done++;
-                } catch (err) {
-                    console.error('Не удалось сохранить слово для колоды:', entry.base, err);
-                    failed++;
+                // Общий лимитер API (по IP, окно 60с) может срезать бурст
+                // сохранений 429-ми: не роняем слово, а ждём, пока окно
+                // освободится, и повторяем — до 3 попыток с ростом паузы.
+                let attempt = 0;
+                for (;;) {
+                    try {
+                        const word = await saveEntry(entry);
+                        if (word && word.id) window.Decks.toggle(deck.id, word.id);
+                        done++;
+                    } catch (err) {
+                        if (is429(err) && attempt < 3) {
+                            attempt++;
+                            await sleep(10000 * attempt);
+                            continue;
+                        }
+                        console.error('Не удалось сохранить слово для колоды:', entry.base, err);
+                        failed++;
+                    }
+                    break;
                 }
                 tick();
             }
