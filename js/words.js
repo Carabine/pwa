@@ -589,6 +589,12 @@ function openKnownImport() {
                 <button class="btn btn--ghost" id="known-file-btn">${esc(t('known.file'))}</button>
                 <span class="known-modal__recognized" id="known-recognized"></span>
             </div>
+            <!-- WaniKani: по API-токену забираем выученную лексику (guru и выше). -->
+            <div class="known-modal__wk">
+                <input class="deck-editor__input" id="wk-token" type="password" autocomplete="off"
+                       placeholder="${esc(t('known.wkToken'))}">
+                <button class="btn btn--ghost" id="wk-load">${esc(t('known.wkLoad'))}</button>
+            </div>
             <div class="deck-editor__actions">
                 <button class="btn btn--ghost" id="known-cancel">${esc(t('words.cancel'))}</button>
                 <button class="btn btn--success" id="known-do" disabled>${esc(t('known.importDo'))}</button>
@@ -666,6 +672,55 @@ function openKnownImport() {
             reparse();
         });
 
+        // ---- WaniKani: assignments (srs guru+) → subjects → characters ----
+        // API отдаёт CORS для браузера; токен никуда, кроме api.wanikani.com,
+        // не уходит. Слова кладём в textarea — их видно и можно править.
+        const wkToken = box.querySelector('#wk-token');
+        const wkBtn = box.querySelector('#wk-load');
+        wkBtn.addEventListener('click', async () => {
+            const token = wkToken.value.trim();
+            if (!token) { wkToken.focus(); return; }
+            wkBtn.disabled = true;
+            const oldLabel = wkBtn.textContent;
+            try {
+                const headers = { Authorization: 'Bearer ' + token };
+                const ids = [];
+                let url = 'https://api.wanikani.com/v2/assignments'
+                    + '?subject_types=vocabulary,kana_vocabulary&srs_stages=5,6,7,8,9&hidden=false';
+                while (url) {
+                    wkBtn.textContent = t('known.wkBusy').replace('{n}', ids.length);
+                    const r = await fetch(url, { headers });
+                    if (!r.ok) throw new Error('wanikani http ' + r.status);
+                    const j = await r.json();
+                    for (const a of j.data || []) ids.push(a.data.subject_id);
+                    url = (j.pages && j.pages.next_url) || '';
+                    if (ids.length > 20000) break;
+                }
+                const words = [];
+                // ids в URL — батчами, чтобы адрес не разрастался за лимиты.
+                for (let i = 0; i < ids.length; i += 300) {
+                    wkBtn.textContent = t('known.wkBusy').replace('{n}', `${words.length}/${ids.length}`);
+                    const r = await fetch('https://api.wanikani.com/v2/subjects?ids='
+                        + ids.slice(i, i + 300).join(','), { headers });
+                    if (!r.ok) throw new Error('wanikani http ' + r.status);
+                    const j = await r.json();
+                    for (const s of j.data || []) {
+                        if (s.data && s.data.characters) words.push(s.data.characters);
+                    }
+                }
+                apkgNotes = null;
+                learnedRow.hidden = true;
+                ta.value = words.join('\n');
+                reparse();
+            } catch (err) {
+                console.error('WaniKani import failed:', err);
+                showSnackbar(t('known.wkFail'), { duration: 4000, type: 'error' });
+            } finally {
+                wkBtn.textContent = oldLabel;
+                wkBtn.disabled = false;
+            }
+        });
+
         box.querySelector('#known-cancel').addEventListener('click', close);
         doBtn.addEventListener('click', () => {
             const added = KnownWords.addMany(parsed);
@@ -679,6 +734,40 @@ function openKnownImport() {
     });
 }
 
+// «Известные» → настоящая колода: создаём карточки (чтение и перевод тянем из
+// словаря), складываем в новую колоду. Для слов, которые пользователь хочет
+// всё-таки повторять, а не просто считать знакомыми.
+async function knownToDeck(words, progress) {
+    const lang = ['ru', 'uk'].includes(localStorage.getItem('animei:lang'))
+        ? localStorage.getItem('animei:lang') : 'en';
+    const ids = [];
+    let i = 0;
+    for (const w of words) {
+        i++;
+        progress(i, words.length);
+        let kana = '';
+        let translation = '';
+        try {
+            const { data: res } = await client.get('dictionary', { params: { q: w, lang } });
+            const entries = (res && res.data) || [];
+            const entry = entries.find((e) => e.word === w) || entries[0];
+            if (entry) {
+                kana = entry.reading || '';
+                translation = (((entry.senses || [])[0] || {}).definitions || []).slice(0, 3).join(', ');
+            }
+        } catch { /* словарь молчит — карточка будет из одного слова */ }
+        try {
+            const saved = await saveWord({ kanji: w, kana, translation });
+            if (saved && saved.id) ids.push(saved.id);
+        } catch (err) { console.error('Не удалось создать карточку', w, err); }
+    }
+    const deck = Decks.create(t('known.deckName'), '📚');
+    Decks.addMany(deck.id, ids);
+    allWords = await fetchWords();
+    renderWords();
+    return { deck, count: ids.length };
+}
+
 function openKnownManager() {
     if (!window.KnownWords) return;
     openModal((box, close) => {
@@ -689,6 +778,7 @@ function openKnownManager() {
             <div class="known-modal__list" id="known-list"></div>
             <div class="deck-editor__actions">
                 <button class="btn btn--ghost words-bulkbar__danger" id="known-clear">${esc(t('known.clear'))}</button>
+                <button class="btn btn--success" id="known-deck">${esc(t('known.toDeck'))}</button>
                 <button class="btn btn--ghost" id="known-close">${esc(t('words.close'))}</button>
             </div>
         `;
@@ -697,6 +787,7 @@ function openKnownManager() {
         const totalEl = box.querySelector('#known-total');
         const noneEl = box.querySelector('#known-none');
         const clearBtn = box.querySelector('#known-clear');
+        const deckBtn = box.querySelector('#known-deck');
         const SHOW_MAX = 300;   // список может быть на тысячи слов — не рисуем всё
 
         const renderList = () => {
@@ -726,7 +817,40 @@ function openKnownManager() {
             noneEl.hidden = !empty;
             filterEl.hidden = empty;
             clearBtn.hidden = empty;
+            deckBtn.hidden = empty || !window.Decks;
         };
+
+        deckBtn.addEventListener('click', async () => {
+            const all = KnownWords.all();
+            const q = filterEl.value.trim();
+            const matched = q ? all.filter((w) => w.includes(q)) : all;
+            if (!matched.length) return;
+            // Словарь опрашиваем по одному слову — большие пачки ограничиваем.
+            const LIMIT = 100;
+            const words = matched.slice(0, LIMIT);
+            let msg = t('known.toDeckConfirm').replace('{n}', words.length);
+            if (matched.length > LIMIT) msg += '\n' + t('known.toDeckLimit').replace('{n}', LIMIT);
+            if (!confirm(msg)) return;
+
+            deckBtn.disabled = true;
+            clearBtn.disabled = true;
+            try {
+                const { deck, count } = await knownToDeck(words, (i, n) => {
+                    deckBtn.textContent = `${i}/${n}…`;
+                });
+                showSnackbar(
+                    t('known.toDeckDone').replace('{n}', count).replace('{d}', deck.name),
+                    { duration: 4500, type: 'success' },
+                );
+                close();
+            } catch (err) {
+                console.error('Не удалось собрать колоду из известных:', err);
+                showSnackbar(t('known.toDeckFail'), { duration: 3500, type: 'error' });
+                deckBtn.textContent = t('known.toDeck');
+                deckBtn.disabled = false;
+                clearBtn.disabled = false;
+            }
+        });
 
         filterEl.addEventListener('input', renderList);
         clearBtn.addEventListener('click', () => {

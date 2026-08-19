@@ -519,6 +519,32 @@
     gap: 10px;
     margin-bottom: 14px;
 }
+
+/* Кнопки модалок известных слов: компактные, без капса — их стало три,
+   капс не влезал на телефоне. */
+.known-modal .deck-editor__actions { flex-wrap: wrap; }
+.known-modal .deck-editor__actions .btn {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 12.5px;
+    text-transform: none;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+
+/* Ряд WaniKani: поле токена тянется, кнопка — нет. */
+.known-modal__wk {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.known-modal__wk .deck-editor__input {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-bottom: 0;
+}
+.known-modal__wk .btn { flex: 0 0 auto; white-space: nowrap; }
 .known-modal__recognized {
     font-size: 13px;
     color: var(--success);
@@ -808,6 +834,17 @@
     padding: 12px 16px;
     border-top: 1px solid var(--border);
     flex-shrink: 0;
+}
+
+/* Кнопки подвала — компактные и без капса: модалка узкая, крупный капс
+   вылезал за края. */
+.word-modal__foot .btn {
+    height: 36px;
+    padding: 0 14px;
+    font-size: 12.5px;
+    text-transform: none;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
 }
 
 /* Слева в подвале — «Удалить» и «В колоды» (словарь); справа — отмена/сохранить. */

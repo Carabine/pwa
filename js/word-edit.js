@@ -31,15 +31,16 @@
         return { g, input };
     }
 
-    // Блок «Свой звук» карточки: загрузить аудиофайл или записать с микрофона.
-    // Хранится в браузере (video-store.js: putAudio/getAudio) по id слова.
-    function buildAudioControl(wordData) {
+    // Блок «Озвучка»: генерируем звук карточки нейроголосом (слово + пример,
+    // POST /words/tts) — для карточек без клипа из аниме. Хранится как обычный
+    // звук карточки: у вошедшего на сервере, у гостя в браузере (IndexedDB).
+    function buildTtsControl(wordData) {
         const box = document.createElement('div');
         box.className = 'word-audio';
 
         const title = document.createElement('div');
         title.className = 'clip-edit__title';
-        title.textContent = t('words.audio');
+        title.textContent = t('words.tts');
         box.appendChild(title);
 
         const player = document.createElement('audio');
@@ -47,20 +48,10 @@
         player.controls = true;
         player.hidden = true;
 
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'audio/*';
-        fileInput.hidden = true;
-
-        const uploadBtn = document.createElement('button');
-        uploadBtn.type = 'button';
-        uploadBtn.className = 'btn btn--ghost';
-        uploadBtn.textContent = t('words.audioUpload');
-
-        const recordBtn = document.createElement('button');
-        recordBtn.type = 'button';
-        recordBtn.className = 'btn btn--ghost word-audio__record';
-        recordBtn.textContent = t('words.audioRecord');
+        const genBtn = document.createElement('button');
+        genBtn.type = 'button';
+        genBtn.className = 'btn btn--ghost';
+        genBtn.textContent = t('words.ttsGen');
 
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
@@ -68,9 +59,8 @@
         removeBtn.textContent = t('words.audioRemove');
         removeBtn.hidden = true;
 
-        // refresh() зовётся многократно (загрузка/запись/удаление звука). Каждый
-        // getWordAudioUrl у гостя создаёт новый blob-URL — старый освобождаем,
-        // иначе они копятся до перезагрузки страницы.
+        // refresh() зовётся многократно. Каждый getWordAudioUrl у гостя создаёт
+        // новый blob-URL — старый освобождаем, иначе копятся до перезагрузки.
         let currentAudioUrl = null;
         function releaseAudioUrl() {
             if (currentAudioUrl && currentAudioUrl.startsWith('blob:')) URL.revokeObjectURL(currentAudioUrl);
@@ -85,62 +75,37 @@
                 player.src = url;
                 player.hidden = false;
                 removeBtn.hidden = false;
+                genBtn.textContent = t('words.ttsRegen');
             } else {
                 player.hidden = true;
                 player.removeAttribute('src');
                 removeBtn.hidden = true;
+                genBtn.textContent = t('words.ttsGen');
             }
         }
 
-        async function store(blob) {
-            if (!blob || !blob.size || typeof setWordAudio !== 'function') {
-                showSnackbar(t('words.audioError'), { duration: 3000, type: 'error' });
-                return;
-            }
+        genBtn.addEventListener('click', async () => {
+            // Голос читает само слово и, если есть, пример целиком.
+            const text = [wordData.kanji, wordData.sentence]
+                .map((s) => String(s || '').trim()).filter(Boolean).join('。');
+            if (!text) return;
+            genBtn.disabled = true;
+            const oldLabel = genBtn.textContent;
+            genBtn.textContent = t('words.ttsBusy');
             try {
-                const url = await setWordAudio(wordData, blob);
-                if (url) {
-                    await refresh();
-                    showSnackbar(t('words.audioSaved'), { duration: 2000, type: 'success' });
-                    return;
-                }
-            } catch (err) {
-                console.error('Не удалось сохранить звук:', err);
-            }
-            showSnackbar(t('words.audioError'), { duration: 3000, type: 'error' });
-        }
-
-        uploadBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', () => {
-            const f = fileInput.files[0];
-            fileInput.value = '';
-            if (f) store(f);
-        });
-
-        // Запись с микрофона — только если браузер умеет MediaRecorder.
-        let recorder = null;
-        let chunks = [];
-        const canRecord = typeof MediaRecorder !== 'undefined'
-            && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
-        if (!canRecord) recordBtn.hidden = true;
-        recordBtn.addEventListener('click', async () => {
-            if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                recorder = new MediaRecorder(stream);
-                chunks = [];
-                recorder.addEventListener('dataavailable', (e) => { if (e.data && e.data.size) chunks.push(e.data); });
-                recorder.addEventListener('stop', () => {
-                    stream.getTracks().forEach((tr) => tr.stop());
-                    recordBtn.classList.remove('is-recording');
-                    recordBtn.textContent = t('words.audioRecord');
-                    store(new Blob(chunks, { type: (chunks[0] && chunks[0].type) || 'audio/webm' }));
+                const { data } = await client.post('words/tts', { text }, {
+                    responseType: 'blob', timeout: 60000,
                 });
-                recorder.start();
-                recordBtn.classList.add('is-recording');
-                recordBtn.textContent = t('words.audioStop');
-            } catch {
-                showSnackbar(t('words.audioMicError'), { duration: 3000, type: 'error' });
+                const url = await setWordAudio(wordData, data);
+                if (!url) throw new Error('audio not stored');
+                await refresh();
+                showSnackbar(t('words.ttsDone'), { duration: 2500, type: 'success' });
+            } catch (err) {
+                console.error('Не удалось сгенерировать озвучку:', err);
+                genBtn.textContent = oldLabel;
+                showSnackbar(t('words.ttsFail'), { duration: 3500, type: 'error' });
+            } finally {
+                genBtn.disabled = false;
             }
         });
 
@@ -151,8 +116,8 @@
 
         const row = document.createElement('div');
         row.className = 'word-audio__row';
-        row.append(uploadBtn, recordBtn, removeBtn);
-        box.append(row, player, fileInput);
+        row.append(genBtn, removeBtn);
+        box.append(row, player);
         refresh();
         return box;
     }
@@ -192,9 +157,9 @@
         const hint = editField('words.hint', wordData.hint, 'edit-hint', true);
         wrap.append(kanji.g, kana.g, translation.g, sentence.g, sentenceTr.g, hint.g);
 
-        // Видео-фрагмент (мини-плеер + правка начала/конца) и свой звук.
+        // Видео-фрагмент (мини-плеер + правка начала/конца) и озвучка.
         if (window.AnimeiClipTrim) wrap.appendChild(window.AnimeiClipTrim.buildForWord(wordData));
-        wrap.appendChild(buildAudioControl(wordData));
+        wrap.appendChild(buildTtsControl(wordData));
 
         function close() {
             overlay.remove();
