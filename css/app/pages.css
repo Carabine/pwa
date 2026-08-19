@@ -439,6 +439,25 @@
     margin-bottom: 10px;
 }
 .known-modal__paste:focus { outline: none; border-color: var(--primary); }
+/* Галка «Только изученные» после чтения .apkg */
+.known-modal__learned {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-transform: none;
+    letter-spacing: normal;
+    cursor: pointer;
+}
+.known-modal__learned input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+    margin: 0;
+}
+
 .known-modal__filerow {
     display: flex;
     align-items: center;

@@ -64,11 +64,76 @@
         return [...out];
     }
 
+    // ---------- Чтение .apkg (zip-архив колоды Anki) ----------
+    // Достаём из архива ТОЛЬКО базу коллекции (collection.anki21/anki2, обычно
+    // пара мегабайт) — медиа не читаем и на сервер не грузим. Новый формат
+    // collection.anki21b (zstd) в браузере не распаковать — кидаем 'modern',
+    // UI просит переэкспорт с галкой «Support older Anki versions».
+    async function extractCollection(file) {
+        const buf = new Uint8Array(await file.arrayBuffer());
+        const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+
+        // End of central directory (0x06054b50) — ищем с конца файла.
+        let eocd = -1;
+        const stop = Math.max(0, buf.length - 22 - 65535);
+        for (let i = buf.length - 22; i >= stop; i--) {
+            if (view.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+        }
+        if (eocd < 0) throw new Error('not a zip');
+
+        // Центральный каталог: имя, метод сжатия, размер, смещение локального заголовка.
+        const count = view.getUint16(eocd + 10, true);
+        let off = view.getUint32(eocd + 16, true);
+        const entries = {};
+        const td = new TextDecoder();
+        for (let k = 0; k < count; k++) {
+            if (view.getUint32(off, true) !== 0x02014b50) break;
+            const method = view.getUint16(off + 10, true);
+            const csize = view.getUint32(off + 20, true);
+            const nameLen = view.getUint16(off + 28, true);
+            const extraLen = view.getUint16(off + 30, true);
+            const commentLen = view.getUint16(off + 32, true);
+            const lho = view.getUint32(off + 42, true);
+            entries[td.decode(buf.subarray(off + 46, off + 46 + nameLen))] = { method, csize, lho };
+            off += 46 + nameLen + extraLen + commentLen;
+        }
+
+        // В новых экспортах рядом с anki21b лежит anki2-заглушка «обновите Anki» —
+        // поэтому сначала anki21, а на anki2 падаем только когда anki21b нет.
+        const entry = entries['collection.anki21']
+            || (!entries['collection.anki21b'] && entries['collection.anki2']) || null;
+        if (!entry) throw new Error(entries['collection.anki21b'] ? 'modern' : 'not a zip');
+
+        // Данные лежат после локального заголовка (длины полей там свои).
+        const nameLen = view.getUint16(entry.lho + 26, true);
+        const extraLen = view.getUint16(entry.lho + 28, true);
+        const start = entry.lho + 30 + nameLen + extraLen;
+        const raw = buf.subarray(start, start + entry.csize);
+        if (entry.method === 0) return new Blob([raw]);
+        if (entry.method !== 8) throw new Error('unsupported compression');
+        const stream = new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+        return await new Response(stream).blob();
+    }
+
     window.KnownWords = {
         all() { return [...set]; },
         count() { return set.size; },
         has(w) { return set.has(w); },
         parseImport,
+
+        // Прочитать колоду .apkg: вынуть базу, отдать её серверу на разбор.
+        // Возвращает [{ flds, learned }]; flds — поля заметки через \x1f.
+        async readApkg(file) {
+            const dbBlob = await extractCollection(file);
+            const fd = new FormData();
+            fd.append('db', dbBlob, 'collection.anki2');
+            const { data: res } = await client.post('words/known/anki', fd, {
+                headers: { 'Content-Type': undefined },
+                timeout: 180000,
+            });
+            const notes = res && res.data && Array.isArray(res.data.notes) ? res.data.notes : [];
+            return notes;
+        },
 
         // Добавить пачку слов; возвращает, сколько было действительно новых.
         addMany(list) {

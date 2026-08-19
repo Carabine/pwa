@@ -392,6 +392,10 @@ function openKnownImport() {
             <div class="deck-editor__title">${esc(t('known.import'))}</div>
             <p class="known-modal__hint">${esc(t('known.hint'))}</p>
             <textarea class="known-modal__paste" rows="6" placeholder="${esc(t('known.paste'))}"></textarea>
+            <label class="known-modal__learned" id="known-learned-row" hidden>
+                <input type="checkbox" id="known-learned" checked>
+                <span id="known-learned-label"></span>
+            </label>
             <div class="known-modal__filerow">
                 <button class="btn btn--ghost" id="known-file-btn">${esc(t('known.file'))}</button>
                 <span class="known-modal__recognized" id="known-recognized"></span>
@@ -404,6 +408,8 @@ function openKnownImport() {
         const ta = box.querySelector('.known-modal__paste');
         const recognizedEl = box.querySelector('#known-recognized');
         const doBtn = box.querySelector('#known-do');
+        const learnedRow = box.querySelector('#known-learned-row');
+        const learnedCb = box.querySelector('#known-learned');
         let parsed = [];
 
         const reparse = () => {
@@ -414,15 +420,59 @@ function openKnownImport() {
         };
         ta.addEventListener('input', reparse);
 
+        // ---- Колода .apkg: заметки с пометкой «изучено» от сервера ----
+        // Извлечённые слова кладём в textarea (по одному в строке) — их видно
+        // и можно поправить руками; галка переключает «изученные/все».
+        // Поля заметки разделены \x1f — заменяем на таб, дальше parseImport.
+        const notesToWords = (notes) => KnownWords.parseImport(
+            notes.map((n) => String(n.flds || '').replace(/\x1f/g, '\t')).join('\n'));
+        let apkgNotes = null;
+
+        const applyApkg = () => {
+            if (!apkgNotes) return;
+            const chosen = learnedCb.checked ? apkgNotes.filter((n) => n.learned) : apkgNotes;
+            ta.value = notesToWords(chosen).join('\n');
+            reparse();
+        };
+        learnedCb.addEventListener('change', applyApkg);
+
+        const handleApkg = async (f) => {
+            recognizedEl.textContent = t('known.apkgReading');
+            doBtn.disabled = true;
+            try {
+                apkgNotes = await KnownWords.readApkg(f);
+                const learnedN = notesToWords(apkgNotes.filter((n) => n.learned)).length;
+                const allN = notesToWords(apkgNotes).length;
+                box.querySelector('#known-learned-label').textContent =
+                    t('known.apkgLearnedOnly').replace('{k}', learnedN).replace('{n}', allN);
+                learnedRow.hidden = false;
+                // Всё «новое», ни одной изученной — сразу показываем все слова.
+                if (!learnedN) learnedCb.checked = false;
+                applyApkg();
+            } catch (err) {
+                console.error('apkg import failed:', err);
+                apkgNotes = null;
+                learnedRow.hidden = true;
+                recognizedEl.textContent = '';
+                showSnackbar(
+                    String(err && err.message) === 'modern' ? t('known.apkgModern') : t('known.apkgFail'),
+                    { duration: 6000, type: 'error' },
+                );
+            }
+        };
+
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
-        fileInput.accept = '.txt,.csv,.tsv,text/plain';
+        fileInput.accept = '.txt,.csv,.tsv,.apkg,.colpkg,text/plain';
         fileInput.hidden = true;
         box.appendChild(fileInput);
         box.querySelector('#known-file-btn').addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', async () => {
             const f = fileInput.files && fileInput.files[0];
             if (!f) return;
+            if (/\.(apkg|colpkg)$/i.test(f.name)) { handleApkg(f); return; }
+            apkgNotes = null;
+            learnedRow.hidden = true;
             ta.value = await f.text();
             reparse();
         });
