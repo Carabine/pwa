@@ -783,15 +783,53 @@
         min-width: 0;
     }
 
-    /* Инструменты — второй строкой на всю ширину; сортировка тянется. */
+    /* Инструменты — второй строкой на всю ширину; сортировка тянется.
+       На телефоне контролы компактнее (36px), чтобы ряд не выглядел грузно. */
     .words-toolbar__controls {
         width: 100%;
+    }
+    .words-filter input { height: 40px; }
+    .words-sort,
+    .words-toolbar__controls .btn {
+        height: 36px;
+        font-size: 12px;
     }
     .words-sort {
         flex: 1 1 auto;
         min-width: 0;
     }
+    .words-toolbar__controls .words-tool {
+        width: 36px;
+        min-width: 36px;
+        font-size: 16px;
+    }
     #select-btn { padding: 0 12px; }
+
+    /* Панель массовых действий: во всю ширину экрана одной строкой, кнопки
+       компактные — иначе панель сворачивалась в узкий «столбик». */
+    .words-bulkbar {
+        left: 12px;
+        right: 12px;
+        transform: none;
+        max-width: none;
+        justify-content: center;
+        gap: 5px;
+        padding: 8px;
+    }
+    .words-bulkbar .btn {
+        height: 32px;
+        padding: 0 10px;
+        font-size: 11.5px;
+        letter-spacing: 0.2px;
+    }
+    .words-bulkbar__count {
+        font-size: 11.5px;
+        padding: 0 2px;
+    }
+    .words-bulkbar__x {
+        font-size: 18px;
+        padding: 0 4px;
+    }
 
     /* Строки списка: слово+чтение и значки в первой строке, перевод — во второй. */
     .word-row {
