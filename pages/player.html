@@ -136,6 +136,17 @@
                         </div>
                     </div>
                 </div>
+                <!-- Колода из серии: здесь, а не в шапке субтитров — там кнопка
+                     наезжала на «📖 N%» и выталкивала «Не совпадают?» за край, а на
+                     телефоне была не видна (по умолчанию открыта вкладка настроек). -->
+                <div class="control-group" id="episode-deck-group" hidden>
+                    <label data-i18n="edeck.label">Карточки</label>
+                    <div class="offset-buttons">
+                        <button id="episode-deck-btn" class="chip-btn chip-btn--accent" type="button"
+                                data-i18n="edeck.btn" data-i18n-title="edeck.btn.title"
+                                title="Собрать колоду из простых (N5–N4) слов этой серии">🎴 Колода из серии</button>
+                    </div>
+                </div>
             </div>
 
             <div class="hotkeys-hint">
@@ -155,9 +166,6 @@
                     <span class="episode-coverage" id="episode-coverage" hidden></span>
                 </div>
                 <div class="transcript__header-right">
-                    <button class="transcript__deck" id="episode-deck-btn" type="button" hidden
-                            data-i18n="edeck.btn" data-i18n-title="edeck.btn.title"
-                            title="Собрать колоду из простых (N5–N4) слов этой серии">🎴 Колода</button>
                     <button class="transcript__fix" id="subs-fix" type="button" hidden
                             data-i18n="subs.wrong" data-i18n-title="subs.wrong.title"
                             title="Субтитры не совпадают со звуком? Синхронизировать точно">Не совпадают?</button>

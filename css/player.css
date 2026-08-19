@@ -2409,25 +2409,12 @@ html, body {
 }
 
 /* ---------- Колода из серии (js/episode-deck.js) ---------- */
-/* Кнопка в шапке субтитров — как «Не совпадают?», но с акцентом: это основное
-   действие панели, а не служебная починка. */
-.transcript__deck {
-    flex-shrink: 0;
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 20px;
-    padding: 3px 10px;
-    font-size: 11.5px;
-    font-weight: 500;
-    white-space: nowrap;
-}
+/* Кнопка живёт в блоке настроек (строка «Карточки»), а не в шапке субтитров:
+   там она наезжала на «📖 N%» и выталкивала «Не совпадают?» за край панели, а
+   на телефоне была не видна — по умолчанию открыта вкладка настроек. */
+#episode-deck-btn { white-space: nowrap; }
 
-.transcript__deck:hover:not(:disabled) {
-    border-color: var(--pink);
-}
-
-.transcript__deck:disabled { opacity: 0.6; }
+#episode-deck-btn:disabled { opacity: 0.6; }
 
 .edeck-overlay {
     position: fixed;
@@ -2519,10 +2506,21 @@ html, body {
 
 .edeck__count { color: var(--text-muted); }
 
+/* Список прокручивается, и нижняя строка почти всегда обрезана кнопкой. Чтобы
+   это читалось как «дальше есть ещё», а не как обрубленная вёрстка, гасим
+   нижний край градиентом-затуханием (маской). */
 .edeck__list {
     overflow-y: auto;
     flex: 1 1 auto;
     min-height: 0;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+}
+
+/* Долистали до конца — маска не нужна, иначе последняя строка выглядит блёклой. */
+.edeck__list.is-bottom {
+    -webkit-mask-image: none;
+    mask-image: none;
 }
 
 .edeck-row {
@@ -2621,3 +2619,15 @@ html, body {
 
 /* Во время сохранения список «замирает» — видно, что идёт работа. */
 .edeck--busy .edeck__list { opacity: 0.55; pointer-events: none; }
+
+/* Низкий экран (телефон в альбомной, кино-режим): шапка с подзаголовком и
+   крупный футер съедали почти весь список — ужимаем их, чтобы строк было видно
+   больше, чем две. */
+@media (max-height: 500px) {
+    .edeck__head { padding: 10px 14px 8px; }
+    .edeck__sub { display: none; }
+    .edeck__toolbar { padding: 6px 14px; }
+    .edeck-row { padding: 6px 14px; }
+    .edeck__foot { padding: 8px 14px; }
+    .edeck__create { padding: 9px; font-size: 13px; }
+}

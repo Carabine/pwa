@@ -31,6 +31,7 @@
     ]);
 
     const btn = document.getElementById('episode-deck-btn');
+    const group = document.getElementById('episode-deck-group');
     const overlay = document.getElementById('edeck-overlay');
     if (!btn || !overlay) return;
 
@@ -62,8 +63,8 @@
     setInterval(() => {
         // state — глобальная const из player.js (мы подключены после него).
         const has = !!(state.cues && state.cues.length);
-        if (btn.hidden === !has) return;
-        btn.hidden = !has;
+        if ((group || btn).hidden === !has) return;
+        (group || btn).hidden = !has;
     }, 1000);
 
     // ---------- Отбор кандидатов ----------
@@ -275,9 +276,35 @@
         listEl.querySelectorAll('input').forEach((cb) => { cb.disabled = on; });
     }
 
+    // В кино-режиме раскладка уходит в реальный fullscreen, а браузер показывает
+    // только fullscreen-элемент и его потомков — модалка из body там была бы
+    // невидимой (так же переносят словарный попап, см. player-ui.js). Поэтому на
+    // время показа переносим оверлей внутрь fullscreen-элемента и возвращаем назад.
+    let overlayHome = null;
+
+    function attachOverlay() {
+        const fs = document.fullscreenElement;
+        if (!fs || fs.contains(overlay)) return;
+        overlayHome = { parent: overlay.parentNode, next: overlay.nextSibling };
+        fs.appendChild(overlay);
+    }
+
+    function restoreOverlay() {
+        if (!overlayHome) return;
+        overlayHome.parent.insertBefore(overlay, overlayHome.next);
+        overlayHome = null;
+    }
+
+    // Вышли из кино-режима с открытой модалкой — возвращаем оверлей в документ
+    // (иначе он остался бы висеть внутри бывшего fullscreen-элемента).
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) restoreOverlay();
+    });
+
     function closeModal() {
         if (creating) return;                // во время сохранения не закрываем
         overlay.hidden = true;
+        restoreOverlay();
     }
 
     async function openModal() {
@@ -299,6 +326,7 @@
         }
         subEl.textContent = t('edeck.sub');
         renderList();
+        attachOverlay();
         overlay.hidden = false;
         listEl.scrollTop = 0;
         if (window.animeiTrack) window.animeiTrack('episode_deck', 'open:' + candidates.length);
@@ -408,12 +436,20 @@
             return;
         }
         overlay.hidden = true;
+        restoreOverlay();
         if (window.animeiTrack) window.animeiTrack('episode_deck', 'created:' + done);
         if (failed) {
             showSnackbar(t('edeck.partial').replace('{k}', done).replace('{n}', total), { duration: 5000, type: 'error' });
         } else {
             showSnackbar(t('edeck.done').replace('{name}', deck.name).replace('{n}', done), { duration: 5000 });
         }
+    });
+
+    // Затухание нижнего края списка (см. .edeck__list в player.css) снимаем,
+    // когда прокрутили до конца — иначе последняя строка выглядит блёклой.
+    listEl.addEventListener('scroll', () => {
+        const atBottom = listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - 2;
+        listEl.classList.toggle('is-bottom', atBottom);
     });
 
     allCb.addEventListener('change', () => {
