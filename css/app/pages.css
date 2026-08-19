@@ -151,20 +151,7 @@
     padding-bottom: 0;
 }
 
-.words-sort {
-    height: 42px;
-    padding: 0 12px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    color: var(--text-muted);
-    font-size: 13px;
-    font-family: var(--font);
-    cursor: pointer;
-}
-.words-sort:focus { outline: none; border-color: var(--primary); }
-
-/* Квадратные кнопки-инструменты (вид, «⋯») — не тянутся. */
+/* Квадратные кнопки-инструменты («⋯») — не тянутся. */
 .words-toolbar__controls .words-tool {
     flex: 0 0 auto;
     width: 42px;
@@ -228,6 +215,17 @@
     color: var(--primary-hover);
 }
 
+/* Группы-переключатели в меню (сортировка, вид): пункт с галочкой слева. */
+.words-menu__group { display: flex; flex-direction: column; }
+.words-menu__item.is-on { color: var(--primary-hover); }
+.words-menu__tick {
+    display: inline-block;
+    width: 16px;
+    flex: 0 0 16px;
+    font-size: 12px;
+    color: var(--primary-hover);
+}
+
 .words-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -259,29 +257,38 @@
     padding: 32px 0;
 }
 
-/* ---- Компактный список (вид по умолчанию) ---- */
+/* ---- Компактный список (вид по умолчанию) ----
+   Не отдельные плашки, а одна карта с тонкими разделителями: строка — одна
+   линия «слово · чтение … перевод · значки», действия не мозолят глаза. */
 .words-list--rows {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: block;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    /* padding-bottom от grid-вида рисовался бы пустой полосой внутри карты */
+    padding-bottom: 0;
+    margin-bottom: 24px;
 }
 
 .word-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 9px 12px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    padding: 11px 16px;
     cursor: pointer;
-    transition: border-color var(--transition), background var(--transition);
+    transition: background var(--transition);
+    /* Лонг-тап включает выбор — системное выделение текста тут только мешает. */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
-.word-row:hover { border-color: var(--primary); }
+.word-row + .word-row { border-top: 1px solid var(--border); }
+.word-row:hover { background: var(--surface); }
 
 /* Фиксированная колонка под слово+чтение: переводы выстраиваются в ровный
-   столбец, а длинный перевод не выдавливает японский текст (раньше кандзи
-   обрезался посередине глифа). Длинное слово усекается многоточием. */
+   столбец, а длинный перевод не выдавливает японский текст. Длинное слово
+   усекается многоточием. */
 .word-row__jp {
     flex: 0 0 230px;
     min-width: 0;
@@ -292,7 +299,7 @@
 }
 .word-row__kanji {
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 16.5px;
+    font-size: 16px;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
@@ -300,7 +307,7 @@
 }
 .word-row__kana {
     flex: 0 1 auto;
-    font-size: 12.5px;
+    font-size: 12px;
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
@@ -310,7 +317,7 @@
     flex: 1 1 auto;
     min-width: 0;
     color: var(--text-muted);
-    font-size: 13.5px;
+    font-size: 13px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -320,24 +327,38 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 13px;
+    font-size: 12px;
+    opacity: 0.85;
 }
 /* Нет ни клипа, ни колод — пустой блок не должен добавлять лишние отступы. */
 .word-row__badges:empty { display: none; }
+
+/* Кнопки строки: только там, где есть курсор, и только по hover/фокусу.
+   На тач-устройствах их нет вовсе — тап открывает карточку слова. */
+.word-row__hover {
+    flex: 0 0 auto;
+    display: none;
+    align-items: center;
+    gap: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+    .word-row__hover { display: flex; visibility: hidden; }
+    .word-row:hover .word-row__hover,
+    .word-row:focus-within .word-row__hover { visibility: visible; }
+}
 .word-row__more,
 .word-row__x {
-    flex: 0 0 auto;
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 15px;
     line-height: 1;
-    padding: 4px 6px;
+    padding: 3px 7px;
     color: var(--text-muted);
     border-radius: 8px;
 }
-.word-row__more:hover { color: var(--text); background: var(--surface); }
-.word-row__x { color: var(--danger); opacity: 0.45; }
+.word-row__more:hover { color: var(--text); background: var(--card); }
+.word-row__x { color: var(--danger); opacity: 0.55; }
 .word-row__x:hover { opacity: 1; }
 
 /* ---- Режим выбора ---- */
@@ -360,7 +381,10 @@
     background: var(--primary);
     border-color: var(--primary);
 }
-.word-row.is-selected,
+.word-row.is-selected {
+    background: rgba(124, 140, 248, 0.1);
+    box-shadow: inset 2px 0 0 var(--primary);
+}
 .word-card.is-selected {
     border-color: var(--primary);
     background: rgba(124, 140, 248, 0.08);
@@ -398,15 +422,46 @@
     flex-wrap: wrap;
     justify-content: center;
 }
+/* Счётчик выбранного — маленький бейдж вместо слова «Выбрано». */
 .words-bulkbar__count {
+    min-width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.16);
+    color: var(--primary-hover);
     font-size: 13px;
-    color: var(--text-muted);
+    font-weight: 600;
     white-space: nowrap;
-    padding: 0 4px;
 }
-.words-bulkbar .btn { padding: 8px 14px; font-size: 13px; }
+/* Кнопки панели — тихие, без капса: это рабочая мелочь, а не CTA. */
+.words-bulkbar__btn {
+    height: 34px;
+    padding: 0 13px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--font);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color var(--transition), background var(--transition);
+}
+.words-bulkbar__btn:hover:not(:disabled) { border-color: var(--primary); }
+.words-bulkbar__btn:disabled { opacity: 0.4; cursor: default; }
+.words-bulkbar__btn--primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #0a0a0f;
+    font-weight: 600;
+}
+.words-bulkbar__btn--primary:hover:not(:disabled) { border-color: var(--primary-hover); background: var(--primary-hover); }
 .words-bulkbar__danger { color: var(--danger); }
-.words-bulkbar__danger:hover { border-color: var(--danger); }
+.words-bulkbar__danger:hover:not(:disabled) { border-color: var(--danger); }
 .words-bulkbar__x {
     background: none;
     border: none;
@@ -770,6 +825,16 @@
     flex-shrink: 0;
 }
 
+/* Слева в подвале — «Удалить» и «В колоды» (словарь); справа — отмена/сохранить. */
+.word-modal__foot-left {
+    display: flex;
+    gap: 8px;
+    margin-right: auto;
+}
+.word-modal__foot-left:empty { display: none; }
+.word-modal__delete { color: var(--danger); }
+.word-modal__delete:hover { border-color: var(--danger); }
+
 @keyframes word-modal-fade {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -794,32 +859,24 @@
     .words-toolbar {
         gap: 8px;
         margin-bottom: 14px;
+        flex-wrap: nowrap;
     }
 
-    /* Поиск занимает всю строку целиком */
+    /* Всё в одну строку: поиск тянется, справа «Выбрать» и «⋯». */
     .words-filter {
-        flex-basis: 100%;
-        min-width: 0;
-    }
-
-    /* Инструменты — второй строкой на всю ширину; сортировка тянется.
-       На телефоне контролы компактнее (36px), чтобы ряд не выглядел грузно. */
-    .words-toolbar__controls {
-        width: 100%;
-    }
-    .words-filter input { height: 40px; }
-    .words-sort,
-    .words-toolbar__controls .btn {
-        height: 36px;
-        font-size: 12px;
-    }
-    .words-sort {
         flex: 1 1 auto;
         min-width: 0;
     }
+    .words-filter input { height: 38px; }
+    .words-filter svg { left: 12px; }
+    .words-filter input { padding-left: 36px; }
+    .words-toolbar__controls .btn {
+        height: 38px;
+        font-size: 11.5px;
+    }
     .words-toolbar__controls .words-tool {
-        width: 36px;
-        min-width: 36px;
+        width: 38px;
+        min-width: 38px;
         font-size: 16px;
     }
     #select-btn { padding: 0 12px; }
@@ -835,40 +892,33 @@
         gap: 5px;
         padding: 8px;
     }
-    .words-bulkbar .btn {
+    .words-bulkbar__btn {
         height: 32px;
-        padding: 0 10px;
-        font-size: 11.5px;
-        letter-spacing: 0.2px;
+        padding: 0 11px;
+        font-size: 12px;
     }
     .words-bulkbar__count {
-        font-size: 11.5px;
-        padding: 0 2px;
+        min-width: 24px;
+        height: 24px;
+        font-size: 12px;
     }
     .words-bulkbar__x {
         font-size: 18px;
         padding: 0 4px;
     }
 
-    /* Строки списка: слово+чтение и значки в первой строке, перевод — во второй. */
-    .word-row {
-        flex-wrap: wrap;
-        row-gap: 2px;
-    }
-    /* basis 0 — длинное слово ужимается (ellipsis), а не выталкивает ⋯/× на
-       отдельную строку. */
-    .word-row__jp { order: 1; flex: 1 1 0; }
-    .word-row__badges { order: 2; }
-    .word-row__more { order: 3; }
-    .word-row__x { order: 4; }
-    .word-row .word-check { order: 0; }
+    /* Подвал карточки слова: «Удалить»/«В колоды» не влезают в одну строку
+       с «Отмена»/«Сохранить» — переносим их на свою строку. */
+    .word-modal__foot { flex-wrap: wrap; }
+    .word-modal__foot-left { flex-basis: 100%; }
+
+    /* Строки списка: та же одна линия, но слово ужимается, перевод — справа.
+       basis 0 — длинное слово усекается, а не выталкивает перевод. */
+    .word-row { padding: 11px 13px; gap: 8px; }
+    .word-row__jp { flex: 1 1 0; }
     .word-row__tr {
-        order: 5;
-        flex-basis: 100%;
-        white-space: normal;
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        -webkit-box-orient: vertical;
+        flex: 0 1 auto;
+        text-align: right;
     }
 
     /* Одна колонка карточек — без минимальной шир, которая давала

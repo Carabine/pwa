@@ -49,18 +49,16 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input type="text" id="words-filter" autocomplete="off" data-i18n-placeholder="words.filter" placeholder="Поиск по слову или переводу…">
             </label>
-            <!-- Компактные инструменты: сортировка, вид (список/карточки), режим
-                 выбора и меню «⋯» (экспорт + известные слова). Логика — words.js. -->
+            <!-- Инструменты: режим выбора и меню «⋯» (сортировка, вид, экспорт,
+                 известные слова — всё низкочастотное убрано с глаз). Логика — words.js. -->
             <div class="words-toolbar__controls">
-                <select class="words-sort" id="words-sort" aria-label="Sort">
-                    <option value="new" data-i18n="words.sort.new">Сначала новые</option>
-                    <option value="old" data-i18n="words.sort.old">Сначала старые</option>
-                    <option value="az" data-i18n="words.sort.az">По алфавиту</option>
-                </select>
-                <button class="btn btn--ghost words-tool" id="view-toggle" aria-label="View"></button>
                 <button class="btn btn--ghost" id="select-btn" data-i18n="words.select">Выбрать</button>
                 <button class="btn btn--ghost words-tool" id="words-menu-btn" aria-label="More">⋯</button>
                 <div class="words-menu" id="words-menu" hidden>
+                    <div class="words-menu__group" id="menu-sort"></div>
+                    <hr class="words-menu__hr">
+                    <div class="words-menu__group" id="menu-view"></div>
+                    <hr class="words-menu__hr">
                     <button id="export-anki-btn" data-i18n="words.exportAnki" data-i18n-title="words.exportAnki.title" title="Готовая колода с аудио из ваших клипов">Экспорт в Anki</button>
                     <button id="export-btn" data-i18n="words.export" data-i18n-title="words.export.title" title="Простой текстовый файл — резервная копия">Экспорт (текст)</button>
                     <hr class="words-menu__hr">

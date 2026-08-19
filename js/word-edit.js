@@ -160,7 +160,10 @@
     // Редактирование карточки слова — модальным окном. onSaved зовём после
     // успешного сохранения (перерисовать список / карточку обучения). Правку
     // видео-фрагмента и звука монтируем внутрь: они сохраняются сами, отдельно.
-    function open(wordData, onSaved) {
+    // opts.onDelete / opts.onDecks (необязательные) добавляют в подвал кнопки
+    // «Удалить» и «В колоды» — у компактного списка словаря нет своих кнопок.
+    function open(wordData, onSaved, opts) {
+        opts = opts || {};
         const overlay = document.createElement('div');
         overlay.className = 'word-modal';
         overlay.innerHTML = `
@@ -171,7 +174,11 @@
                 </div>
                 <div class="word-modal__body"><div class="word-edit"></div></div>
                 <div class="word-modal__foot">
-                    <button class="btn btn--danger cancel-btn" type="button">${esc(t('words.cancel'))}</button>
+                    <span class="word-modal__foot-left">
+                        ${opts.onDelete ? `<button class="btn btn--ghost word-modal__delete delete-btn" type="button">${esc(t('words.bulkDelete'))}</button>` : ''}
+                        ${opts.onDecks ? `<button class="btn btn--ghost decks-btn" type="button">${esc(t('decks.add'))}</button>` : ''}
+                    </span>
+                    <button class="btn btn--ghost cancel-btn" type="button">${esc(t('words.cancel'))}</button>
                     <button class="btn btn--success save-btn" type="button">${esc(t('words.save'))}</button>
                 </div>
             </div>`;
@@ -198,6 +205,8 @@
         overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(); });
         overlay.querySelector('.word-modal__close').addEventListener('click', close);
         overlay.querySelector('.cancel-btn').addEventListener('click', close);
+        overlay.querySelector('.delete-btn')?.addEventListener('click', () => { close(); opts.onDelete(); });
+        overlay.querySelector('.decks-btn')?.addEventListener('click', () => opts.onDecks());
         overlay.querySelector('.save-btn').addEventListener('click', async () => {
             const patch = {
                 kanji: kanji.input.value,

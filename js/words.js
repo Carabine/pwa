@@ -119,6 +119,22 @@ async function removeWord(wordData) {
     renderWords();
 }
 
+// Удаление одного слова — всегда с подтверждением (раньше «×» удалял мгновенно).
+function confirmRemove(wordData) {
+    const name = wordData.kanji || wordData.kana || '';
+    if (!confirm(t('words.deleteConfirmOne').replace('{w}', name))) return;
+    removeWord(wordData);
+}
+
+// Открыть карточку слова: правка полей + «В колоды» и «Удалить» в самой модалке
+// (на телефоне у строк списка нет своих кнопок — всё здесь).
+function openWord(wordData) {
+    AnimeiWordEdit.open(wordData, renderWords, {
+        onDelete: () => confirmRemove(wordData),
+        onDecks: window.DecksUI ? () => DecksUI.openSheet(wordData) : null,
+    });
+}
+
 function toggleSelected(id) {
     if (selected.has(id)) selected.delete(id);
     else selected.add(id);
@@ -158,17 +174,17 @@ function buildCard(wordData) {
         return wordEl;
     }
 
-    wordEl.querySelector('.word-card__delete').addEventListener('click', () => removeWord(wordData));
-    wordEl.querySelector('.edit-btn').addEventListener('click', () => {
-        AnimeiWordEdit.open(wordData, renderWords);
-    });
+    wordEl.querySelector('.word-card__delete').addEventListener('click', () => confirmRemove(wordData));
+    wordEl.querySelector('.edit-btn').addEventListener('click', () => openWord(wordData));
 
     // Мини-чипы колод + кнопка «в колоды» на карточке.
     if (window.DecksUI) DecksUI.decorateCard(wordEl, wordData);
     return wordEl;
 }
 
-// Компактная строка списка: слово + чтение, перевод, значки, «⋯» и «×».
+// Компактная строка списка: одна линия «слово · чтение … перевод · значки».
+// Кнопки «⋯»/«×» есть только на устройствах с курсором и видны по hover;
+// на телефоне действия живут в карточке слова (тап) и режиме выбора (лонг-тап).
 function buildRow(wordData) {
     const row = document.createElement('div');
     row.className = 'word-row' + (selected.has(wordData.id) ? ' is-selected' : '');
@@ -185,9 +201,10 @@ function buildRow(wordData) {
         </div>
         <div class="word-row__tr">${esc(wordData.translation || '')}</div>
         <div class="word-row__badges">${clipBadgeHtml(wordData)}${deckEmojis}</div>
-        ${selectMode ? '' : `
+        ${selectMode ? '' : `<span class="word-row__hover">
             <button class="word-row__more" title="${esc(t('decks.add'))}" aria-label="${esc(t('decks.add'))}">⋯</button>
-            <button class="word-row__x" title="${esc(t('words.delete.title'))}" aria-label="${esc(t('words.delete.title'))}">×</button>`}
+            <button class="word-row__x" title="${esc(t('words.delete.title'))}" aria-label="${esc(t('words.delete.title'))}">×</button>
+        </span>`}
     `;
 
     if (selectMode) {
@@ -195,16 +212,57 @@ function buildRow(wordData) {
         return row;
     }
 
-    // Клик по строке — редактирование (там же полный текст примера и клип).
+    // Клик по строке — карточка слова (полный пример, клип, колоды, удаление).
     row.addEventListener('click', (e) => {
-        if (e.target.closest('.word-row__more, .word-row__x')) return;
-        AnimeiWordEdit.open(wordData, renderWords);
+        if (e.target.closest('.word-row__hover')) return;
+        openWord(wordData);
     });
     row.querySelector('.word-row__more').addEventListener('click', () => {
         if (window.DecksUI) DecksUI.openSheet(wordData);
     });
-    row.querySelector('.word-row__x').addEventListener('click', () => removeWord(wordData));
+    row.querySelector('.word-row__x').addEventListener('click', () => confirmRemove(wordData));
+    attachLongPress(row, wordData);
     return row;
+}
+
+// Долгое нажатие по строке (телефон) — вход в режим выбора с этой строкой.
+// После срабатывания список перерисовывается, поэтому «хвостовой» click гасим
+// глобальным флагом (capture на document — см. initLongPressGuard).
+let suppressNextClick = false;
+
+function initLongPressGuard() {
+    document.addEventListener('click', (e) => {
+        if (!suppressNextClick) return;
+        suppressNextClick = false;
+        e.stopPropagation();
+        e.preventDefault();
+    }, true);
+}
+
+function attachLongPress(row, wordData) {
+    let timer = null;
+    let startX = 0;
+    let startY = 0;
+    const cancel = () => { clearTimeout(timer); timer = null; };
+    row.addEventListener('pointerdown', (e) => {
+        if (selectMode || e.button) return;
+        startX = e.clientX; startY = e.clientY;
+        timer = setTimeout(() => {
+            timer = null;
+            suppressNextClick = true;
+            if (navigator.vibrate) navigator.vibrate(15);
+            enterSelect();
+            toggleSelected(wordData.id);
+        }, 450);
+    });
+    row.addEventListener('pointermove', (e) => {
+        // Палец поехал (скролл) — это не лонг-тап.
+        if (timer && Math.hypot(e.clientX - startX, e.clientY - startY) > 8) cancel();
+    });
+    row.addEventListener('pointerup', cancel);
+    row.addEventListener('pointercancel', cancel);
+    // Системное меню по долгому тапу мешает нашему выбору.
+    row.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
 function renderWords() {
@@ -237,7 +295,9 @@ function renderWords() {
 
     if (words.length === 0) {
         // Пустая колода — своя формулировка, а не «ничего не нашлось».
-        const msg = (deckActive && !wordsFilter) ? t('decks.empty') : t('words.nothingFound');
+        const msg = (deckActive && !wordsFilter)
+            ? t(deckActive === '__none__' ? 'decks.noneEmpty' : 'decks.empty')
+            : t('words.nothingFound');
         wordsListEl.innerHTML = `<p class="words-nothing">${msg}</p>`;
         if (window.DecksUI) DecksUI.refresh();
         renderBulkBar(words);
@@ -289,13 +349,15 @@ function renderBulkBar(visibleWords) {
     }
 
     const n = selected.size;
-    const deckActive = window.DecksUI ? DecksUI.activeDeckId() : null;
+    // «Из колоды» имеет смысл только для настоящей колоды (не для «Без колоды»).
+    const active = window.DecksUI ? DecksUI.activeDeckId() : null;
+    const deckActive = (active && window.Decks && Decks.get(active)) ? active : null;
     bar.innerHTML = `
-        <span class="words-bulkbar__count">${esc(t('words.selectedN').replace('{n}', n))}</span>
-        <button class="btn btn--ghost" id="bulk-all">${esc(t('words.selectAll'))}</button>
-        <button class="btn btn--success" id="bulk-deck" ${n ? '' : 'disabled'}>${esc(t('words.toDeck'))}</button>
-        ${deckActive ? `<button class="btn btn--ghost" id="bulk-undeck" ${n ? '' : 'disabled'}>${esc(t('words.fromDeck'))}</button>` : ''}
-        <button class="btn btn--ghost words-bulkbar__danger" id="bulk-delete" ${n ? '' : 'disabled'}>${esc(t('words.bulkDelete'))}</button>
+        <span class="words-bulkbar__count">${n}</span>
+        <button class="words-bulkbar__btn" id="bulk-all">${esc(t('words.selectAll'))}</button>
+        <button class="words-bulkbar__btn words-bulkbar__btn--primary" id="bulk-deck" ${n ? '' : 'disabled'}>${esc(t('words.toDeck'))}</button>
+        ${deckActive ? `<button class="words-bulkbar__btn" id="bulk-undeck" ${n ? '' : 'disabled'}>${esc(t('words.fromDeck'))}</button>` : ''}
+        <button class="words-bulkbar__btn words-bulkbar__danger" id="bulk-delete" ${n ? '' : 'disabled'}>${esc(t('words.bulkDelete'))}</button>
         <button class="words-bulkbar__x" id="bulk-cancel" title="${esc(t('words.cancel'))}">×</button>
     `;
 
@@ -344,6 +406,41 @@ function updateKnownMenuLabel() {
     const n = KnownWords.count();
     el.textContent = n ? String(n) : '';
     el.hidden = !n;
+}
+
+// Пункты-переключатели в меню «⋯»: сортировка и вид (список/карточки).
+// Низкочастотные настройки — им не место в тулбаре.
+function renderMenuChoices() {
+    const sortBox = document.getElementById('menu-sort');
+    const viewBox = document.getElementById('menu-view');
+    if (!sortBox || !viewBox) return;
+
+    const item = (label, on, fn) => {
+        const b = document.createElement('button');
+        b.className = 'words-menu__item' + (on ? ' is-on' : '');
+        b.innerHTML = `<span class="words-menu__tick">${on ? '✓' : ''}</span>${esc(label)}`;
+        b.addEventListener('click', fn);
+        return b;
+    };
+
+    sortBox.innerHTML = '';
+    for (const [v, k] of [['new', 'words.sort.new'], ['old', 'words.sort.old'], ['az', 'words.sort.az']]) {
+        sortBox.appendChild(item(t(k), sortMode === v, () => {
+            sortMode = v;
+            localStorage.setItem(SORT_KEY, v);
+            renderMenuChoices();
+            renderWords();
+        }));
+    }
+    viewBox.innerHTML = '';
+    for (const [v, k] of [['list', 'words.view.list'], ['cards', 'words.view.cards']]) {
+        viewBox.appendChild(item(t(k), viewMode === v, () => {
+            viewMode = v;
+            localStorage.setItem(VIEW_KEY, v);
+            renderMenuChoices();
+            renderWords();
+        }));
+    }
 }
 
 function initMenu() {
@@ -648,19 +745,6 @@ async function exportWords() {
     URL.revokeObjectURL(a.href);
 }
 
-// ---------- Переключатели тулбара ----------
-
-function applyViewToggle() {
-    const btn = document.getElementById('view-toggle');
-    if (!btn) return;
-    // Иконка показывает, КУДА переключимся (сейчас список → покажем сетку).
-    const toCards = viewMode === 'list';
-    btn.title = t(toCards ? 'words.view.cards' : 'words.view.list');
-    btn.innerHTML = toCards
-        ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>'
-        : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="0.5"/><circle cx="4" cy="12" r="0.5"/><circle cx="4" cy="18" r="0.5"/></svg>';
-}
-
 window.addEventListener('DOMContentLoaded', () => {
     // Слой колод (необязательный): чип-фильтр, кнопка «Учить», меню карточек.
     if (window.DecksUI) {
@@ -676,27 +760,14 @@ window.addEventListener('DOMContentLoaded', () => {
     loadWords();
 
     const filterInput = document.getElementById('words-filter');
+    // На узком экране длинный плейсхолдер обрезается посреди слова.
+    if (filterInput && window.matchMedia('(max-width: 560px)').matches) {
+        filterInput.placeholder = t('words.filterShort');
+        // Чтобы смена языка тоже подставляла короткий вариант.
+        filterInput.setAttribute('data-i18n-placeholder', 'words.filterShort');
+    }
     filterInput?.addEventListener('input', () => {
         wordsFilter = filterInput.value.trim().toLowerCase();
-        renderWords();
-    });
-
-    const sortSel = document.getElementById('words-sort');
-    if (sortSel) {
-        sortSel.value = sortMode;
-        sortSel.addEventListener('change', () => {
-            sortMode = sortSel.value;
-            localStorage.setItem(SORT_KEY, sortMode);
-            renderWords();
-        });
-    }
-
-    const viewBtn = document.getElementById('view-toggle');
-    applyViewToggle();
-    viewBtn?.addEventListener('click', () => {
-        viewMode = viewMode === 'list' ? 'cards' : 'list';
-        localStorage.setItem(VIEW_KEY, viewMode);
-        applyViewToggle();
         renderWords();
     });
 
@@ -705,7 +776,9 @@ window.addEventListener('DOMContentLoaded', () => {
         else enterSelect();
     });
 
+    initLongPressGuard();
     initMenu();
+    renderMenuChoices();
     document.getElementById('export-btn')?.addEventListener('click', exportWords);
     document.getElementById('export-anki-btn')?.addEventListener('click', exportAnki);
     document.getElementById('import-known-btn')?.addEventListener('click', openKnownImport);

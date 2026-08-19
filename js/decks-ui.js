@@ -37,10 +37,13 @@
 
         activeDeckId() { return this._activeId; },
 
-        // Проходит ли слово текущий фильтр по колоде.
+        // Проходит ли слово текущий фильтр по колоде. '__none__' — виртуальный
+        // фильтр «Без колоды»: слова, не попавшие ни в одну (удобно раскладывать).
         visible(word) {
             if (!this._activeId) return true;
-            return window.Decks ? Decks.has(this._activeId, word.id) : true;
+            if (!window.Decks) return true;
+            if (this._activeId === '__none__') return Decks.decksOf(word.id).length === 0;
+            return Decks.has(this._activeId, word.id);
         },
 
         // Сколько слов активной колоды реально есть в коллекции (мёртвые id не в счёт).
@@ -65,7 +68,8 @@
             const decks = Decks.all();
 
             // Активную колоду удалили извне — откатываемся на «Все».
-            if (this._activeId && !decks.some(d => d.id === this._activeId)) this._activeId = null;
+            if (this._activeId && this._activeId !== '__none__'
+                && !decks.some(d => d.id === this._activeId)) this._activeId = null;
 
             box.innerHTML = '';
 
@@ -91,6 +95,19 @@
                     `<span class="deck-chip__count">${d.wordIds.length}</span>`);
                 chip.addEventListener('click', () => this._setActive(active ? null : d.id));
                 scroll.appendChild(chip);
+            }
+
+            // «Без колоды» — сколько слов коллекции ещё не разложено.
+            const loose = (this._ctx.getWords() || [])
+                .filter(w => Decks.decksOf(w.id).length === 0).length;
+            if (loose > 0) {
+                const noneActive = this._activeId === '__none__';
+                const none = h('button', 'deck-chip' + (noneActive ? ' deck-chip--active' : ''),
+                    esc(t('decks.noDeck')) + `<span class="deck-chip__count">${loose}</span>`);
+                none.addEventListener('click', () => this._setActive(noneActive ? null : '__none__'));
+                scroll.appendChild(none);
+            } else if (this._activeId === '__none__') {
+                this._activeId = null;
             }
             box.appendChild(scroll);
 
