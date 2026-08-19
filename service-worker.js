@@ -27,7 +27,6 @@ const urlsToCache = [
     './js/i18n/en.js',
     './js/speech.js',
     './js/words.js',
-    './js/beginner-study.js',
     './js/login.js',
     './js/settings.js',
     './js/romaji.js',
@@ -61,8 +60,10 @@ const urlsToCache = [
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();
+    // Set — страховка от дубликата в списке: addAll с повторяющимся URL
+    // отвергается целиком, и установка SW молча падает (наступили 20.08).
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+        caches.open(CACHE_NAME).then((cache) => cache.addAll([...new Set(urlsToCache)]))
     );
 });
 
