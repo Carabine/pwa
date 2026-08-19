@@ -2720,6 +2720,11 @@ async function loadKnownWords() {
         for (const w of words) {
             if (w.kanji) state.knownWords.add(w.kanji);
         }
+        // Плюс импортированные «известные слова» (Anki/списки, known-store.js):
+        // подсвечиваются как знакомые и не предлагаются в колодах из серии.
+        if (window.KnownWords) {
+            for (const k of KnownWords.all()) state.knownWords.add(k);
+        }
         // Словарь мог прийти позже сабов — пересчитываем покрытие серии.
         updateCoverage();
     } catch { /* нет слов — просто без подсветки */ }

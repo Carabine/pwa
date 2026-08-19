@@ -166,6 +166,66 @@
             actions.appendChild(btn);
         },
 
+        // Публичная обёртка для words.js (компактный список зовёт sheet сам).
+        openSheet(word) { this._openSheet(word); },
+
+        // ---- Массовое добавление: выбранные слова → одна колода ---------------
+        // wordIds — id выбранных слов; onDone(added, deck) — после добавления.
+        openBulkSheet(wordIds, onDone) {
+            const ids = (wordIds || []).slice();
+            if (!ids.length) return;
+
+            const overlay = h('div', 'deck-sheet__overlay');
+            const sheet = h('div', 'deck-sheet');
+            const close = () => {
+                overlay.classList.remove('is-open');
+                document.removeEventListener('keydown', onEsc);
+                setTimeout(() => overlay.remove(), 180);
+            };
+            const onEsc = (e) => { if (e.key === 'Escape') close(); };
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+            document.addEventListener('keydown', onEsc);
+
+            const finishAdd = (deck) => {
+                const added = Decks.addMany(deck.id, ids);
+                snack(t('decks.addedN').replace('{n}', added));
+                close();
+                this.refresh();
+                if (onDone) onDone(added, deck);
+            };
+
+            const head = h('div', 'deck-sheet__head',
+                `<div><div class="deck-sheet__title">${esc(t('decks.sheetTitle'))}</div>` +
+                `<div class="deck-sheet__word">${esc(t('words.selectedN').replace('{n}', ids.length))}</div></div>`);
+            const x = h('button', 'deck-sheet__x', '×');
+            x.addEventListener('click', close);
+            head.appendChild(x);
+            sheet.appendChild(head);
+
+            const list = h('div', 'deck-sheet__list');
+            const decks = Decks.all();
+            if (!decks.length) list.appendChild(h('div', 'deck-sheet__empty', esc(t('decks.noneYet'))));
+            for (const d of decks) {
+                const row = h('button', 'deck-sheet__row',
+                    `<span class="deck-sheet__emoji">${d.emoji}</span>` +
+                    `<span class="deck-sheet__name">${esc(d.name)}</span>` +
+                    `<span class="deck-chip__count">${d.wordIds.length}</span>`);
+                row.addEventListener('click', () => finishAdd(d));
+                list.appendChild(row);
+            }
+
+            const create = h('button', 'deck-sheet__create', '＋ ' + esc(t('decks.create')));
+            create.addEventListener('click', () => {
+                this._openEditor({ mode: 'create', then: (deck) => { if (deck) finishAdd(deck); } });
+            });
+
+            sheet.appendChild(list);
+            sheet.appendChild(create);
+            overlay.appendChild(sheet);
+            document.body.appendChild(overlay);
+            requestAnimationFrame(() => overlay.classList.add('is-open'));
+        },
+
         // ---- Bottom sheet «Добавить в колоды» ---------------------------------
         _openSheet(word) {
             const overlay = h('div', 'deck-sheet__overlay');

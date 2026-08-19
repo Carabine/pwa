@@ -112,6 +112,33 @@
             return i === -1;
         },
 
+        // Массово добавить слова в колоду (дубли пропускаются).
+        // Возвращает, сколько слов действительно добавилось.
+        addMany(deckId, wordIds) {
+            const d = find(deckId);
+            if (!d) return 0;
+            let added = 0;
+            for (const id of wordIds || []) {
+                if (typeof id !== 'string' || d.wordIds.includes(id)) continue;
+                d.wordIds.push(id);
+                added++;
+            }
+            if (added) { d.updatedAt = Date.now(); save(); }
+            return added;
+        },
+
+        // Массово убрать слова из колоды. Возвращает, сколько убрано.
+        removeMany(deckId, wordIds) {
+            const d = find(deckId);
+            if (!d) return 0;
+            const drop = new Set(wordIds || []);
+            const before = d.wordIds.length;
+            d.wordIds = d.wordIds.filter((id) => !drop.has(id));
+            const removed = before - d.wordIds.length;
+            if (removed) { d.updatedAt = Date.now(); save(); }
+            return removed;
+        },
+
         // Все колоды, в которых состоит слово.
         decksOf(wordId) {
             return decks.filter(d => d.wordIds.includes(wordId)).map(clone);
