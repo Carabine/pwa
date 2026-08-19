@@ -2440,6 +2440,12 @@ html, body {
     padding: 16px;
 }
 
+/* display: flex выше перебивает UA-правило для [hidden] — без этого модалка
+   была видна (пустая) сразу при заходе на страницу. */
+.edeck-overlay[hidden] {
+    display: none;
+}
+
 .edeck {
     background: var(--card);
     border: 1px solid var(--border);
