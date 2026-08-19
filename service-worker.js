@@ -1,6 +1,6 @@
 // Пути относительные — SW живёт в /app/, поэтому './' указывает на /app/.
 // ВАЖНО: меняй номер версии при каждом деплое — иначе старый кеш не сбросится.
-const CACHE_NAME = 'animei-cache-v0.0.268';
+const CACHE_NAME = 'animei-cache-v0.0.269';
 const urlsToCache = [
     './',
     './index.html',
@@ -17,6 +17,18 @@ const urlsToCache = [
     './pages/player.html',
     './css/app.css',
     './css/watch.css',
+    './css/player.css',
+    './css/catalog.css',
+    './libs/axios/axios.min.js',
+    './libs/snackbar/snackbar.js',
+    './libs/hls/hls.min.js',
+    './js/i18n.js',
+    './js/i18n/uk.js',
+    './js/i18n/en.js',
+    './js/speech.js',
+    './js/words.js',
+    './js/beginner-study.js',
+    './js/login.js',
     './js/settings.js',
     './js/romaji.js',
     './js/settings-page.js',
@@ -30,7 +42,6 @@ const urlsToCache = [
     './js/deck-study.js',
     './js/player-ui.js',
     './js/episode-deck.js',
-    './data/jlpt-n5n4.json',
     './js/watch.js',
     './js/catalog.js',
     './js/anime-difficulty.js',
@@ -84,8 +95,11 @@ self.addEventListener('fetch', (event) => {
     // приложения (в инкогнито HTTP-кеша нет — там обновлялось сразу).
     // Навигационные запросы (mode 'navigate') пересоздавать нельзя — Request
     // конструктор для них бросает исключение, поэтому их не трогаем.
+    // Вендорные библиотеки (libs/) при деплое не меняются — им ревалидация не
+    // нужна, пусть отдаются из HTTP-кеша по Cache-Control от nginx.
     const sameOrigin = new URL(request.url).origin === self.location.origin;
-    const networkRequest = (sameOrigin && request.mode !== 'navigate')
+    const isVendorLib = url.pathname.includes('/libs/');
+    const networkRequest = (sameOrigin && !isVendorLib && request.mode !== 'navigate')
         ? new Request(request, { cache: 'no-cache' })
         : request;
 

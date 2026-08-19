@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.268';
+const APP_VERSION = 'v0.0.269';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -880,4 +880,27 @@ function renderAuthState() {
             window.location.reload();
         });
     }
+}
+
+// ---------- Ленивый hls.js ----------
+// hls.min.js весит 530 КБ и нужен только когда реально играем HLS-поток —
+// прямые mp4 (AnimeJoy/KAA) и сама загрузка страницы обходятся без него.
+// Скрипт подтягиваем один раз при первом обращении.
+let hlsLoadPromise = null;
+function loadHlsJs() {
+    if (typeof Hls !== 'undefined') return Promise.resolve();
+    if (!hlsLoadPromise) {
+        hlsLoadPromise = new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            const inPages = location.pathname.includes('/pages/');
+            s.src = (inPages ? '../' : './') + 'libs/hls/hls.min.js';
+            s.onload = () => resolve();
+            s.onerror = () => {
+                hlsLoadPromise = null; // дать шанс повторной попытке
+                reject(new Error('hls.js не загрузился'));
+            };
+            document.head.appendChild(s);
+        });
+    }
+    return hlsLoadPromise;
 }

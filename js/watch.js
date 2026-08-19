@@ -485,6 +485,12 @@ function loadHlsVideo(url) {
     currentHls = null;
   }
 
+  // hls.js подтягиваем лениво при первом HLS-адресе (см. loadHlsJs в app.js).
+  if (url.includes(".m3u8") && typeof Hls === "undefined") {
+    loadHlsVideoLazy(url);
+    return;
+  }
+
   if (url.includes(".m3u8") && typeof Hls !== "undefined" && Hls.isSupported()) {
     const hls = new Hls();
     hls.loadSource(url);
@@ -496,6 +502,12 @@ function loadHlsVideo(url) {
   } else {
     player.src = url;
   }
+}
+
+function loadHlsVideoLazy(url) {
+  loadHlsJs()
+    .then(() => loadHlsVideo(url))
+    .catch(() => { player.src = url; }); // нативный HLS (Safari) как запасной путь
 }
 
 // ========== LOADING OVERLAY ==========

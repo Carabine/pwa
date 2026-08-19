@@ -11,9 +11,27 @@
     <meta name="theme-color" content="#0a0a0f">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <link href="../css/app.css" rel="stylesheet">
     <link href="../css/catalog.css" rel="stylesheet">
+    <script>
+        // Пакет переводов uk/en грузим лениво и только для выбранного языка;
+        // русский встроен в i18n.js. Выбор зеркалит detectLang() из i18n.js.
+        (function () {
+            var langs = { ru: 1, uk: 1, en: 1 };
+            var lang = null;
+            try { lang = localStorage.getItem('animei:lang'); } catch (e) { /* приватный режим */ }
+            if (!langs[lang]) {
+                lang = 'ru';
+                var prefs = [navigator.language].concat(navigator.languages || []);
+                for (var i = 0; i < prefs.length; i++) {
+                    var c = String(prefs[i] || '').toLowerCase().split('-')[0];
+                    if (langs[c]) { lang = c; break; }
+                }
+            }
+            if (lang !== 'ru') document.write('<scr' + 'ipt src="../js/i18n/' + lang + '.js" defer></scr' + 'ipt>');
+        })();
+    </script>
 </head>
 <body>
 <div class="app">
@@ -74,14 +92,14 @@
     <div class="overlay" id="overlay"></div>
 </div>
 
-<script src="../libs/axios/axios.min.js"></script>
-<script src="../libs/snackbar/snackbar.js"></script>
-<script src="../js/settings.js"></script>
-<script src="../js/i18n.js"></script>
-<script src="../js/axiosClient.js"></script>
-<script src="../js/app.js"></script>
-<script src="../js/anime-difficulty.js"></script>
-<script src="../js/catalog.js"></script>
-<script src="../js/stats.js"></script>
+<script src="../libs/axios/axios.min.js" defer></script>
+<script src="../libs/snackbar/snackbar.js" defer></script>
+<script src="../js/settings.js" defer></script>
+<script src="../js/i18n.js" defer></script>
+<script src="../js/axiosClient.js" defer></script>
+<script src="../js/app.js" defer></script>
+<script src="../js/anime-difficulty.js" defer></script>
+<script src="../js/catalog.js" defer></script>
+<script src="../js/stats.js" defer></script>
 </body>
 </html>

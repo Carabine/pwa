@@ -978,6 +978,17 @@ function attachDirectVideo(url) {
 }
 
 function attachVideo(hlsUrl) {
+    // hls.js грузим лениво (см. loadHlsJs в app.js): страница плеера открывается
+    // без 530 КБ библиотеки, она подъезжает только когда реально нужен HLS.
+    if (typeof Hls === 'undefined') {
+        videoLoading.style.display = 'flex';
+        loadHlsJs().then(() => attachVideo(hlsUrl)).catch(() => {
+            videoLoading.classList.add('is-error');
+            videoLoading.textContent = t('player.videoError') + 'hls';
+        });
+        return;
+    }
+
     if (state.hls) {
         state.hls.destroy();
         state.hls = null;
