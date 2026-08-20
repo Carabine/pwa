@@ -368,7 +368,7 @@ function renderWords() {
         wordsListEl.innerHTML = `
             <div class="words-empty">
                 <p style="color: var(--text-muted)">${t('words.empty')}</p>
-                <a class="btn btn--success" href="./catalog.html">${t('words.openCatalog')}</a>
+                <a class="btn btn--primary" href="./catalog.html">${t('words.openCatalog')}</a>
             </div>`;
         renderBulkBar([]);
         return;
@@ -974,6 +974,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     loadWords();
+
+    // Синк колод с аккаунтом закончился (мог принести колоды с другого
+    // устройства) — перерисовываем чипы и карточки.
+    document.addEventListener('decks:changed', () => renderWords());
 
     const filterInput = document.getElementById('words-filter');
     // На узком экране длинный плейсхолдер обрезается посреди слова.

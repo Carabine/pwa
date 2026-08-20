@@ -2631,3 +2631,24 @@ html, body {
     .edeck__foot { padding: 8px 14px; }
     .edeck__create { padding: 9px; font-size: 13px; }
 }
+
+/* Скелетон транскрипта: пока ищем/грузим субтитры, под статусом мерцают
+   «строки реплик» — панель не выглядит пустой/сломанной. */
+.transcript__status.is-loading::after {
+    content: '';
+    display: block;
+    margin-top: 16px;
+    height: 120px;
+    border-radius: 10px;
+    background:
+        linear-gradient(90deg, transparent, rgba(255, 255, 255, .07), transparent) -60% 0 / 60% 100% no-repeat,
+        repeating-linear-gradient(180deg, rgba(255, 255, 255, .05) 0 18px, transparent 18px 34px);
+    animation: subs-skeleton 1.3s linear infinite;
+}
+@keyframes subs-skeleton {
+    from { background-position: -60% 0, 0 0; }
+    to   { background-position: 160% 0, 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .transcript__status.is-loading::after { animation: none; }
+}

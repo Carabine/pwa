@@ -130,3 +130,24 @@ async function deleteAudio(id) {
         });
     } catch { /* нечего удалять — и ладно */ }
 }
+
+// ---------- Фоновое докеширование медиа с сервера ----------
+// У вошедшего клипы/звук карточек живут на сервере. Чтобы повторение работало
+// без сети (метро/самолёт), при проигрывании тихо складываем копию в IndexedDB;
+// дальше карточка берёт её первой (см. study-core/words-store). kind: 'clip'|'audio'.
+const mediaCacheInFlight = new Set();
+
+async function cacheMediaFromUrl(kind, id, url) {
+    const key = kind + ':' + id;
+    if (!id || !url || mediaCacheInFlight.has(key)) return;
+    mediaCacheInFlight.add(key);
+    try {
+        const resp = await fetch(url);
+        if (!resp.ok) return;
+        const blob = await resp.blob();
+        if (!blob || !blob.size) return;
+        if (kind === 'clip') await putClip(id, blob);
+        else await putAudio(id, blob);
+    } catch { /* нет сети — докешируем в другой раз */ }
+    finally { mediaCacheInFlight.delete(key); }
+}

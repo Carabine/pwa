@@ -672,3 +672,23 @@
     color: var(--text);
     background: var(--surface);
 }
+
+/* Праздник рубежа серии занятий («7 дней подряд») — показывается один раз
+   на рубеж, поверх недельной полоски. Лёгкий вход + подпрыгивающий эмодзи. */
+.week-strip__milestone {
+    flex-basis: 100%;
+    margin-top: 8px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(124, 140, 248, .18), rgba(180, 188, 251, .10));
+    border: 1px solid rgba(124, 140, 248, .35);
+    color: var(--text);
+    font-size: 14px;
+    animation: milestone-in .5s cubic-bezier(.2, .9, .3, 1.3) both;
+}
+.week-strip__milestone b { color: var(--primary-hover, #b4bcfb); }
+@keyframes milestone-in {
+    from { opacity: 0; transform: translateY(6px) scale(.96); }
+    to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .week-strip__milestone { animation: none; } }

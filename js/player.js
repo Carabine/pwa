@@ -132,6 +132,17 @@ async function init() {
         return;
     }
 
+    // Пока грузятся дорожки/серии/видео — показываем постер тайтла вместо чёрного
+    // прямоугольника (он закеширован при переходе из каталога). Атрибут poster
+    // сам исчезает с первым кадром видео.
+    try {
+        const poster = localStorage.getItem('animei:poster:' + shikimoriId);
+        if (poster) video.poster = poster;
+    } catch { /* localStorage недоступен */ }
+    // Поэтапный статус загрузки: видно, что происходит, а не просто спиннер
+    // на 10 секунд (холодный тайтл резолвится по внешним источникам долго).
+    videoLoading.textContent = t('player.stageTracks');
+
     loadKnownWords();
     loadFranchise();   // параллельно: другие сезоны франшизы для дропдауна
 
@@ -386,6 +397,10 @@ async function loadMegaplayEpisodes(t, restoreSaved) {
 // восстанавливаем сами — по сбросу нумерации серий.
 async function loadEpisodes(media, restoreSaved) {
     episodeSelect.innerHTML = '<option>' + window.t('player.loading') + '</option>';
+    // Этап 2 поэтапного статуса (только пока оверлей ещё висит без ошибки).
+    if (!videoLoading.classList.contains('is-error')) {
+        videoLoading.textContent = t('player.stageEpisodes');
+    }
 
     try {
         const { data: res } = await client.get('catalog/episodes', { params: media });
@@ -961,6 +976,9 @@ function apiOrigin() {
 // так что перемотка работает. Файлы не faststart (moov в хвосте), поэтому до
 // первого кадра браузер делает лишний запрос к концу файла — это нормально.
 function attachDirectVideo(url) {
+    if (!videoLoading.classList.contains('is-error')) {
+        videoLoading.textContent = t('player.videoLoading');
+    }
     if (state.hls) {
         state.hls.destroy();
         state.hls = null;
@@ -978,6 +996,10 @@ function attachDirectVideo(url) {
 }
 
 function attachVideo(hlsUrl) {
+    // Этап 3 поэтапного статуса: дорожки и серии найдены, грузим сам поток.
+    if (!videoLoading.classList.contains('is-error')) {
+        videoLoading.textContent = t('player.videoLoading');
+    }
     // hls.js грузим лениво (см. loadHlsJs в app.js): страница плеера открывается
     // без 530 КБ библиотеки, она подъезжает только когда реально нужен HLS.
     if (typeof Hls === 'undefined') {
@@ -1228,6 +1250,7 @@ async function loadSubtitles(episodeNumber = 1) {
     renderTranscript();
     subsStatus.style.display = '';
     subsStatus.textContent = t('subs.searching');
+    subsStatus.classList.add('is-loading');   // шиммер-скелетон реплик (CSS)
     subsFixBtn.hidden = true;
 
     try {
@@ -1241,6 +1264,7 @@ async function loadSubtitles(episodeNumber = 1) {
 
         state.cues = cues;
         subsStatus.style.display = 'none';
+        subsStatus.classList.remove('is-loading');
         // Подобрали (или выбрали) файл — предлагаем сменить, если серия не та
         subsFixBtn.hidden = false;
 
@@ -1272,6 +1296,7 @@ async function loadSubtitles(episodeNumber = 1) {
         }
     } catch (err) {
         console.error(err);
+        subsStatus.classList.remove('is-loading');
         if (err.response?.status === 404) {
             // Сабов в архиве нет. Не тупик: можно смотреть без них или принести своё видео.
             subsStatus.textContent = '';

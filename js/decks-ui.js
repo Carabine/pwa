@@ -162,7 +162,9 @@
             if (!el) return;
             const show = Decks.all().length === 0 && localStorage.getItem(HINT_KEY) !== '1';
             el.hidden = !show;
-            if (show) el.textContent = t('decks.hint');
+            // У вошедшего колоды синхронизируются с аккаунтом, у гостя — локальные.
+            const signedIn = typeof isLoggedIn === 'function' && isLoggedIn();
+            if (show) el.textContent = t(signedIn ? 'decks.hintSynced' : 'decks.hint');
         },
 
         // ---- Украшаем карточку словаря: мини-чипы колод внизу карточки.

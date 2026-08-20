@@ -1306,7 +1306,19 @@
 
             const src = videoSrcOf(w);
             const expectsClip = !!src || Number(w.videoEnd) > Number(w.videoStart);
-            if (src) {
+            if (src && /^https?:\/\//.test(src) && w.id && typeof getClip === 'function') {
+                // Серверный клип: сначала офлайн-копия из IndexedDB (работает без
+                // сети), нет копии — играем с сервера и фоном докешируем.
+                const wid = w.id;
+                getClip(wid).then((blob) => {
+                    if (!current || current.word.id !== wid) return;
+                    if (!els.back.classList.contains('back-side--visible')) return;
+                    const playUrl = blob ? URL.createObjectURL(blob) : src;
+                    mediaSlot.insertBefore(makeClipVideo(playUrl, w), mediaSlot.firstChild);
+                    fitBackMedia();
+                    if (!blob && typeof cacheMediaFromUrl === 'function') cacheMediaFromUrl('clip', wid, src);
+                });
+            } else if (src) {
                 mediaSlot.appendChild(makeClipVideo(src, w));
             } else if (w.noClip) {
                 // Карточка курируемой колоды, для которой видео ещё не подобрали.
@@ -1643,6 +1655,19 @@
             graduated = 0;
             current = queue.shift() ?? null;
             render();
+
+            // Тихо докешировать клипы сегодняшней сессии в IndexedDB: если сеть
+            // пропадёт посреди повторения (метро), карточки продолжат играть.
+            // Только серверные ссылки; уже закешированные пропускаются внутри.
+            if (typeof cacheMediaFromUrl === 'function' && typeof getClip === 'function') {
+                const items = current ? [current, ...queue] : [...queue];
+                for (const it of items) {
+                    const w = it && it.word;
+                    const src = w && videoSrcOf(w);
+                    if (!w || !w.id || !src || !/^https?:\/\//.test(src)) continue;
+                    getClip(w.id).then((blob) => { if (!blob) cacheMediaFromUrl('clip', w.id, src); });
+                }
+            }
         }
 
         // ---- Keyboard shortcuts -------------------------------------------

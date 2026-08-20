@@ -126,10 +126,26 @@ async function saveWord(payload) {
 }
 
 // Получить все слова пользователя (серверная форма).
+// У вошедшего последний успешный список кешируется: без сети (метро/самолёт)
+// учёба и словарь работают по нему, а клипы — из IndexedDB (см. study-core).
+const WORDS_CACHE_KEY = 'animei:wordsCache';
+
 async function fetchWords() {
     if (isSignedIn()) {
-        const { data: res } = await client.get('words');
-        return res.data ?? [];
+        try {
+            const { data: res } = await client.get('words');
+            const words = res.data ?? [];
+            try { localStorage.setItem(WORDS_CACHE_KEY, JSON.stringify(words)); } catch { /* тесно в localStorage — не страшно */ }
+            return words;
+        } catch (err) {
+            let cached = null;
+            try { cached = JSON.parse(localStorage.getItem(WORDS_CACHE_KEY) || 'null'); } catch { cached = null; }
+            if (Array.isArray(cached)) {
+                console.warn('Слова с сервера не загрузились — работаем по локальной копии');
+                return cached;
+            }
+            throw err;
+        }
     }
     return getGuestWords();
 }
@@ -137,6 +153,9 @@ async function fetchWords() {
 async function deleteWord(id) {
     if (isSignedIn()) {
         await client.delete('words/' + id);
+        // Локальные офлайн-копии клипа/звука больше не нужны.
+        if (typeof deleteClip === 'function') deleteClip(id);
+        if (typeof deleteAudio === 'function') deleteAudio(id);
         return;
     }
     setGuestWords(getGuestWords().filter((w) => w.id !== id));
@@ -174,6 +193,8 @@ async function setWordAudio(word, blob) {
             headers: { 'Content-Type': undefined },
         });
         word.audio = (res && res.data && res.data.url) || '';
+        // Обновляем офлайн-копию — иначе из кеша играл бы старый звук.
+        if (typeof putAudio === 'function') putAudio(word.id, blob);
         return word.audio;
     }
     if (typeof putAudio === 'function' && await putAudio(word.id, blob)) {
@@ -187,13 +208,23 @@ async function clearWordAudio(word) {
         try { await client.delete(`words/${word.id}/audio`); }
         catch (err) { console.warn('Не удалось удалить звук:', err); }
         word.audio = '';
+        if (typeof deleteAudio === 'function') await deleteAudio(word.id);
         return;
     }
     if (typeof deleteAudio === 'function') await deleteAudio(word.id);
 }
 
 async function getWordAudioUrl(word) {
-    if (word && word.audio) return word.audio;
+    if (word && word.audio) {
+        // Сначала офлайн-копия из IndexedDB; сети нет — звук всё равно играет.
+        // Нет копии — отдаём серверный URL и фоном докешируем.
+        if (word.id && typeof getAudio === 'function') {
+            const blob = await getAudio(word.id);
+            if (blob) return URL.createObjectURL(blob);
+            if (typeof cacheMediaFromUrl === 'function') cacheMediaFromUrl('audio', word.id, word.audio);
+        }
+        return word.audio;
+    }
     if (word && word.id && typeof getAudioUrl === 'function') return await getAudioUrl(word.id);
     return '';
 }

@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.269';
+const APP_VERSION = 'v0.0.270';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -844,6 +844,21 @@ function renderWeekActivity() {
             ? '<span class="week-strip__streak">🔥 ' + escHtml(tStreak(streak)) + '</span>'
             : '');
     el.hidden = false;
+
+    // Праздник рубежа серии: 3/7/14/30/50/100 дней подряд. Показываем один раз
+    // на рубеж (последний отмеченный — в localStorage), с маленькой анимацией.
+    const MILESTONES = [100, 50, 30, 14, 7, 3];
+    let celebrated = 0;
+    try { celebrated = Number(localStorage.getItem('animei:streakMilestone')) || 0; } catch { /* нет localStorage */ }
+    const hit = MILESTONES.find((m) => streak >= m && m > celebrated);
+    if (hit && typeof tStreak === 'function') {
+        try { localStorage.setItem('animei:streakMilestone', String(hit)); } catch { /* ок */ }
+        const banner = document.createElement('div');
+        banner.className = 'week-strip__milestone';
+        banner.innerHTML = '🎉 <b>' + escHtml(tStreak(hit)) + '</b> — ' + escHtml(t('week.milestone'));
+        el.appendChild(banner);
+        if (window.animeiTrack) window.animeiTrack('streak_milestone', String(hit));
+    }
 }
 
 function renderAuthState() {

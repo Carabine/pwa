@@ -55,6 +55,123 @@
     function find(id) { return decks.find(d => d.id === id) || null; }
     function clone(d) { return d ? { ...d, wordIds: d.wordIds.slice() } : null; }
 
+    // ---------- Синк с аккаунтом ----------
+    // У вошедшего колоды зеркалятся на сервер (PUT/DELETE по клиентскому id).
+    // Очереди в localStorage переживают офлайн: dirty — колоды с неотправленными
+    // правками, deleted — неотправленные удаления, synced — id, про которые
+    // известно, что они есть на сервере (отличаем «новую локальную» колоду от
+    // «удалённой на другом устройстве»). Гость живёт полностью локально.
+    const DIRTY_KEY = 'animei:decksDirty';
+    const DELETED_KEY = 'animei:decksDeleted';
+    const SYNCED_KEY = 'animei:decksSynced';
+
+    function signedIn() { return typeof isLoggedIn === 'function' && isLoggedIn(); }
+    function idSet(key) {
+        try { return new Set(JSON.parse(localStorage.getItem(key) || '[]')); } catch { return new Set(); }
+    }
+    function saveIdSet(key, set) {
+        try { localStorage.setItem(key, JSON.stringify([...set])); } catch { /* тесно — не страшно */ }
+    }
+
+    let pushTimer = null;
+    function markDirty(id) {
+        if (!signedIn() || !id) return;
+        const s = idSet(DIRTY_KEY); s.add(id); saveIdSet(DIRTY_KEY, s);
+        clearTimeout(pushTimer);
+        pushTimer = setTimeout(flushQueues, 800);   // батчим серию кликов
+    }
+
+    function queueDelete(id) {
+        if (!signedIn() || !id) return;
+        const del = idSet(DELETED_KEY); del.add(id); saveIdSet(DELETED_KEY, del);
+        const dirty = idSet(DIRTY_KEY); dirty.delete(id); saveIdSet(DIRTY_KEY, dirty);
+        clearTimeout(pushTimer);
+        pushTimer = setTimeout(flushQueues, 800);
+    }
+
+    // Отправить очереди на сервер. Ошибки глотаем: офлайн-правки доедут при
+    // следующей загрузке страницы (очереди лежат в localStorage).
+    async function flushQueues() {
+        if (!signedIn() || typeof client === 'undefined') return;
+        const deleted = idSet(DELETED_KEY);
+        for (const id of deleted) {
+            try {
+                await client.delete('decks/' + encodeURIComponent(id));
+                deleted.delete(id); saveIdSet(DELETED_KEY, deleted);
+                const synced = idSet(SYNCED_KEY); synced.delete(id); saveIdSet(SYNCED_KEY, synced);
+            } catch { /* сеть — повторим позже */ }
+        }
+        const dirty = idSet(DIRTY_KEY);
+        for (const id of dirty) {
+            const d = find(id);
+            if (!d) { dirty.delete(id); saveIdSet(DIRTY_KEY, dirty); continue; }
+            try {
+                await client.put('decks/' + encodeURIComponent(id), {
+                    name: d.name, emoji: d.emoji, wordIds: d.wordIds, createdAt: d.createdAt,
+                });
+                dirty.delete(id); saveIdSet(DIRTY_KEY, dirty);
+                const synced = idSet(SYNCED_KEY); synced.add(id); saveIdSet(SYNCED_KEY, synced);
+            } catch { /* сеть — повторим позже */ }
+        }
+    }
+
+    let syncInFlight = null;
+    function syncWithServer() {
+        if (!signedIn() || typeof client === 'undefined') return Promise.resolve();
+        if (!syncInFlight) syncInFlight = runSync().finally(() => { syncInFlight = null; });
+        return syncInFlight;
+    }
+
+    async function runSync() {
+        await flushQueues();               // сначала свои недоехавшие правки
+        let server;
+        try {
+            const { data: res } = await client.get('decks');
+            server = Array.isArray(res.data) ? res.data : [];
+        } catch { return; }                // офлайн — живём по локальной копии
+        const dirty = idSet(DIRTY_KEY);    // недоехавшая правка локально главнее
+        const synced = idSet(SYNCED_KEY);
+        const serverById = new Map(server.map((d) => [d.id, d]));
+        let changed = false;
+
+        // Сервер → локально: новые колоды и чужие правки (кроме dirty).
+        for (const sd of server) {
+            synced.add(sd.id);
+            if (dirty.has(sd.id)) continue;
+            const incoming = {
+                id: sd.id,
+                name: normalizeName(sd.name) || 'Deck',
+                emoji: EMOJIS.includes(sd.emoji) ? sd.emoji : EMOJIS[0],
+                wordIds: [...new Set((sd.wordIds || []).filter((x) => typeof x === 'string'))],
+                createdAt: Number(sd.createdAt) || Date.now(),
+                updatedAt: Number(sd.updatedAt) || Date.now(),
+            };
+            const local = find(sd.id);
+            if (!local) { decks.push(incoming); changed = true; }
+            else if (JSON.stringify(local) !== JSON.stringify(incoming)) {
+                Object.assign(local, incoming); changed = true;
+            }
+        }
+
+        // Локальные без серверной копии: раньше на сервере была → удалена на
+        // другом устройстве (убираем и у себя); не была → новая, отправляем.
+        for (const d of [...decks]) {
+            if (serverById.has(d.id)) continue;
+            if (synced.has(d.id)) {
+                decks = decks.filter((x) => x.id !== d.id);
+                synced.delete(d.id);
+                changed = true;
+            } else {
+                markDirty(d.id);
+            }
+        }
+        saveIdSet(SYNCED_KEY, synced);
+        if (changed) {
+            save();
+            document.dispatchEvent(new CustomEvent('decks:changed'));
+        }
+    }
+
     const Decks = {
         EMOJIS,
 
@@ -75,24 +192,25 @@
             };
             decks.push(deck);
             save();
+            markDirty(deck.id);
             return clone(deck);
         },
 
         rename(id, name) {
             const d = find(id);
             const n = normalizeName(name);
-            if (d && n) { d.name = n; d.updatedAt = Date.now(); save(); }
+            if (d && n) { d.name = n; d.updatedAt = Date.now(); save(); markDirty(id); }
         },
 
         setEmoji(id, emoji) {
             const d = find(id);
-            if (d && EMOJIS.includes(emoji)) { d.emoji = emoji; d.updatedAt = Date.now(); save(); }
+            if (d && EMOJIS.includes(emoji)) { d.emoji = emoji; d.updatedAt = Date.now(); save(); markDirty(id); }
         },
 
         remove(id) {
             const before = decks.length;
             decks = decks.filter(d => d.id !== id);
-            if (decks.length !== before) save();
+            if (decks.length !== before) { save(); queueDelete(id); }
         },
 
         has(deckId, wordId) {
@@ -109,6 +227,7 @@
             else d.wordIds.splice(i, 1);
             d.updatedAt = Date.now();
             save();
+            markDirty(deckId);
             return i === -1;
         },
 
@@ -123,7 +242,7 @@
                 d.wordIds.push(id);
                 added++;
             }
-            if (added) { d.updatedAt = Date.now(); save(); }
+            if (added) { d.updatedAt = Date.now(); save(); markDirty(deckId); }
             return added;
         },
 
@@ -135,7 +254,7 @@
             const before = d.wordIds.length;
             d.wordIds = d.wordIds.filter((id) => !drop.has(id));
             const removed = before - d.wordIds.length;
-            if (removed) { d.updatedAt = Date.now(); save(); }
+            if (removed) { d.updatedAt = Date.now(); save(); markDirty(deckId); }
             return removed;
         },
 
@@ -149,7 +268,7 @@
             let changed = false;
             for (const d of decks) {
                 const i = d.wordIds.indexOf(wordId);
-                if (i !== -1) { d.wordIds.splice(i, 1); changed = true; }
+                if (i !== -1) { d.wordIds.splice(i, 1); changed = true; markDirty(d.id); }
             }
             if (changed) save();
         },
@@ -161,7 +280,7 @@
             let changed = false;
             for (const d of decks) {
                 const kept = d.wordIds.filter(id => valid.has(id));
-                if (kept.length !== d.wordIds.length) { d.wordIds = kept; changed = true; }
+                if (kept.length !== d.wordIds.length) { d.wordIds = kept; changed = true; markDirty(d.id); }
             }
             if (changed) save();
         },
@@ -172,15 +291,25 @@
             if (!mapping) return;
             let changed = false;
             for (const d of decks) {
+                const before = d.wordIds.join('|');
                 d.wordIds = d.wordIds.map(id => {
                     if (mapping[id] && mapping[id] !== id) { changed = true; return mapping[id]; }
                     return id;
                 });
                 d.wordIds = [...new Set(d.wordIds)];
+                if (d.wordIds.join('|') !== before) markDirty(d.id);
             }
             if (changed) save();
         },
+
+        // Синк с аккаунтом (см. блок выше). Возвращает промис; можно await'ить
+        // перед рендером, а можно подписаться на событие 'decks:changed'.
+        sync: syncWithServer,
     };
 
     window.Decks = Decks;
+
+    // Автосинк вошедшего при каждой загрузке страницы: подтягиваем колоды с
+    // других устройств и допушиваем офлайн-правки. Тихо, сеть не обязательна.
+    if (signedIn()) setTimeout(syncWithServer, 0);
 })();
