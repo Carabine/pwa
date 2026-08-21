@@ -1065,6 +1065,14 @@ html, body {
 
 .subs-precise-hint[hidden] { display: none; }
 
+/* «Попробовать другой файл субтитров» — появляется, когда точный подбор
+   говорит, что содержание файла не совпадает с речью серии. */
+.subs-alt-btn {
+    width: 100%;
+    margin-top: 8px;
+}
+.subs-alt-btn[hidden] { display: none; }
+
 /* Явный лоадер точной синхронизации */
 .subs-precise-loading {
     display: flex;

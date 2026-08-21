@@ -1274,6 +1274,14 @@ function setSubsSkeleton(on) {
 }
 
 async function loadSubtitles(episodeNumber = 1) {
+    // Исключённые файлы (клик «попробовать другой») живут в рамках одной серии.
+    if (state.subsExcludedEp !== episodeNumber) {
+        state.subsExcluded = [];
+        state.subsExcludedEp = episodeNumber;
+    }
+    state.subsFile = '';
+    const altBtn = document.getElementById('subs-alt-file');
+    if (altBtn) altBtn.hidden = true;
     state.cues = [];
     state.activeCueIndex = -1;
     setFollowCue(true);           // новая серия — снова едем за репликой
@@ -1290,12 +1298,18 @@ async function loadSubtitles(episodeNumber = 1) {
         // Субтитры подбираются автоматически по названию и номеру серии (ручного
         // выбора файла нет — он путал сдвиг: у разных файлов свои тайминги).
         const { data: res } = await client.get('subtitles/episode', {
-            params: { title: titleRomaji, episode: episodeNumber, translate: subsLang() },
+            params: {
+                title: titleRomaji, episode: episodeNumber, translate: subsLang(),
+                // Уже не подошедшие файлы — сервер подберёт следующий кандидат.
+                ...(state.subsExcluded && state.subsExcluded.length
+                    ? { exclude: JSON.stringify(state.subsExcluded) } : {}),
+            },
             timeout: 180000,
         });
         const cues = res.data.cues;
 
         state.cues = cues;
+        state.subsFile = res.data.file || '';
         subsStatus.style.display = 'none';
         setSubsSkeleton(false);
         // Подобрали (или выбрали) файл — предлагаем сменить, если серия не та
@@ -1596,7 +1610,15 @@ async function preciseSyncSubs() {
             setTimeout(closeSubsPicker, 900);
         } else {
             setPreciseLoading(false);
-            if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.fail');
+            // Почти нет совпадений по содержанию (votes≤2) — это не «сдвиг не
+            // нашёлся», а скорее ФАЙЛ от другой серии: говорим об этом прямо и
+            // предлагаем взять следующий кандидат из архива.
+            const wrongFile = r.reason === 'no-match' && (r.votes || 0) <= 2 && !!state.subsFile;
+            if (subsPreciseStatus) {
+                subsPreciseStatus.textContent = t(wrongFile ? 'subs.wrongFile' : 'subs.precise.fail');
+            }
+            const altBtn = document.getElementById('subs-alt-file');
+            if (altBtn && wrongFile) altBtn.hidden = false;
         }
     } catch {
         setPreciseLoading(false);
@@ -2884,6 +2906,37 @@ function closeSubsPicker() {
 
 subsFixBtn.addEventListener('click', openSubsPicker);
 if (subsPreciseBtn) subsPreciseBtn.addEventListener('click', preciseSyncSubs);
+
+// «Попробовать другой файл субтитров»: текущий файл в исключения, сдвиг этой
+// серии сбрасываем (он относился к прежнему файлу) и подбираем заново.
+async function tryOtherSubsFile() {
+    const altBtn = document.getElementById('subs-alt-file');
+    if (!state.subsFile || !altBtn || altBtn.disabled) return;
+    altBtn.disabled = true;
+    const prev = state.subsFile;
+    state.subsExcluded.push(prev);
+    localStorage.removeItem(offsetStorageKey());
+    localStorage.removeItem(offsetStorageKey() + ':m');
+    state.offset = 0;
+    state.autoSyncKey = null;   // автосинк заново для нового файла
+    const ep = state.episodes[parseInt(episodeSelect.value, 10)];
+    const epNum = ep && ep.number != null ? ep.number : 1;
+    try {
+        await loadSubtitles(epNum);
+        if (!state.cues.length) {
+            // Другого файла в архиве нет — возвращаем прежний, чтобы не остаться без сабов.
+            state.subsExcluded = state.subsExcluded.filter((n) => n !== prev);
+            showSnackbar(t('subs.noOther'), { duration: 3500 });
+            await loadSubtitles(epNum);
+        } else {
+            showSnackbar(t('subs.otherLoaded'), { duration: 3000 });
+            state.syncPromise = maybeAutoSync();
+        }
+    } finally {
+        altBtn.disabled = false;
+    }
+}
+document.getElementById('subs-alt-file')?.addEventListener('click', tryOtherSubsFile);
 document.getElementById('subs-picker-close').addEventListener('click', closeSubsPicker);
 document.querySelectorAll('.subs-manual__btn').forEach((btn) => {
     btn.addEventListener('click', () => nudgeOffset(parseFloat(btn.dataset.delta)));
