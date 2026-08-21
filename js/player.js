@@ -188,12 +188,14 @@ async function init() {
         }
 
         renderTranslations();
-        // По умолчанию — источник с сабами на языке интерфейса (EN → AllAnime англ.,
-        // иначе → рус. дорожка Kodik). Если такого нет — первый в списке.
         // По умолчанию — субтитры на языке интерфейса, если они есть у тайтла;
         // иначе первый доступный вариант (обычно английский, реже «оригинал»).
+        // Русские сабы бывают и ВШИТЫМИ (Kodik: lang=null + burned='ru') — для
+        // RU/UK-интерфейса это тоже «русские», без этого дефолт съезжал на
+        // английские у тайтлов, где у KickAssAnime нет своей русской дорожки.
         const wantSub = getLang() === 'en' ? 'en' : 'ru';
-        let pref = state.subOptions.findIndex((o) => o.lang === wantSub);
+        let pref = state.subOptions.findIndex((o) =>
+            o.lang === wantSub || (wantSub === 'ru' && o.burned === 'ru'));
         if (pref < 0) pref = 0;
         await selectTranslation(pref);
     } catch (err) {
@@ -1233,6 +1235,44 @@ function switchQuality(key) {
 
 // ---------- Субтитры ----------
 
+// Скелетон транскрипта: пока ищем/грузим субтитры, под статусом — «призрачные
+// реплики» (тайм-код + японская строка из «слов» + строка перевода) с волной
+// прозрачности. Ширины фиксированы, чтобы картинка не прыгала между сериями.
+// renderTranscript() скелетон не трогает (чистит только .cue) — убираем сами.
+const SKEL_ROWS = [
+    [[38, 24, 15], 55],
+    [[28, 33], 40],
+    [[45, 18, 12], 62],
+    [[22, 30], 35],
+    [[40, 26], 48],
+];
+
+function setSubsSkeleton(on) {
+    let el = document.getElementById('subs-skel');
+    if (!on) { if (el) el.remove(); return; }
+    if (el) return;
+    el = document.createElement('div');
+    el.id = 'subs-skel';
+    el.setAttribute('aria-hidden', 'true');
+    for (const [jpWidths, ruWidth] of SKEL_ROWS) {
+        const row = document.createElement('div');
+        row.className = 'subs-skel__row';
+        row.appendChild(document.createElement('i')).className = 'subs-skel__time';
+        for (const w of jpWidths) {
+            const bar = document.createElement('i');
+            bar.className = 'subs-skel__jp';
+            bar.style.width = w + '%';
+            row.appendChild(bar);
+        }
+        const ru = document.createElement('i');
+        ru.className = 'subs-skel__ru';
+        ru.style.width = ruWidth + '%';
+        row.appendChild(ru);
+        el.appendChild(row);
+    }
+    subsStatus.after(el);
+}
+
 async function loadSubtitles(episodeNumber = 1) {
     state.cues = [];
     state.activeCueIndex = -1;
@@ -1243,7 +1283,7 @@ async function loadSubtitles(episodeNumber = 1) {
     renderTranscript();
     subsStatus.style.display = '';
     subsStatus.textContent = t('subs.searching');
-    subsStatus.classList.add('is-loading');   // шиммер-скелетон реплик (CSS)
+    setSubsSkeleton(true);
     subsFixBtn.hidden = true;
 
     try {
@@ -1257,7 +1297,7 @@ async function loadSubtitles(episodeNumber = 1) {
 
         state.cues = cues;
         subsStatus.style.display = 'none';
-        subsStatus.classList.remove('is-loading');
+        setSubsSkeleton(false);
         // Подобрали (или выбрали) файл — предлагаем сменить, если серия не та
         subsFixBtn.hidden = false;
 
@@ -1289,7 +1329,7 @@ async function loadSubtitles(episodeNumber = 1) {
         }
     } catch (err) {
         console.error(err);
-        subsStatus.classList.remove('is-loading');
+        setSubsSkeleton(false);
         if (err.response?.status === 404) {
             // Сабов в архиве нет. Не тупик: можно смотреть без них или принести своё видео.
             subsStatus.textContent = '';

@@ -2632,23 +2632,52 @@ html, body {
     .edeck__create { padding: 9px; font-size: 13px; }
 }
 
-/* Скелетон транскрипта: пока ищем/грузим субтитры, под статусом мерцают
-   «строки реплик» — панель не выглядит пустой/сломанной. */
-.transcript__status.is-loading::after {
-    content: '';
+/* Скелетон транскрипта — «призрачные реплики»: тайм-код + японская строка из
+   «слов» + строка перевода, волна прозрачности сверху вниз. Строки вставляет
+   player.js (setSubsSkeleton), ширины плашек задаются инлайном. */
+.subs-skel__row {
+    padding: 10px 16px;
+    animation: subs-skel-pulse 1.6s ease-in-out infinite;
+}
+
+.subs-skel__row:nth-child(2) { animation-delay: 0.18s; }
+.subs-skel__row:nth-child(3) { animation-delay: 0.36s; }
+.subs-skel__row:nth-child(4) { animation-delay: 0.54s; }
+.subs-skel__row:nth-child(5) { animation-delay: 0.72s; }
+
+.subs-skel__row i {
+    display: inline-block;
+    height: 10px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, .07);
+    margin-right: 6px;
+}
+
+.subs-skel__row .subs-skel__time {
     display: block;
-    margin-top: 16px;
-    height: 120px;
-    border-radius: 10px;
-    background:
-        linear-gradient(90deg, transparent, rgba(255, 255, 255, .07), transparent) -60% 0 / 60% 100% no-repeat,
-        repeating-linear-gradient(180deg, rgba(255, 255, 255, .05) 0 18px, transparent 18px 34px);
-    animation: subs-skeleton 1.3s linear infinite;
+    width: 30px;
+    height: 8px;
+    margin-bottom: 7px;
+    opacity: .6;
 }
-@keyframes subs-skeleton {
-    from { background-position: -60% 0, 0 0; }
-    to   { background-position: 160% 0, 0 0; }
+
+.subs-skel__row .subs-skel__jp {
+    height: 14px;
+    background: rgba(255, 255, 255, .10);
 }
+
+.subs-skel__row .subs-skel__ru {
+    display: block;
+    height: 9px;
+    margin-top: 7px;
+    opacity: .75;
+}
+
+@keyframes subs-skel-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .45; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .transcript__status.is-loading::after { animation: none; }
+    .subs-skel__row { animation: none; }
 }
