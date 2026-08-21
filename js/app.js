@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.270';
+const APP_VERSION = 'v0.0.271';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -522,9 +522,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Профиль: показываем «Войти» гостю и почту + «Выйти» вошедшему.
     renderAuthState();
 
-    // На главной — «Продолжить просмотр», план дня и живой счётчик учёбы на
-    // карточке «Учёба». Блок «Слова из последнего просмотра» убран по просьбе.
+    // На главной — «Продолжить просмотр», компактная строка «Слова из последнего
+    // просмотра» (полная карточка с чекбоксами убрана по просьбе в v0.0.231),
+    // план дня и живой счётчик учёбы на карточке «Учёба».
     renderContinueCard();
+    renderSessionCard();
     renderDailyPlan();
     renderWeekActivity();
     // На iOS beforeinstallprompt не бывает — там строку показывает уже этот
@@ -590,10 +592,11 @@ function renderContinueCard() {
     });
 }
 
-// Слова прошлой сессии просмотра (пишет плеер в animei:lastSession): «сохранил
-// N слов — выбери, что учить». Выбранные уходят в начало сегодняшних новых
-// (srs:pickedFirst), остальные остаются в «Моих словах». Карточка показывается,
-// пока сессию не обработали (или не нажали «Позже»).
+// Слова прошлой сессии просмотра (пишет плеер в animei:lastSession) — компактная
+// строка «Слова из последнего просмотра · Тайтл → N». Тап уводит все слова в
+// начало сегодняшних новых (srs:pickedFirst) и открывает учёбу; выбор по одному
+// остаётся в панели конца серии в плеере. Полную карточку с чекбоксами с
+// главной убирали в v0.0.231 — не возвращать.
 function renderSessionCard() {
     const el = document.getElementById('session-card');
     if (!el) return;
@@ -601,39 +604,22 @@ function renderSessionCard() {
     try { s = JSON.parse(localStorage.getItem('animei:lastSession') || 'null'); } catch { /* битый JSON */ }
     if (!s || s.processed || !Array.isArray(s.words) || !s.words.length) return;
 
+    const preview = s.words.slice(0, 3).map((w) => w.kanji).join('、')
+        + (s.words.length > 3 ? '…' : '');
+
     el.innerHTML =
-        '<div class="session-card__title"></div>' +
-        '<div class="session-card__hint"></div>' +
-        '<div class="session-card__list"></div>' +
-        '<div class="session-card__actions">' +
-        '<button class="btn btn--primary session-card__study"></button>' +
-        '<button class="btn session-card__later"></button>' +
-        '</div>';
+        '<div class="session-card__info">' +
+        '<span class="session-card__label"></span>' +
+        '<span class="session-card__line"></span>' +
+        '<span class="session-card__meta"></span>' +
+        '</div>' +
+        '<span class="session-card__go"></span>' +
+        '<button class="session-card__close" type="button" aria-label="Close">×</button>';
 
-    el.querySelector('.session-card__title').textContent =
-        t('session.title') + ': ' + s.words.length + ' · ' + s.title;
-    el.querySelector('.session-card__hint').textContent = t('session.pick');
-
-    const list = el.querySelector('.session-card__list');
-    s.words.forEach((w, i) => {
-        const row = document.createElement('label');
-        row.className = 'session-word';
-        row.innerHTML = '<input type="checkbox"><span class="session-word__kanji"></span><span class="session-word__tr"></span>';
-        row.querySelector('input').checked = i < 5;
-        row.querySelector('input').dataset.id = w.id;
-        row.querySelector('.session-word__kanji').textContent = w.kanji + (w.kana ? ' · ' + w.kana : '');
-        row.querySelector('.session-word__tr').textContent = w.translation || '';
-        list.appendChild(row);
-    });
-
-    const studyBtn = el.querySelector('.session-card__study');
-    const updateBtn = () => {
-        const n = list.querySelectorAll('input:checked').length;
-        studyBtn.textContent = t('session.study') + (n ? ' (' + n + ')' : '');
-        studyBtn.disabled = !n;
-    };
-    list.addEventListener('change', updateBtn);
-    updateBtn();
+    el.querySelector('.session-card__label').textContent = t('session.title');
+    el.querySelector('.session-card__line').textContent = s.title;
+    el.querySelector('.session-card__meta').textContent = preview;
+    el.querySelector('.session-card__go').textContent = s.words.length;
 
     const markProcessed = () => {
         try {
@@ -642,21 +628,20 @@ function renderSessionCard() {
         } catch { /* недоступен */ }
     };
 
-    studyBtn.addEventListener('click', () => {
-        const ids = [...list.querySelectorAll('input:checked')].map((c) => c.dataset.id);
+    el.addEventListener('click', () => {
         try {
             const picked = JSON.parse(localStorage.getItem('srs:pickedFirst') || '[]');
-            for (const id of ids) if (!picked.includes(id)) picked.push(id);
+            for (const w of s.words) if (!picked.includes(w.id)) picked.push(w.id);
             localStorage.setItem('srs:pickedFirst', JSON.stringify(picked));
         } catch { /* недоступен */ }
         markProcessed();
-        if (window.animeiTrack) window.animeiTrack('session_card', 'home_pick:' + ids.length);
-        window.location.href = './pages/study.html';
+        if (window.animeiTrack) window.animeiTrack('session_card', 'home_compact:' + s.words.length);
     });
 
-    const laterBtn = el.querySelector('.session-card__later');
-    laterBtn.textContent = t('session.later');
-    laterBtn.addEventListener('click', () => {
+    // Крестик = «Позже»: сессия помечается обработанной, слова остаются в «Моих словах».
+    el.querySelector('.session-card__close').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         markProcessed();
         el.hidden = true;
         if (window.animeiTrack) window.animeiTrack('session_card', 'home_later');

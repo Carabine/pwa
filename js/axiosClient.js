@@ -8,6 +8,7 @@ const accessTokenKey = 'animei:accessToken';
 
 let failedQueue = [];
 let isRefreshing = false;
+let lastSnackbar = { msg: '', at: 0 };
 
 function processQueue(error) {
     failedQueue.forEach((prom) => {
@@ -39,11 +40,17 @@ function createAxiosClient({ options, getCurrentAccessToken, getCurrentRefreshTo
     client.interceptors.response.use(
         (response) => response,
         async (error) => {
-            if (error.response?.status !== 401 && error.response?.status < 400) {
-                showSnackbar(error?.response?.data?.message ?? 'An unexpected error occurred', {
-                    duration: 4000,
-                    type: 'error'
-                });
+            // Снекбар — для HTTP-ошибок кроме 401 (тот уходит в refresh-логику ниже).
+            // Сетевые ошибки без ответа не показываем: офлайн-режим и фоновые
+            // опросы иначе спамили бы. Повторы одного сообщения глушим на 5 с.
+            const status = error.response?.status;
+            if (status && status !== 401) {
+                const msg = error?.response?.data?.message ?? 'An unexpected error occurred';
+                const now = Date.now();
+                if (msg !== lastSnackbar.msg || now - lastSnackbar.at > 5000) {
+                    lastSnackbar = { msg, at: now };
+                    showSnackbar(msg, { duration: 4000, type: 'error' });
+                }
             }
 
             const originalRequest = error.config;
