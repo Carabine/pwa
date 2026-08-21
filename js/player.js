@@ -132,13 +132,6 @@ async function init() {
         return;
     }
 
-    // Пока грузятся дорожки/серии/видео — показываем постер тайтла вместо чёрного
-    // прямоугольника (он закеширован при переходе из каталога). Атрибут poster
-    // сам исчезает с первым кадром видео.
-    try {
-        const poster = localStorage.getItem('animei:poster:' + shikimoriId);
-        if (poster) video.poster = poster;
-    } catch { /* localStorage недоступен */ }
     // Поэтапный статус загрузки: видно, что происходит, а не просто спиннер
     // на 10 секунд (холодный тайтл резолвится по внешним источникам долго).
     videoLoading.textContent = t('player.stageTracks');
