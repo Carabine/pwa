@@ -1303,14 +1303,14 @@ async function loadSubtitles(episodeNumber = 1) {
 
         // Разовая миграция: сдвиги, сохранённые ПРЕЖНИМИ (ошибочными) версиями
         // автосинка, могут быть неверны — чистим все один раз, чтобы автосинк
-        // пересчитал их свежим, исправленным методом (alass, который корректно
-        // находит и большие сдвиги от обрезки интро). Ручной правки сдвига в UI нет,
-        // поэтому любое сохранённое значение — от автосинка, стирать безопасно.
-        if (localStorage.getItem('animei:subsOffsetReset') !== '5') {
+        // пересчитал их свежим, исправленным методом. Бамп «6» (21.08): до
+        // v0.0.275 ключ/язык считались от чужой дорожки, а «Part 2»-тайтлы
+        // получали чужие файлы субтитров — сохранённые сдвиги той эпохи мусорные.
+        if (localStorage.getItem('animei:subsOffsetReset') !== '6') {
             Object.keys(localStorage)
                 .filter((k) => k.startsWith('animei:subsOffset:'))
                 .forEach((k) => localStorage.removeItem(k));
-            localStorage.setItem('animei:subsOffsetReset', '5');
+            localStorage.setItem('animei:subsOffsetReset', '6');
         }
         state.offset = parseFloat(localStorage.getItem(offsetStorageKey())) || 0;
         updateOffsetLabel();
