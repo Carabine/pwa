@@ -1345,13 +1345,24 @@ async function loadSubtitles(episodeNumber = 1) {
     }
 }
 
+// Дорожка, РЕАЛЬНО выбранная в селекте. Селект теперь показывает subOptions
+// (язык субтитров; источник лежит в opt.track), а не translations — но три
+// места индексировали translations значением селекта и получали ЧУЖУЮ дорожку:
+// у автосинка и точного подбора ломались язык аудио для Whisper (дубляж вместо
+// японской озвучки → «не удалось» всегда), ключ сдвига и консенсус серий.
+function selectedTrack() {
+    const i = parseInt(translationSelect.value, 10);
+    if (state.subOptions.length) return (state.subOptions[i] || state.subOptions[0]).track || {};
+    return state.translations[i] || {};   // фолбэк: старый рендер по источникам
+}
+
 function offsetStorageKey() {
     // Сдвиг субтитров зависит от ТАЙМИНГА ИСТОЧНИКА: у разных дорожек (русский
     // дубляж Kodik, оригинальная озвучка MegaPlay) своё смещение относительно
     // одних и тех же субтитров. Раньше ключ был только по серии — и сдвиг,
     // подобранный под дубляж, ошибочно применялся к оригиналу (субтитры «уезжали»).
     // Теперь ключ включает выбранный перевод и номер серии.
-    const tr = state.translations[parseInt(translationSelect.value, 10)] || {};
+    const tr = selectedTrack();
     const ep = state.episodes[parseInt(episodeSelect.value, 10)];
     const epNum = ep && ep.number != null ? ep.number : episodeSelect.value;
     const src = tr.id || tr.provider || 'k';
@@ -1445,7 +1456,7 @@ async function maybeAutoSync() {
 
     // Ключ дорожки-сериала — для консенсуса сдвига по сериям (у одной дорожки
     // обрезка интро одинакова, выброс одной серии правится по «соседям»).
-    const trSel = state.translations[parseInt(translationSelect.value, 10)] || {};
+    const trSel = selectedTrack();
     const seriesKey = shikimoriId + ':' + (trSel.id || trSel.provider || 'k') + ':s' + state.seasonIndex;
 
     // Тексты реплик на языке ЗВУКА — для фоновой Whisper-верификации по содержанию.
@@ -1550,7 +1561,7 @@ async function preciseSyncSubs() {
         .slice(0, 300);
     const cueStarts = inWin.map((c) => c.start);
     if (cueStarts.length < 5) return;
-    const trSel = state.translations[parseInt(translationSelect.value, 10)] || {};
+    const trSel = selectedTrack();
     const audioLang = trackAudioLang(trSel);
     const cueTexts = inWin.map((c) => (audioLang === 'ja' ? (c.text || '') : (c.translation || c.text || '')));
     const seriesKey = shikimoriId + ':' + (trSel.id || trSel.provider || 'k') + ':s' + state.seasonIndex;
