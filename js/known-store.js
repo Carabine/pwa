@@ -65,10 +65,10 @@
     }
 
     // ---------- Чтение .apkg (zip-архив колоды Anki) ----------
-    // Достаём из архива ТОЛЬКО базу коллекции (collection.anki21/anki2, обычно
-    // пара мегабайт) — медиа не читаем и на сервер не грузим. Новый формат
-    // collection.anki21b (zstd) в браузере не распаковать — кидаем 'modern',
-    // UI просит переэкспорт с галкой «Support older Anki versions».
+    // Достаём из архива ТОЛЬКО базу коллекции (обычно пара мегабайт) — медиа не
+    // читаем и на сервер не грузим. Легаси-формат (collection.anki21/anki2) —
+    // готовый SQLite; новый (collection.anki21b) — SQLite, сжатый zstd, его
+    // распаковывает сервер (zlib.zstdDecompressSync), магию он различает сам.
     async function extractCollection(file) {
         const buf = new Uint8Array(await file.arrayBuffer());
         const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
@@ -98,11 +98,11 @@
             off += 46 + nameLen + extraLen + commentLen;
         }
 
-        // В новых экспортах рядом с anki21b лежит anki2-заглушка «обновите Anki» —
-        // поэтому сначала anki21, а на anki2 падаем только когда anki21b нет.
-        const entry = entries['collection.anki21']
-            || (!entries['collection.anki21b'] && entries['collection.anki2']) || null;
-        if (!entry) throw new Error(entries['collection.anki21b'] ? 'modern' : 'not a zip');
+        // Порядок: легаси anki21 → новый anki21b (zstd) → anki2. anki2 последним:
+        // в новых экспортах это заглушка «обновите Anki», а не реальные данные.
+        const entry = entries['collection.anki21'] || entries['collection.anki21b']
+            || entries['collection.anki2'] || null;
+        if (!entry) throw new Error('not a zip');
 
         // Данные лежат после локального заголовка (длины полей там свои).
         const nameLen = view.getUint16(entry.lho + 26, true);

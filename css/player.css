@@ -589,9 +589,13 @@ html, body {
     text-decoration-color: transparent;
 }
 
-/* Уже в словаре — сплошная зелёная черта, пунктир убираем */
+/* Уже в словаре — тусклая зелёная черта, пунктир убираем. border-radius: 0
+   перебивает скругление базового .tok — иначе inset-тень (черта) шла с
+   закруглёнными краями. color-mix глушит цвет темы; rgba — запасной вариант. */
 .tok--known {
-    box-shadow: inset 0 -2px 0 var(--success);
+    border-radius: 0;
+    box-shadow: inset 0 -2px 0 rgba(16, 185, 129, 0.35);
+    box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--success) 35%, transparent);
     text-decoration-color: transparent;
 }
 
