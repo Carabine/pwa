@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.277';
+const APP_VERSION = 'v0.0.278';
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -592,11 +592,12 @@ function renderContinueCard() {
     });
 }
 
-// Слова прошлой сессии просмотра (пишет плеер в animei:lastSession) — компактная
-// строка «Слова из последнего просмотра · Тайтл → N». Тап уводит все слова в
-// начало сегодняшних новых (srs:pickedFirst) и открывает учёбу; выбор по одному
-// остаётся в панели конца серии в плеере. Полную карточку с чекбоксами с
-// главной убирали в v0.0.231 — не возвращать.
+// Слова прошлой сессии просмотра (пишет плеер в animei:lastSession) — тихий
+// чип-таблетка «Слова из серии: N · Повторить». Не карточка: в ленте хаба уже
+// две плашки в рамках («Продолжить просмотр» и план дня), третья читалась как
+// стопка одинаковых блоков. Тап уводит все слова сессии в начало сегодняшних
+// новых (srs:pickedFirst) и открывает учёбу; выбор по одному остаётся в панели
+// конца серии в плеере. Полную карточку с чекбоксами убирали в v0.0.231.
 function renderSessionCard() {
     const el = document.getElementById('session-card');
     if (!el) return;
@@ -604,22 +605,17 @@ function renderSessionCard() {
     try { s = JSON.parse(localStorage.getItem('animei:lastSession') || 'null'); } catch { /* битый JSON */ }
     if (!s || s.processed || !Array.isArray(s.words) || !s.words.length) return;
 
-    const preview = s.words.slice(0, 3).map((w) => w.kanji).join('、')
-        + (s.words.length > 3 ? '…' : '');
-
     el.innerHTML =
-        '<div class="session-card__info">' +
-        '<span class="session-card__label"></span>' +
-        '<span class="session-card__line"></span>' +
-        '<span class="session-card__meta"></span>' +
-        '</div>' +
+        '<span class="session-card__chip">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>' +
+        '<span class="session-card__txt"></span>' +
         '<span class="session-card__go"></span>' +
-        '<button class="session-card__close" type="button" aria-label="Close">×</button>';
+        '<button class="session-card__close" type="button" aria-label="Close">×</button>' +
+        '</span>';
 
-    el.querySelector('.session-card__label').textContent = t('session.title');
-    el.querySelector('.session-card__line').textContent = s.title;
-    el.querySelector('.session-card__meta').textContent = preview;
-    el.querySelector('.session-card__go').textContent = s.words.length;
+    el.querySelector('.session-card__txt').textContent =
+        t('session.chip').replace('{n}', s.words.length);
+    el.querySelector('.session-card__go').textContent = t('session.repeat');
 
     const markProcessed = () => {
         try {

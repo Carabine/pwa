@@ -34,6 +34,8 @@ window.I18N_UK = {
         'session.study': 'Вчити вибрані',
         'session.later': 'Пізніше',
         'session.next': 'Наступна серія',
+        'session.chip': 'Слова із серії: {n}',
+        'session.repeat': 'Повторити',
         'beginner.choose': 'З чого почнемо?',
         'beginner.core': 'Сцени з аніме',
         'beginner.core.sub': 'Картки з відео — репліки культових сцен',

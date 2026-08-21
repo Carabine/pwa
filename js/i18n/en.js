@@ -34,6 +34,8 @@ window.I18N_EN = {
         'session.study': 'Study selected',
         'session.later': 'Later',
         'session.next': 'Next episode',
+        'session.chip': 'Words from the episode: {n}',
+        'session.repeat': 'Review',
         'beginner.choose': 'Where do we start?',
         'beginner.core': 'Anime scenes',
         'beginner.core.sub': 'Video cards — lines from iconic scenes',

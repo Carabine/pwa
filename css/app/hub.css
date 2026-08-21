@@ -156,77 +156,78 @@
     flex-shrink: 0;
 }
 
-/* Слова прошлой сессии просмотра — компактная строка «тайтл + N слов → учёба».
-   Полную карточку с чекбоксами убрали с главной в v0.0.231. */
+/* Слова прошлой сессии просмотра — тихий чип-таблетка «Слова из серии: N ·
+   Повторить». Намеренно НЕ карточка: в ленте хаба уже есть «Продолжить
+   просмотр» и план дня в рамках, третья плашка читалась как стопка одинаковых
+   блоков. Сама ссылка держит ширину ленты (иначе центрирование .hub на
+   десктопе выбрасывало бы чип за край), пилюля живёт внутри слева. */
 .session-card {
-    position: relative; /* якорь для крестика-закрытия */
     display: flex;
-    align-items: center;
-    gap: 14px;
     width: 100%;
     max-width: 400px;
-    padding: 12px 16px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
     text-decoration: none;
-    transition: all 0.25s ease;
 }
 
-.session-card:hover {
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.18);
+.session-card__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    padding: 7px 8px 7px 14px;
+    border-radius: 999px;
+    background: rgba(52, 211, 153, 0.10);
+    border: 1px solid rgba(52, 211, 153, 0.28);
     color: var(--text);
-}
-
-.session-card__info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.session-card__label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    color: var(--success);
-}
-
-.session-card__line {
-    font-size: 15px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.session-card__meta {
     font-size: 13px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.2;
+    transition: background 0.2s ease;
 }
 
-/* Кружок со счётчиком слов — визуальный CTA, как play у continue-card */
-.session-card__go {
-    margin-left: auto;
-    margin-right: 14px; /* место под крестик */
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(52, 211, 153, 0.15);
+.session-card:hover .session-card__chip {
+    background: rgba(52, 211, 153, 0.16);
+}
+
+.session-card__chip > svg {
     color: var(--success);
-    font-size: 15px;
-    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.session-card__txt {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.session-card__go {
+    color: var(--success);
+    font-weight: 600;
+    padding-left: 8px;
+    border-left: 1px solid rgba(52, 211, 153, 0.28);
+    flex-shrink: 0;
+}
+
+/* «Позже» — внутри пилюли, а не абсолютным углом (как у continue-card):
+   у чипа нет площади, куда его повесить, не задев текст. */
+.session-card__close {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 50%;
+    padding: 0;
+}
+
+.session-card__close:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.07);
 }
 
 .hub-card__label {
@@ -686,7 +687,6 @@
 
 
 /* Крестик: убрать «Продолжить просмотр» с главной (позиция в плеере остаётся) */
-.session-card__close,
 .continue-card__close {
     position: absolute;
     top: 2px;
@@ -705,7 +705,6 @@
     border-radius: 50%;
 }
 
-.session-card__close:hover,
 .continue-card__close:hover {
     color: var(--text);
     background: var(--surface);
