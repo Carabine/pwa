@@ -494,7 +494,9 @@
     margin-bottom: 10px;
 }
 .known-modal__paste:focus { outline: none; border-color: var(--primary); }
-/* Галка «Только изученные» после чтения .apkg */
+/* Галка «Только изученные» после чтения .apkg. До загрузки колоды строка
+   скрыта атрибутом hidden — display:flex класса сильнее UA-правила, прячем явно. */
+.known-modal__learned[hidden] { display: none; }
 .known-modal__learned {
     display: flex;
     align-items: center;
