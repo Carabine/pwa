@@ -152,7 +152,7 @@ window.I18N_EN = {
         'edeck.label': 'Cards',
         'edeck.btn': 'Auto-deck',
         'edeck.btn.title': 'Build a deck from easy (N5–N4) words of this episode',
-        'edeck.title': 'Episode deck',
+        'edeck.title': 'Auto-deck',
         'edeck.sub': 'Easy words (N5–N4) from this episode. Uncheck the ones you don’t need.',
         'edeck.selectAll': 'Select all',
         'edeck.selected': '{n} of {m} selected',

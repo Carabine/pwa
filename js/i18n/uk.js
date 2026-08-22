@@ -152,7 +152,7 @@ window.I18N_UK = {
         'edeck.label': 'Картки',
         'edeck.btn': 'Авто-колода',
         'edeck.btn.title': 'Зібрати колоду з простих (N5–N4) слів цієї серії',
-        'edeck.title': 'Колода з серії',
+        'edeck.title': 'Авто-колода',
         'edeck.sub': 'Прості слова (N5–N4) з цієї серії. Зніми галочки з непотрібних.',
         'edeck.selectAll': 'Вибрати всі',
         'edeck.selected': 'вибрано {n} з {m}',
