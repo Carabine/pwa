@@ -54,6 +54,13 @@ const transcriptList = document.getElementById('transcript-list');
 const subsStatus = document.getElementById('subs-status');
 const jumpBtn = document.getElementById('transcript-jump');
 const subsFixBtn = document.getElementById('subs-fix');
+// Кнопка «Не совпадают?» живёт в блоке настроек — прячем/показываем группу
+// целиком, иначе от неё остаётся висячая подпись «Синхронизация».
+const subsFixGroup = document.getElementById('subs-fix-group');
+function setSubsFixVisible(v) {
+    subsFixBtn.hidden = !v;
+    if (subsFixGroup) subsFixGroup.hidden = !v;
+}
 const subsPreciseBtn = document.getElementById('subs-precise');
 const subsPreciseStatus = document.getElementById('subs-precise-status');
 
@@ -1292,7 +1299,7 @@ async function loadSubtitles(episodeNumber = 1) {
     subsStatus.style.display = '';
     subsStatus.textContent = t('subs.searching');
     setSubsSkeleton(true);
-    subsFixBtn.hidden = true;
+    setSubsFixVisible(false);
 
     try {
         // Субтитры подбираются автоматически по названию и номеру серии (ручного
@@ -1313,7 +1320,7 @@ async function loadSubtitles(episodeNumber = 1) {
         subsStatus.style.display = 'none';
         setSubsSkeleton(false);
         // Подобрали (или выбрали) файл — предлагаем сменить, если серия не та
-        subsFixBtn.hidden = false;
+        setSubsFixVisible(true);
 
         // Разовая миграция: сдвиги, сохранённые ПРЕЖНИМИ (ошибочными) версиями
         // автосинка, могут быть неверны — чистим все один раз, чтобы автосинк
@@ -2989,6 +2996,29 @@ controlsToggle.addEventListener('click', () => {
     setControlsCollapsed(!playerMain.classList.contains('controls-collapsed'));
 });
 // По умолчанию настройки видны (в т.ч. на телефоне); свернуть можно кнопкой
+
+// ---------- Горячие клавиши под значком «i» ----------
+// Постоянная строка подсказок нужна только первое время, поэтому по умолчанию
+// она свёрнута, а выбор пользователя запоминаем.
+
+const hotkeysToggle = document.getElementById('hotkeys-toggle');
+const hotkeysHint = document.getElementById('hotkeys-hint');
+
+if (hotkeysToggle && hotkeysHint) {
+    const setHotkeysOpen = (open) => {
+        hotkeysHint.hidden = !open;
+        hotkeysToggle.setAttribute('aria-expanded', String(open));
+        hotkeysToggle.classList.toggle('is-open', open);
+    };
+    let open = false;
+    try { open = localStorage.getItem('animei:hotkeysOpen') === '1'; } catch { /* недоступен */ }
+    setHotkeysOpen(open);
+    hotkeysToggle.addEventListener('click', () => {
+        open = hotkeysHint.hidden;
+        setHotkeysOpen(open);
+        try { localStorage.setItem('animei:hotkeysOpen', open ? '1' : '0'); } catch { /* недоступен */ }
+    });
+}
 
 // ---------- Телефон: табы «Субтитры / Настройки» ----------
 // На узком экране субтитры и настройки не стекаются друг под другом, а

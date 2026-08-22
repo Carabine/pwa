@@ -127,6 +127,8 @@ window.I18N_EN = {
         'controls.showVideo': 'Show video',
         'controls.hideVideo.title': 'Hide the picture, keep audio and subtitles — listening practice',
         'player.videoHidden': 'Video hidden — audio keeps playing',
+        'hotkeys.title': 'Keyboard shortcuts',
+        'controls.sync': 'Sync',
         'hotkeys.space': 'pause',
         'hotkeys.a': 'replay line',
         'player.coverage': 'You know {p}% of the words in this episode ({k} of {n})',

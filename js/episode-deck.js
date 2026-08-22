@@ -31,7 +31,6 @@
     ]);
 
     const btn = document.getElementById('episode-deck-btn');
-    const group = document.getElementById('episode-deck-group');
     const overlay = document.getElementById('edeck-overlay');
     if (!btn || !overlay) return;
 
@@ -63,8 +62,8 @@
     setInterval(() => {
         // state — глобальная const из player.js (мы подключены после него).
         const has = !!(state.cues && state.cues.length);
-        if ((group || btn).hidden === !has) return;
-        (group || btn).hidden = !has;
+        if (btn.hidden === !has) return;
+        btn.hidden = !has;
     }, 1000);
 
     // ---------- Отбор кандидатов ----------

@@ -127,6 +127,8 @@ window.I18N_UK = {
         'controls.showVideo': 'Показати відео',
         'controls.hideVideo.title': 'Сховати картинку, лишити звук і субтитри — тренування на слух',
         'player.videoHidden': 'Відео сховано — звук грає',
+        'hotkeys.title': 'Гарячі клавіші',
+        'controls.sync': 'Синхронізація',
         'hotkeys.space': 'пауза',
         'hotkeys.a': 'повторити репліку',
         'player.coverage': 'Ти знаєш {p}% слів цієї серії ({k} з {n})',

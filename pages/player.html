@@ -154,26 +154,36 @@
                         </div>
                     </div>
                 </div>
-                <!-- Колода из серии: здесь, а не в шапке субтитров — там кнопка
-                     наезжала на «📖 N%» и выталкивала «Не совпадают?» за край, а на
-                     телефоне была не видна (по умолчанию открыта вкладка настроек). -->
-                <div class="control-group" id="episode-deck-group" hidden>
-                    <label data-i18n="edeck.label">Карточки</label>
+                <!-- «Не совпадают?» — здесь, а не в шапке субтитров: в настройках
+                     кнопке хватает места на полную подпись, а шапку списка занимает
+                     «Колода из серии». Группу целиком показывает player.js. -->
+                <div class="control-group" id="subs-fix-group" hidden>
+                    <label data-i18n="controls.sync">Синхронизация</label>
                     <div class="offset-buttons">
-                        <button id="episode-deck-btn" class="chip-btn chip-btn--accent" type="button"
-                                data-i18n="edeck.btn" data-i18n-title="edeck.btn.title"
-                                title="Собрать колоду из простых (N5–N4) слов этой серии">🎴 Колода из серии</button>
+                        <button id="subs-fix" class="chip-btn" type="button"
+                                data-i18n="subs.wrong" data-i18n-title="subs.wrong.title"
+                                title="Субтитры не совпадают со звуком? Синхронизировать точно">Не совпадают?</button>
                     </div>
                 </div>
             </div>
 
-            <div class="hotkeys-hint">
-                <span><b>Space</b> <span data-i18n="hotkeys.space">пауза</span></span>
-                <span><b>A</b> <span data-i18n="hotkeys.a">повторить реплику</span></span>
-                <span><b>S</b> <span data-i18n="hotkeys.s">авто-пауза</span></span>
-                <span><b>D</b> <span data-i18n="hotkeys.d">следующая</span></span>
-                <span><b>F</b> <span data-i18n="hotkeys.f">весь экран</span></span>
-                <span><b data-i18n="hotkeys.click">клик по слову</b> <span data-i18n="hotkeys.dict">словарь</span></span>
+            <!-- Горячие клавиши: по умолчанию свёрнуты под значок «i» — постоянная
+                 строка подсказок мешает тем, кто их уже выучил. Состояние помнится. -->
+            <div class="hotkeys">
+                <button class="hotkeys__toggle" id="hotkeys-toggle" type="button"
+                        aria-expanded="false" aria-controls="hotkeys-hint"
+                        data-i18n-title="hotkeys.title" title="Горячие клавиши">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                    <span data-i18n="hotkeys.title">Горячие клавиши</span>
+                </button>
+                <div class="hotkeys-hint" id="hotkeys-hint" hidden>
+                    <span><b>Space</b> <span data-i18n="hotkeys.space">пауза</span></span>
+                    <span><b>A</b> <span data-i18n="hotkeys.a">повторить реплику</span></span>
+                    <span><b>S</b> <span data-i18n="hotkeys.s">авто-пауза</span></span>
+                    <span><b>D</b> <span data-i18n="hotkeys.d">следующая</span></span>
+                    <span><b>F</b> <span data-i18n="hotkeys.f">весь экран</span></span>
+                    <span><b data-i18n="hotkeys.click">клик по слову</b> <span data-i18n="hotkeys.dict">словарь</span></span>
+                </div>
             </div>
         </section>
 
@@ -184,9 +194,11 @@
                     <span class="episode-coverage" id="episode-coverage" hidden></span>
                 </div>
                 <div class="transcript__header-right">
-                    <button class="transcript__fix" id="subs-fix" type="button" hidden
-                            data-i18n="subs.wrong" data-i18n-title="subs.wrong.title"
-                            title="Субтитры не совпадают со звуком? Синхронизировать точно">Не совпадают?</button>
+                    <!-- Колода из серии: рядом со списком реплик, из которых она
+                         и собирается. Показывает кнопку episode-deck.js. -->
+                    <button class="transcript__fix transcript__fix--deck" id="episode-deck-btn" type="button" hidden
+                            data-i18n="edeck.btn" data-i18n-title="edeck.btn.title"
+                            title="Собрать колоду из простых (N5–N4) слов этой серии">🎴 Колода из серии</button>
                 </div>
             </div>
             <div class="transcript__list" id="transcript-list">

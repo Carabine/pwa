@@ -131,6 +131,8 @@ const I18N = {
         'controls.showVideo': 'Показать видео',
         'controls.hideVideo.title': 'Спрятать картинку, оставить звук и субтитры — тренировка на слух',
         'player.videoHidden': 'Видео скрыто — звук играет',
+        'hotkeys.title': 'Горячие клавиши',
+        'controls.sync': 'Синхронизация',
         'hotkeys.space': 'пауза',
         'hotkeys.a': 'повторить реплику',
         'player.coverage': 'Ты знаешь {p}% слов этой серии ({k} из {n})',
