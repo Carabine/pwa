@@ -154,11 +154,11 @@
                         </div>
                     </div>
                 </div>
-                <!-- Синхронизация — тихая ссылка в углу настроек, а не кнопка:
+                <!-- Синхронизация — тихая ссылка в левом углу настроек, а не кнопка:
                      нужна редко (сдвиг подбирается автоматически). -->
                 <button id="subs-fix" class="subs-fix-link" type="button" hidden
                         data-i18n="subs.wrong" data-i18n-title="subs.wrong.title"
-                        title="Субтитры не совпадают со звуком? Синхронизировать точно">Не совпадают?</button>
+                        title="Субтитры не совпадают со звуком? Синхронизировать точно">Не совпадают субтитры?</button>
             </div>
 
             <!-- Горячие клавиши: по умолчанию свёрнуты под значок «i» — постоянная
@@ -186,15 +186,13 @@
                 <div class="transcript__header-left">
                     <span data-i18n="transcript.title">Субтитры</span>
                     <span class="episode-coverage" id="episode-coverage" hidden></span>
-                </div>
-                <div class="transcript__header-right">
-                    <!-- Слова серии → колода: рядом со списком реплик, из которых
+                    <!-- Авто-колода: слева, рядом со списком реплик, из которых
                          она и собирается. Показывает кнопку episode-deck.js. -->
                     <button class="transcript__fix transcript__fix--deck" id="episode-deck-btn" type="button" hidden
                             data-i18n-title="edeck.btn.title"
                             title="Собрать колоду из простых (N5–N4) слов этой серии">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="15" rx="2"/><path d="M8 3h9a2 2 0 0 1 2 2v11"/></svg>
-                        <span data-i18n="edeck.btn">Слова серии</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 21 9-9"/><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M17.8 6.2 19 5"/><path d="M12.2 6.2 11 5"/></svg>
+                        <span data-i18n="edeck.btn">Авто-колода</span>
                     </button>
                 </div>
             </div>
