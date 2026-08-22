@@ -886,6 +886,26 @@ html, body {
 }
 
 /* Горячие клавиши: значок «i» + раскрывающаяся строка подсказок. */
+/* «Не совпадают?» — тихая ссылка в углу настроек: нужна редко, сдвиг субтитров
+   почти всегда подбирается сам. Не чип и не кнопка, чтобы не тянуть внимание. */
+.subs-fix-link {
+    align-self: flex-end;
+    margin-bottom: 4px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.subs-fix-link:hover {
+    color: var(--text-muted);
+}
+
 .hotkeys {
     margin-top: 10px;
 }
@@ -987,19 +1007,16 @@ html, body {
     color: var(--text);
 }
 
-/* «Колода из серии» в шапке субтитров — та же пилюля, но акцентная: это
-   действие, а не служебная ссылка. */
+/* «Слова серии» в шапке субтитров — тихая пилюля с иконкой карточек: действие
+   полезное, но не главное на экране, кричать ему незачем. */
 .transcript__fix--deck {
-    border-color: transparent;
-    background: var(--grad);
-    color: #fff;
-    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
 
-.transcript__fix--deck:hover {
-    border-color: transparent;
-    color: #fff;
-    filter: brightness(1.08);
+.transcript__fix--deck svg {
+    opacity: 0.75;
 }
 
 /* «К текущей реплике» — появляется, когда список пролистан вручную */
@@ -1957,7 +1974,7 @@ html, body {
         font-size: 13px;
     }
 
-    /* «Колода из серии» в шапке — компактнее, чтобы не выдавливала «📖 N%» */
+    /* «Слова серии» в шапке — компактнее, чтобы не выдавливала «📖 N%» */
     .transcript__fix--deck {
         padding: 4px 9px;
         font-size: 11px;

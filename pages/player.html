@@ -154,17 +154,11 @@
                         </div>
                     </div>
                 </div>
-                <!-- «Не совпадают?» — здесь, а не в шапке субтитров: в настройках
-                     кнопке хватает места на полную подпись, а шапку списка занимает
-                     «Колода из серии». Группу целиком показывает player.js. -->
-                <div class="control-group" id="subs-fix-group" hidden>
-                    <label data-i18n="controls.sync">Синхронизация</label>
-                    <div class="offset-buttons">
-                        <button id="subs-fix" class="chip-btn" type="button"
-                                data-i18n="subs.wrong" data-i18n-title="subs.wrong.title"
-                                title="Субтитры не совпадают со звуком? Синхронизировать точно">Не совпадают?</button>
-                    </div>
-                </div>
+                <!-- Синхронизация — тихая ссылка в углу настроек, а не кнопка:
+                     нужна редко (сдвиг подбирается автоматически). -->
+                <button id="subs-fix" class="subs-fix-link" type="button" hidden
+                        data-i18n="subs.wrong" data-i18n-title="subs.wrong.title"
+                        title="Субтитры не совпадают со звуком? Синхронизировать точно">Не совпадают?</button>
             </div>
 
             <!-- Горячие клавиши: по умолчанию свёрнуты под значок «i» — постоянная
@@ -194,11 +188,14 @@
                     <span class="episode-coverage" id="episode-coverage" hidden></span>
                 </div>
                 <div class="transcript__header-right">
-                    <!-- Колода из серии: рядом со списком реплик, из которых она
-                         и собирается. Показывает кнопку episode-deck.js. -->
+                    <!-- Слова серии → колода: рядом со списком реплик, из которых
+                         она и собирается. Показывает кнопку episode-deck.js. -->
                     <button class="transcript__fix transcript__fix--deck" id="episode-deck-btn" type="button" hidden
-                            data-i18n="edeck.btn" data-i18n-title="edeck.btn.title"
-                            title="Собрать колоду из простых (N5–N4) слов этой серии">🎴 Колода из серии</button>
+                            data-i18n-title="edeck.btn.title"
+                            title="Собрать колоду из простых (N5–N4) слов этой серии">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="15" rx="2"/><path d="M8 3h9a2 2 0 0 1 2 2v11"/></svg>
+                        <span data-i18n="edeck.btn">Слова серии</span>
+                    </button>
                 </div>
             </div>
             <div class="transcript__list" id="transcript-list">

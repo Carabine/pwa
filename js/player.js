@@ -54,13 +54,9 @@ const transcriptList = document.getElementById('transcript-list');
 const subsStatus = document.getElementById('subs-status');
 const jumpBtn = document.getElementById('transcript-jump');
 const subsFixBtn = document.getElementById('subs-fix');
-// Кнопка «Не совпадают?» живёт в блоке настроек — прячем/показываем группу
-// целиком, иначе от неё остаётся висячая подпись «Синхронизация».
-const subsFixGroup = document.getElementById('subs-fix-group');
-function setSubsFixVisible(v) {
-    subsFixBtn.hidden = !v;
-    if (subsFixGroup) subsFixGroup.hidden = !v;
-}
+// «Не совпадают?» — тихая ссылка в блоке настроек; появляется, когда субтитры
+// подобраны (до этого синхронизировать нечего).
+function setSubsFixVisible(v) { subsFixBtn.hidden = !v; }
 const subsPreciseBtn = document.getElementById('subs-precise');
 const subsPreciseStatus = document.getElementById('subs-precise-status');
 
