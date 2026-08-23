@@ -315,3 +315,52 @@ async function runGuestSync() {
         );
     }
 }
+
+// ---------- Короткий перевод для карточки ----------
+
+// Ключ сравнения значений. Гугл переводит каждый английский глосс отдельно и
+// капитализирует его как начало предложения, поэтому «window» и «window (of a
+// computer)» превращаются в «окно» и «Окно» — для человека это одно значение.
+// Регистр, ё/е, скобочные уточнения и пунктуацию из сравнения убираем.
+function glossKey(text) {
+    return String(text)
+        .toLowerCase()
+        .replace(/ё/g, 'е')
+        .replace(/\([^)]*\)/g, ' ')
+        .replace(/^(?:to|чтобы|щоб|быть|бути)\s+/, '')
+        .replace(/[^\p{L}\p{N}]+/gu, ' ')
+        .trim();
+}
+
+// Одно значение поглощает другое, если целиком содержит его слова:
+// «уйти» и «уйти назад» в карточке — по сути один и тот же перевод.
+function glossCovers(a, b) {
+    return ` ${a} `.includes(` ${b} `);
+}
+
+// Короткий перевод для карточки: самые «очевидные» значения словарной статьи.
+// jisho иногда ставит первым формальный вариант со скобочным уточнением (у 戦う
+// это «to make war (on)», а простое «to fight» — в хвосте), поэтому сначала
+// берём определения БЕЗ скобок (сохраняя порядок jisho), затем — уточнённые со
+// снятыми скобками. Реверсить весь список нельзя: для большинства слов порядок
+// jisho верный. Из похожих вариантов оставляем только первый — второй «окно»
+// после «окно» ничего не объясняет, а карточку удлиняет.
+function shortTranslation(dict, limit = 2) {
+    if (!dict || !dict.senses) return '';
+    const all = dict.senses.flatMap((s) => s.definitions || []);
+    const clean = all.filter((d) => !/\(/.test(d));
+    const qualified = all.filter((d) => /\(/.test(d)).map((d) => d.replace(/\s*\([^)]*\)/g, '').trim());
+
+    const picked = [];
+    const keys = [];
+    for (const def of [...clean, ...qualified]) {
+        const text = String(def || '').trim();
+        const key = glossKey(text);
+        if (!key) continue;
+        if (keys.some((k) => glossCovers(k, key) || glossCovers(key, k))) continue;
+        picked.push(text);
+        keys.push(key);
+        if (picked.length >= limit) break;
+    }
+    return picked.join('; ');
+}

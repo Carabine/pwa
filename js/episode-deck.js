@@ -117,14 +117,10 @@
 
     // ---------- Перевод и чтение ----------
 
-    // Короткий перевод для карточки — та же логика, что при сохранении из попапа
-    // (см. player.js): сначала определения без скобочных уточнений, максимум два.
+    // Короткий перевод для карточки — та же логика, что при сохранении из попапа:
+    // общий shortTranslation (words-store.js).
     function buildTranslation(dict) {
-        if (!dict) return '';
-        const all = dict.senses.flatMap((s) => s.definitions);
-        const clean = all.filter((d) => !/\(/.test(d));
-        const qualified = all.filter((d) => /\(/.test(d)).map((d) => d.replace(/\s*\([^)]*\)/g, '').trim());
-        return [...new Set([...clean, ...qualified].filter(Boolean))].slice(0, 2).join('; ');
+        return shortTranslation(dict);
     }
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

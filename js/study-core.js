@@ -1024,10 +1024,10 @@
             // Оценка кадра от ширины: не резервируем пустоту под широкий 16:9.
             const w = slot.clientWidth || back.clientWidth;
             if (w > 0) h = Math.min(h, Math.round(w * 9 / 16));
-            // Метаданные уже есть — точная высота вместо оценки.
-            if (video && video.videoWidth > 0) {
-                h = Math.min(h, Math.ceil(w * video.videoHeight / video.videoWidth));
-            }
+            // По соотношению исходника высоту больше НЕ подгоняем: бокс клипа
+            // всегда 16:9 (см. .clip-player video в study.css), а квадратная
+            // нарезка вписывается в него с чёрными полями по бокам. Раньше слот
+            // повторял аспект исходника и такой клип торчал квадратом.
             h = Math.max(120, Math.floor(h));
 
             // Высоту клипу задаём ЯВНО (height, не только max-height): <video> с

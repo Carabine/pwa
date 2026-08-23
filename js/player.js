@@ -2763,20 +2763,9 @@ popupSave.addEventListener('click', async () => {
 
     try {
         const dict = ctx.dict;
-        // Для карточки берём самые «очевидные» значения. jisho иногда ставит первым
-        // формальный вариант со скобочным уточнением (у 戦う это «to make war (on)»,
-        // а простое «to fight» — в хвосте). Поэтому сначала берём определения БЕЗ
-        // скобок (обычно это чистое ядро смысла), сохраняя порядок jisho, и лишь
-        // затем — уточнённые (со снятыми скобками). Не больше двух — иначе длинно.
-        // Реверсить весь список нельзя: для большинства слов порядок jisho верный.
-        let translation = '';
-        if (dict) {
-            const all = dict.senses.flatMap(s => s.definitions);
-            const clean = all.filter(d => !/\(/.test(d));
-            const qualified = all.filter(d => /\(/.test(d)).map(d => d.replace(/\s*\([^)]*\)/g, '').trim());
-            const ordered = [...new Set([...clean, ...qualified].filter(Boolean))];
-            translation = ordered.slice(0, 2).join('; ');
-        }
+        // Не больше двух значений — иначе карточка длинная (логика отбора и
+        // склейки похожих вариантов — в shortTranslation, words-store.js).
+        const translation = shortTranslation(dict);
 
         const savedWord = await saveWord({
             kanji: ctx.tok.base,
@@ -3041,31 +3030,19 @@ if (mobileTabs) {
 }
 setMobileTab('settings'); // по умолчанию — настройки (выбрать серию/дорожку)
 
-// Следим за шириной кадра 16:9 и кладём её в --video-w на .player-layout (десктоп):
+// Следим за шириной кадра 16:9 и перекладываем её в --video-w на .player-layout
+// (десктоп):
 //  1) левую колонку грида сужаем ровно до видео и центрируем пару «видео+сабы»
 //     (см. player.css, min-width: 901px) — между ними больше нет большого отступа;
 //  2) блоки под видео (now-cue/настройки/подсказки) ограничиваем этой же шириной.
+// Сама формула — window.fitVideoWidth из инлайн-скрипта player.html: она обязана
+// отработать до первой отрисовки, иначе видно узкую раскладку.
 (function matchVideoWidth() {
     const vw = document.querySelector('.video-wrap');
     const layout = document.querySelector('.player-layout');
-    if (!layout || !vw || !window.ResizeObserver) return;
+    if (!layout || !vw || !window.ResizeObserver || typeof window.fitVideoWidth !== 'function') return;
     let raf = 0;
-    const remeasure = () => {
-        raf = 0;
-        // В театре свой грид, --video-w там не используется. Если записать замер
-        // театрального кадра, после выхода грид строится от него и видео залипает
-        // ужатым (колонка = ширина видео = колонка) до перезагрузки.
-        if (layout.classList.contains('theater')) return;
-        // Перед замером снимаем прошлое значение: колонка грида и max-width кадра
-        // сами сделаны из --video-w, поэтому замер «с ограничителем» всегда ≤
-        // прошлого — храповик: после уменьшения окна (или ранних reflow при
-        // загрузке) видео не могло вырасти обратно и залипало ужатым.
-        layout.style.removeProperty('--video-w');
-        // Пол в 320px: в очень низком окне кадр схлопывается и без пола замер
-        // ужимал бы до этой же ширины настройки/подсказки под видео (max-width).
-        const w = Math.max(320, Math.round(vw.getBoundingClientRect().width));
-        layout.style.setProperty('--video-w', w + 'px');
-    };
+    const remeasure = () => { raf = 0; window.fitVideoWidth(); };
     // Через rAF: и чтобы не ловить «ResizeObserver loop» от синхронной правки
     // стилей в колбэке, и как дедуп двух наблюдателей.
     const schedule = () => { if (!raf) raf = requestAnimationFrame(remeasure); };

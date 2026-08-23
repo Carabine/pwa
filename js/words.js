@@ -753,7 +753,7 @@ async function knownToDeck(words, progress) {
             const entry = entries.find((e) => e.word === w) || entries[0];
             if (entry) {
                 kana = entry.reading || '';
-                translation = (((entry.senses || [])[0] || {}).definitions || []).slice(0, 3).join(', ');
+                translation = shortTranslation(entry, 3);
             }
         } catch { /* словарь молчит — карточка будет из одного слова */ }
         try {
