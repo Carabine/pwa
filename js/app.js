@@ -1,7 +1,127 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.292';
+const APP_VERSION = 'v0.0.293';
+
+/* ========== Кнопка «Назад» закрывает открытый слой ==========
+   Сайдбар, модалки, шторки и выпадающие меню — «слои» поверх страницы. На
+   телефоне системная кнопка/жест «назад» должна закрывать верхний открытый слой,
+   а не уводить со страницы. Механика одна на всё приложение: открытие слоя кладёт
+   запись в history, закрытие — снимает её, а popstate закрывает всё, что оказалось
+   выше текущей глубины. Слои стыкуются (сайдбар → модалка → вложенная шторка):
+   каждая запись помнит свою глубину в state.animeiLayer.
+
+   Использование:
+       const layer = AnimeiBack.open(() => { ...спрятать слой... });
+       ...
+       AnimeiBack.close(layer);   // крестик / Esc / клик по фону
+
+   Важно: close-колбэк ТОЛЬКО прячет слой и не трогает history — иначе запись
+   снимется дважды и «назад» перепрыгнет через страницу. */
+const AnimeiBack = (() => {
+    const stack = [];          // открытые слои снизу вверх
+
+    // Глубина, на которой мы сейчас стоим в history (0 = слоёв нет).
+    const depth = () => {
+        const s = history.state;
+        return (s && typeof s.animeiLayer === 'number') ? s.animeiLayer : 0;
+    };
+
+    // Спрятать слои выше уровня n, сверху вниз. Только DOM — history не трогаем.
+    function hideAbove(n) {
+        while (stack.length > n) {
+            const layer = stack.pop();
+            try { layer.close(); } catch (err) { console.error(err); }
+        }
+    }
+
+    // Свои записи из history снимаем одним history.go: закрытие слоя может по
+    // цепочке закрыть соседний (сохранение в редакторе колоды закрывает и шторку
+    // над ним), а несколько подряд идущих go(-1) браузеры склеивают в один шаг.
+    // Копим шаги и делаем один переход в микрозадаче.
+    let pendingSteps = 0;
+    let flushQueued = false;
+    function unwind(steps) {
+        if (steps <= 0) return;
+        pendingSteps += steps;
+        if (flushQueued) return;
+        flushQueued = true;
+        Promise.resolve().then(() => {
+            flushQueued = false;
+            const n = pendingSteps;
+            pendingSteps = 0;
+            if (n > 0) history.go(-n);
+        });
+    }
+
+    // Системный «назад» (или наш собственный history.go выше): приводим стек в
+    // соответствие с глубиной, на которую откатился history. Если мы уже закрыли
+    // слои сами, здесь просто нечего делать — сверка идемпотентна.
+    window.addEventListener('popstate', () => hideAbove(depth()));
+
+    return {
+        // Зарегистрировать открытый слой. close — как его спрятать.
+        open(close) {
+            const layer = { close };
+            stack.push(layer);
+            const state = { animeiLayer: stack.length };
+            if (pendingSteps > 0) {
+                // Слой открылся вместо только что закрытого (пункт меню открывает
+                // модалку). Занимаем запись, которую собирались снять, — иначе
+                // отложенный go() снял бы уже новую.
+                pendingSteps--;
+                history.replaceState(state, '');
+            } else {
+                history.pushState(state, '');
+            }
+            return layer;
+        },
+
+        // Закрыть слой по кнопке/Esc/клику по фону. Прячем сразу (без мигания),
+        // а свои записи из history снимаем следом — popstate увидит, что стек уже
+        // сошёлся, и ничего не сделает.
+        close(layer) {
+            const i = stack.indexOf(layer);
+            if (i < 0) return;
+            const steps = stack.length - i;      // сам слой + всё, что над ним
+            hideAbove(i);
+            unwind(steps);
+        },
+
+        // Слой ещё открыт?
+        isOpen(layer) { return !!layer && stack.indexOf(layer) >= 0; },
+
+        count() { return stack.length; },
+
+        // Уход со страницы при открытых слоях. Сначала снимаем свои записи из
+        // history, и только потом переходим — иначе они останутся висеть, и
+        // «назад» с новой страницы вернёт сюда с лишней пустой записью.
+        navigate(url) {
+            const steps = stack.length;
+            hideAbove(0);
+            if (!steps && !pendingSteps) { window.location.href = url; return; }
+            let done = false;
+            const go = () => { if (done) return; done = true; window.location.href = url; };
+            window.addEventListener('popstate', go, { once: true });
+            setTimeout(go, 150);                 // страховка, если popstate не придёт
+            unwind(steps);
+        },
+    };
+})();
+
+// Обычные ссылки внутри открытых слоёв (пункты сайдбара — основной случай)
+// уводят со страницы. Перехватываем на всплытии и уходим через navigate(), чтобы
+// записи слоёв не оставались в history.
+document.addEventListener('click', (e) => {
+    if (!AnimeiBack.count()) return;
+    if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = e.target.closest && e.target.closest('a[href]');
+    if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+    const href = a.getAttribute('href');
+    if (!href || href.startsWith('#') || /^(javascript|mailto|tel):/i.test(href)) return;
+    e.preventDefault();
+    AnimeiBack.navigate(a.href);
+});
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -337,15 +457,32 @@ document.addEventListener('DOMContentLoaded', () => {
         // рейку из «только иконки» в «иконки + подписи» (оверлей там скрыт CSS,
         // поэтому его класс ни на что не влияет). Toggle, а не add — чтобы на
         // десктопе повторное нажатие сворачивало рейку обратно.
-        menuBtn.addEventListener('click', () => {
-            const open = sidebar.classList.toggle('open');
-            overlay.classList.toggle('open', open);
-        });
+        //
+        // Шторкой сайдбар работает только на телефоне — там его и регистрируем
+        // слоем для кнопки «назад». На десктопе .open просто раскрывает рейку, и
+        // забирать себе системный «назад» ради неё было бы неожиданно.
+        const isDrawer = () => window.matchMedia('(max-width: 767px)').matches;
+        let sidebarLayer = null;
 
-        overlay.addEventListener('click', () => {
+        const hideSidebar = () => {
             sidebar.classList.remove('open');
             overlay.classList.remove('open');
+        };
+        const closeSidebar = () => {
+            if (sidebarLayer) AnimeiBack.close(sidebarLayer);   // снимет запись из history
+            else hideSidebar();
+        };
+
+        menuBtn.addEventListener('click', () => {
+            if (sidebar.classList.contains('open')) { closeSidebar(); return; }
+            sidebar.classList.add('open');
+            overlay.classList.add('open');
+            if (isDrawer()) {
+                sidebarLayer = AnimeiBack.open(() => { sidebarLayer = null; hideSidebar(); });
+            }
         });
+
+        overlay.addEventListener('click', closeSidebar);
     }
 
     // Ховер-подсматривание рейки (десктоп): при наведении на бургер или саму рейку
@@ -393,13 +530,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const profileMenu = document.getElementById('profile-menu');
 
     if (profileBtn && profileMenu) {
+        // Выпадашка профиля — тоже слой: «назад» на телефоне закрывает её, а не
+        // уводит со страницы.
+        let profileLayer = null;
+        const closeProfile = () => {
+            if (profileLayer) AnimeiBack.close(profileLayer);
+            else profileMenu.classList.remove('open');
+        };
+
         profileBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            profileMenu.classList.toggle('open');
+            if (profileMenu.classList.contains('open')) { closeProfile(); return; }
+            profileMenu.classList.add('open');
+            profileLayer = AnimeiBack.open(() => {
+                profileLayer = null;
+                profileMenu.classList.remove('open');
+            });
         });
 
         document.addEventListener('click', () => {
-            profileMenu.classList.remove('open');
+            if (profileMenu.classList.contains('open')) closeProfile();
         });
     }
 

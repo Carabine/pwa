@@ -161,9 +161,17 @@
         if (window.AnimeiClipTrim) wrap.appendChild(window.AnimeiClipTrim.buildForWord(wordData));
         wrap.appendChild(buildTtsControl(wordData));
 
-        function close() {
+        // «Назад» на телефоне закрывает редактор, а не уводит со страницы: слой
+        // регистрируем в общем менеджере (AnimeiBack в app.js).
+        let layer = null;
+        function hide() {
+            layer = null;
             overlay.remove();
             document.removeEventListener('keydown', onKey);
+        }
+        function close() {
+            if (layer) AnimeiBack.close(layer);
+            else hide();
         }
         function onKey(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } }
 
@@ -190,6 +198,7 @@
 
         document.addEventListener('keydown', onKey);
         document.body.appendChild(overlay);
+        layer = AnimeiBack.open(hide);
         kanji.input.focus();
     }
 

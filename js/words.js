@@ -170,12 +170,20 @@ async function copyWordText(w) {
 // Живёт в body (список обрезал бы его overflow'ом), позиционируется у кнопки.
 let wordActionsEl = null;
 let wordActionsCleanup = null;
+let wordActionsLayer = null;
 
-function closeWordActions() {
+// Спрятать меню. history не трогаем — этим занимается AnimeiBack.
+function hideWordActions() {
+    wordActionsLayer = null;
     if (wordActionsCleanup) wordActionsCleanup();
     wordActionsCleanup = null;
     if (wordActionsEl) wordActionsEl.remove();
     wordActionsEl = null;
+}
+
+function closeWordActions() {
+    if (wordActionsLayer) AnimeiBack.close(wordActionsLayer);
+    else hideWordActions();
 }
 
 function openWordActions(anchor, wordData) {
@@ -227,6 +235,8 @@ function openWordActions(anchor, wordData) {
         document.removeEventListener('scroll', onAway, true);
         window.removeEventListener('resize', onAway);
     };
+    // «Назад» на телефоне закрывает меню, а не уводит со страницы.
+    wordActionsLayer = AnimeiBack.open(hideWordActions);
 }
 
 // ---------- Отрисовка ----------
@@ -540,10 +550,17 @@ function initMenu() {
     const menu = document.getElementById('words-menu');
     if (!btn || !menu) return;
 
-    const closeMenu = () => { menu.hidden = true; };
+    // «Назад» на телефоне закрывает выпадашку, а не уводит со страницы.
+    let layer = null;
+    const closeMenu = () => {
+        if (layer) AnimeiBack.close(layer);
+        else menu.hidden = true;
+    };
     btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        menu.hidden = !menu.hidden;
+        if (!menu.hidden) { closeMenu(); return; }
+        menu.hidden = false;
+        layer = AnimeiBack.open(() => { layer = null; menu.hidden = true; });
     });
     document.addEventListener('click', (e) => {
         if (!menu.hidden && !menu.contains(e.target)) closeMenu();
@@ -560,17 +577,22 @@ function openModal(buildBody) {
     overlay.className = 'deck-sheet__overlay';
     const box = document.createElement('div');
     box.className = 'deck-editor known-modal';
-    const close = () => {
+    // «Назад» на телефоне закрывает модалку, а не уводит со страницы.
+    let layer = null;
+    const hide = () => {
+        layer = null;
         overlay.classList.remove('is-open');
         document.removeEventListener('keydown', onEsc);
         setTimeout(() => overlay.remove(), 180);
     };
+    const close = () => { if (layer) AnimeiBack.close(layer); else hide(); };
     const onEsc = (e) => { if (e.key === 'Escape') close(); };
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
     document.addEventListener('keydown', onEsc);
     buildBody(box, close);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
+    layer = AnimeiBack.open(hide);
     requestAnimationFrame(() => overlay.classList.add('is-open'));
 }
 

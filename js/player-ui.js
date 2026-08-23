@@ -220,6 +220,13 @@
         volHideTimer = setTimeout(() => volWrap.classList.remove('is-open'), 3000);
     }
 
+    // Открылось меню качества/скорости — сворачиваем ползунок. (Сам он в history
+    // не лезет: закрывается по таймеру, отдельным слоем не регистрируем.)
+    document.addEventListener('animei:player-menu', () => {
+        clearTimeout(volHideTimer);
+        volWrap.classList.remove('is-open');
+    });
+
     if (touchLike) {
         // Тап мимо группы звука — закрываем ползунок сразу, не дожидаясь таймера.
         document.addEventListener('click', (e) => {
@@ -281,7 +288,10 @@
         speedWrap.appendChild(menu);
 
         const fmtRate = (r) => (r === 1 ? '1' : String(r)) + '×';
-        const closeMenu = () => speedWrap.classList.remove('is-open');
+        // «Назад» на телефоне закрывает меню скорости, а не уводит с плеера.
+        let layer = null;
+        const hideMenu = () => { layer = null; speedWrap.classList.remove('is-open'); };
+        const closeMenu = () => { if (layer) AnimeiBack.close(layer); else hideMenu(); };
 
         function syncBtn() {
             speedBtn.textContent = fmtRate(video.playbackRate);
@@ -309,15 +319,20 @@
         speedBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (speedWrap.classList.contains('is-open')) { closeMenu(); return; }
-            // Не держим два меню открытыми сразу (качество/скорость/звук).
-            document.querySelectorAll('.player-ui__quality-wrap.is-open, .player-ui__speed-wrap.is-open, .player-ui__vol.is-open')
-                .forEach((w) => { if (w !== speedWrap) w.classList.remove('is-open'); });
+            // Не держим два меню открытыми сразу (качество/скорость/звук). Соседние
+            // меню — тоже слои, поэтому просим их закрыться самих (событие ниже), а
+            // не снимаем класс мимо AnimeiBack.
+            document.dispatchEvent(new CustomEvent('animei:player-menu', { detail: speedWrap }));
             buildMenu();
             speedWrap.classList.add('is-open');
+            layer = AnimeiBack.open(hideMenu);
         });
 
         document.addEventListener('click', (e) => {
-            if (!speedWrap.contains(e.target)) closeMenu();
+            if (!speedWrap.contains(e.target) && speedWrap.classList.contains('is-open')) closeMenu();
+        });
+        document.addEventListener('animei:player-menu', (e) => {
+            if (e.detail !== speedWrap && speedWrap.classList.contains('is-open')) closeMenu();
         });
 
         video.addEventListener('ratechange', syncBtn);

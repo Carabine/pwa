@@ -778,6 +778,13 @@ function showSessionPanel(endedEpIndex) {
         list.appendChild(row);
     });
 
+    // «Назад» на телефоне убирает карточку итогов серии, а не уводит с плеера.
+    let panelLayer = AnimeiBack.open(() => { panelLayer = null; panel.remove(); });
+    const dismissPanel = () => {
+        if (panelLayer) AnimeiBack.close(panelLayer);
+        else panel.remove();
+    };
+
     const studyBtn = panel.querySelector('.session-panel__study');
     const updateBtn = () => {
         const n = list.querySelectorAll('input:checked').length;
@@ -797,13 +804,13 @@ function showSessionPanel(endedEpIndex) {
             localStorage.setItem('animei:lastSession', JSON.stringify(s));
         } catch { /* недоступен */ }
         if (window.animeiTrack) window.animeiTrack('session_card', 'player_pick:' + ids.length);
-        window.location.href = './study.html';
+        AnimeiBack.navigate('./study.html');
     });
     panel.querySelector('.session-panel__next')?.addEventListener('click', () => {
-        panel.remove();
+        dismissPanel();
         selectEpisode(endedEpIndex + 1);
     });
-    panel.querySelector('.session-panel__close').addEventListener('click', () => panel.remove());
+    panel.querySelector('.session-panel__close').addEventListener('click', dismissPanel);
     panel.querySelector('.session-panel__next') && (panel.querySelector('.session-panel__next').textContent = t('session.next'));
 
     document.body.appendChild(panel);
@@ -1200,7 +1207,10 @@ function switchQuality(key) {
     menu.className = 'player-ui__quality-menu';
     wrap.appendChild(menu);
 
-    const closeMenu = () => wrap.classList.remove('is-open');
+    // «Назад» на телефоне закрывает меню качества, а не уводит с плеера.
+    let layer = null;
+    const hideMenu = () => { layer = null; wrap.classList.remove('is-open'); };
+    const closeMenu = () => { if (layer) AnimeiBack.close(layer); else hideMenu(); };
 
     function buildMenu() {
         menu.innerHTML = '';
@@ -1224,15 +1234,20 @@ function switchQuality(key) {
         e.stopPropagation();
         if (qualityKeys().length <= 1) return;
         if (wrap.classList.contains('is-open')) { closeMenu(); return; }
-        // Не держим два меню открытыми сразу (качество/скорость/звук).
-        document.querySelectorAll('.player-ui__quality-wrap.is-open, .player-ui__speed-wrap.is-open, .player-ui__vol.is-open')
-            .forEach((w) => { if (w !== wrap) w.classList.remove('is-open'); });
+        // Не держим два меню открытыми сразу (качество/скорость/звук). Соседние
+        // меню — тоже слои, поэтому просим их закрыться самих (событие ниже), а не
+        // снимаем класс мимо AnimeiBack — иначе их запись зависла бы в history.
+        document.dispatchEvent(new CustomEvent('animei:player-menu', { detail: wrap }));
         buildMenu();
         wrap.classList.add('is-open');
+        layer = AnimeiBack.open(hideMenu);
     });
 
     document.addEventListener('click', (e) => {
-        if (!wrap.contains(e.target)) closeMenu();
+        if (!wrap.contains(e.target) && wrap.classList.contains('is-open')) closeMenu();
+    });
+    document.addEventListener('animei:player-menu', (e) => {
+        if (e.detail !== wrap && wrap.classList.contains('is-open')) closeMenu();
     });
 })();
 
@@ -2414,28 +2429,17 @@ const popupExplainLabel = popupExplainBtn.querySelector('.btn-label') || popupEx
 
 // Кнопка «Назад» (в т.ч. системная на Android/жест) должна закрывать открытую
 // словарную карточку / разбор предложения, а не уводить со страницы просмотра.
-// Открытие карточки кладёт одну запись в history, закрытие — снимает её; системный
-// «назад» ловим через popstate и просто прячем карточку, никуда не переходя.
-let popupHistoryOpen = false;
+// Общий менеджер слоёв (AnimeiBack в app.js) держит history в порядке.
+let popupLayer = null;
 function markPopupOpen() {
-    if (popupHistoryOpen) return;
-    popupHistoryOpen = true;
-    history.pushState({ animeiPopup: 1 }, '');
+    if (popupLayer) return;
+    popupLayer = AnimeiBack.open(() => { popupLayer = null; popup.hidden = true; });
 }
 function closeWordPopup() {
     if (popup.hidden) return;
-    if (popupHistoryOpen) {
-        history.back();           // снимет нашу запись → popstate спрячет карточку
-    } else {
-        popup.hidden = true;
-    }
+    if (popupLayer) AnimeiBack.close(popupLayer);
+    else popup.hidden = true;
 }
-window.addEventListener('popstate', () => {
-    if (popupHistoryOpen) {
-        popupHistoryOpen = false;
-        popup.hidden = true;
-    }
-});
 
 // Узнаём один раз, настроен ли на сервере ИИ; если нет — кнопки разбора не будет
 client.get('explain/status')
@@ -2883,8 +2887,14 @@ function setPreciseLoading(on) {
     if (subsPreciseStatus) subsPreciseStatus.hidden = on;   // подсказку прячем на время загрузки
 }
 
+// «Назад» на телефоне закрывает шторку настройки субтитров, а не уводит с плеера.
+let subsPickerLayer = null;
+
 function openSubsPicker() {
     subsPicker.hidden = false;
+    if (!subsPickerLayer) {
+        subsPickerLayer = AnimeiBack.open(() => { subsPickerLayer = null; subsPicker.hidden = true; });
+    }
     setPreciseLoading(preciseBusy);
     if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.hint');
     if (subsPreciseBtn) subsPreciseBtn.disabled = preciseBusy;
@@ -2893,7 +2903,8 @@ function openSubsPicker() {
 }
 
 function closeSubsPicker() {
-    subsPicker.hidden = true;
+    if (subsPickerLayer) AnimeiBack.close(subsPickerLayer);
+    else subsPicker.hidden = true;
 }
 
 subsFixBtn.addEventListener('click', openSubsPicker);

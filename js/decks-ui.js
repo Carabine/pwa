@@ -196,11 +196,15 @@
 
             const overlay = h('div', 'deck-sheet__overlay');
             const sheet = h('div', 'deck-sheet');
-            const close = () => {
+            // «Назад» на телефоне закрывает шторку, а не уводит со страницы.
+            let layer = null;
+            const hide = () => {
+                layer = null;
                 overlay.classList.remove('is-open');
                 document.removeEventListener('keydown', onEsc);
                 setTimeout(() => overlay.remove(), 180);
             };
+            const close = () => { if (layer) AnimeiBack.close(layer); else hide(); };
             const onEsc = (e) => { if (e.key === 'Escape') close(); };
             overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
             document.addEventListener('keydown', onEsc);
@@ -242,6 +246,7 @@
             sheet.appendChild(create);
             overlay.appendChild(sheet);
             document.body.appendChild(overlay);
+            layer = AnimeiBack.open(hide);
             requestAnimationFrame(() => overlay.classList.add('is-open'));
         },
 
@@ -251,13 +256,17 @@
             const sheet = h('div', 'deck-sheet');
             let statusTimer = null;
 
-            const close = () => {
+            // «Назад» на телефоне закрывает шторку, а не уводит со страницы.
+            let layer = null;
+            const hide = () => {
+                layer = null;
                 overlay.classList.remove('is-open');
                 document.removeEventListener('keydown', onEsc);
                 setTimeout(() => overlay.remove(), 180);
                 this.refresh();          // счётчики чипов
                 this._ctx.onChange();    // мини-чипы на карточках
             };
+            const close = () => { if (layer) AnimeiBack.close(layer); else hide(); };
             const onEsc = (e) => { if (e.key === 'Escape') close(); };
             overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
             document.addEventListener('keydown', onEsc);
@@ -317,6 +326,7 @@
             sheet.appendChild(create);
             overlay.appendChild(sheet);
             document.body.appendChild(overlay);
+            layer = AnimeiBack.open(hide);
             renderList();
             requestAnimationFrame(() => overlay.classList.add('is-open'));
         },
@@ -331,11 +341,21 @@
 
             const overlay = h('div', 'deck-sheet__overlay');
             const box = h('div', 'deck-editor');
-            const finish = (result) => {
+            // «Назад» на телефоне закрывает редактор, а не уводит со страницы.
+            let layer = null;
+            let pending = null;               // результат, с которым закрываемся
+            const hide = () => {
+                layer = null;
                 overlay.classList.remove('is-open');
                 document.removeEventListener('keydown', onEsc);
                 setTimeout(() => overlay.remove(), 180);
+                const result = pending; pending = null;
                 if (then) then(result || null);
+            };
+            const finish = (result) => {
+                pending = result || null;
+                if (layer) AnimeiBack.close(layer);
+                else hide();
             };
             const onEsc = (e) => { if (e.key === 'Escape') finish(null); };
             overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(null); });
@@ -405,6 +425,7 @@
 
             overlay.appendChild(box);
             document.body.appendChild(overlay);
+            layer = AnimeiBack.open(hide);
             requestAnimationFrame(() => { overlay.classList.add('is-open'); input.focus(); });
         },
     };

@@ -711,6 +711,20 @@ function isElementInView(el, container) {
 
 // ========== SAVE WORD MODAL ==========
 
+// Кнопка «Назад» на телефоне должна закрывать модалку, а не уводить со страницы —
+// регистрируем её слоем в общем менеджере (AnimeiBack в app.js).
+let saveModalLayer = null;
+
+function hideSaveModal() {
+  saveModalLayer = null;
+  saveModal.classList.add("hidden");
+}
+
+function closeSaveModal() {
+  if (saveModalLayer) AnimeiBack.close(saveModalLayer);
+  else hideSaveModal();
+}
+
 function openSaveModal(token, sentence, english) {
   saveModalTitle.textContent = token.baseForm;
   saveWordInput.value = token.baseForm;
@@ -720,15 +734,14 @@ function openSaveModal(token, sentence, english) {
   saveSentence.value = sentence;
   saveTranslation.value = english || "";
   saveModal.classList.remove("hidden");
+  saveModalLayer = AnimeiBack.open(hideSaveModal);
   saveMeaning.focus();
 }
 
-document.getElementById("save-cancel").addEventListener("click", () => {
-  saveModal.classList.add("hidden");
-});
+document.getElementById("save-cancel").addEventListener("click", closeSaveModal);
 
 saveModal.addEventListener("click", (e) => {
-  if (e.target === saveModal) saveModal.classList.add("hidden");
+  if (e.target === saveModal) closeSaveModal();
 });
 
 document.getElementById("save-confirm").addEventListener("click", async () => {
@@ -746,7 +759,7 @@ document.getElementById("save-confirm").addEventListener("click", async () => {
   try {
     await saveWord(payload);
     if (window.animeiTrack) window.animeiTrack("save_word", payload.kanji);
-    saveModal.classList.add("hidden");
+    closeSaveModal();
     if (typeof showSnackbar === "function") {
       showSnackbar("Word saved to dictionary", { duration: 3000, type: "success" });
     }

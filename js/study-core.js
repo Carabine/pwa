@@ -127,19 +127,17 @@
         const body = overlay.querySelector('.explain-modal__body');
         const onKey = (e) => { if (e.key === 'Escape') close(); };
         // Кнопка «Назад» (в т.ч. системная на Android) должна закрывать разбор, а не
-        // уводить со страницы. Открытие кладёт запись в history, закрытие — снимает.
-        let histOpen = false;
+        // уводить со страницы — этим занимается общий AnimeiBack (app.js).
+        let layer = null;
         function doClose() {
+            layer = null;
             overlay.hidden = true;
             document.removeEventListener('keydown', onKey);
         }
         function close() {
-            if (histOpen) history.back();   // popstate ниже спрячет модалку
+            if (layer) AnimeiBack.close(layer);
             else doClose();
         }
-        window.addEventListener('popstate', () => {
-            if (histOpen) { histOpen = false; doClose(); }
-        });
         // Клик по затемнённому фону (но не по диалогу) — закрыть.
         overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
         overlay.querySelector('.explain-modal__close').addEventListener('click', close);
@@ -150,7 +148,7 @@
                 overlay.hidden = false;
                 body.scrollTop = 0;
                 document.addEventListener('keydown', onKey);
-                if (!histOpen) { histOpen = true; history.pushState({ animeiExplain: 1 }, ''); }
+                if (!layer) layer = AnimeiBack.open(doClose);
             },
         };
         return explainModal;
@@ -923,12 +921,19 @@
             panel.appendChild(toggleRow('studySentenceRomaji', t('study.sentenceRomaji'), true));
             panel.appendChild(toggleRow('studyAutoplayClip', t('study.autoplayClip'), true));
 
+            let panelLayer = null;
+            const closePanel = () => {
+                if (panelLayer) AnimeiBack.close(panelLayer);
+                else panel.hidden = true;
+            };
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                panel.hidden = !panel.hidden;
+                if (!panel.hidden) { closePanel(); return; }
+                panel.hidden = false;
+                panelLayer = AnimeiBack.open(() => { panelLayer = null; panel.hidden = true; });
             });
             document.addEventListener('click', (e) => {
-                if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) panel.hidden = true;
+                if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) closePanel();
             });
 
             main.appendChild(btn);
@@ -1767,10 +1772,19 @@
             const openBtn = document.getElementById('open-modal-btn');
             const closeBtn = document.getElementById('close-modal-btn');
             if (!overlay || !openBtn || !closeBtn) return;
-            openBtn.addEventListener('click', () => overlay.classList.remove('hidden'));
-            closeBtn.addEventListener('click', () => overlay.classList.add('hidden'));
+            let layer = null;
+            const close = () => {
+                if (layer) AnimeiBack.close(layer);
+                else overlay.classList.add('hidden');
+            };
+            openBtn.addEventListener('click', () => {
+                if (!overlay.classList.contains('hidden')) return;
+                overlay.classList.remove('hidden');
+                layer = AnimeiBack.open(() => { layer = null; overlay.classList.add('hidden'); });
+            });
+            closeBtn.addEventListener('click', close);
             overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) overlay.classList.add('hidden');
+                if (e.target === overlay) close();
             });
         }
 

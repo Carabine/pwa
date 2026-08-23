@@ -296,10 +296,20 @@
         if (!document.fullscreenElement) restoreOverlay();
     });
 
-    function closeModal() {
-        if (creating) return;                // во время сохранения не закрываем
+    // «Назад» на телефоне закрывает модалку, а не уводит с плеера — слой живёт
+    // в общем менеджере (AnimeiBack в app.js).
+    let layer = null;
+
+    function hideModal() {
+        layer = null;
         overlay.hidden = true;
         restoreOverlay();
+    }
+
+    function closeModal() {
+        if (creating) return;                // во время сохранения не закрываем
+        if (layer) AnimeiBack.close(layer);
+        else hideModal();
     }
 
     async function openModal() {
@@ -323,6 +333,7 @@
         renderList();
         attachOverlay();
         overlay.hidden = false;
+        layer = AnimeiBack.open(hideModal);
         listEl.scrollTop = 0;
         if (window.animeiTrack) window.animeiTrack('episode_deck', 'open:' + candidates.length);
         loadTranslations(candidates);
@@ -430,8 +441,7 @@
             showSnackbar(t('edeck.error'), { duration: 4000, type: 'error' });
             return;
         }
-        overlay.hidden = true;
-        restoreOverlay();
+        if (layer) AnimeiBack.close(layer); else hideModal();
         if (window.animeiTrack) window.animeiTrack('episode_deck', 'created:' + done);
         if (failed) {
             showSnackbar(t('edeck.partial').replace('{k}', done).replace('{n}', total), { duration: 5000, type: 'error' });
