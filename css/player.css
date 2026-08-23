@@ -664,6 +664,15 @@ html, body {
     gap: 8px;
     min-width: 0;
 }
+/* Заголовок «Субтитры» — единственное, что можно ужать: в узкой колонке
+   (кино-режим) он уступает место кнопке и обрезается многоточием, а не
+   выдавливает «Авто-колоду» за край панели. */
+.transcript__title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 .episode-coverage {
     flex: 0 0 auto;
     font-size: 11.5px;
@@ -982,13 +991,17 @@ html, body {
     padding: 12px 16px;
     border-bottom: 1px solid var(--border);
     font-weight: 600;
+    min-width: 0;
 }
 
 .transcript__header-right {
     display: flex;
     align-items: baseline;
     gap: 8px;
-    min-width: 0;
+    /* Кнопки внутри не сжимаются (flex-shrink: 0), поэтому и сама группа
+       ужиматься не должна — иначе содержимое вылезает за её край. Место
+       уступает левая группа: там есть что обрезать (заголовок). */
+    flex: 0 0 auto;
 }
 
 
@@ -1036,6 +1049,10 @@ html, body {
     border-radius: 999px;
     font-size: 14px;
     font-weight: 600;
+    /* В одну строку: «До поточної» (uk) длиннее «К текущей» и в узкой колонке
+       ломалась на две строки — пилюля превращалась в кляксу поверх списка. */
+    white-space: nowrap;
+    max-width: calc(100% - 20px);
     box-shadow: var(--shadow-pink);
     opacity: 0;
     pointer-events: none;
@@ -2354,6 +2371,35 @@ html, body {
 }
 /* Словарный попап переносится внутрь раскладки — держим его поверх всего. */
 .player-layout.theater .word-popup { z-index: 300; }
+/* Шапка субтитров в театре: колонка узкая (от ~200px), а в шапке три вещи —
+   «Субтитры», «📖 N%» и «Авто-колода». В прежних размерах пилюля колоды
+   вылезала за край панели и обрезалась по overflow:hidden. Ужимаем всё:
+   отступы, шрифты, иконку — и заголовок отдаём под обрезку многоточием. */
+.player-layout.theater .transcript__header {
+    padding: 7px 10px;
+    gap: 6px;
+    font-size: 12px;
+}
+.player-layout.theater .transcript__header-left,
+.player-layout.theater .transcript__header-right { gap: 6px; }
+.player-layout.theater .episode-coverage {
+    padding: 0;
+    font-size: 10.5px;
+}
+.player-layout.theater .transcript__fix--deck {
+    padding: 3px 8px;
+    font-size: 10.5px;
+    gap: 4px;
+}
+.player-layout.theater .transcript__fix--deck svg { width: 11px; height: 11px; }
+
+/* На совсем узких экранах (телефон в лендскейпе, колонка ~200px) от заголовка
+   остаётся огрызок «Суб…» — толку от него ноль. Прячем целиком: в кино-режиме
+   и так очевидно, что справа субтитры, а место уходит на «📖 N%» и колоду. */
+@media (orientation: landscape) and (max-width: 720px) {
+    .player-layout.theater .transcript__title { display: none; }
+}
+
 /* Кнопка «К текущей» в театре — компактнее. */
 .player-layout.theater .transcript__jump {
     padding: 6px 12px;
