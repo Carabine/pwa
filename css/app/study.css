@@ -38,11 +38,17 @@
 /* Счётчики — одна «стеклянная» капсула-HUD вместо трёх коробок: компактнее и
    не спорит с карточкой за внимание. */
 .study-stats {
-    display: flex;
+    /* Колонки грид'ом, а не флексом: 1fr раздаёт всем одинаковую ширину по
+       самой длинной подписи («ПОВТОРИТЬ»). При раскладке по содержимому
+       колонки выходили разной ширины — цифры стояли вразнобой, а разделители
+       уезжали от центра капсулы. */
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
     width: auto;
     max-width: 560px;
     gap: 0;
-    justify-content: center;
+    justify-items: stretch;
     padding: 4px 6px;
     background: var(--card);
     background: color-mix(in srgb, var(--card) 72%, transparent);
@@ -58,8 +64,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     min-width: 66px;
-    padding: 2px 15px;
+    padding: 2px 12px;
     line-height: 1.1;
 }
 
@@ -1331,13 +1338,11 @@
         padding: 3px 4px;
     }
 
+    /* На телефоне ширину колонок задаёт грид (1fr по самой длинной подписи),
+       поэтому min-width снимаем — иначе он завышал бы капсулу на узких экранах. */
     .stat {
         min-width: 0;
-        /* По содержимому, а не поровну: при flex:1 все три колонки получали
-           одинаковую ширину (~49px), и длинная подпись «ПОВТОРИТЬ» (нужно 54px)
-           вылезала за скруглённый край капсулы. */
-        flex: 0 1 auto;
-        padding: 3px 8px;
+        padding: 3px 7px;
     }
 
     .stat b { font-size: 15px; }
