@@ -2422,10 +2422,47 @@ const popupReading = document.getElementById('popup-reading-text');
 const popupBody = document.getElementById('popup-body');
 const popupSentence = document.getElementById('popup-sentence');
 const popupSave = document.getElementById('popup-save');
+const popupKnown = document.getElementById('popup-known');
 const popupExplain = document.getElementById('popup-explain');
 const popupExplainBtn = document.getElementById('popup-explain-btn');
 // Меняем только текстовую подпись, чтобы иконка ИИ в кнопке не пропадала.
 const popupExplainLabel = popupExplainBtn.querySelector('.btn-label') || popupExplainBtn;
+
+// ---------- Тихая отметка «уже знаю» в попапе слова ----------
+// Слово уходит в известные (known-store, страница «Мои слова» → «Известные
+// слова»): зелёная подсветка, процент покрытия и авто-колода сразу считают его
+// знакомым — карточка при этом НЕ создаётся. Повторный клик снимает отметку.
+
+function updateKnownBtn(base) {
+    if (!popupKnown) return;
+    const on = !!(window.KnownWords && KnownWords.has(base));
+    popupKnown.classList.toggle('is-on', on);
+    popupKnown.textContent = (on ? '✓ ' : '') + t('popup.known');
+}
+
+popupKnown?.addEventListener('click', () => {
+    const ctx = state.popupContext;
+    if (!ctx || !window.KnownWords) return;
+    const base = ctx.tok.base;
+    if (KnownWords.has(base)) {
+        // Снять отметку: слово снова «новое» (подсветку пересобираем).
+        KnownWords.remove(base);
+        state.knownWords.delete(base);
+        renderTranscript();
+        updateNowCue(state.activeCueIndex);
+        updateCoverage();
+        updateKnownBtn(base);
+    } else {
+        KnownWords.addMany([base]);
+        state.knownWords.add(base);
+        markKnownEverywhere(base);
+        updateCoverage();
+        updateKnownBtn(base);
+        if (window.animeiTrack) window.animeiTrack('known_word', base);
+        showSnackbar(t('popup.knownAdded'), { duration: 2500 });
+        closeWordPopup();
+    }
+});
 
 // Кнопка «Назад» (в т.ч. системная на Android/жест) должна закрывать открытую
 // словарную карточку / разбор предложения, а не уводить со страницы просмотра.
@@ -2460,6 +2497,7 @@ async function openWordPopup(tok, cue, event) {
     state.popupContext = { tok, cue, dict: null, event };
 
     popupWord.textContent = tok.base;
+    updateKnownBtn(tok.base);
     // Показываем слово (tok.base) и чтение согласованно — от базовой формы:
     // baseReading (かえる), а не поверхностное tok.reading (かえっ). Ниже, если
     // найдётся словарная статья, чтение уточнится из неё.

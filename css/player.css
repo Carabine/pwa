@@ -1612,6 +1612,24 @@ html, body {
     margin-bottom: 14px;
 }
 
+/* Тихая отметка «уже знаю» — мелкий текст между словом и крестиком. */
+.word-popup__known {
+    flex: 0 0 auto;
+    margin-left: auto;
+    align-self: flex-start;
+    background: none;
+    border: none;
+    padding: 3px 6px;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-radius: 6px;
+    white-space: nowrap;
+    transition: color var(--transition);
+}
+.word-popup__known:hover,
+.word-popup__known.is-on { color: var(--success); }
+
 .word-popup__word {
     font-family: 'Noto Sans JP', sans-serif;
     font-size: 30px;
