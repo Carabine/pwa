@@ -254,6 +254,8 @@
     width: 100%;
     padding-bottom: 14px;
     flex-shrink: 0;
+    /* Сжатие титульного ряда при открытии ответа — плавно, в такт слову. */
+    transition: padding 0.28s ease, margin 0.28s ease;
 }
 
 /* Разделитель вопроса и ответа: нейтральная линия, тающая к краям.
@@ -329,8 +331,14 @@
 .word-furigana {
     animation: furi-drop 0.3s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
     animation-delay: 0.03s;
+    overflow: hidden;
 }
-@keyframes furi-drop { from { opacity: 0; transform: translateY(-7px); } }
+/* max-height раскрывается вместе с появлением — вставка строки чтения не
+   толкает слово мгновенным рывком. */
+@keyframes furi-drop {
+    from { opacity: 0; transform: translateY(-7px); max-height: 0; }
+    to { opacity: 1; transform: none; max-height: 26px; }
+}
 
 /* Кнопки под карточкой всплывают лёгким каскадом при каждой смене состава
    («Показать ответ» → оценки и обратно на новой карточке). */
@@ -503,6 +511,8 @@
     font-size: clamp(44px, 7vw, 62px);
     font-weight: 300;
     letter-spacing: -0.02em;
+    /* Плавное уменьшение титула при открытии ответа (вместо телепорта). */
+    transition: font-size 0.28s cubic-bezier(0.2, 0.7, 0.3, 1), letter-spacing 0.28s ease;
     line-height: 1.15;
     text-align: center;
     color: var(--text);
@@ -524,8 +534,9 @@
     from { opacity: 0; transform: translateY(6px); }
 }
 
-/* Без transition — перекладка мгновенна, быстрой зубрёжке не мешает.
-   Титул заметно крупнее перевода — слово остаётся главным и после открытия. */
+/* Титул заметно крупнее перевода — слово остаётся главным и после открытия.
+   Смена размера плавная (transition на .word): раньше слово телепортировалось
+   вверх с мгновенным уменьшением — читалось как скачок раскладки. */
 .card-area:has(.back-side--visible) .word {
     /* Слово остаётся якорем ответа — крупнее и плотнее перевода, чтобы главным
        оставался объект памяти (японское слово), а не его перевод. Компактнее,

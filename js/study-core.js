@@ -1290,8 +1290,33 @@
             return box;
         }
 
+        // FLIP-доводка титульного ряда: при открытии ответа карточка переклеивает
+        // flex-раскладку мгновенно (фронт из центра уезжает вверх, снизу встаёт
+        // оборот) — слово телепортируется. Компенсируем: ставим фронт transform-ом
+        // на старое место и отпускаем с транзишеном. CSS-транзишены (кегль слова,
+        // паддинги) в замер не попадают — forced reflow возвращает их стартовые
+        // значения, то есть гасим только мгновенную часть сдвига.
+        let frontFlipTimer = 0;
+        function startFrontFlip(fromTop) {
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            clearTimeout(frontFlipTimer);
+            els.front.style.transform = '';
+            const dy = fromTop - els.front.getBoundingClientRect().top;
+            if (dy < 2) return;
+            els.front.style.transform = `translateY(${dy}px)`;
+            void els.front.offsetHeight;    // зафиксировать стартовое положение
+            requestAnimationFrame(() => {
+                // Инлайн-список повторяет CSS (padding/margin) + transform: смена
+                // списка не сбивает уже идущий padding-транзишен.
+                els.front.style.transition = 'padding 0.28s ease, margin 0.28s ease, transform 0.3s cubic-bezier(0.2, 0.7, 0.3, 1)';
+                els.front.style.transform = '';
+                frontFlipTimer = setTimeout(() => { els.front.style.transition = ''; }, 400);
+            });
+        }
+
         function renderBack() {
             const w = current.word;
+            const flipFrom = els.front.getBoundingClientRect().top;
             els.back.innerHTML = '';
             els.back.classList.add('back-side--visible');
 
@@ -1533,6 +1558,7 @@
             // зарезервированного места — мелькал скролл. Стабильный 16:9-бокс клипа
             // (класс clip-player--sizing) + синхронная резервация = без прыжка.
             fitBackMedia();
+            startFrontFlip(flipFrom);
 
             const hints = ratingHints();
             els.buttons.innerHTML = '';
