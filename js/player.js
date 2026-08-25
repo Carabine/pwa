@@ -1309,6 +1309,9 @@ async function loadSubtitles(episodeNumber = 1) {
     renderTranscript();
     subsStatus.style.display = '';
     subsStatus.textContent = t('subs.searching');
+    // Пока идёт поиск — компактная строка со спиннером вплотную над скелетоном
+    // (без модификатора это крупный центрированный текст для «не найдены»).
+    subsStatus.classList.add('transcript__status--searching');
     setSubsSkeleton(true);
     setSubsFixVisible(false);
 
@@ -1329,6 +1332,7 @@ async function loadSubtitles(episodeNumber = 1) {
         state.cues = cues;
         state.subsFile = res.data.file || '';
         subsStatus.style.display = 'none';
+        subsStatus.classList.remove('transcript__status--searching');
         setSubsSkeleton(false);
         // Подобрали (или выбрали) файл — предлагаем сменить, если серия не та
         setSubsFixVisible(true);
@@ -1362,6 +1366,7 @@ async function loadSubtitles(episodeNumber = 1) {
     } catch (err) {
         console.error(err);
         setSubsSkeleton(false);
+        subsStatus.classList.remove('transcript__status--searching');
         if (err.response?.status === 404) {
             // Сабов в архиве нет. Не тупик: можно смотреть без них или принести своё видео.
             subsStatus.textContent = '';

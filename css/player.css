@@ -1364,6 +1364,30 @@ html, body {
     padding: 24px 16px;
 }
 
+/* Во время поиска сабов — компактная строка со спиннером вплотную над
+   скелетоном (единый лоадер, а не крупный текст, повисший над призраками). */
+.transcript__status--searching {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 14px 16px 6px;
+    font-size: 12.5px;
+}
+.transcript__status--searching::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 13px;
+    height: 13px;
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: subs-search-spin 0.8s linear infinite;
+}
+@keyframes subs-search-spin {
+    to { transform: rotate(360deg); }
+}
+
 .cue {
     position: relative; /* якорь для иконки ИИ-разбора в углу */
     padding: 8px 16px;
