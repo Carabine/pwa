@@ -254,8 +254,6 @@
     width: 100%;
     padding-bottom: 14px;
     flex-shrink: 0;
-    /* Сжатие титульного ряда при открытии ответа — плавно, в такт слову. */
-    transition: padding 0.28s ease, margin 0.28s ease;
 }
 
 /* Разделитель вопроса и ответа: нейтральная линия, тающая к краям.
@@ -268,6 +266,10 @@
     /* Компактный титульный ряд ответа — сцена достаётся клипу. */
     padding-bottom: 5px;
     margin-bottom: 5px;
+    /* Переход «вопрос → ответ» — простой фейд, как при смене карточки после
+       оценки: раскладка меняется мгновенно, а новое состояние проявляется.
+       Движение элементов глаз при этом не отслеживает — скачков нет. */
+    animation: back-in 0.16s ease-out;
 }
 
 .back-side {
@@ -299,46 +301,13 @@
 }
 .back-side--visible::-webkit-scrollbar { display: none; }
 
-/* Внутри оборота ужимается только медиа-слот (видеоклип) — остальное фиксировано.
-   Микро-каскад: строки разбора поднимаются друг за другом (задержки до 150мс),
-   ввод ничего не блокирует — быстрая зубрёжка с клавиатуры не страдает. */
+/* Внутри оборота ужимается только медиа-слот (видеоклип) — остальное фиксировано. */
 .back-side--visible > * {
     flex-shrink: 0;
-    animation: rise-in 0.24s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
 }
-
-.back-side--visible > :nth-child(2) { animation-delay: 0.04s; }
-.back-side--visible > :nth-child(3) { animation-delay: 0.07s; }
-.back-side--visible > :nth-child(4) { animation-delay: 0.10s; }
-.back-side--visible > :nth-child(5) { animation-delay: 0.13s; }
-.back-side--visible > :nth-child(n+6) { animation-delay: 0.15s; }
 
 @keyframes back-in { from { opacity: 0; } }
 @keyframes rise-in { from { opacity: 0; transform: translateY(10px); } }
-
-/* Момент ответа: перевод «проявляется» из расфокуса — взгляд сам падает на
-   него, остальные строки догоняют обычным каскадом. */
-.back-side--visible > .meaning {
-    animation: answer-focus 0.42s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
-    animation-delay: 0.05s;
-}
-@keyframes answer-focus {
-    from { opacity: 0; filter: blur(7px); transform: translateY(6px) scale(1.04); }
-    65% { filter: blur(0); }
-}
-
-/* Чтение-фуригана мягко опускается сверху на слово. */
-.word-furigana {
-    animation: furi-drop 0.3s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
-    animation-delay: 0.03s;
-    overflow: hidden;
-}
-/* max-height раскрывается вместе с появлением — вставка строки чтения не
-   толкает слово мгновенным рывком. */
-@keyframes furi-drop {
-    from { opacity: 0; transform: translateY(-7px); max-height: 0; }
-    to { opacity: 1; transform: none; max-height: 26px; }
-}
 
 /* Кнопки под карточкой всплывают лёгким каскадом при каждой смене состава
    («Показать ответ» → оценки и обратно на новой карточке). */
@@ -505,14 +474,13 @@
     max-width: 340px;
 }
 
-/* Слово-«титул»: крупное и лёгкое на вопросе, мгновенно сжимается в титульную
-   строку после открытия ответа — сцена достаётся клипу и разбору. */
+/* Слово-«титул»: крупное и лёгкое на вопросе, сжимается в титульную строку
+   после открытия ответа — сцена достаётся клипу и разбору. Перекладка
+   мгновенная и накрыта общим фейдом (см. .card-area:has(...) .front-side). */
 .word {
     font-size: clamp(44px, 7vw, 62px);
     font-weight: 300;
     letter-spacing: -0.02em;
-    /* Плавное уменьшение титула при открытии ответа (вместо телепорта). */
-    transition: font-size 0.28s cubic-bezier(0.2, 0.7, 0.3, 1), letter-spacing 0.28s ease;
     line-height: 1.15;
     text-align: center;
     color: var(--text);
@@ -534,9 +502,7 @@
     from { opacity: 0; transform: translateY(6px); }
 }
 
-/* Титул заметно крупнее перевода — слово остаётся главным и после открытия.
-   Смена размера плавная (transition на .word): раньше слово телепортировалось
-   вверх с мгновенным уменьшением — читалось как скачок раскладки. */
+/* Титул заметно крупнее перевода — слово остаётся главным и после открытия. */
 .card-area:has(.back-side--visible) .word {
     /* Слово остаётся якорем ответа — крупнее и плотнее перевода, чтобы главным
        оставался объект памяти (японское слово), а не его перевод. Компактнее,
@@ -1585,18 +1551,13 @@
     font-size: 17px;
     color: var(--text-muted);
     letter-spacing: 0.3px;
-    max-height: 28px;
-    overflow: hidden;
-    transition: max-height 0.28s ease, margin-top 0.28s ease, opacity 0.18s ease;
 }
 
-/* На обороте чтение уже есть (фуригана над словом) — фронтовое схлопываем
-   ПЛАВНО (max-height/margin), а не display:none: мгновенное исчезновение
-   строки было последним рывком в переходе «Показать ответ». */
+/* На обороте чтение уже есть (фуригана над словом) — фронтовое прячем, чтобы
+   не дублировать его над разделителем. Смена мгновенная: переход накрыт
+   общим фейдом титульного ряда. */
 .card-area:has(.back-side--visible) .front-reading {
-    max-height: 0;
-    margin-top: 0;
-    opacity: 0;
+    display: none;
 }
 
 /* ---- Выбор колоды новичка: 15 сцен или все 50 слов ---- */
