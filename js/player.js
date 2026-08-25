@@ -2433,7 +2433,7 @@ const popupExplain = document.getElementById('popup-explain');
 // залитый зелёный с галочкой — как «отмечено» (та же метафора, что у выбора
 // слов на странице «Мои слова»).
 const KNOWN_CHIP_HTML = '<span class="word-popup__known-box"><svg viewBox="0 0 24 24" fill="none" '
-    + 'stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'
+    + 'stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">'
     + '<path d="M20 6 9 17l-5-5"/></svg></span><span class="word-popup__known-label"></span>';
 const popupKnown = (() => {
     let el = document.getElementById('popup-known');

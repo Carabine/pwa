@@ -194,7 +194,7 @@ window.I18N_UK = {
         'popup.searching': 'Шукаємо у словнику…',
         'popup.notFound': 'У словнику такого немає — але можна зберегти як є',
         'popup.noResponse': 'Словник не відповідає',
-        'popup.known': 'Вже знаю',
+        'popup.known': 'Вже знаю це слово',
         'popup.known.title': 'Не пропонувати це слово як нове',
         'popup.knownAdded': 'Позначено як відоме — картка не потрібна',
         'popup.seen': 'зустрілося ×{n}',

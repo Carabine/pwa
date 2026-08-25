@@ -198,7 +198,7 @@ const I18N = {
         'popup.searching': 'Ищем в словаре…',
         'popup.notFound': 'В словаре такого нет — но можно сохранить как есть',
         'popup.noResponse': 'Словарь не отвечает',
-        'popup.known': 'Уже знаю',
+        'popup.known': 'Уже знаю это слово',
         'popup.known.title': 'Не предлагать это слово как новое',
         'popup.knownAdded': 'Отмечено как известное — карточка не нужна',
         'popup.seen': 'встретилось ×{n}',

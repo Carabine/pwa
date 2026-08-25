@@ -194,7 +194,7 @@ window.I18N_EN = {
         'popup.searching': 'Looking it up…',
         'popup.notFound': 'Not in the dictionary — you can still save it as is',
         'popup.noResponse': 'Dictionary is not responding',
-        'popup.known': 'I know this',
+        'popup.known': 'I already know this word',
         'popup.known.title': 'Don’t suggest this word as new',
         'popup.knownAdded': 'Marked as known — no card needed',
         'popup.seen': 'seen ×{n}',
