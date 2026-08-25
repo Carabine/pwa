@@ -1612,28 +1612,54 @@ html, body {
     margin-bottom: 14px;
 }
 
-/* Чип «Уже знаю» под чтением слова (выбран вариант Б из галереи known-vars). */
+/* Чип-переключатель «Уже знаю» под чтением слова. Внутри — кружок-чекбокс
+   (та же метафора, что у выбора слов на «Моих словах»): пустой кружок читается
+   как «можно тапнуть», залитый зелёный с галочкой — как «отмечено». */
 .word-popup__known {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 7px;
     margin-top: 8px;
-    padding: 4px 11px;
+    padding: 5px 12px 5px 7px;
     background: var(--card);
-    color: var(--text-dim);
+    color: var(--text-muted);
     border: 1px solid var(--border);
     border-radius: 20px;
     font-size: 12px;
     cursor: pointer;
     white-space: nowrap;
-    transition: color 0.15s ease, border-color 0.15s ease;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
-.word-popup__known svg { width: 12px; height: 12px; }
 .word-popup__known:hover { border-color: var(--primary); }
+
+.word-popup__known-box {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--text-dim);
+    border-radius: 50%;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.word-popup__known-box svg {
+    width: 9px;
+    height: 9px;
+    color: transparent;               /* галочка проявляется только в «отмечено» */
+    transition: color 0.15s ease;
+}
+
 .word-popup__known.is-on {
     color: var(--success);
     border-color: rgba(16, 185, 129, 0.5);
+    background: rgba(16, 185, 129, 0.1);
 }
+.word-popup__known.is-on .word-popup__known-box {
+    background: var(--success);
+    border-color: var(--success);
+}
+.word-popup__known.is-on .word-popup__known-box svg { color: #06281c; }
 
 .word-popup__word {
     font-family: 'Noto Sans JP', sans-serif;

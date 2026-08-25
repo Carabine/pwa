@@ -2429,8 +2429,12 @@ const popupExplain = document.getElementById('popup-explain');
 // нового HTML нет). Поэтому не полагаемся на разметку: нет — создаём сами.
 // Содержимое (галочка + подпись) выставляем всегда: у клиента со старым HTML
 // внутри кнопки мог остаться голый текст прежнего варианта.
-const KNOWN_CHIP_HTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" '
-    + 'stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span></span>';
+// Кружок-чекбокс + подпись: пустой кружок читается как «можно тапнуть»,
+// залитый зелёный с галочкой — как «отмечено» (та же метафора, что у выбора
+// слов на странице «Мои слова»).
+const KNOWN_CHIP_HTML = '<span class="word-popup__known-box"><svg viewBox="0 0 24 24" fill="none" '
+    + 'stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'
+    + '<path d="M20 6 9 17l-5-5"/></svg></span><span class="word-popup__known-label"></span>';
 const popupKnown = (() => {
     let el = document.getElementById('popup-known');
     if (!el) {
@@ -2458,8 +2462,8 @@ function updateKnownBtn(base) {
     if (!popupKnown) return;
     const on = !!(window.KnownWords && KnownWords.has(base));
     popupKnown.classList.toggle('is-on', on);
-    // Меняем только подпись — галочка-svg живёт в кнопке постоянно.
-    const label = popupKnown.querySelector('span');
+    // Меняем только подпись — кружок-чекбокс живёт в кнопке постоянно.
+    const label = popupKnown.querySelector('.word-popup__known-label');
     if (label) label.textContent = t('popup.known');
     popupKnown.title = t('popup.known.title');
 }
