@@ -314,10 +314,37 @@
 @keyframes back-in { from { opacity: 0; } }
 @keyframes rise-in { from { opacity: 0; transform: translateY(10px); } }
 
+/* Момент ответа: перевод «проявляется» из расфокуса — взгляд сам падает на
+   него, остальные строки догоняют обычным каскадом. */
+.back-side--visible > .meaning {
+    animation: answer-focus 0.42s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+    animation-delay: 0.05s;
+}
+@keyframes answer-focus {
+    from { opacity: 0; filter: blur(7px); transform: translateY(6px) scale(1.04); }
+    65% { filter: blur(0); }
+}
+
+/* Чтение-фуригана мягко опускается сверху на слово. */
+.word-furigana {
+    animation: furi-drop 0.3s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+    animation-delay: 0.03s;
+}
+@keyframes furi-drop { from { opacity: 0; transform: translateY(-7px); } }
+
+/* Кнопки под карточкой всплывают лёгким каскадом при каждой смене состава
+   («Показать ответ» → оценки и обратно на новой карточке). */
+.main.study .buttons > button {
+    animation: rise-in 0.26s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+}
+.main.study .buttons > button:nth-child(2) { animation-delay: 0.06s; }
+
 @media (prefers-reduced-motion: reduce) {
     .word,
     .back-side--visible,
     .back-side--visible > *,
+    .word-furigana,
+    .main.study .buttons > button,
     .sentence__spark { animation: none !important; }
 }
 
