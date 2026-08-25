@@ -2483,8 +2483,11 @@ async function openWordPopup(tok, cue, event) {
 
     try {
         // lang: глоссы jisho английские — бэкенд переводит их на язык интерфейса
+        // silentErrors: у попапа своя обработка ошибки («Словарь не отвечает» +
+        // «Повторить» прямо в теле) — глобальный снекбар дублировал бы её.
         const { data: res } = await client.get('dictionary', {
             params: { q: tok.base, lang: (typeof getLang === 'function') ? getLang() : 'ru' },
+            silentErrors: true,
         });
         const entries = res.data || [];
         if (state.popupContext?.tok !== tok) return;

@@ -127,8 +127,11 @@
     const is429 = (err) => err && err.response && err.response.status === 429;
 
     async function fetchDict(entry) {
+        // silentErrors: непрогретые слова словарь-прокси отдаёт 502, мы их сами
+        // ретраим — глобальный снекбар «Словарь не отвечает» тут только пугал.
         const { data: res } = await client.get('dictionary', {
             params: { q: entry.base, lang: (typeof getLang === 'function') ? getLang() : 'ru' },
+            silentErrors: true,
         });
         entry.dict = (res.data && res.data[0]) || null;
         entry.translation = buildTranslation(entry.dict);

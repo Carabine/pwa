@@ -43,8 +43,11 @@ function createAxiosClient({ options, getCurrentAccessToken, getCurrentRefreshTo
             // Снекбар — для HTTP-ошибок кроме 401 (тот уходит в refresh-логику ниже).
             // Сетевые ошибки без ответа не показываем: офлайн-режим и фоновые
             // опросы иначе спамили бы. Повторы одного сообщения глушим на 5 с.
+            // silentErrors: true в конфиге запроса — вообще без снекбара: для
+            // фоновых best-effort запросов (прогрев словаря в авто-колоде) и мест
+            // со своим UI ошибки (словарный попап с кнопкой «Повторить»).
             const status = error.response?.status;
-            if (status && status !== 401) {
+            if (status && status !== 401 && !error.config?.silentErrors) {
                 const msg = error?.response?.data?.message ?? 'An unexpected error occurred';
                 const now = Date.now();
                 if (msg !== lastSnackbar.msg || now - lastSnackbar.at > 5000) {
