@@ -1834,10 +1834,12 @@ html, body {
     color: var(--primary-hover);
 }
 
-/* Режим «разбор предложения» (открыт иконкой ИИ у реплики): словарная часть и
-   кнопка сохранения не нужны — остаются предложение и сам разбор. */
+/* Режим «разбор предложения» (открыт иконкой ИИ у реплики): словарная часть,
+   кнопка сохранения и чекбокс «уже знаю» не нужны — тут нет слова, остаются
+   предложение и сам разбор. */
 .word-popup--sentence .word-popup__body,
-.word-popup--sentence .word-popup__save {
+.word-popup--sentence .word-popup__save,
+.word-popup--sentence .word-popup__known {
     display: none;
 }
 
