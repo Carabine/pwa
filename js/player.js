@@ -1272,7 +1272,9 @@ function setSubsSkeleton(on) {
     el = document.createElement('div');
     el.id = 'subs-skel';
     el.setAttribute('aria-hidden', 'true');
-    for (const [jpWidths, ruWidth] of SKEL_ROWS) {
+    // Паттерн дважды — призраки заполняют всю видимую область даже на высокой
+    // десктопной панели (статус теперь плавает поверх, а не занимает верх).
+    for (const [jpWidths, ruWidth] of [...SKEL_ROWS, ...SKEL_ROWS]) {
         const row = document.createElement('div');
         row.className = 'subs-skel__row';
         row.appendChild(document.createElement('i')).className = 'subs-skel__time';
