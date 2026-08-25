@@ -1646,6 +1646,43 @@ html, body {
     background: var(--grad);
 }
 
+/* Появление карточки — в такт анимации ответа в обучении: лёгкий подъём с
+   проявлением (на телефоне свой лист word-sheet-up ниже). Позиция ставится
+   через left/top, поэтому transform здесь свободен. */
+.word-popup:not(.word-popup--sheet) {
+    animation: popup-pop 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+@keyframes popup-pop {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+}
+
+/* Содержимое словаря (смыслы, мета, «ищем…»/ошибка) всплывает каскадом, как
+   строки оборота карточки обучения: innerHTML-вставка не бьёт по глазам. */
+.word-popup__body > * {
+    animation: popup-rise 0.24s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+}
+.word-popup__body > :nth-child(2) { animation-delay: 0.05s; }
+.word-popup__body > :nth-child(3) { animation-delay: 0.09s; }
+.word-popup__body > :nth-child(n+4) { animation-delay: 0.12s; }
+@keyframes popup-rise {
+    from { opacity: 0; transform: translateY(8px); }
+}
+
+/* Первый смысл — главный ответ: «проявляется» из расфокуса, как перевод
+   при «Показать ответ». */
+.word-popup__body > .sense:first-child {
+    animation: popup-focus 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+}
+@keyframes popup-focus {
+    from { opacity: 0; filter: blur(6px); transform: translateY(5px); }
+    65% { filter: blur(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .word-popup,
+    .word-popup__body > * { animation: none !important; }
+}
+
 /* На телефоне — нижний лист во всю ширину, чтобы карточка не вылезала за экран */
 .word-popup--sheet {
     left: 0;
