@@ -48,12 +48,15 @@ const videoWrap = document.getElementById('video-wrap');
 const videoLoading = document.getElementById('video-loading');
 const translationSelect = document.getElementById('translation-select');
 const episodeSelect = document.getElementById('episode-select');
-// До загрузки каталога оба селекта пусты — показываем их призрачными
-// полосками (setSelectGhost объявлена ниже, hoisting).
-setSelectGhost(translationSelect, true);
-setSelectGhost(episodeSelect, true);
 const seasonSelect = document.getElementById('season-select');
 const seasonGroup = document.getElementById('season-group');
+// До загрузки каталога селекты пусты — показываем их призрачными полосками
+// (setSelectGhost объявлена ниже, hoisting; вызовы строго ПОСЛЕ всех const —
+// иначе TDZ-ошибка валит весь скрипт). Слот сезона тоже зарезервирован
+// призраком: его позднее появление не должно дёргать раскладку.
+setSelectGhost(translationSelect, true);
+setSelectGhost(episodeSelect, true);
+setSelectGhost(seasonSelect, true);
 const transcriptList = document.getElementById('transcript-list');
 const subsStatus = document.getElementById('subs-status');
 const jumpBtn = document.getElementById('transcript-jump');
@@ -558,6 +561,8 @@ function seasonLabels(groups) {
 
 function fillSeasonSelect(labels, selectedIndex, skipSet) {
     seasonGroup.hidden = false;
+    seasonGroup.classList.remove('season-none');
+    setSelectGhost(seasonSelect, false);
     seasonSelect.innerHTML = '';
     labels.forEach((label, i) => {
         if (skipSet && skipSet.has(i)) return;   // прячем чиби-сезоны
@@ -585,7 +590,8 @@ function renderSeasons() {
         return;
     }
     state.seasonMode = 'single';
-    seasonGroup.hidden = true;
+    // Сезонов нет — схлопываем зарезервированный слот (на телефоне плавно).
+    seasonGroup.classList.add('season-none');
 }
 
 // ---- Детект короткометражек (чиби/PV) по длине серии ----

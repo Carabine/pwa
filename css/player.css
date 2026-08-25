@@ -857,6 +857,21 @@ html, body {
     border-color: var(--text-dim);
 }
 
+/* Сезонов у тайтла нет — зарезервированный слот схлопывается. На десктопе все
+   три группы в одной строке (высота ряда не меняется) — можно мгновенно;
+   плавная версия для телефона живёт в мобильном @media ниже. */
+.control-group--season.season-none {
+    display: none;
+}
+
+/* Ссылка «Не совпадают субтитры?» появляется после загрузки сабов — резервируем
+   её строку с первого рендера, чтобы поздний показ не сдвигал раскладку. */
+.subs-fix-link[hidden] {
+    display: inline-block;
+    visibility: hidden;
+    pointer-events: none;
+}
+
 /* Селект ещё без данных — призрачная полоска в стиле скелетона субтитров
    (пульс), а не пустой «сломанный» выпадающий список. */
 .control-group select.select--ghost {
@@ -2208,6 +2223,18 @@ html, body {
 
     .control-group--season {
         flex: 1 1 100%;
+        max-height: 80px;
+        overflow: hidden;
+        transition: max-height 0.25s ease, opacity 0.2s ease, margin-bottom 0.25s ease;
+    }
+
+    /* На телефоне сезон — своя строка: схлопываем плавно, съедая row-gap. */
+    .control-group--season.season-none {
+        display: block;
+        max-height: 0;
+        opacity: 0;
+        margin-bottom: -8px;
+        pointer-events: none;
     }
 
     /* flex-basis:0 — дорожка не диктует свою «контентную» ширину, поэтому серия

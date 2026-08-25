@@ -130,7 +130,10 @@
                 <!-- Сезон/дорожка/серия — компактный ряд: на ПК всегда в одну строку,
                      на телефоне сезон занимает всю строку, дорожка и серия — рядом. -->
                 <div class="control-row">
-                    <div class="control-group control-group--season" id="season-group" hidden>
+                    <!-- Слот сезона виден с первого рендера (призрак-селект), чтобы
+                         его появление после загрузки не дёргало раскладку; если
+                         сезонов нет — JS схлопывает классом season-none. -->
+                    <div class="control-group control-group--season" id="season-group">
                         <label data-i18n="controls.season">Сезон</label>
                         <select id="season-select"></select>
                     </div>
