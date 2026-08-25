@@ -1585,12 +1585,18 @@
     font-size: 17px;
     color: var(--text-muted);
     letter-spacing: 0.3px;
+    max-height: 28px;
+    overflow: hidden;
+    transition: max-height 0.28s ease, margin-top 0.28s ease, opacity 0.18s ease;
 }
 
-/* На обороте чтение уже есть (чип транскрипции) — фронтовое прячем, чтобы
-   не дублировать его над разделителем. */
+/* На обороте чтение уже есть (фуригана над словом) — фронтовое схлопываем
+   ПЛАВНО (max-height/margin), а не display:none: мгновенное исчезновение
+   строки было последним рывком в переходе «Показать ответ». */
 .card-area:has(.back-side--visible) .front-reading {
-    display: none;
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
 }
 
 /* ---- Выбор колоды новичка: 15 сцен или все 50 слов ---- */
