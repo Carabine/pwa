@@ -156,7 +156,9 @@ html, body {
     background: var(--surface);
     box-shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.5);
     transition: transform var(--transition), box-shadow var(--transition);
-    animation: cardIn 0.4s ease both;
+    /* Лесенкой карточки проступают волной, а не все разом: задержку по индексу
+       (с потолком 400мс) ставит buildCard инлайном. Тайминг — общий. */
+    animation: cardIn var(--dur-3, 0.32s) var(--ease-out, ease) both;
 }
 
 @keyframes cardIn {
@@ -402,26 +404,13 @@ html, body {
     color: rgba(226, 232, 240, 0.72);
 }
 
-/* ---------- Скелетоны при загрузке ---------- */
+/* ---------- Скелетоны при загрузке ----------
+   Блик и цвет берём из общего .skel (css/app/motion.css) — раньше у каталога
+   был свой ::after со своим таймингом, и два скелетона в приложении мерцали
+   вразнобой. Здесь остаётся только форма постера. */
 .skeleton {
-    position: relative;
     border-radius: 16px;
     aspect-ratio: 2 / 3;
-    background: var(--card);
-    overflow: hidden;
-}
-
-.skeleton::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
-    animation: shimmer 1.3s infinite;
-}
-
-@keyframes shimmer {
-    100% { transform: translateX(100%); }
 }
 
 /* На телефоне карточки идут по 3 в ряд (~110px) — текст и лейблы внутри

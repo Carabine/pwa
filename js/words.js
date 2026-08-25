@@ -38,9 +38,19 @@ function scheduleClipRefresh() {
     }, 8000);
 }
 
+// Заглушка списка на время загрузки. Раньше здесь стояла одна строка
+// «Загрузка…»: список приезжал совсем другой высоты и весь экран прыгал.
+// Саму заглушку рисует инлайн-скрипт в words.html — ещё при разборе страницы,
+// до первого кадра (см. window.animeiWordsSkeleton). Здесь — только страховка
+// на случай, если тот скрипт почему-то не отработал.
+function renderWordsSkeleton() {
+    const el = document.querySelector('.words-list');
+    if (!el || el.querySelector('.is-skel')) return;
+    if (typeof window.animeiWordsSkeleton === 'function') window.animeiWordsSkeleton();
+}
+
 async function loadWords() {
-    const wordsListEl = document.querySelector('.words-list');
-    wordsListEl.innerHTML = `<p style="color: var(--text-muted)">${t('words.loading')}</p>`;
+    renderWordsSkeleton();
 
     try {
         allWords = await fetchWords();
@@ -374,7 +384,8 @@ function renderWords() {
 
     if (allWords.length === 0) {
         // Пустая коллекция — сразу зовём туда, где слова добавляются
-        wordsListEl.className = 'words-list';
+        wordsListEl.className = 'words-list'
+            + (wordsListEl.querySelector('.is-skel') ? ' anim-fade' : '');
         wordsListEl.innerHTML = `
             <div class="words-empty">
                 <p style="color: var(--text-muted)">${t('words.empty')}</p>
@@ -390,9 +401,14 @@ function renderWords() {
         .filter(matchesFilter)
         .filter((w) => (window.DecksUI ? DecksUI.visible(w) : true)));
 
+    // Первая отрисовка приходит на место скелетона — её проявляем; повторные
+    // (поиск, сортировка, фильтр по колоде) идут без анимации, иначе список
+    // мигал бы на каждой набранной букве.
+    const fromSkeleton = !!wordsListEl.querySelector('.is-skel');
     wordsListEl.className = 'words-list'
         + (viewMode === 'list' ? ' words-list--rows' : '')
-        + (selectMode ? ' is-selecting' : '');
+        + (selectMode ? ' is-selecting' : '')
+        + (fromSkeleton ? ' anim-fade' : '');
     wordsListEl.innerHTML = '';
 
     if (words.length === 0) {

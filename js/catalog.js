@@ -38,7 +38,7 @@ function hideStatus() {
 // Мерцающие плейсхолдеры, пока идёт загрузка — как на стриминговых сайтах.
 function renderSkeletons(n = 12) {
     hideStatus();
-    resultsEl.innerHTML = Array.from({ length: n }, () => '<div class="skeleton"></div>').join('');
+    resultsEl.innerHTML = Array.from({ length: n }, () => '<div class="skeleton skel"></div>').join('');
 }
 
 // Сложность языка тайтла из кураторской карты (anime-difficulty.js);

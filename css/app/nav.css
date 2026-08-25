@@ -69,6 +69,10 @@
 .header__right {
     justify-content: flex-end;
     gap: 8px;
+    /* Пилюлю языка вставляет i18n.js уже после первого кадра. Держим под неё
+       место (53px селект + 8px зазор + 36px профиль), иначе кнопка профиля
+       заметно прыгает влево на каждой странице приложения. */
+    min-width: 97px;
 }
 
 /* Главная: логотип прижат к левому краю (сразу за кнопкой меню), профиль — справа.
@@ -96,7 +100,7 @@
     background: transparent;
     color: var(--text-muted);
     font-size: 20px;
-    transition: all var(--transition);
+    transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 
 .icon-btn:hover {
@@ -222,7 +226,7 @@
     color: var(--text-muted);
     font-size: 15px;
     font-weight: 500;
-    transition: all var(--transition);
+    transition: background-color var(--transition), color var(--transition);
 }
 
 .sidebar a:hover {

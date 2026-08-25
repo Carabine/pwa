@@ -27,7 +27,7 @@
     border: 2px dashed var(--border);
     border-radius: var(--radius);
     cursor: pointer;
-    transition: all var(--transition);
+    transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
     color: var(--text-muted);
     max-width: 500px;
     width: 100%;
@@ -172,7 +172,7 @@
     align-items: center;
     gap: 8px;
     opacity: 0.4;
-    transition: all 0.3s ease;
+    transition: opacity var(--dur-3) var(--ease-out), color var(--dur-3) var(--ease-out);
 }
 
 .loading-step::before {
@@ -182,7 +182,7 @@
     border-radius: 50%;
     background: var(--border);
     flex-shrink: 0;
-    transition: all 0.3s ease;
+    transition: background-color var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out);
 }
 
 .loading-step.active {
@@ -368,7 +368,7 @@
     color: var(--text-muted);
     border: none;
     flex-shrink: 0;
-    transition: all var(--transition);
+    transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 
 .pc-btn:hover {
@@ -420,7 +420,7 @@
     font-weight: 600;
     font-family: var(--font);
     cursor: pointer;
-    transition: all var(--transition);
+    transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
     outline: none;
 }
 
@@ -599,7 +599,7 @@
     padding: 1px 3px;
     border-radius: 3px;
     cursor: pointer;
-    transition: all var(--transition);
+    transition: background-color var(--transition), color var(--transition), box-shadow var(--transition);
     font-size: 16px;
 }
 
@@ -668,7 +668,7 @@
     color: var(--text-dim);
     cursor: pointer;
     opacity: 0;
-    transition: all var(--transition);
+    transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 
 .sub-segment:hover .sub-ai-btn {

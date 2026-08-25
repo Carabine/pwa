@@ -25,7 +25,7 @@
     color: var(--text);
     font-size: 18px;
     font-weight: 600;
-    transition: all 0.25s ease;
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
     text-decoration: none;
 }
 
@@ -89,7 +89,7 @@
     border-radius: var(--radius);
     color: var(--text);
     text-decoration: none;
-    transition: all 0.25s ease;
+    transition: border-color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
 }
 
 .continue-card:hover {
@@ -271,7 +271,7 @@
    Ядро новой главной: учёба показана как конечная задача на сегодня
    («8 повторений · 5 новых · ≈5 мин → Начать»), а не как ссылка на раздел.
    Наполняет app.js (renderDailyPlan). Три визуальных варианта переключаются
-   классом .hub--v1/v2/v3 на контейнере (?hub=1|2|3) — выбираем лучший. */
+   классом .hub-var-2/.hub-var-3 на <html> (?hub=1|2|3) — выбираем лучший. */
 .daily-plan {
     width: 100%;
     max-width: 400px;
@@ -435,29 +435,34 @@
     border: 1px solid var(--border);
 }
 
+/* Вариант оформления вешает на <html> скрипт-резерватор в <head> (?hub=2|3),
+   ДО первой отрисовки — раньше класс ставил app.js, и на этих URL карточка
+   перекраивалась уже после первого кадра. Вариант 1 — состояние по умолчанию,
+   поэтому он описан «от противного», без своего класса. */
+
 /* Вариант 1 — «кольцо-герой»: горизонтально, кольцо прогресса слева. */
-.hub--v1 .daily-plan__ring { display: block; }
-.hub--v1 .daily-plan__headline { font-size: var(--fs-title); }
+:root:not(.hub-var-2):not(.hub-var-3) .daily-plan__ring { display: block; }
+:root:not(.hub-var-2):not(.hub-var-3) .daily-plan__headline { font-size: var(--fs-title); }
 
 /* Вариант 2 — «карточка-задача»: вертикально, крупная цифра, полоса, CTA во всю ширину. */
-.hub--v2 .daily-plan {
+:root.hub-var-2 .daily-plan {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
     padding: 20px;
 }
-.hub--v2 .daily-plan__headline { font-size: var(--fs-display); }
-.hub--v2 .daily-plan__bar { display: block; }
-.hub--v2 .daily-plan__cta { width: 100%; padding: 13px; }
+:root.hub-var-2 .daily-plan__headline { font-size: var(--fs-display); }
+:root.hub-var-2 .daily-plan__bar { display: block; }
+:root.hub-var-2 .daily-plan__cta { width: 100%; padding: 13px; }
 
 /* Вариант 3 — «минимальный баннер»: тише фон, компактно, без кольца/полосы. */
-.hub--v3 .daily-plan {
+:root.hub-var-3 .daily-plan {
     background: var(--card);
     border-color: var(--border);
     padding: 14px 16px;
 }
-.hub--v3 .daily-plan__headline { font-size: var(--fs-title); }
-.hub--v3 .daily-plan__eyebrow { display: none; }
+:root.hub-var-3 .daily-plan__headline { font-size: var(--fs-title); }
+:root.hub-var-3 .daily-plan__eyebrow { display: none; }
 
 /* ========== НЕДЕЛЬНАЯ АКТИВНОСТЬ ========== */
 .week-strip {
@@ -729,3 +734,102 @@
     to   { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) { .week-strip__milestone { animation: none; } }
+
+
+/* ========== СКЕЛЕТОНЫ ЛЕНТЫ ГЛАВНОЙ ==========
+   Динамические блоки стоят в разметке сразу — в состоянии .is-skel. Место под
+   них занято до первой отрисовки, поэтому появление данных не двигает ленту
+   (раньше статичный блок «Ещё» рисовался у верха и потом уезжал вниз на пол-
+   экрана). Какие слоты показать, решает синхронный скрипт-резерватор в <head>
+   (классы hub-slot-* на <html>) — его условия совпадают с проверками
+   renderContinueCard/renderSessionCard/renderWeekActivity в app.js.
+
+   Скелетон собран из НАСТОЯЩИХ классов блока: высоту строк держит обычный
+   strut (font-size/line-height родителя), а .skel-bar внутри — ниже строки.
+   Поэтому заглушка занимает столько же, сколько потом займёт текст, без
+   подгонки пикселей под каждый брейкпоинт и язык. */
+
+.continue-card.is-skel,
+.session-card.is-skel,
+.daily-plan.is-skel,
+.week-strip.is-skel {
+    display: none;
+}
+
+:root.hub-slot-continue .continue-card.is-skel { display: flex; }
+:root.hub-slot-session .session-card.is-skel { display: flex; }
+:root.hub-slot-plan .daily-plan.is-skel,
+:root.hub-slot-plan-done .daily-plan.is-skel,
+:root.hub-slot-plan-empty .daily-plan.is-skel { display: flex; }
+:root.hub-slot-week .week-strip.is-skel { display: flex; }
+
+/* Заглушка — не кликабельна и не реагирует на ховер: это ещё не карточка. */
+.hub .is-skel {
+    pointer-events: none;
+    cursor: default;
+}
+
+.hub .is-skel:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* У плана три состояния разной высоты, и какое отрисуется — знает
+   скрипт-резерватор в <head> (он считает due/fresh по тем же данным, что и
+   srsSummary). Резервируем ровно его:
+     «есть что учить» — кольцо + чипы,
+     «на сегодня всё» — кольцо + строка-подпись,
+     «пусто»          — только подпись, кольца в этом состоянии нет. */
+:root.hub-slot-plan .daily-plan.is-skel .daily-plan__sub { display: none; }
+:root.hub-slot-plan-done .daily-plan.is-skel .daily-plan__chips { display: none; }
+:root.hub-slot-plan-empty .daily-plan.is-skel .daily-plan__ring,
+:root.hub-slot-plan-empty .daily-plan.is-skel .daily-plan__chips { display: none; }
+
+/* Кнопка-заглушка: без градиента и текста, ровно той же высоты. В рабочем
+   состоянии настоящая кнопка — градиент без рамки, поэтому контур рисуем
+   тенью: рамка добавила бы 2px сверх содержимого. А у «пусто» и «на сегодня
+   всё» кнопка как раз с рамкой — там повторяем её один в один. */
+.daily-plan.is-skel .daily-plan__cta {
+    background: var(--card);
+    box-shadow: inset 0 0 0 1px var(--border);
+}
+
+:root.hub-slot-plan-done .daily-plan.is-skel .daily-plan__cta,
+:root.hub-slot-plan-empty .daily-plan.is-skel .daily-plan__cta {
+    border: 1px solid var(--border);
+    box-shadow: none;
+}
+
+/* Чип «Слова из серии» держит высоту крестиком-закрытием (22px), а не строкой
+   текста — в заглушке его заменяет распорка. */
+.skel-close-spacer {
+    display: block;
+    width: 150px;
+    height: 22px;
+}
+
+.session-card.is-skel .session-card__chip {
+    border-color: var(--border);
+    background: var(--card);
+}
+
+.week-strip.is-skel .week-day {
+    border-color: transparent;
+}
+
+/* Строку стрика и баннер-рубеж резервируем только тем, у кого они реально
+   появятся (стрик считает скрипт-резерватор в <head>). На телефоне строка
+   «🔥 N дней подряд» переносится на свою строку, а баннер — это ещё +50px:
+   без резерва оба прилетали позже и толкали ленту. */
+.week-strip.is-skel .week-strip__streak,
+.week-strip.is-skel .week-strip__milestone { display: none; }
+
+:root.hub-slot-streak .week-strip.is-skel .week-strip__streak { display: block; }
+:root.hub-slot-milestone .week-strip.is-skel .week-strip__milestone { display: block; }
+
+/* У заглушки баннера анимации входа быть не должно — она не праздник. */
+.week-strip.is-skel .week-strip__milestone { animation: none; }
+
+/* Появление ленты: блоки проступают лесенкой на уже занятых местах — только
+   прозрачность и микросдвиг, поток при этом неподвижен. */
+.hub > .anim-in { will-change: opacity, transform; }

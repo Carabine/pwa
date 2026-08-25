@@ -12,6 +12,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <script>
+        // Тему ставим ДО первой отрисовки. js/settings.js подключён с defer и
+        // выполняется уже после того, как браузер нарисовал первый кадр, —
+        // из-за этого светлая тема на каждой загрузке вспыхивала тёмной.
+        // Логика зеркалит effectiveTheme() из js/settings.js.
+        (function () {
+            var th = 'dark';
+            try {
+                var s = JSON.parse(localStorage.getItem('animei:settings') || '{}');
+                if (s && s.theme) th = s.theme;
+            } catch (e) { /* приватный режим */ }
+            if (th === 'system') {
+                th = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'light' : 'dark';
+            }
+            th = th === 'light' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', th);
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute('content', th === 'light' ? '#f4f5fa' : '#0a0a0f');
+        })();
+    </script>
     <link href="../css/app.css" rel="stylesheet">
     <link href="../css/watch.css" rel="stylesheet">
     <script>

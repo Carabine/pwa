@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.313';
+const APP_VERSION = 'v0.0.314';
 
 /* ========== Кнопка «Назад» закрывает открытый слой ==========
    Сайдбар, модалки, шторки и выпадающие меню — «слои» поверх страницы. На
@@ -693,6 +693,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// ---- Слоты главной: скелетон → данные ---------------------------------------
+// Блоки ленты стоят в разметке сразу, в состоянии .is-skel (место занято ещё
+// до первой отрисовки — см. скрипт-резерватор в <head> index.html). Здесь мы
+// только подменяем содержимое: показ данных не должен ничего двигать.
+
+// Слот не понадобился (условие резерватора и рендера разошлись) — убираем его
+// совсем, а не оставляем вечно мерцающую заглушку.
+function dropSlot(el) {
+    if (!el) return;
+    el.classList.remove('is-skel');
+    el.removeAttribute('aria-hidden');
+    el.hidden = true;
+}
+
+// Данные готовы: снимаем заглушку и проявляем содержимое на её месте.
+// stagger — номер блока в ленте, чтобы они проступали лесенкой, а не разом.
+function fillSlot(el, html, stagger) {
+    if (!el) return;
+    const wasSkel = el.classList.contains('is-skel');
+    el.innerHTML = html;
+    el.classList.remove('is-skel');
+    el.removeAttribute('aria-hidden');
+    el.hidden = false;
+    // Повторный рендер (обновление после синка) не анимируем — мигание на
+    // месте читается как ошибка, а не как появление.
+    if (!wasSkel) return;
+    el.style.setProperty('--i', String(stagger || 0));
+    el.classList.remove('anim-fade');
+    void el.offsetWidth;   // рестарт анимации, если класс уже висел
+    el.classList.add('anim-fade');
+}
+
 // «Продолжить просмотр» — первый блок главной: последний тайтл, серия и
 // таймкод (пишет плеер в animei:lastWatch). Возврат в просмотр — один тап;
 // сезон/серию/время плеер восстановит сам по своим ключам.
@@ -701,7 +733,7 @@ function renderContinueCard() {
     if (!el) return;
     let lw = null;
     try { lw = JSON.parse(localStorage.getItem('animei:lastWatch') || 'null'); } catch { /* битый JSON */ }
-    if (!lw || !lw.id || !lw.title) return;
+    if (!lw || !lw.id || !lw.title) { dropSlot(el); return; }
 
     const p = new URLSearchParams({ id: lw.id, title: lw.title, name: lw.name || lw.title });
     el.href = './pages/player.html?' + p.toString();
@@ -710,7 +742,7 @@ function renderContinueCard() {
     const ss = String(Math.floor((lw.time || 0) % 60)).padStart(2, '0');
     const meta = t('hub.continue.ep') + ' ' + lw.epNum + (lw.time > 0 ? ' · ' + mm + ':' + ss : '');
 
-    el.innerHTML =
+    fillSlot(el,
         '<div class="continue-card__poster">' + (lw.poster ? '<img src="" alt="" loading="lazy">' : '') + '</div>' +
         '<div class="continue-card__info">' +
         '<span class="continue-card__label" data-i18n="hub.continue"></span>' +
@@ -718,12 +750,11 @@ function renderContinueCard() {
         '<span class="continue-card__meta"></span>' +
         '</div>' +
         '<span class="continue-card__play"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>' +
-        '<button class="continue-card__close" type="button" aria-label="Close">×</button>';
+        '<button class="continue-card__close" type="button" aria-label="Close">×</button>', 0);
     if (lw.poster) el.querySelector('.continue-card__poster img').src = lw.poster;
     el.querySelector('.continue-card__label').textContent = t('hub.continue');
     el.querySelector('.continue-card__title').textContent = lw.title;
     el.querySelector('.continue-card__meta').textContent = meta;
-    el.hidden = false;
 
     // Крестик убирает карточку с главной (указатель lastWatch). Позицию
     // просмотра (watchPos) не трогаем: если открыть тайтл заново, плеер
@@ -753,15 +784,15 @@ function renderSessionCard() {
     if (!el) return;
     let s = null;
     try { s = JSON.parse(localStorage.getItem('animei:lastSession') || 'null'); } catch { /* битый JSON */ }
-    if (!s || s.processed || !Array.isArray(s.words) || !s.words.length) return;
+    if (!s || s.processed || !Array.isArray(s.words) || !s.words.length) { dropSlot(el); return; }
 
-    el.innerHTML =
+    fillSlot(el,
         '<span class="session-card__chip">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>' +
         '<span class="session-card__txt"></span>' +
         '<span class="session-card__go"></span>' +
         '<button class="session-card__close" type="button" aria-label="Close">×</button>' +
-        '</span>';
+        '</span>', 1);
 
     el.querySelector('.session-card__txt').textContent =
         t('session.chip').replace('{n}', s.words.length);
@@ -793,7 +824,6 @@ function renderSessionCard() {
         if (window.animeiTrack) window.animeiTrack('session_card', 'home_later');
     });
 
-    el.hidden = false;
     if (window.animeiTrack) window.animeiTrack('session_card', 'home_shown:' + s.words.length);
 }
 
@@ -856,42 +886,76 @@ function ringHTML(frac, label) {
         '</div>';
 }
 
-async function renderDailyPlan() {
+// План рисуем СРАЗУ по локальной копии (srsSummary читает только localStorage),
+// а сеть догоняет фоном. Раньше рендер ждал fetchDataFromServer — карточка
+// появлялась через секунды после остальной ленты и сдвигала всё под собой.
+function renderDailyPlan() {
     const el = document.getElementById('daily-plan');
     if (!el || typeof srsSummary !== 'function') return;
 
-    // Вариант оформления: ?hub=1|2|3 (по умолчанию 1). Класс вешаем на .hub.
-    const hub = document.getElementById('hub');
-    if (hub) {
-        const v = new URLSearchParams(location.search).get('hub');
-        hub.classList.add('hub--v' + (['1', '2', '3'].includes(v) ? v : '1'));
+    // Вошедший без локальной копии слов (новое устройство, чистый кэш): по
+    // локальным данным план выглядит «пустым», а после синка станет обычным —
+    // это схлопывание и обратное разворачивание карточки. Такому держим
+    // скелетон до ответа сервера: он уже занимает нужное место.
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem('words') || 'null'); } catch { /* битый JSON */ }
+    const waitForSync = !(Array.isArray(cached) && cached.length)
+        && typeof isLoggedIn === 'function' && isLoggedIn();
+
+    if (waitForSync) {
+        // Заглушку держим не дольше пары секунд: у axios таймаут 5 минут, и
+        // залипшая сеть иначе оставила бы мерцающее место вместо плана.
+        setTimeout(() => { if (el.classList.contains('is-skel')) paintDailyPlan(el); }, 2500);
+    } else {
+        paintDailyPlan(el);
     }
 
-    // srsSummary читает localStorage, так что план строится и без сети.
-    // Серверную синхронизацию пробуем, но её отказ не должен прятать план.
-    try {
-        await fetchDataFromServer();
-        if (typeof mergeServerSchedule === 'function') mergeServerSchedule();
-    } catch { /* нет сети — считаем по локальной копии расписания */ }
+    // Догоняем сервером: слова и расписание могли измениться на другом
+    // устройстве. Отказ сети не должен ломать уже показанный план.
+    (async () => {
+        try {
+            await fetchDataFromServer();
+            if (typeof mergeServerSchedule === 'function') mergeServerSchedule();
+        } catch { /* нет сети — остаёмся на локальной копии */ }
+        paintDailyPlan(el);
+    })();
+}
 
+// Один раз за загрузку отправляем состояние плана в аналитику. Флагом служит
+// отдельная переменная, а не наличие скелетона: у вошедшего первая заливка
+// может прийти уже после синка, и событие бы потерялось.
+let planTracked = false;
+
+// Отрисовка состояния плана по текущей локальной сводке. Вызывается один-два
+// раза (сразу и/или после синка) — повторный раз молча, без анимации.
+function paintDailyPlan(el) {
     let s;
-    try { s = srsSummary(); } catch { return; }
+    try { s = srsSummary(); } catch {
+        // Локальная копия слов испорчена — вечно мерцающая заглушка хуже, чем
+        // отсутствие блока: убираем слот и ждём следующей загрузки.
+        dropSlot(el);
+        return;
+    }
+    const first = el.classList.contains('is-skel');
+    // className переписываем целиком (состояния плана взаимоисключающие), но
+    // служебные классы сохраняем: is-skel до первой заливки, anim-fade — чтобы
+    // быстрый ответ сервера не оборвал уже идущее появление.
+    const keep = first ? ' is-skel' : (el.classList.contains('anim-fade') ? ' anim-fade' : '');
 
     // Ещё нет слов — первым делом предлагаем ГОТОВУЮ стартовую колоду
     // (beginner.html: 15 карточек со сценами, «В коллекцию» на каждой), а не
     // отправляем новичка сразу искать аниме: его первое действие — попробовать
     // учёбу на готовом, как было до редизайна главной.
     if (!s.total) {
-        el.className = 'daily-plan daily-plan--empty';
         el.href = './pages/beginner.html?deck=core';
-        el.innerHTML =
+        el.className = 'daily-plan daily-plan--empty' + keep;
+        fillSlot(el,
             '<div class="daily-plan__body">' +
             '<span class="daily-plan__eyebrow">' + escHtml(t('plan.title')) + '</span>' +
             '<span class="daily-plan__headline">' + escHtml(t('plan.empty.title')) + '</span>' +
             '<span class="daily-plan__sub">' + escHtml(t('plan.empty.sub')) + '</span>' +
             '</div>' +
-            '<span class="daily-plan__cta">' + escHtml(t('plan.empty.cta')) + '</span>';
-        el.hidden = false;
+            '<span class="daily-plan__cta">' + escHtml(t('plan.empty.cta')) + '</span>', 2);
         return;
     }
 
@@ -902,29 +966,28 @@ async function renderDailyPlan() {
 
     if (remaining === 0) {
         // На сегодня всё — зелёное состояние, CTA обратно к просмотру.
-        el.className = 'daily-plan daily-plan--done';
         el.href = resumeHref() || './pages/catalog.html';
-        el.innerHTML =
+        el.className = 'daily-plan daily-plan--done' + keep;
+        fillSlot(el,
             ringHTML(1, '✓') +
             '<div class="daily-plan__body">' +
             '<span class="daily-plan__eyebrow">' + escHtml(t('plan.title')) + '</span>' +
             '<span class="daily-plan__headline">' + escHtml(t('plan.done.title')) + '</span>' +
             '<span class="daily-plan__sub">' + escHtml(t('plan.done.sub')) + '</span>' +
             '</div>' +
-            '<span class="daily-plan__cta">' + escHtml(t('plan.done.cta')) + '</span>';
-        el.hidden = false;
-        if (window.animeiTrack) window.animeiTrack('daily_plan', 'done');
+            '<span class="daily-plan__cta">' + escHtml(t('plan.done.cta')) + '</span>', 2);
+        if (!planTracked && window.animeiTrack) { planTracked = true; window.animeiTrack('daily_plan', 'done'); }
         return;
     }
 
     // Есть что делать: время + разбивка + прогресс.
-    el.className = 'daily-plan daily-plan--plan';
     el.href = './pages/study.html';
+    el.className = 'daily-plan daily-plan--plan' + keep;
     const mins = estimateMinutes(s.due, s.fresh);
     const chips = [];
     if (s.due) chips.push('<span class="dp-chip dp-chip--due">' + s.due + ' ' + escHtml(t('plan.reviews')) + '</span>');
     if (s.fresh) chips.push('<span class="dp-chip dp-chip--new">' + s.fresh + ' ' + escHtml(t('home.new')) + '</span>');
-    el.innerHTML =
+    fillSlot(el,
         ringHTML(frac, doneCount + '/' + target) +
         '<div class="daily-plan__body">' +
         '<span class="daily-plan__eyebrow">' + escHtml(t('plan.title')) + '</span>' +
@@ -932,9 +995,8 @@ async function renderDailyPlan() {
         '<div class="daily-plan__chips">' + chips.join('') + '</div>' +
         '<div class="daily-plan__bar"><span style="width:' + Math.round(frac * 100) + '%"></span></div>' +
         '</div>' +
-        '<span class="daily-plan__cta">' + escHtml(doneCount > 0 ? t('plan.resume') : t('plan.start')) + '</span>';
-    el.hidden = false;
-    if (window.animeiTrack) window.animeiTrack('daily_plan', 'shown:' + remaining);
+        '<span class="daily-plan__cta">' + escHtml(doneCount > 0 ? t('plan.resume') : t('plan.start')) + '</span>', 2);
+    if (!planTracked && window.animeiTrack) { planTracked = true; window.animeiTrack('daily_plan', 'shown:' + remaining); }
 }
 
 // Небольшая недельная активность: последние 7 дней + серия занятий (🔥).
@@ -945,7 +1007,7 @@ function renderWeekActivity() {
     let days = [];
     try { days = JSON.parse(localStorage.getItem('srs:days') || '[]'); } catch { /* битый JSON */ }
     const active = new Set(Array.isArray(days) ? days : []);
-    if (!active.size) return; // ещё ни одного дня занятий — нечего показывать
+    if (!active.size) { dropSlot(el); return; } // ещё ни одного дня занятий — нечего показывать
 
     const letters = (t('week.days') || 'Su,Mo,Tu,We,Th,Fr,Sa').split(',');
     const today = new Date();
@@ -969,12 +1031,11 @@ function renderWeekActivity() {
     if (!active.has(dayKeyOf(cur))) cur.setDate(cur.getDate() - 1);
     while (active.has(dayKeyOf(cur))) { streak++; cur.setDate(cur.getDate() - 1); }
 
-    el.innerHTML =
+    fillSlot(el,
         '<div class="week-strip__days">' + cells + '</div>' +
         (streak > 1 && typeof tStreak === 'function'
             ? '<span class="week-strip__streak">🔥 ' + escHtml(tStreak(streak)) + '</span>'
-            : '');
-    el.hidden = false;
+            : ''), 3);
 
     // Праздник рубежа серии: 3/7/14/30/50/100 дней подряд. Показываем один раз
     // на рубеж (последний отмеченный — в localStorage), с маленькой анимацией.

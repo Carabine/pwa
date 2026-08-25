@@ -1,6 +1,7 @@
 /* app.css разбит на модули (css/app/). Порядок @import = каскад — не менять.
    Правь конкретный модуль, а не этот файл. */
 @import url('app/base.css');
+@import url('app/motion.css');
 @import url('app/nav.css');
 @import url('app/study.css');
 @import url('app/buttons.css');

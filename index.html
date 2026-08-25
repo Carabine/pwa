@@ -12,11 +12,32 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <script>
+        // Тему ставим ДО первой отрисовки. js/settings.js подключён с defer и
+        // выполняется уже после того, как браузер нарисовал первый кадр, —
+        // из-за этого светлая тема на каждой загрузке вспыхивала тёмной.
+        // Логика зеркалит effectiveTheme() из js/settings.js.
+        (function () {
+            var th = 'dark';
+            try {
+                var s = JSON.parse(localStorage.getItem('animei:settings') || '{}');
+                if (s && s.theme) th = s.theme;
+            } catch (e) { /* приватный режим */ }
+            if (th === 'system') {
+                th = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'light' : 'dark';
+            }
+            th = th === 'light' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', th);
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute('content', th === 'light' ? '#f4f5fa' : '#0a0a0f');
+        })();
+    </script>
     <link href="./css/app.css" rel="stylesheet">
     <style>
         /* Анимированный сплэш при запуске приложения (поверх нативного «лого на весь
            экран»): пульсирующая иконка あ, имя с градиентом и бегущая полоска. */
-        .app-splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:#0a0a0f;transition:opacity .45s ease}
+        .app-splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:var(--bg,#0a0a0f);transition:opacity .45s ease}
         .app-splash.is-hiding{opacity:0;pointer-events:none}
         .app-splash__logo{position:relative;width:100px;height:100px;display:flex;align-items:center;justify-content:center;animation:splash-pop .6s cubic-bezier(.2,.9,.3,1.25) both}
         .app-splash__mark{width:100px;height:100px;border-radius:24%;box-shadow:0 14px 44px -8px rgba(124,140,248,.6);position:relative;z-index:1}
@@ -49,6 +70,88 @@
                 }
             }
             if (lang !== 'ru') document.write('<scr' + 'ipt src="./js/i18n/' + lang + '.js" defer></scr' + 'ipt>');
+        })();
+    </script>
+    <script>
+        // Резервируем место под динамические блоки главной ДО первой отрисовки.
+        // Все условия читаются из localStorage синхронно — сеть тут не нужна.
+        // Без этого статичный блок «Ещё» рисовался первым у самого верха, а
+        // через секунду карточки вставлялись НАД ним и сдвигали его на пол-
+        // экрана (замеряли CLS 0.17). Условия обязаны совпадать с проверками
+        // в renderContinueCard/renderSessionCard/renderWeekActivity (app.js).
+        (function () {
+            var html = document.documentElement;
+            var json = function (k) {
+                try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; }
+            };
+            var key = function (d) {
+                return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+                    + '-' + String(d.getDate()).padStart(2, '0');
+            };
+            var lw = json('animei:lastWatch');
+            if (lw && lw.id && lw.title) html.classList.add('hub-slot-continue');
+            var ls = json('animei:lastSession');
+            if (ls && !ls.processed && Array.isArray(ls.words) && ls.words.length) html.classList.add('hub-slot-session');
+            // Недельная полоска: кроме кружков её высоту задают строка
+            // «🔥 N дней подряд» (на телефоне переносится на свою строку) и
+            // баннер-рубеж. Считаем стрик здесь же — иначе они прилетают
+            // позже и толкают всё, что ниже. Логика зеркалит
+            // renderWeekActivity() в app.js: правим в обоих местах.
+            var days = json('srs:days');
+            if (Array.isArray(days) && days.length) {
+                html.classList.add('hub-slot-week');
+                var active = {};
+                for (var i = 0; i < days.length; i++) active[days[i]] = 1;
+                var cur = new Date();
+                cur.setHours(0, 0, 0, 0);
+                if (!active[key(cur)]) cur.setDate(cur.getDate() - 1);
+                var streak = 0;
+                while (active[key(cur)]) { streak++; cur.setDate(cur.getDate() - 1); }
+                if (streak > 1) html.classList.add('hub-slot-streak');
+                var celebrated = 0;
+                try { celebrated = Number(localStorage.getItem('animei:streakMilestone')) || 0; } catch (e) { /* нет доступа */ }
+                var marks = [100, 50, 30, 14, 7, 3];
+                for (var m = 0; m < marks.length; m++) {
+                    if (streak >= marks[m] && marks[m] > celebrated) { html.classList.add('hub-slot-milestone'); break; }
+                }
+            }
+            // План дня есть всегда, но три его состояния разной высоты
+            // (пусто и «на сегодня всё» — 185px, «есть что учить» — 171px),
+            // поэтому нужное определяем здесь. Расчёт зеркалит srsSummary()
+            // из js/study-core.js: правим в обоих местах.
+            var words = json('words');
+            var list = Array.isArray(words) ? words : [];
+            var token = null;
+            try { token = localStorage.getItem('animei:accessToken'); } catch (e) { /* приватный режим */ }
+            var planSlot;
+            if (!list.length) {
+                // Вошедший с пустой локальной копией (новое устройство): после
+                // синка коллекция почти наверняка окажется непустой, поэтому
+                // резервируем рабочее состояние, а не «пусто».
+                planSlot = token ? 'hub-slot-plan' : 'hub-slot-plan-empty';
+            } else {
+                var sched = json('srs:schedule:v2') || {};
+                var todayKey = key(new Date());
+                var due = 0, fresh = 0;
+                for (var n = 0; n < list.length; n++) {
+                    var it = list[n];
+                    if (!it || !it.id) continue;
+                    var sc = sched[it.id];
+                    if (!sc) fresh++;
+                    else if (sc.due <= todayKey) due++;
+                }
+                var perDay = 20;
+                var cfg = json('animei:settings');
+                if (cfg && Number(cfg.newPerDay) > 0) perDay = Number(cfg.newPerDay);
+                planSlot = (due + Math.min(fresh, perDay)) > 0 ? 'hub-slot-plan' : 'hub-slot-plan-done';
+            }
+            html.classList.add(planSlot);
+            // Вариант оформления плана (?hub=2|3) тоже ставим здесь. Раньше
+            // класс варианта вешал app.js — на этих URL карточка перекраивалась
+            // уже после первого кадра. Вариант 1 — состояние по умолчанию,
+            // своего класса у него нет (см. css/app/hub.css).
+            var v = /[?&]hub=([123])/.exec(location.search);
+            if (v && v[1] !== '1') html.classList.add('hub-var-' + v[1]);
         })();
     </script>
 </head>
@@ -85,19 +188,54 @@
         </div>
     </header>
 
+    <!-- Слоты главной. Каждый динамический блок стоит в разметке СРАЗУ, но в
+         состоянии скелетона (.is-skel) — место занято ещё до первой отрисовки,
+         поэтому появление данных не двигает ленту. Показываются только те
+         слоты, что включил скрипт-резерватор в <head> (классы hub-slot-*);
+         app.js подменяет содержимое и снимает .is-skel. -->
     <div class="hub" id="hub">
-        <a class="continue-card" id="continue-card" hidden></a>
+        <a class="continue-card is-skel" id="continue-card" aria-hidden="true">
+            <span class="continue-card__poster skel"></span>
+            <span class="continue-card__info">
+                <span class="continue-card__label"><i class="skel skel-bar" style="width:110px"></i></span>
+                <span class="continue-card__title"><i class="skel skel-bar" style="width:150px"></i></span>
+                <span class="continue-card__meta"><i class="skel skel-bar" style="width:90px"></i></span>
+            </span>
+        </a>
 
         <!-- Слова из последнего просмотра — компактная строка (тап → все слова
              сессии в приоритет учёбы). Наполняет app.js (renderSessionCard). -->
-        <a class="session-card" id="session-card" href="./pages/study.html" hidden></a>
+        <a class="session-card is-skel" id="session-card" href="./pages/study.html" aria-hidden="true">
+            <span class="session-card__chip skel"><i class="skel-close-spacer"></i></span>
+        </a>
 
         <!-- Дневной план — ядро главной: конечная порция на сегодня (due + fresh +
              оценка времени + состояние «на сегодня всё»). Наполняет app.js. -->
-        <a class="daily-plan" id="daily-plan" href="./pages/study.html" hidden></a>
+        <a class="daily-plan is-skel" id="daily-plan" href="./pages/study.html" aria-hidden="true">
+            <span class="daily-plan__ring skel skel-circle"></span>
+            <span class="daily-plan__body">
+                <span class="daily-plan__eyebrow"><i class="skel skel-bar" style="width:100px"></i></span>
+                <span class="daily-plan__headline"><i class="skel skel-bar" style="width:120px"></i></span>
+                <span class="daily-plan__chips"><i class="dp-chip skel"><i class="skel-bar" style="width:64px"></i></i></span>
+                <!-- Подпись у состояний «пусто» и «на сегодня всё» реально занимает
+                     две строки: первая заглушка во всю ширину заставляет вторую
+                     перенестись, поэтому высота совпадает без магических пикселей. -->
+                <span class="daily-plan__sub"><i class="skel skel-bar" style="width:100%"></i><i class="skel skel-bar" style="width:58%"></i></span>
+            </span>
+            <span class="daily-plan__cta skel"><i class="skel-fill"></i></span>
+        </a>
 
         <!-- Недельная активность: стрик и дни занятий. Наполняет app.js. -->
-        <div class="week-strip" id="week-strip" hidden></div>
+        <div class="week-strip is-skel" id="week-strip" aria-hidden="true">
+            <span class="week-strip__days">
+                <span class="week-day skel skel-circle"></span><span class="week-day skel skel-circle"></span>
+                <span class="week-day skel skel-circle"></span><span class="week-day skel skel-circle"></span>
+                <span class="week-day skel skel-circle"></span><span class="week-day skel skel-circle"></span>
+                <span class="week-day skel skel-circle"></span>
+            </span>
+            <span class="week-strip__streak"><i class="skel skel-bar" style="width:104px"></i></span>
+            <span class="week-strip__milestone skel"><i class="skel-fill"></i></span>
+        </div>
 
         <!-- Вторичное: способы пополнять словарь и прочие режимы. Раньше
              конкурировали с учёбой на первом уровне — теперь понижены. -->

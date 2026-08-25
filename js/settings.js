@@ -78,7 +78,13 @@
     }
 
     function applyTheme() {
-        document.documentElement.setAttribute('data-theme', effectiveTheme());
+        const th = effectiveTheme();
+        document.documentElement.setAttribute('data-theme', th);
+        // Цвет системной строки браузера держим в паре с темой. Первое значение
+        // ставит инлайн-бутстрап в <head> (до первой отрисовки), здесь — все
+        // последующие смены: ручная в настройках и системная при theme:'system'.
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', th === 'light' ? '#f4f5fa' : '#0a0a0f');
     }
 
     // Применяем тему сразу (скрипт подключается рано — до первой отрисовки контента).

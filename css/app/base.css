@@ -1,3 +1,25 @@
+/* Метрически подогнанный фолбэк под Inter.
+   Шрифты грузятся отложенно (media=print + onload в <head> страниц), поэтому
+   первые кадры всегда рисуются системным шрифтом, а потом текст «переезжает»:
+   строки перескакивали на 2–5px, а в настройках переносился целый ряд и всё
+   ниже уезжало на 32px. size-adjust подгоняет ширину знаков системного шрифта
+   под Inter, ascent/descent — высоту строки, так что подмена почти незаметна.
+   Значения — стандартные для пары Inter/Arial. Японский текст сюда не попадает:
+   в Arial нет каны и кандзи, поэтому эти участки как и раньше отрисует
+   'Noto Sans JP' (следующий в стеке). */
+@font-face {
+    font-family: 'Inter Fallback';
+    /* Только Arial: метрики ниже посчитаны под пару Inter/Arial, а Roboto и
+       Helvetica Neue отличаются — с ними подгонка сама стала бы источником
+       сдвига. Где Arial нет (Android), @font-face просто не подхватится и
+       поведение останется прежним. */
+    src: local('Arial');
+    ascent-override: 90.20%;
+    descent-override: 22.48%;
+    line-gap-override: 0%;
+    size-adjust: 107.40%;
+}
+
 :root {
     --bg: #0a0a0f;
     --surface: #13131a;
@@ -20,7 +42,7 @@
     --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
     --transition: 0.2s ease;
-    --font: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+    --font: 'Inter', 'Inter Fallback', 'Noto Sans JP', system-ui, sans-serif;
     /* Ширины постоянной боковой рейки на десктопе: свёрнутая (только иконки)
        и раскрытая (иконки + подписи). Контент .app сдвигается на текущую ширину. */
     --rail-w: 68px;
@@ -118,7 +140,7 @@ button {
     font-size: 14px;
     font-weight: 500;
     letter-spacing: 0.3px;
-    transition: all var(--transition);
+    transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 
 input, textarea {

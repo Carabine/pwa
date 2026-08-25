@@ -1,0 +1,189 @@
+/* ========== ДВИЖЕНИЕ: единая шкала, скелетоны, входные анимации ==========
+   Раньше каждая страница задавала свои длительности и кривые (0.2s/0.25s/0.3s/
+   0.4s ease/cubic-bezier вразнобой), а асинхронные блоки просто «вваливались»
+   в поток и двигали всё под собой. Здесь — общий словарь движения и
+   инструменты, чтобы контент ПОЯВЛЯЛСЯ на заранее занятом месте.
+
+   Правило страницы: место резервируем скелетоном, контент проявляем opacity/
+   transform. Никаких анимаций высоты/ширины на входе — они и есть «скакание». */
+
+:root {
+    /* Длительности. dur-1 — отклик на тап, dur-2 — обычный переход,
+       dur-3 — появление блока, dur-4 — крупный оверлей/шторка. */
+    --dur-1: 120ms;
+    --dur-2: 200ms;
+    --dur-3: 320ms;
+    --dur-4: 460ms;
+
+    /* Кривые. out — вход (быстро стартует, мягко тормозит), in-out — движение
+       уже видимого объекта, spring — лёгкий «доводчик» для празднований. */
+    --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.2, 0.9, 0.3, 1.25);
+
+    /* Шаг лесенки для последовательного появления блоков ленты. */
+    --stagger: 45ms;
+}
+
+/* ========== СКЕЛЕТОНЫ ==========
+   Один блик на всё приложение. Раньше он жил только в catalog.css и остальным
+   страницам был недоступен — они показывали текст «Загрузка…», который потом
+   заменялся списком другой высоты. */
+
+.skel {
+    position: relative;
+    overflow: hidden;
+    /* Полупрозрачная накладка, а не сплошной var(--card): заглушки живут и на
+       фоне страницы, и внутри карточек того же цвета — сплошная заливка там
+       просто исчезала. Накладка читается на любой подложке и в обеих темах. */
+    background: rgba(255, 255, 255, 0.055);
+    border-radius: var(--radius-sm);
+    /* Блик рисуем ::after'ом, поэтому вложенный текст не нужен. */
+    color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.skel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.055), transparent);
+    animation: skel-sweep 1.35s var(--ease-in-out) infinite;
+}
+
+:root[data-theme="light"] .skel {
+    background: rgba(30, 34, 60, 0.07);
+}
+
+:root[data-theme="light"] .skel::after {
+    background: linear-gradient(90deg, transparent, rgba(30, 34, 60, 0.06), transparent);
+}
+
+@keyframes skel-sweep {
+    100% { transform: translateX(100%); }
+}
+
+/* Полоска-заглушка под строку текста. Высота в em, поэтому она НЕ управляет
+   высотой строки — её задаёт обычный strut родителя (его font-size/line-height).
+   Значит скелетон, собранный из настоящих классов блока, занимает ровно
+   столько же, сколько потом займёт текст, на любом брейкпоинте и языке. */
+.skel-bar {
+    display: inline-block;
+    vertical-align: baseline;
+    height: 0.72em;
+    min-width: 24px;
+    border-radius: 5px;
+}
+
+/* Распорка для флекс-контейнеров (кнопка/чип), где высоту держит не строка
+   текста, а сам элемент: пустой скелетон схлопнулся бы в ноль. */
+.skel-fill {
+    display: block;
+    width: 100%;
+    height: 1.5em;
+}
+
+.skel-circle { border-radius: 50%; }
+
+/* ========== ПОЯВЛЕНИЕ БЛОКА НА ЗАРЕЗЕРВИРОВАННОМ МЕСТЕ ==========
+   Место под блок уже занято (скелетоном или min-height), поэтому вход —
+   только прозрачность плюс микросдвиг. Поток при этом не двигается. */
+
+.anim-in {
+    animation: anim-in var(--dur-3) var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+
+@keyframes anim-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* Мягкое проявление без сдвига — для подмены содержимого «на месте»
+   (скелетон → данные), где любой сдвиг читался бы как рывок. */
+.anim-fade {
+    animation: anim-fade var(--dur-3) var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+
+@keyframes anim-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ========== ЕДИНЫЙ ВЫКЛЮЧАТЕЛЬ ДВИЖЕНИЯ ==========
+   Системная настройка «уменьшить движение» должна гасить анимации во всём
+   приложении, а не в трёх местах, где про неё вспомнили. Переходы не убираем
+   в ноль — оставляем 1мс, чтобы состояния всё равно доезжали до конца и
+   transitionend-обработчики не зависали. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        animation-delay: 0ms !important;
+        transition-duration: 1ms !important;
+        transition-delay: 0ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    /* Бесконечный блик скелетона при выключенном движении просто гасим:
+       ускоренный до 1мс он бы мерцал. */
+    .skel::after { display: none; }
+}
+
+/* ========== ТАКТИЛЬНЫЙ ОТКЛИК НА ТАП ==========
+   На телефоне ховера нет: кнопка нажата — и до перерисовки экрана ничего не
+   происходит, интерфейс ощущается «мёртвым». Короткое сжатие на :active даёт
+   подтверждение нажатия. Длительность — самая короткая ступень: отклик должен
+   успеть отыграть за время касания.
+
+   Специфичность выше, чем у :hover-правил (там один класс), поэтому на ПК
+   нажатие перебивает подъём карточки, а не спорит с ним. */
+.btn:active:not(:disabled),
+.icon-btn:active,
+.hub-card:active,
+.mini-card:active,
+.continue-card:active:not(.is-skel),
+.session-card:active:not(.is-skel) .session-card__chip,
+.daily-plan:active:not(.is-skel),
+.anime-card:active,
+.deck-chip:active,
+.catalog-chip:active {
+    transform: scale(0.972);
+    transition-duration: var(--dur-1);
+}
+
+/* Строка списка слов не масштабируется (соседи стоят вплотную — сжатие видно
+   как разрыв рамки), ей достаточно подсветки. */
+.word-row:active { background: var(--surface); }
+
+/* ========== ПЕРЕХОД МЕЖДУ СТРАНИЦАМИ ==========
+   Приложение многостраничное: каждый переход по меню — обычная навигация, и
+   между страницами мигал фон. Кроссфейд убирает мигание и связывает экраны.
+
+   Браузер придерживает снимок старой страницы, пока новая не отрисуется, —
+   поэтому это уместно только при быстрой первой отрисовке. Замеряли: с тёплым
+   кэшем и 4x-троттлингом CPU новая страница рисуется за ~270мс (скелетоны
+   стоят в разметке, ждать данных не нужно). Где не поддерживается
+   (Safari/Firefox) — правило просто игнорируется, поведение прежнее. */
+@view-transition {
+    navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: var(--dur-2);
+    animation-timing-function: var(--ease-out);
+}
+
+/* Системное «уменьшить движение» гасит и кроссфейд: переключаем страницы
+   мгновенно, а не ускоренной анимацией. */
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
+}

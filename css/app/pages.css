@@ -1021,3 +1021,22 @@
     color: var(--primary-hover);
     font-weight: 600;
 }
+
+/* ---- Скелетон списка слов ----
+   Пока коллекция едет с сервера, показываем строки-заглушки из НАСТОЯЩИХ
+   классов строки/карточки: список приезжает на готовое место и ничего не
+   двигает. Раньше здесь стояла одна строка «Загрузка…» — и весь экран прыгал
+   в момент подмены. */
+.word-row.is-skel,
+.word-card.is-skel {
+    pointer-events: none;
+    cursor: default;
+}
+
+.word-row.is-skel:hover,
+.word-card.is-skel:hover {
+    background: none;
+    transform: none;
+    box-shadow: none;
+    border-color: var(--border);
+}

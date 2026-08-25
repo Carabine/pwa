@@ -24,7 +24,7 @@
     font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    transition: all var(--transition);
+    transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 
 /* display:inline-flex перебивает атрибут hidden — скрытую кнопку прячем явно. */
@@ -145,7 +145,7 @@
     background: var(--card);
     border: 1px solid var(--border);
     cursor: pointer;
-    transition: all var(--transition);
+    transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 
 .hint-btn:hover {

@@ -12,6 +12,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <script>
+        // Тему ставим ДО первой отрисовки. js/settings.js подключён с defer и
+        // выполняется уже после того, как браузер нарисовал первый кадр, —
+        // из-за этого светлая тема на каждой загрузке вспыхивала тёмной.
+        // Логика зеркалит effectiveTheme() из js/settings.js.
+        (function () {
+            var th = 'dark';
+            try {
+                var s = JSON.parse(localStorage.getItem('animei:settings') || '{}');
+                if (s && s.theme) th = s.theme;
+            } catch (e) { /* приватный режим */ }
+            if (th === 'system') {
+                th = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'light' : 'dark';
+            }
+            th = th === 'light' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', th);
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute('content', th === 'light' ? '#f4f5fa' : '#0a0a0f');
+        })();
+    </script>
     <link href="../css/app.css" rel="stylesheet">
     <script>
         // Пакет переводов uk/en грузим лениво и только для выбранного языка;
@@ -91,6 +112,48 @@
         <div class="deck-chips" id="deck-chips" hidden></div>
         <div class="deck-study" id="deck-study" hidden></div>
         <div class="words-list"></div>
+        <script>
+            // Скелетон списка рисуем ПРЯМО ЗДЕСЬ, при разборе страницы: так
+            // место под слова занято уже в первом кадре, а не после того как
+            // доедет words.js. Сколько строк — знаем из локальной копии
+            // коллекции; вид (список/карточки) — из настроек. Функция остаётся
+            // глобальной, loadWords() зовёт её повторно как страховку.
+            window.animeiWordsSkeleton = function () {
+                var el = document.querySelector('.words-list');
+                if (!el) return;
+                var cached = 0, view = 'list';
+                var count = function (k) {
+                    try {
+                        var v = JSON.parse(localStorage.getItem(k) || 'null');
+                        return Array.isArray(v) ? v.length : 0;
+                    } catch (e) { return 0; }
+                };
+                try {
+                    // Канонические копии коллекции: animei:wordsCache у вошедшего,
+                    // animei:guestWords у гостя. Ключ words — производный, его
+                    // пишет только главная, так что сам по себе он ненадёжен.
+                    cached = Math.max(count('animei:wordsCache'), count('animei:guestWords'), count('words'));
+                    view = localStorage.getItem('animei:wordsView') === 'cards' ? 'cards' : 'list';
+                } catch (e) { /* приватный режим */ }
+                var rows = Math.min(Math.max(cached || 7, 3), 10);
+                var jp = [58, 46, 72, 52, 64, 44, 68, 50, 60, 48];
+                var html = '';
+                for (var i = 0; i < rows; i++) {
+                    var w = jp[i % jp.length], tr = 90 + (i % 4) * 26;
+                    html += view === 'list'
+                        ? '<div class="word-row is-skel"><div class="word-row__jp">'
+                            + '<span class="word-row__kanji"><i class="skel skel-bar" style="width:' + w + 'px"></i></span>'
+                            + '</div><div class="word-row__tr"><i class="skel skel-bar" style="width:' + tr + 'px"></i></div></div>'
+                        : '<div class="word-card word-read-content is-skel"><div class="word-card__head">'
+                            + '<span class="word-card__kanji"><i class="skel skel-bar" style="width:' + w + 'px"></i></span>'
+                            + '</div><div class="word-card__meaning"><i class="skel skel-bar" style="width:' + tr + 'px"></i></div>'
+                            + '<div class="word-card__sentence"><i class="skel skel-bar" style="width:80%"></i></div></div>';
+                }
+                el.className = 'words-list' + (view === 'list' ? ' words-list--rows' : '');
+                el.innerHTML = html;
+            };
+            window.animeiWordsSkeleton();
+        </script>
     </div>
 
     <nav class="sidebar" id="sidebar">
