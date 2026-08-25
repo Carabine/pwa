@@ -2422,8 +2422,24 @@ const popupReading = document.getElementById('popup-reading-text');
 const popupBody = document.getElementById('popup-body');
 const popupSentence = document.getElementById('popup-sentence');
 const popupSave = document.getElementById('popup-save');
-const popupKnown = document.getElementById('popup-known');
 const popupExplain = document.getElementById('popup-explain');
+// Кнопка «Уже знаю»: в разметке её может НЕ быть, если HTML страницы пришёл из
+// старого кеша (установленное PWA иногда стартует со снапшота страницы при уже
+// свежем JS — версия в сайдбаре новая, а элементов нового HTML нет). Поэтому
+// не полагаемся на разметку: нет — создаём сами перед крестиком.
+const popupKnown = (() => {
+    let el = document.getElementById('popup-known');
+    if (el) return el;
+    const head = popup.querySelector('.word-popup__head');
+    const closeBtn = document.getElementById('popup-close');
+    if (!head || !closeBtn) return null;
+    el = document.createElement('button');
+    el.id = 'popup-known';
+    el.type = 'button';
+    el.className = 'word-popup__known';
+    head.insertBefore(el, closeBtn);
+    return el;
+})();
 const popupExplainBtn = document.getElementById('popup-explain-btn');
 // Меняем только текстовую подпись, чтобы иконка ИИ в кнопке не пропадала.
 const popupExplainLabel = popupExplainBtn.querySelector('.btn-label') || popupExplainBtn;
@@ -2438,6 +2454,7 @@ function updateKnownBtn(base) {
     const on = !!(window.KnownWords && KnownWords.has(base));
     popupKnown.classList.toggle('is-on', on);
     popupKnown.textContent = (on ? '✓ ' : '') + t('popup.known');
+    popupKnown.title = t('popup.known.title');
 }
 
 popupKnown?.addEventListener('click', () => {
