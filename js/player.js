@@ -2423,21 +2423,26 @@ const popupBody = document.getElementById('popup-body');
 const popupSentence = document.getElementById('popup-sentence');
 const popupSave = document.getElementById('popup-save');
 const popupExplain = document.getElementById('popup-explain');
-// Кнопка «Уже знаю»: в разметке её может НЕ быть, если HTML страницы пришёл из
-// старого кеша (установленное PWA иногда стартует со снапшота страницы при уже
-// свежем JS — версия в сайдбаре новая, а элементов нового HTML нет). Поэтому
-// не полагаемся на разметку: нет — создаём сами перед крестиком.
+// Чип «Уже знаю» (под чтением слова): в разметке его может НЕ быть, если HTML
+// страницы пришёл из старого кеша (установленное PWA иногда стартует со
+// снапшота страницы при уже свежем JS — версия в сайдбаре новая, а элементов
+// нового HTML нет). Поэтому не полагаемся на разметку: нет — создаём сами.
+// Содержимое (галочка + подпись) выставляем всегда: у клиента со старым HTML
+// внутри кнопки мог остаться голый текст прежнего варианта.
+const KNOWN_CHIP_HTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" '
+    + 'stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span></span>';
 const popupKnown = (() => {
     let el = document.getElementById('popup-known');
-    if (el) return el;
-    const head = popup.querySelector('.word-popup__head');
-    const closeBtn = document.getElementById('popup-close');
-    if (!head || !closeBtn) return null;
-    el = document.createElement('button');
-    el.id = 'popup-known';
-    el.type = 'button';
-    el.className = 'word-popup__known';
-    head.insertBefore(el, closeBtn);
+    if (!el) {
+        const home = document.getElementById('popup-reading')?.parentElement;
+        if (!home) return null;
+        el = document.createElement('button');
+        el.id = 'popup-known';
+        el.type = 'button';
+        el.className = 'word-popup__known';
+        home.appendChild(el);
+    }
+    el.innerHTML = KNOWN_CHIP_HTML;
     return el;
 })();
 const popupExplainBtn = document.getElementById('popup-explain-btn');
@@ -2453,7 +2458,9 @@ function updateKnownBtn(base) {
     if (!popupKnown) return;
     const on = !!(window.KnownWords && KnownWords.has(base));
     popupKnown.classList.toggle('is-on', on);
-    popupKnown.textContent = (on ? '✓ ' : '') + t('popup.known');
+    // Меняем только подпись — галочка-svg живёт в кнопке постоянно.
+    const label = popupKnown.querySelector('span');
+    if (label) label.textContent = t('popup.known');
     popupKnown.title = t('popup.known.title');
 }
 
