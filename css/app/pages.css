@@ -24,6 +24,36 @@
     margin-bottom: 28px;
 }
 
+/* Поле пароля с «глазиком»: тап переключает видимость введённого. */
+.pw-field {
+    position: relative;
+}
+.pw-field input {
+    width: 100%;
+    padding-right: 44px;
+}
+.pw-field__eye {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color var(--transition);
+}
+.pw-field__eye:hover { color: var(--text); }
+/* Два svg: открытый глаз (пароль скрыт) и перечёркнутый (пароль показан). */
+.pw-field__eye svg:last-child { display: none; }
+.pw-field__eye.is-on svg:first-child { display: none; }
+.pw-field__eye.is-on svg:last-child { display: block; }
+
 .login-form__toggle {
     display: block;
     width: 100%;
