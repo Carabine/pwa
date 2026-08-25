@@ -48,6 +48,10 @@ const videoWrap = document.getElementById('video-wrap');
 const videoLoading = document.getElementById('video-loading');
 const translationSelect = document.getElementById('translation-select');
 const episodeSelect = document.getElementById('episode-select');
+// До загрузки каталога оба селекта пусты — показываем их призрачными
+// полосками (setSelectGhost объявлена ниже, hoisting).
+setSelectGhost(translationSelect, true);
+setSelectGhost(episodeSelect, true);
 const seasonSelect = document.getElementById('season-select');
 const seasonGroup = document.getElementById('season-group');
 const transcriptList = document.getElementById('transcript-list');
@@ -297,6 +301,7 @@ function buildSubOptions() {
 }
 
 function renderTranslations() {
+    setSelectGhost(translationSelect, false);
     state.subOptions = buildSubOptions();
     translationSelect.innerHTML = '';
     state.subOptions.forEach((o, i) => {
@@ -329,6 +334,7 @@ function renderTranslations() {
 // Старый рендер по источникам оставлен на случай отката: если у тайтла нет
 // чистого видео вовсе, выбор языков вырождается в единственный «оригинал».
 function renderTranslationsBySource() {
+    setSelectGhost(translationSelect, false);
     translationSelect.innerHTML = '';
     state.translations.forEach((tr, i) => {
         const opt = document.createElement('option');
@@ -393,8 +399,17 @@ async function loadMegaplayEpisodes(t, restoreSaved) {
 // плоским списком (у «Атаки титанов» это 1–25, спешл, снова 1–25), а его данные
 // о сезонах ненадёжны (у разных сезонов один и тот же serial). Поэтому сезоны
 // восстанавливаем сами — по сбросу нумерации серий.
+// Селект без данных — призрачная полоска (класс в player.css), а не пустой
+// выпадающий список, который выглядит сломанным.
+function setSelectGhost(sel, on) {
+    if (!sel) return;
+    sel.classList.toggle('select--ghost', on);
+    if (on) sel.innerHTML = '';
+    sel.disabled = on;
+}
+
 async function loadEpisodes(media, restoreSaved) {
-    episodeSelect.innerHTML = '<option>' + window.t('player.loading') + '</option>';
+    setSelectGhost(episodeSelect, true);
     // Этап 2 поэтапного статуса (только пока оверлей ещё висит без ошибки).
     if (!videoLoading.classList.contains('is-error')) {
         videoLoading.textContent = t('player.stageEpisodes');
@@ -433,6 +448,7 @@ async function loadEpisodes(media, restoreSaved) {
         detectShortFormChibi();   // асинхронно: зондируем длины и прячем чиби/PV
     } catch (err) {
         console.error(err);
+        setSelectGhost(episodeSelect, false);
         episodeSelect.innerHTML = '<option>' + window.t('player.episodesError') + '</option>';
     }
 }
@@ -457,6 +473,7 @@ async function loadFranchise() {
 
 // Наполняем дропдаун серий сериями текущего режима сезона
 function populateEpisodes(restoreSaved, keepCurrent) {
+    setSelectGhost(episodeSelect, false);
     const prevEp = keepCurrent ? state.episodes[parseInt(episodeSelect.value, 10)] : null;
 
     state.episodes = state.seasonMode === 'groups'
