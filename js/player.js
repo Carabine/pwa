@@ -2453,6 +2453,58 @@ const popupExplainBtn = document.getElementById('popup-explain-btn');
 // Меняем только текстовую подпись, чтобы иконка ИИ в кнопке не пропадала.
 const popupExplainLabel = popupExplainBtn.querySelector('.btn-label') || popupExplainBtn;
 
+// ---------- Подписи частей речи ----------
+// jisho отдаёт английские термины («Adverb (fukushi)», «Godan verb with 'ru'
+// ending») — переводим в короткие подписи на языке интерфейса. Набор меток у
+// jisho конечный, правила по префиксам/ключевым словам; порядок важен (частные
+// раньше общих). Непокрытая метка — как есть, но без скобочного термина.
+const POS_RULES = [
+    [/genitive/i,             { ru: 'существительное (+の)', uk: 'іменник (+の)', en: 'noun (+の)' }],
+    [/^noun.*suru/i,          { ru: 'существительное (+する)', uk: 'іменник (+する)', en: 'noun (+する)' }],
+    [/^noun|^proper noun/i,   { ru: 'существительное', uk: 'іменник', en: 'noun' }],
+    [/^adverb.*'to'/i,        { ru: 'наречие (+と)', uk: 'прислівник (+と)', en: 'adverb (+と)' }],
+    [/^adverb/i,              { ru: 'наречие', uk: 'прислівник', en: 'adverb' }],
+    [/^i-adjective/i,         { ru: 'い-прилагательное', uk: 'い-прикметник', en: 'i-adjective' }],
+    [/^na-adjective/i,        { ru: 'な-прилагательное', uk: 'な-прикметник', en: 'na-adjective' }],
+    [/^no-adjective/i,        { ru: 'прилагательное (+の)', uk: 'прикметник (+の)', en: 'no-adjective' }],
+    [/^pre-noun adjectival/i, { ru: 'приимённое (рэнтайси)', uk: 'приіменне (рентайсі)', en: 'pre-noun adjectival' }],
+    [/^taru-adjective/i,      { ru: 'たる-прилагательное', uk: 'たる-прикметник', en: 'taru-adjective' }],
+    [/^godan verb/i,          { ru: 'глагол (годан)', uk: 'дієслово (ґодан)', en: 'godan verb' }],
+    [/^ichidan verb/i,        { ru: 'глагол (итидан)', uk: 'дієслово (ітідан)', en: 'ichidan verb' }],
+    [/^suru verb/i,           { ru: 'する-глагол', uk: 'する-дієслово', en: 'suru verb' }],
+    [/^kuru verb/i,           { ru: 'глагол (куру)', uk: 'дієслово (куру)', en: 'kuru verb' }],
+    [/^(nidan|yodan) verb/i,  { ru: 'глагол (устар.)', uk: 'дієслово (застар.)', en: 'archaic verb' }],
+    [/^transitive verb/i,     { ru: 'переходный', uk: 'перехідне', en: 'transitive' }],
+    [/^intransitive verb/i,   { ru: 'непереходный', uk: 'неперехідне', en: 'intransitive' }],
+    [/^auxiliary verb/i,      { ru: 'вспомогательный глагол', uk: 'допоміжне дієслово', en: 'auxiliary verb' }],
+    [/^auxiliary/i,           { ru: 'вспомогательное', uk: 'допоміжне', en: 'auxiliary' }],
+    [/^expression/i,          { ru: 'выражение', uk: 'вираз', en: 'expression' }],
+    [/^conjunction/i,         { ru: 'союз', uk: 'сполучник', en: 'conjunction' }],
+    [/^particle/i,            { ru: 'частица', uk: 'частка', en: 'particle' }],
+    [/^interjection/i,        { ru: 'междометие', uk: 'вигук', en: 'interjection' }],
+    [/^pronoun/i,             { ru: 'местоимение', uk: 'займенник', en: 'pronoun' }],
+    [/^prefix/i,              { ru: 'приставка', uk: 'префікс', en: 'prefix' }],
+    [/^suffix/i,              { ru: 'суффикс', uk: 'суфікс', en: 'suffix' }],
+    [/^counter/i,             { ru: 'счётное слово', uk: 'лічильне слово', en: 'counter' }],
+    [/^numeric/i,             { ru: 'числительное', uk: 'числівник', en: 'numeral' }],
+    [/^copula/i,              { ru: 'связка', uk: 'зв’язка', en: 'copula' }],
+    [/^wikipedia/i,           { ru: 'из Википедии', uk: 'з Вікіпедії', en: 'from Wikipedia' }],
+];
+
+function posLabel(posList) {
+    const lang = (typeof getLang === 'function') ? getLang() : 'ru';
+    const out = [];
+    for (const p of posList || []) {
+        let label = null;
+        for (const [re, tr] of POS_RULES) {
+            if (re.test(p)) { label = tr[lang] || tr.en; break; }
+        }
+        if (!label) label = String(p).replace(/\s*\([^)]*\)/g, '').trim();
+        if (label && !out.includes(label)) out.push(label);
+    }
+    return out.join(', ');
+}
+
 // ---------- Тихая отметка «уже знаю» в попапе слова ----------
 // Слово уходит в известные (known-store, страница «Мои слова» → «Известные
 // слова»): зелёная подсветка, процент покрытия и авто-колода сразу считают его
@@ -2569,18 +2621,27 @@ async function openWordPopup(tok, cue, event) {
         if (entries[0].reading) popupReading.textContent = entries[0].reading;
 
         popupBody.innerHTML = '';
-        for (const sense of entries[0].senses) {
+        // Часть речи — по-человечески и без повторов: одинаковый заголовок у
+        // соседних смыслов показываем один раз, сами смыслы нумеруем.
+        const senses = entries[0].senses;
+        const multiSense = senses.length > 1;
+        let lastPosLabel = null;
+        senses.forEach((sense, si) => {
             const div = document.createElement('div');
             div.className = 'sense';
-            const pos = document.createElement('div');
-            pos.className = 'sense__pos';
-            pos.textContent = sense.pos.join(', ');
+            const label = posLabel(sense.pos);
+            if (label && label !== lastPosLabel) {
+                const pos = document.createElement('div');
+                pos.className = 'sense__pos';
+                pos.textContent = label;
+                div.appendChild(pos);
+                lastPosLabel = label;
+            }
             const defs = document.createElement('div');
-            defs.textContent = sense.definitions.join('; ');
-            div.appendChild(pos);
+            defs.textContent = (multiSense ? (si + 1) + '. ' : '') + sense.definitions.join('; ');
             div.appendChild(defs);
             popupBody.appendChild(div);
-        }
+        });
 
         const meta = [];
         if (entries[0].isCommon) meta.push(t('popup.common'));
