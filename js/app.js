@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.316';
+const APP_VERSION = 'v0.0.317';
 
 /* ========== Кнопка «Назад» закрывает открытый слой ==========
    Сайдбар, модалки, шторки и выпадающие меню — «слои» поверх страницы. На
@@ -671,6 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Профиль: показываем «Войти» гостю и почту + «Выйти» вошедшему.
     renderAuthState();
+    showPendingLogoutToast();
 
     // На главной — «Продолжить просмотр», компактная строка «Слова из последнего
     // просмотра» (полная карточка с чекбоксами убрана по просьбе в v0.0.231),
@@ -1054,6 +1055,18 @@ function renderWeekActivity() {
     }
 }
 
+// Подтверждение выхода. Само нажатие «Выйти» перезагружает страницу, поэтому
+// сообщение ставится в очередь флагом и показывается уже после загрузки —
+// иначе на страницах, которые от выхода внешне не меняются (настройки, учёба),
+// нажатие выглядело безответным.
+function showPendingLogoutToast() {
+    let pending = null;
+    try { pending = localStorage.getItem('animei:loggedOut'); } catch { /* нет localStorage */ }
+    if (!pending) return;
+    try { localStorage.removeItem('animei:loggedOut'); } catch { /* ок, покажем ещё раз */ }
+    if (typeof showSnackbar === 'function') showSnackbar(t('auth.loggedOut'), { duration: 2600 });
+}
+
 function renderAuthState() {
     const menu = document.getElementById('profile-menu');
     if (!menu) return;
@@ -1085,6 +1098,13 @@ function renderAuthState() {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
             logout();
+            // Флаг переживает перезагрузку, снекбар — нет: показать его прямо
+            // здесь бессмысленно, страница тут же перезагрузится и убьёт его.
+            // Раньше выход так и выглядел «ничего не произошло»: на настройках
+            // и в учёбе после перезагрузки тот же экран и никакого ответа на
+            // нажатие. Сообщение показывает уже новая страница (см.
+            // showPendingLogoutToast).
+            try { localStorage.setItem('animei:loggedOut', '1'); } catch { /* приватный режим */ }
             window.location.reload();
         });
     }
