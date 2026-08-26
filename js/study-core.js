@@ -28,12 +28,12 @@
     const SCHEDULE_KEY = 'srs:schedule:v2';
     const DAYS_KEY = 'srs:days';       // days the user actually studied (for the streak)
 
-    // ?rv=b|c — примерить другой темп раскрытия ответа прямо в бою (как ?hub=
+    // ?rv=a|b — примерить прежние темпы раскрытия ответа прямо в бою (как ?hub=
     // у главной). Сами числа живут в --reveal-* (css/app/study.css), здесь
     // только переключатель.
     try {
         const rv = new URLSearchParams(window.location.search).get('rv');
-        if (rv === 'b' || rv === 'c') document.documentElement.classList.add('rv-' + rv);
+        if (rv === 'a' || rv === 'b') document.documentElement.classList.add('rv-' + rv);
     } catch { /* без URLSearchParams остаёмся на базовом темпе */ }
 
     // ---- ИИ-разбор предложения на обороте карточки -------------------------
