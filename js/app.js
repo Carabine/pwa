@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.314';
+const APP_VERSION = 'v0.0.315';
 
 /* ========== Кнопка «Назад» закрывает открытый слой ==========
    Сайдбар, модалки, шторки и выпадающие меню — «слои» поверх страницы. На
@@ -971,7 +971,8 @@ function paintDailyPlan(el) {
         fillSlot(el,
             ringHTML(1, '✓') +
             '<div class="daily-plan__body">' +
-            '<span class="daily-plan__eyebrow">' + escHtml(t('plan.title')) + '</span>' +
+            // Надзаголовок «План на сегодня» здесь молчит: делать нечего, и
+            // заголовок сам говорит про сегодня — лишняя строка только росла.
             '<span class="daily-plan__headline">' + escHtml(t('plan.done.title')) + '</span>' +
             '<span class="daily-plan__sub">' + escHtml(t('plan.done.sub')) + '</span>' +
             '</div>' +

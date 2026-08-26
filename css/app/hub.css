@@ -612,6 +612,77 @@
 }
 
 
+/* ========== «НА СЕГОДНЯ ВСЁ» — КОМПАКТНАЯ ФОРМА ==========
+   Делать нечего, а блок занимал ровно столько же, сколько рабочий план
+   (185px на телефоне): кольцо 64px, надзаголовок, две строки подписи и
+   кнопка во всю ширину. Здесь состояние ужимается до строки-квитанции:
+   бейдж-галочка, заголовок, кнопка рядом. Надзаголовок убран и в разметке
+   (paintDailyPlan), подпись скрыта, тексты в i18n укорочены.
+   Каждое правило продублировано для заглушки (hub-slot-plan-done): она
+   собрана из тех же классов, но без .daily-plan--done, а разъехавшаяся
+   высота дёрнула бы ленту в момент первой отрисовки.
+   Секция идёт ПОСЛЕ медиазапросов выше — иначе мобильная кнопка во всю
+   ширину и десктопный padding перебивали бы её. */
+.daily-plan--done,
+:root.hub-slot-plan-done .daily-plan.is-skel {
+    padding: 12px 14px;
+    gap: 12px;
+    flex-wrap: nowrap;
+}
+
+/* Кольцо здесь всегда полное — от него нужен только знак «сделано». */
+.daily-plan--done .daily-plan__ring,
+:root.hub-slot-plan-done .daily-plan.is-skel .daily-plan__ring {
+    width: 34px;
+    height: 34px;
+}
+
+.daily-plan--done .daily-plan__ring svg,
+:root.hub-slot-plan-done .daily-plan.is-skel .daily-plan__ring svg {
+    width: 100%;
+    height: 100%;
+}
+
+.daily-plan--done .daily-plan__ring circle { stroke-width: 8; }
+
+.daily-plan--done .daily-plan__ring-label {
+    font-size: var(--fs-body);
+    color: var(--success-hover);
+}
+
+.daily-plan--done .daily-plan__body,
+:root.hub-slot-plan-done .daily-plan.is-skel .daily-plan__body { gap: 2px; }
+
+/* Селектор нарочно длинный: правило варианта оформления главной
+   (:root:not(.hub-var-2):not(.hub-var-3) .daily-plan__headline) весит четыре
+   класса, и коротким его не перебить. */
+:root .daily-plan.daily-plan--done .daily-plan__headline,
+:root.hub-slot-plan-done .daily-plan.is-skel .daily-plan__headline {
+    font-size: var(--fs-body);
+}
+
+/* Надзаголовок «План на сегодня» в этом состоянии не рисуется. */
+:root.hub-slot-plan-done .daily-plan.is-skel .daily-plan__eyebrow { display: none; }
+
+/* Подпись («Новые слова придут из серий») в этом состоянии молчит: она ничего
+   не добавляет к галочке и заголовку, а строку занимала. Разметку не режем —
+   заглушка собрана из тех же классов, и правило должно работать на обеих. */
+.daily-plan--done .daily-plan__sub,
+:root.hub-slot-plan-done .daily-plan.is-skel .daily-plan__sub { display: none; }
+
+/* Кнопка остаётся в строке даже на телефоне: текста в ней мало. */
+.daily-plan--done .daily-plan__cta,
+:root.hub-slot-plan-done .daily-plan.is-skel .daily-plan__cta {
+    width: auto;
+    margin-top: 0;
+    padding: 8px 14px;
+    font-size: var(--fs-caption);
+}
+
+/* Распорка кнопки-заглушки тянется на 100% контейнера, а он теперь по
+   содержимому — задаём ей ширину примерно в текст CTA. */
+:root.hub-slot-plan-done .daily-plan.is-skel .daily-plan__cta .skel-fill { width: 104px; }
+
 /* ========== УСТАНОВКА PWA ==========
    Намеренно тихий блок в самом низу главной: приглушённый текст-ссылка, без
    рамки и фона, чтобы не спорить с дневным планом. Виден только когда
