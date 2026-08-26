@@ -1290,8 +1290,63 @@
             return box;
         }
 
+        // ===== Переезд титульного ряда «вопрос → ответ» =====
+        // Слово и его чтение есть на ОБЕИХ сторонах карточки, просто в разных
+        // местах и размерах: слово из центра уезжает под самый верх и мельчает
+        // (36→22px), чтение из строки под словом — фуриганой над ним. Раньше
+        // весь титульный ряд гасили в ноль и зажигали заново: глаз ловил, что
+        // крупное слово моргнуло и оказалось не там — это и читалось как
+        // «скачок». Теперь эти двое не гаснут, а доезжают на transform (FLIP):
+        // раскладка уже финальная, анимируется только картинка, без reflow.
+        // Всё остальное на обороте — новое, его по-прежнему просто проявляем.
+        function titleBox(el) {
+            if (!el) return null;
+            const b = el.getBoundingClientRect();
+            if (!b.width && !b.height) return null;
+            return {
+                cx: b.left + b.width / 2,
+                cy: b.top + b.height / 2,
+                fs: parseFloat(getComputedStyle(el).fontSize) || 0,
+            };
+        }
+
+        function measureTitle() {
+            return {
+                word: titleBox(els.front.querySelector('.word')),
+                reading: titleBox(els.front.querySelector('.front-reading')),
+            };
+        }
+
+        function morphTitle(before) {
+            if (!before) return;
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const pairs = [
+                [before.word, els.front.querySelector('.word'), 1],
+                // Чтение меняет и место, и роль (подпись → фуригана), поэтому
+                // едет с лёгким проявлением: чистый переезд на таком масштабе
+                // (17→13px) читался бы как рывок.
+                [before.reading, els.front.querySelector('.word-furigana'), 0.45],
+            ];
+            for (const [from, el, fromOpacity] of pairs) {
+                if (!from || !el || typeof el.animate !== 'function') continue;
+                const to = titleBox(el);
+                if (!to) continue;
+                const scale = from.fs && to.fs ? from.fs / to.fs : 1;
+                const dx = from.cx - to.cx;
+                const dy = from.cy - to.cy;
+                // Нечего двигать (перерисовка уже открытого оборота) — не мигаем.
+                if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(scale - 1) < 0.02) continue;
+                el.animate([
+                    { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${scale.toFixed(3)})`, opacity: fromOpacity },
+                    { transform: 'none', opacity: 1 },
+                ], { duration: 260, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' });
+            }
+        }
+
         function renderBack() {
             const w = current.word;
+            // Замеряем титульный ряд ДО перестройки — по этим числам поедет FLIP.
+            const titleBefore = els.back.classList.contains('back-side--visible') ? null : measureTitle();
             els.back.innerHTML = '';
             els.back.classList.add('back-side--visible');
 
@@ -1541,6 +1596,11 @@
 
             // Кнопку-подсказку (ⓘ) убрали из интерфейса карточки — не показываем.
             if (els.hintBtn) els.hintBtn.classList.add('hidden');
+
+            // Последним делом — переезд слова и чтения на новые места. Именно
+            // здесь: раскладка оборота уже собрана и высоты посчитаны, значит
+            // конечные координаты титула окончательные.
+            morphTitle(titleBefore);
         }
 
         // Коллекция пустая — предлагаем готовую колоду, а не тупик

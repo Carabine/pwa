@@ -257,19 +257,30 @@
 }
 
 /* Разделитель вопроса и ответа: нейтральная линия, тающая к краям.
-   border-image поверх solid — без поддержки остаётся обычная линия.
-   Появляется только вместе с ответом. */
+   Рисует её ::after, а не border-image: линию нужно ПРОЯВИТЬ вместе с ответом
+   (border-image не анимируется), иначе на открытии она возникала хлопком.
+   Прозрачный border-bottom оставлен ради места под неё — раскладка та же. */
 .card-area:has(.back-side--visible) .front-side {
-    border-bottom: 1px solid var(--border);
-    border-image: linear-gradient(90deg,
-        transparent, var(--border) 22%, var(--border) 78%, transparent) 1;
+    position: relative;
+    border-bottom: 1px solid transparent;
     /* Компактный титульный ряд ответа — сцена достаётся клипу. */
     padding-bottom: 5px;
     margin-bottom: 5px;
-    /* Переход «вопрос → ответ» — простой фейд, как при смене карточки после
-       оценки: раскладка меняется мгновенно, а новое состояние проявляется.
-       Движение элементов глаз при этом не отслеживает — скачков нет. */
-    animation: back-in 0.16s ease-out;
+    /* Сам титульный ряд НЕ гасим: слово и чтение переезжают на новые места
+       трансформом (morphTitle в study-core.js). Гашение в ноль и было тем
+       «скачком» — крупное слово моргало и оказывалось в другом месте. */
+}
+
+.card-area:has(.back-side--visible) .front-side::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent, var(--border) 22%, var(--border) 78%, transparent);
+    animation: back-in 0.22s ease-out 0.04s backwards;
 }
 
 .back-side {
@@ -297,7 +308,10 @@
     overflow-x: hidden;
     overscroll-behavior: contain;
     scrollbar-width: none;
-    animation: back-in 0.16s ease-out;
+    /* Оборот целиком — новое содержимое, его просто проявляем. Небольшая
+       задержка даёт титулу тронуться первым: сначала слово поехало, следом
+       проступил ответ — вместо одновременной вспышки всего сразу. */
+    animation: back-in 0.22s ease-out 0.04s backwards;
 }
 .back-side--visible::-webkit-scrollbar { display: none; }
 
@@ -320,6 +334,7 @@
     .word,
     .back-side--visible,
     .back-side--visible > *,
+    .card-area:has(.back-side--visible) .front-side::after,
     .word-furigana,
     .main.study .buttons > button,
     .sentence__spark { animation: none !important; }
