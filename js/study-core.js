@@ -805,6 +805,23 @@
             // Пнуть докачку: карточка сменилась — теперь самый нужный клип у
             // неё, а следующий по важности у той, что пойдёт за ней.
             pumpClipPrefetch();
+
+            // И подготовить видео этой карточки к показу: скачать (если ещё нет)
+            // и прогреть элемент, пока человек думает над вопросом.
+            dropWarmedClip();
+            if (typeof getClip === 'function' && typeof cacheMediaFromUrl === 'function') {
+                const cw = current.word;
+                const cSrc = videoSrcOf(cw);
+                if (cw.id && cSrc && /^https?:\/\//.test(cSrc)) {
+                    getClip(cw.id)
+                        .then((blob) => blob || ensureClip(cw.id, cSrc))
+                        .then((blob) => {
+                            if (!blob || !current || current.word.id !== cw.id) return;
+                            warmClipElement(cw, blob);
+                        })
+                        .catch(() => {});
+                }
+            }
         }
 
         // Google Fonts отдаёт Noto Sans JP десятками subset'ов по диапазонам
@@ -1209,7 +1226,7 @@
 
         // Свой мини-плеер вместо нативных браузерных контролов: короткий клип
         // сам зациклен, поэтому нужны только Play/Pause по центру и кнопка звука.
-        function makeClipVideo(src, w) {
+        function makeClipVideo(src, w, warmedVideo) {
             const ICONS = {
                 play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72c0 .8.87 1.3 1.55.88l10.8-6.86a1.04 1.04 0 0 0 0-1.76L9.55 4.26A1.04 1.04 0 0 0 8 5.14z"/></svg>',
                 volume: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.3 5.7a9 9 0 0 1 0 12.6"/></svg>',
@@ -1227,15 +1244,22 @@
             // тот же, поэтому появление кадра проходит без скачка.
             wrap.classList.add('clip-player--sizing');
 
-            const video = document.createElement('video');
-            video.src = src;
-            video.addEventListener('loadedmetadata',
+            // Прогретый на вопросе элемент переиспользуем как есть: он уже
+            // прочитал файл и стоит на стартовом кадре, поэтому показ начинается
+            // сразу, без чтения и перемотки на глазах у человека.
+            const video = warmedVideo || document.createElement('video');
+            video.classList.remove('clip-warm');
+            video.muted = false;
+            if (!warmedVideo) video.src = src;
+            if (video.readyState >= 1) wrap.classList.remove('clip-player--sizing');
+            else video.addEventListener('loadedmetadata',
                 () => wrap.classList.remove('clip-player--sizing'), { once: true });
             // blob-URL из IndexedDB освобождаем, как только видео загрузило данные
             // (элемент дальше держит blob сам) — иначе URL'ы копились бы до
             // перезагрузки вкладки. Для http-ссылок revoke — безвредный no-op.
             if (typeof src === 'string' && src.startsWith('blob:')) {
-                video.addEventListener('loadeddata', () => URL.revokeObjectURL(src), { once: true });
+                if (video.readyState >= 2) { try { URL.revokeObjectURL(src); } catch (e) { /* ок */ } }
+                else video.addEventListener('loadeddata', () => URL.revokeObjectURL(src), { once: true });
             }
             // Стартом/остановкой управляем вручную (нужно окно [tStart..tEnd]).
             video.autoplay = false;
@@ -1321,6 +1345,10 @@
                     if (autoPlay) video.play().catch(() => {});
                     sync();
                 };
+                // Прогретый элемент уже стоит ровно на стартовом кадре: повторная
+                // запись того же currentTime не вызывает seeked, и играть мы
+                // начинали только по 700мс-страховке ниже.
+                if (Math.abs(video.currentTime - tStart) < 0.05) { afterSeek(); return; }
                 if (tStart > 0 && Number.isFinite(video.duration) && video.duration > tStart) {
                     video.addEventListener('seeked', afterSeek, { once: true });
                     try {
@@ -1337,8 +1365,10 @@
             else video.addEventListener('loadedmetadata', startPlayback, { once: true });
 
             // Реальные размеры кадра известны только после метаданных — тогда
-            // и подгоняем высоту клипа под свободное место оборота.
-            video.addEventListener('loadedmetadata', scheduleFitBack, { once: true });
+            // и подгоняем высоту клипа под свободное место оборота. У прогретого
+            // элемента метаданные уже пришли, событие не повторится — считаем сразу.
+            if (video.readyState >= 1) scheduleFitBack();
+            else video.addEventListener('loadedmetadata', scheduleFitBack, { once: true });
 
             // Держим воспроизведение в пределах окна [tStart, tEnd].
             video.addEventListener('timeupdate', () => {
@@ -1585,22 +1615,33 @@
                 // Серверный клип: сначала офлайн-копия из IndexedDB (работает без
                 // сети), нет копии — играем с сервера и фоном докешируем.
                 const wid = w.id;
-                const skel = makeClipSkeleton();
-                mediaSlot.appendChild(skel);
+                // Клип уже прогрет на вопросе (файл прочитан, кадр найден) —
+                // показываем видео сразу, вместе с остальным ответом: ни
+                // скелетона, ни ожидания конца анимации ему не нужно.
+                const ready = warmedClip && warmedClip.id === wid
+                    && warmedClip.video.readyState >= 2 ? takeWarmedClip(wid) : null;
+                if (ready) {
+                    mediaSlot.appendChild(makeClipVideo(ready.url, w, ready.video));
+                }
+                const skel = ready ? null : makeClipSkeleton();
+                if (skel) mediaSlot.appendChild(skel);
                 // Нет в IndexedDB — качаем через ОБЩУЮ очередь и играем уже из
                 // браузера. Раньше в этом случае видео тянулось потоком с сервера,
                 // и параллельно тот же файл качался «в кэш»: один клип приезжал по
                 // два-три раза (замер: 161459d5.mp4 × 3) и делил канал сам с собой.
-                getClip(wid)
+                if (!ready) getClip(wid)
                     .then((blob) => blob || ensureClip(wid, src))
                     .then((blob) => afterReveal(() => {
                     if (!current || current.word.id !== wid) return;
                     if (!els.back.classList.contains('back-side--visible')) return;
+                    // Элемент уже прогрет на вопросе — показываем его как есть:
+                    // он и файл прочитал, и стоит на нужном кадре.
+                    const warm = takeWarmedClip(wid);
                     // Скачать не вышло (нет сети) — последняя попытка: играем
                     // прямо с сервера, как раньше.
-                    const playUrl = blob ? URL.createObjectURL(blob) : src;
+                    const playUrl = warm ? warm.url : (blob ? URL.createObjectURL(blob) : src);
                     skel.remove();
-                    mediaSlot.insertBefore(makeClipVideo(playUrl, w), mediaSlot.firstChild);
+                    mediaSlot.insertBefore(makeClipVideo(playUrl, w, warm && warm.video), mediaSlot.firstChild);
                     fitBackMedia();
                 })).catch(() => afterReveal(() => {
                     // Клип не достали — вместо вечного мерцания говорим прямо.
@@ -1898,6 +1939,8 @@
         }
 
         function renderDone() {
+            dropWarmedClip();   // сессия окончена — прогретое видео больше не нужно
+
             current = null;
             if (els.hintBtn) els.hintBtn.classList.add('hidden');
             els.front.innerHTML = '';
@@ -1988,6 +2031,62 @@
             // сбрасываем: сеть с прошлой сессии могла вернуться.
             clipFailed.clear();
             setTimeout(pumpClipPrefetch, 600);
+        }
+
+        // ===== Прогрев видео-элемента текущей карточки =====
+        // Мало положить клип в IndexedDB: сам <video> после вставки ещё читает
+        // blob, разбирает контейнер и ПЕРЕМАТЫВАЕТСЯ на нужный кадр (клип режется
+        // с запасом, играем окно [trimStart..trimEnd]). Замер на 4x-медленном CPU:
+        // кадр готов на 330мс, а playing наступал на 945мс — эти шестьсот
+        // миллисекунд и читались как «видео грузится». Поэтому элемент готовим,
+        // пока человек смотрит на вопрос: скрытый video заранее прочитывает файл
+        // и встаёт ровно на стартовый кадр, а на ответе мы показываем готовое.
+        let warmedClip = null;   // { id, video, url }
+
+        function clipStartTime(w) {
+            const v = Number(w && w.trimStart);
+            return Number.isFinite(v) && v > 0 ? v : 0;
+        }
+
+        function dropWarmedClip() {
+            if (!warmedClip) return;
+            const kept = warmedClip;
+            warmedClip = null;
+            if (kept.video.parentNode) kept.video.parentNode.removeChild(kept.video);
+            try { URL.revokeObjectURL(kept.url); } catch (e) { /* уже отозван */ }
+        }
+
+        function warmClipElement(w, blob) {
+            if (!w || !w.id || !blob) return;
+            if (warmedClip && warmedClip.id === w.id) return;
+            dropWarmedClip();
+
+            const url = URL.createObjectURL(blob);
+            const video = document.createElement('video');
+            video.className = 'clip-warm';
+            video.preload = 'auto';
+            video.playsInline = true;
+            video.muted = true;          // прогрев молча; звук вернёт makeClipVideo
+            video.src = url;
+            const start = clipStartTime(w);
+            if (start > 0) {
+                video.addEventListener('loadedmetadata', () => {
+                    try {
+                        if (start < (video.duration || Infinity)) video.currentTime = start;
+                    } catch (e) { /* перемотка не удалась — не беда */ }
+                }, { once: true });
+            }
+            // Элемент должен быть в документе, иначе браузер вправе не грузить его
+            // вовсе. Держим его крошечным и прозрачным (см. .clip-warm).
+            (document.querySelector('.card-area') || document.body).appendChild(video);
+            warmedClip = { id: w.id, video, url };
+        }
+
+        function takeWarmedClip(id) {
+            if (!warmedClip || warmedClip.id !== id) return null;
+            const taken = warmedClip;
+            warmedClip = null;
+            return taken;
         }
 
         // ===== Очередь докачки клипов =====
