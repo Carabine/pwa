@@ -144,8 +144,13 @@
 }
 
 /* Карточка с видеоклипом обнимает контент (не растягивается на всю высоту) —
-   чтобы не быть «слишком большой»; размер задаёт само видео (ограничено по высоте). */
-.card-area:has(.clip-player) {
+   чтобы не быть «слишком большой»; размер задаёт само видео (ограничено по высоте).
+   Скелетон клипа обязан попадать под ТЕ ЖЕ правила: он стоит вместо видео с
+   первого кадра, и если карточка при нём ведёт себя иначе, fitBackMedia меряет
+   свободное место по другой раскладке — клип потом «усыхал» на подмене
+   (198 → 120px через секунду после ответа). */
+.card-area:has(.clip-player),
+.card-area:has(.clip-skel) {
     flex: 0 0 auto;
 }
 
@@ -433,11 +438,67 @@
    max-height, центрировано) вываливалось за слот и наезжало на соседей (чтение/
    перевод). Теперь высоту клипа задаёт его max-height ниже, а если всё вместе не
    влезло — прокручивается сам оборот (.back-side--visible, без наложения). */
-.back-side--visible:has(.clip-player) .back-media {
+.back-side--visible:has(.clip-player) .back-media,
+.back-side--visible:has(.clip-skel) .back-media {
     flex: 0 0 auto;
     min-height: 0;
     justify-content: center;
     align-items: center;   /* центрируем клип, который теперь по ширине видео */
+}
+
+/* Скелетон клипа — держит место видео с первого кадра ответа, чтобы блок
+   видео проявлялся ВМЕСТЕ с текстом, а не подъезжал отдельно, когда клип
+   доехал. Геометрия та же, что у настоящего бокса: высота от слота, ширина
+   выведена из 16:9, — поэтому подмена скелетона на видео ничего не двигает.
+   Блик даёт общий класс .skel (css/app/motion.css). */
+.card-area .clip-skel {
+    /* Потолок ТОТ ЖЕ, что у настоящего кадра (.clip-player video ниже):
+       fitBackMedia меряет скелетон как видео и задаёт ему ту же высоту, а
+       ширину выводит 16:9. Иначе скелетон вставал в свой размер, и подмена на
+       видео перекраивала блок. */
+    max-height: clamp(160px, calc(100svh - 470px), 48svh);
+    aspect-ratio: 16 / 9;
+    width: auto;
+    max-width: 100%;
+    flex: 0 0 auto;
+    min-height: 0;
+    margin: 0 auto;
+    border-radius: 12px;
+    box-shadow: 0 0 0 1px var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Иконка воспроизведения — намёк, что здесь будет видео. Цвет задаём явно:
+   у .skel текст прозрачный, а иконка рисуется currentColor. */
+.card-area .clip-skel__icon {
+    display: flex;
+    color: var(--text-dim, var(--text-muted));
+    opacity: 0.5;
+}
+
+/* Статус «видео готовится» внутри скелетона: у .skel текст прозрачный, поэтому
+   цвет задаём явно. Блик при этом продолжает идти — он и означает ожидание. */
+.card-area .clip-skel__text {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.card-area .clip-skel .clip-spinner {
+    margin-right: 8px;
+}
+
+/* Видео сменяет скелетон коротким проявлением — без него подмена читается как
+   щелчок: только что был ровный блик, и вдруг кадр. */
+.card-area .clip-player {
+    animation: clip-in 0.18s ease-out;
+}
+
+@keyframes clip-in { from { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .card-area .clip-player { animation: none; }
 }
 
 /* Контейнер клипа обнимает бокс видео (width:fit-content), а бокс всегда 16:9
@@ -1480,13 +1541,15 @@
     }
 
 
-    .card-area:has(.clip-player) {
+    .card-area:has(.clip-player),
+    .card-area:has(.clip-skel) {
         /* То же фиксированное место, что у вопроса: наличие видео не должно
            менять высоту карточки и сдвигать кнопки после переворота. */
         flex: 1 1 0;
     }
 
-    .back-side--visible:has(.clip-player) .back-media {
+    .back-side--visible:has(.clip-player) .back-media,
+    .back-side--visible:has(.clip-skel) .back-media {
         flex: 0 0 auto;
     }
 

@@ -769,9 +769,16 @@
             els.buttons.appendChild(makeButton(t('study.showAnswer'), 'show-btn', renderBack));
             // Кнопка «Уже знаю это слово» убрана по просьбе.
 
-            // Пока человек смотрит на вопрос — тихо подтягиваем японские
-            // начертания, которые понадобятся ОТВЕТУ (фраза, чтение).
+            // Пока человек смотрит на вопрос — тихо готовим всё, что понадобится
+            // ОТВЕТУ: японские начертания и разбор фразы на ромадзи-ячейки.
+            // Оба запроса потом сработали бы уже поверх открытого ответа и
+            // перекроили бы его (шрифт — полной раскладкой, ячейки — высотой
+            // фразы, из-за которой ужимался клип).
             warmJapaneseFont(current.word);
+            if (studyPref('studyTranscription') === 'romaji'
+                && studyPref('studySentenceRomaji') !== false) {
+                fetchSentenceTokens(current.word.sentence).catch(() => {});
+            }
         }
 
         // Google Fonts отдаёт Noto Sans JP десятками subset'ов по диапазонам
@@ -1041,7 +1048,7 @@
             if (!back.classList.contains('back-side--visible')) return;
             const slot = back.querySelector('.back-media');
             if (!slot) return;
-            const clipEl = slot.querySelector('.clip-player, .clip-pending');
+            const clipEl = slot.querySelector('.clip-player, .clip-pending, .clip-skel');
             if (!clipEl) {
                 // Клипа нет и не будет (только аудио или пусто) — слот живёт
                 // своим естественным размером.
@@ -1049,7 +1056,8 @@
                 slot.style.height = '';
                 return;
             }
-            const video = slot.querySelector('.clip-player video');
+            // Скелетон меряем и растим как видео — тогда подмена не двигает блок.
+            const video = slot.querySelector('.clip-player video, .clip-skel');
 
             // Все чтения ключа — до единой записи, чтобы они уложились в одну
             // раскладку.
@@ -1366,6 +1374,37 @@
 
         // Заглушка вместо пустоты, пока клип грузится (гость) или ещё режется на
         // сервере (вошедший) — чтобы «пропавшее» видео читалось как «готовится».
+        // Скелетон клипа. Стоит в уже зарезервированном месте с ПЕРВОГО кадра
+        // ответа, поэтому видео-блок проявляется вместе с текстом, а не
+        // подъезжает отдельно, когда клип доехал. Геометрия — как у настоящего
+        // бокса (16:9, высота от слота), так что подмена не двигает раскладку.
+        function makeClipSkeleton() {
+            const box = document.createElement('div');
+            box.className = 'clip-skel skel';
+            box.setAttribute('aria-hidden', 'true');
+            const icon = document.createElement('span');
+            icon.className = 'clip-skel__icon';
+            icon.innerHTML = '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+            box.appendChild(icon);
+            return box;
+        }
+
+        // Клип ещё режется на сервере: статус показываем ВНУТРИ скелетона, не
+        // подменяя его маленькой плашкой — иначе через секунду после ответа
+        // блок схлопывался бы и дёргал раскладку.
+        function setClipSkeletonStatus(box, msgKey) {
+            if (!box || !box.isConnected) return;
+            box.removeAttribute('aria-hidden');
+            box.innerHTML = '';
+            const sp = document.createElement('span');
+            sp.className = 'clip-spinner';
+            const txt = document.createElement('span');
+            txt.className = 'clip-skel__text';
+            txt.textContent = t(msgKey);
+            box.appendChild(sp);
+            box.appendChild(txt);
+        }
+
         function makeClipPending(msgKey, spinner = true) {
             const box = document.createElement('div');
             box.className = 'clip-pending';
@@ -1614,13 +1653,20 @@
                 // Серверный клип: сначала офлайн-копия из IndexedDB (работает без
                 // сети), нет копии — играем с сервера и фоном докешируем.
                 const wid = w.id;
+                const skel = makeClipSkeleton();
+                mediaSlot.appendChild(skel);
                 getClip(wid).then((blob) => afterReveal(() => {
                     if (!current || current.word.id !== wid) return;
                     if (!els.back.classList.contains('back-side--visible')) return;
                     const playUrl = blob ? URL.createObjectURL(blob) : src;
+                    skel.remove();
                     mediaSlot.insertBefore(makeClipVideo(playUrl, w), mediaSlot.firstChild);
                     fitBackMedia();
                     if (!blob && typeof cacheMediaFromUrl === 'function') cacheMediaFromUrl('clip', wid, src);
+                })).catch(() => afterReveal(() => {
+                    // Клип не достали — вместо вечного мерцания говорим прямо.
+                    if (skel.isConnected) skel.replaceWith(makeClipPending('clip.unavailable', false));
+                    fitBackMedia();
                 }));
             } else if (src) {
                 mediaSlot.appendChild(makeClipVideo(src, w));
@@ -1631,9 +1677,13 @@
                 const wid = w.id;
                 const isGuest = typeof wid === 'string' && wid.startsWith('local-');
                 // Пока тянем из IndexedDB / ждём серверную нарезку — показываем статус.
+                // Пока клип ищется в IndexedDB или режется на сервере, место
+                // занимает скелетон — он появляется вместе с текстом ответа.
+                // Текстовый статус («готовим клип») показываем только если
+                // ожидание затянулось, то есть клипа в итоге не оказалось.
                 let pending = null;
                 if (expectsClip) {
-                    pending = makeClipPending(isGuest ? 'clip.loading' : 'clip.preparing');
+                    pending = makeClipSkeleton();
                     mediaSlot.appendChild(pending);
                 }
                 getClipUrl(wid).then((url) => afterReveal(() => {
@@ -1650,8 +1700,12 @@
                     } else if (pending && isGuest) {
                         // У гостя клипа в браузере нет — значит нарезать не удалось.
                         pending.replaceWith(makeClipPending('clip.unavailable', false));
+                        fitBackMedia();
+                    } else if (pending) {
+                        // Вошедший: сервер ещё режет — пишем это прямо в
+                        // скелетоне, место под клип остаётся за ним.
+                        setClipSkeletonStatus(pending, 'clip.preparing');
                     }
-                    // Вошедший: клипа ещё нет в IndexedDB — оставляем «готовится».
                 }));
             }
 
@@ -1737,7 +1791,17 @@
                 const wid = current && current.word.id;
                 const romajiMode = studyPref('studyTranscription') === 'romaji';
                 const withRomaji = romajiMode && studyPref('studySentenceRomaji') !== false;
-                if (withRomaji) {
+                const cachedTokens = withRomaji ? sentenceTokensCache.get(w.sentence) : null;
+                if (withRomaji && cachedTokens && cachedTokens.length) {
+                    // Токены уже в кэше (их греет renderFront, пока человек
+                    // смотрит на вопрос) — раскладываем СРАЗУ, до первой
+                    // раскладки ответа. Тогда высота фразы окончательная с
+                    // первого кадра, и клип получает свой настоящий размер, а не
+                    // ужимается через секунду, когда ячейки доехали.
+                    jpLine.textContent = '';
+                    jpLine.classList.add('sentence--cells');
+                    buildReadingCells(cachedTokens).forEach((c) => jpLine.appendChild(c));
+                } else if (withRomaji) {
                     // Ячейки придут с сервера асинхронно и они ВЫШЕ плоской строки.
                     // Резервируем их высоту сразу: иначе плашка подрастала через
                     // ~200мс и fitBackMedia ужимал уже показанный клип — «видео
