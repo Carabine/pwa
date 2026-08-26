@@ -331,6 +331,9 @@ window.I18N_EN = {
         'words.ttsFail': 'Could not generate audio',
 
         'decks.all': 'All',
+        'decks.pickAll': 'All decks',
+        'decks.pickTitle': 'Show deck',
+        'decks.allWords': 'All words',
         'decks.createFirst': 'Create deck',
         'decks.create': 'Create deck',
         'decks.study': 'Study',

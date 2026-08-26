@@ -1000,7 +1000,7 @@ async function exportWords() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    // Слой колод (необязательный): чип-фильтр, кнопка «Учить», меню карточек.
+    // Слой колод (необязательный): фильтр-селектор, кнопка «Учить», меню карточек.
     if (window.DecksUI) {
         DecksUI.init({
             chips: document.getElementById('deck-chips'),

@@ -1,4 +1,4 @@
-// UI колод на экране словаря: чип-ряд фильтра, кнопка «Учить», меню карточки
+// UI колод на экране словаря: кнопка выбора колоды, кнопка «Учить», меню карточки
 // «в колоды» (bottom sheet) и управление активной колодой. Данные — window.Decks.
 //
 // Экран словаря остаётся плоским и знакомым; колоды — необязательный слой поверх,
@@ -61,7 +61,11 @@
             this._renderHint();
         },
 
-        // ---- Чип-ряд фильтра --------------------------------------------------
+        // ---- Кнопка выбора колоды --------------------------------------------
+        // Раньше здесь был горизонтальный ряд чипов. На телефоне в него влезала
+        // ровно одна колода, а обрезанный край читался как конец списка — что
+        // ряд листается вбок, никто не догадывался. Теперь фильтр — одна кнопка
+        // во всю ширину, а весь список колод открывается шторкой.
         _renderChips() {
             const box = this._ctx.chips;
             if (!box) return;
@@ -74,7 +78,7 @@
             box.innerHTML = '';
 
             if (decks.length === 0) {
-                // Колод ещё нет — только приглашающий чип, без фильтра «Все».
+                // Колод ещё нет — только приглашающий чип, без фильтра.
                 const add = h('button', 'deck-chip deck-chip--add', '＋ ' + esc(t('decks.createFirst')));
                 add.addEventListener('click', () => this._openEditor({ mode: 'create' }));
                 box.appendChild(add);
@@ -82,47 +86,94 @@
                 return;
             }
 
-            // «Все» + колоды листаются, кнопка «＋» вынесена вправо и не скроллится.
-            const scroll = h('div', 'deck-chips__scroll');
-            const all = h('button', 'deck-chip' + (this._activeId ? '' : ' deck-chip--active'), esc(t('decks.all')));
-            all.addEventListener('click', () => this._setActive(null));
-            scroll.appendChild(all);
+            const loose = this._looseCount();
+            if (this._activeId === '__none__' && loose === 0) this._activeId = null;
 
-            for (const d of decks) {
-                const active = d.id === this._activeId;
-                const chip = h('button', 'deck-chip' + (active ? ' deck-chip--active' : ''),
-                    `<span class="deck-chip__emoji">${d.emoji}</span>` +
-                    `<span class="deck-chip__name">${esc(d.name)}</span>` +
-                    `<span class="deck-chip__count">${d.wordIds.length}</span>`);
-                chip.addEventListener('click', () => this._setActive(active ? null : d.id));
-                scroll.appendChild(chip);
-            }
+            const active = this._activeId && this._activeId !== '__none__' ? Decks.get(this._activeId) : null;
+            let emoji = '🗂';
+            let name = t('decks.pickAll');
+            let count = decks.length;
+            if (active) { emoji = active.emoji; name = active.name; count = active.wordIds.length; }
+            else if (this._activeId === '__none__') { emoji = '·'; name = t('decks.noDeck'); count = loose; }
 
-            // «Без колоды» — сколько слов коллекции ещё не разложено.
-            const loose = (this._ctx.getWords() || [])
-                .filter(w => Decks.decksOf(w.id).length === 0).length;
-            if (loose > 0) {
-                const noneActive = this._activeId === '__none__';
-                const none = h('button', 'deck-chip' + (noneActive ? ' deck-chip--active' : ''),
-                    `<span class="deck-chip__name">${esc(t('decks.noDeck'))}</span>` +
-                    `<span class="deck-chip__count">${loose}</span>`);
-                none.addEventListener('click', () => this._setActive(noneActive ? null : '__none__'));
-                scroll.appendChild(none);
-            } else if (this._activeId === '__none__') {
-                this._activeId = null;
-            }
-            box.appendChild(scroll);
+            const pick = h('button', 'deck-pick' + (this._activeId ? ' deck-pick--on' : ''),
+                `<span class="deck-pick__emoji">${esc(emoji)}</span>` +
+                `<span class="deck-pick__name">${esc(name)}</span>` +
+                `<span class="deck-pick__count">${count}</span>` +
+                '<span class="deck-pick__caret">▾</span>');
+            pick.setAttribute('aria-haspopup', 'dialog');
+            pick.addEventListener('click', () => this._openPicker());
+            box.appendChild(pick);
 
             const add = h('button', 'deck-chip deck-chip--add deck-chip--pinned', '＋');
             add.title = t('decks.createFirst');
+            add.setAttribute('aria-label', t('decks.createFirst'));
             add.addEventListener('click', () => this._openEditor({ mode: 'create' }));
             box.appendChild(add);
             box.hidden = false;
+        },
 
-            // Затухание правого края — только когда чипы реально скроллятся.
-            requestAnimationFrame(() => {
-                scroll.classList.toggle('is-scrollable', scroll.scrollWidth > scroll.clientWidth + 1);
+        // Сколько слов коллекции ещё не разложено ни в одну колоду.
+        _looseCount() {
+            return (this._ctx.getWords() || []).filter(w => Decks.decksOf(w.id).length === 0).length;
+        },
+
+        // ---- Шторка выбора колоды (фильтр словаря) ---------------------------
+        _openPicker() {
+            const overlay = h('div', 'deck-sheet__overlay');
+            const sheet = h('div', 'deck-sheet');
+
+            // «Назад» на телефоне закрывает шторку, а не уводит со страницы.
+            let layer = null;
+            const hide = () => {
+                layer = null;
+                overlay.classList.remove('is-open');
+                document.removeEventListener('keydown', onEsc);
+                setTimeout(() => overlay.remove(), 180);
+            };
+            const close = () => { if (layer) AnimeiBack.close(layer); else hide(); };
+            const onEsc = (e) => { if (e.key === 'Escape') close(); };
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+            document.addEventListener('keydown', onEsc);
+
+            const head = h('div', 'deck-sheet__head',
+                `<div><div class="deck-sheet__title">${esc(t('decks.pickTitle'))}</div></div>`);
+            const x = h('button', 'deck-sheet__x', '×');
+            x.addEventListener('click', close);
+            head.appendChild(x);
+            sheet.appendChild(head);
+
+            const list = h('div', 'deck-sheet__list');
+            const total = (this._ctx.getWords() || []).length;
+
+            // Строка списка: значок, имя, счётчик и галочка у текущего фильтра.
+            const addRow = (id, ico, label, n) => {
+                const on = this._activeId === id;
+                const row = h('button', 'deck-sheet__row' + (on ? ' is-on' : ''),
+                    `<span class="deck-sheet__emoji">${esc(ico)}</span>` +
+                    `<span class="deck-sheet__name">${esc(label)}</span>` +
+                    `<span class="deck-chip__count">${n}</span>` +
+                    `<span class="deck-sheet__check">${on ? '✓' : ''}</span>`);
+                row.addEventListener('click', () => { close(); this._setActive(id); });
+                list.appendChild(row);
+            };
+
+            addRow(null, '🗂', t('decks.allWords'), total);
+            for (const d of Decks.all()) addRow(d.id, d.emoji, d.name, d.wordIds.length);
+            const loose = this._looseCount();
+            if (loose > 0) addRow('__none__', '·', t('decks.noDeck'), loose);
+
+            const create = h('button', 'deck-sheet__create', '＋ ' + esc(t('decks.create')));
+            create.addEventListener('click', () => {
+                this._openEditor({ mode: 'create', then: (deck) => { if (deck) { close(); this._setActive(deck.id); } } });
             });
+
+            sheet.appendChild(list);
+            sheet.appendChild(create);
+            overlay.appendChild(sheet);
+            document.body.appendChild(overlay);
+            layer = AnimeiBack.open(hide);
+            requestAnimationFrame(() => overlay.classList.add('is-open'));
         },
 
         _setActive(id) {

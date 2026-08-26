@@ -335,6 +335,9 @@ const I18N = {
         'words.ttsFail': 'Не удалось сгенерировать озвучку',
 
         'decks.all': 'Все',
+        'decks.pickAll': 'Все колоды',
+        'decks.pickTitle': 'Показать колоду',
+        'decks.allWords': 'Все слова',
         'decks.createFirst': 'Создать колоду',
         'decks.create': 'Создать колоду',
         'decks.study': 'Учить',

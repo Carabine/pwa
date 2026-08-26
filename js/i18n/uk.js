@@ -331,6 +331,9 @@ window.I18N_UK = {
         'words.ttsFail': 'Не вдалося згенерувати озвучку',
 
         'decks.all': 'Усі',
+        'decks.pickAll': 'Усі колоди',
+        'decks.pickTitle': 'Показати колоду',
+        'decks.allWords': 'Усі слова',
         'decks.createFirst': 'Створити колоду',
         'decks.create': 'Створити колоду',
         'decks.study': 'Вчити',
