@@ -802,18 +802,9 @@
                 && studyPref('studySentenceRomaji') !== false) {
                 fetchSentenceTokens(current.word.sentence).catch(() => {});
             }
-            // И клип этой карточки — вне общей очереди докачки: пока человек
-            // думает над вопросом, он успевает лечь в IndexedDB, и к «Показать
-            // ответ» видео играет из браузера, а не тянется по сети.
-            if (typeof getClip === 'function' && typeof cacheMediaFromUrl === 'function') {
-                const w = current.word;
-                const clipSrc = videoSrcOf(w);
-                if (w.id && clipSrc && /^https?:\/\//.test(clipSrc)) {
-                    getClip(w.id).then((blob) => {
-                        if (!blob) cacheMediaFromUrl('clip', w.id, clipSrc);
-                    }).catch(() => {});
-                }
-            }
+            // Пнуть докачку: карточка сменилась — теперь самый нужный клип у
+            // неё, а следующий по важности у той, что пойдёт за ней.
+            pumpClipPrefetch();
         }
 
         // Google Fonts отдаёт Noto Sans JP десятками subset'ов по диапазонам
@@ -1596,14 +1587,21 @@
                 const wid = w.id;
                 const skel = makeClipSkeleton();
                 mediaSlot.appendChild(skel);
-                getClip(wid).then((blob) => afterReveal(() => {
+                // Нет в IndexedDB — качаем через ОБЩУЮ очередь и играем уже из
+                // браузера. Раньше в этом случае видео тянулось потоком с сервера,
+                // и параллельно тот же файл качался «в кэш»: один клип приезжал по
+                // два-три раза (замер: 161459d5.mp4 × 3) и делил канал сам с собой.
+                getClip(wid)
+                    .then((blob) => blob || ensureClip(wid, src))
+                    .then((blob) => afterReveal(() => {
                     if (!current || current.word.id !== wid) return;
                     if (!els.back.classList.contains('back-side--visible')) return;
+                    // Скачать не вышло (нет сети) — последняя попытка: играем
+                    // прямо с сервера, как раньше.
                     const playUrl = blob ? URL.createObjectURL(blob) : src;
                     skel.remove();
                     mediaSlot.insertBefore(makeClipVideo(playUrl, w), mediaSlot.firstChild);
                     fitBackMedia();
-                    if (!blob && typeof cacheMediaFromUrl === 'function') cacheMediaFromUrl('clip', wid, src);
                 })).catch(() => afterReveal(() => {
                     // Клип не достали — вместо вечного мерцания говорим прямо.
                     if (skel.isConnected) skel.replaceWith(makeClipPending('clip.unavailable', false));
@@ -1984,54 +1982,113 @@
             current = queue.shift() ?? null;
             render();
 
-            // Тихо докешировать клипы сегодняшней сессии в IndexedDB: если сеть
-            // пропадёт посреди повторения (метро), карточки продолжат играть.
-            // Только серверные ссылки; уже закешированные пропускаются внутри.
-            if (typeof cacheMediaFromUrl === 'function' && typeof getClip === 'function') {
-                const items = current ? [current, ...queue] : [...queue];
-                const targets = [];
-                for (const it of items) {
-                    const w = it && it.word;
-                    const src = w && videoSrcOf(w);
-                    if (!w || !w.id || !src || !/^https?:\/\//.test(src)) continue;
-                    targets.push({ id: w.id, src });
+            // Тихо докешировать клипы сессии в IndexedDB: если сеть пропадёт
+            // посреди повторения (метро), карточки продолжат играть. Фора в
+            // 600мс — чтобы сначала догрузилась сама страница. Список неудач
+            // сбрасываем: сеть с прошлой сессии могла вернуться.
+            clipFailed.clear();
+            setTimeout(pumpClipPrefetch, 600);
+        }
+
+        // ===== Очередь докачки клипов =====
+        // Одна очередь на всё, с приоритетом: текущая карточка → следующая →
+        // остальные по колоде. Раньше было три независимых источника запросов
+        // (залп на всю колоду при старте, прогрев текущей карточки и прогрев
+        // следующей) — на мобильном канале они душили друг друга, и клип, нужный
+        // прямо сейчас, приходил последним. Теперь работают одна-две дорожки, и
+        // каждая берёт САМЫЙ нужный на этот момент клип: сменилась карточка —
+        // сменился и приоритет.
+        const clipInFlight = new Map();   // id → промис текущей загрузки
+        // Клипы, которые скачать не вышло (нет сети, 404): без этого списка
+        // дорожка бесконечно долбилась бы в один и тот же файл — он не попал в
+        // IndexedDB, значит снова «самый нужный».
+        const clipFailed = new Set();
+        let clipLanes = 0;
+
+        // Медленный канал — тянем в одну дорожку, чтобы не отбирать полосу у
+        // клипа, который человек ждёт прямо сейчас.
+        function clipLaneLimit() {
+            const conn = navigator.connection;
+            const type = conn && conn.effectiveType;
+            return (type === 'slow-2g' || type === '2g' || type === '3g') ? 1 : 2;
+        }
+
+        function clipTarget(item) {
+            const w = item && item.word;
+            const src = w && videoSrcOf(w);
+            if (!w || !w.id || !src || !/^https?:\/\//.test(src)) return null;
+            return { id: w.id, src };
+        }
+
+        // Живой список приоритетов: читается на каждом шаге, поэтому после
+        // ответа очередь сама переключается на новую текущую карточку.
+        function nextClipTarget() {
+            const items = current ? [current, ...queue] : [...queue];
+            const seen = new Set();
+            const out = [];
+            for (const it of items) {
+                const t = clipTarget(it);
+                if (!t || seen.has(t.id) || clipInFlight.has(t.id) || clipFailed.has(t.id)) continue;
+                seen.add(t.id);
+                out.push(t);
+            }
+            return out;
+        }
+
+        // Единственное место, где клип реально качается. Возвращает blob (или
+        // null, если не вышло) и следит, чтобы один файл не тянулся дважды:
+        // карточка, которой клип нужен прямо сейчас, присоединяется к уже
+        // идущей загрузке, а не запускает свою.
+        function ensureClip(id, src) {
+            const pending = clipInFlight.get(id);
+            if (pending) return pending;
+            const job = cacheMediaFromUrl('clip', id, src)
+                .catch(() => {})
+                .then(() => getClip(id).catch(() => null))
+                .then((blob) => {
+                    if (!blob) clipFailed.add(id);
+                    return blob;
+                })
+                .finally(() => clipInFlight.delete(id));
+            clipInFlight.set(id, job);
+            return job;
+        }
+
+        async function clipLane() {
+            clipLanes++;
+            try {
+                for (;;) {
+                    // Пока качается клип ТЕКУЩЕЙ карточки — фоновые дорожки ждут:
+                    // человек смотрит именно на неё, и делить с ней канал нельзя.
+                    const curId = current && current.word && current.word.id;
+                    const curJob = curId && clipInFlight.get(curId);
+                    if (curJob) { await curJob; continue; }
+
+                    const targets = nextClipTarget();
+                    let picked = null;
+                    for (const t of targets) {
+                        // eslint-disable-next-line no-await-in-loop
+                        const blob = await getClip(t.id).catch(() => null);
+                        if (!blob) { picked = t; break; }
+                    }
+                    if (!picked) return;
+                    await ensureClip(picked.id, picked.src);
                 }
-                prefetchClips(targets);
+            } finally {
+                clipLanes--;
             }
         }
 
-        // Докачка идёт ПО ОЧЕРЕДИ и в порядке колоды, а не всем скопом. Раньше
-        // цикл дёргал докешивание сразу для всех карточек сессии: на входе в
-        // «Повторить всё» это 25 файлов и ~17 МБ одним залпом (замер
-        // _pp/clip-timing.js). На мобильном интернете клип ТЕКУЩЕЙ карточки
-        // стоял в этой же очереди и не мог пробиться — «видео грузится пару
-        // секунд». Теперь две дорожки, первая карточка в очереди первая, и
-        // старт с задержкой: сначала пусть догрузится сама страница.
-        let prefetchToken = 0;
-        function prefetchClips(targets) {
-            const my = ++prefetchToken;
-            if (!targets.length) return;
-            // «Экономия трафика» у пользователя — колоду вперёд не тянем,
-            // клипы приедут по одному, когда карточка откроется.
+        // Пнуть докачку: зовём при старте сессии и на каждой новой карточке —
+        // приоритеты пересчитываются сами.
+        function pumpClipPrefetch() {
+            if (typeof cacheMediaFromUrl !== 'function' || typeof getClip !== 'function') return;
+            // «Экономия трафика» — вперёд не забегаем: клип придёт, когда
+            // карточка откроется.
             const conn = navigator.connection;
             if (conn && conn.saveData) return;
-
-            const LANES = 2;
-            const HEAD_START = 900;   // мс форы текущей карточке и странице
-            let next = 0;
-            const lane = async () => {
-                while (next < targets.length && my === prefetchToken) {
-                    const item = targets[next++];
-                    try {
-                        const blob = await getClip(item.id);
-                        if (!blob) await cacheMediaFromUrl('clip', item.id, item.src);
-                    } catch { /* нет сети — докешируем в другой раз */ }
-                }
-            };
-            setTimeout(() => {
-                if (my !== prefetchToken) return;   // сессию уже перезапустили
-                for (let i = 0; i < LANES; i++) lane();
-            }, HEAD_START);
+            const limit = clipLaneLimit();
+            while (clipLanes < limit) clipLane();
         }
 
         // ---- Keyboard shortcuts -------------------------------------------
