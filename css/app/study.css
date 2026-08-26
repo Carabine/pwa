@@ -262,40 +262,32 @@
 }
 
 /* ===== Тайминги открытия ответа =====
-   Раскрытие — ОДИН жест: слово (и чтение) переезжает на новое место
-   трансформом, оборот приезжает тем же движением вверх. Обе части идут по
-   одной кривой, стартуют вместе и вместе заканчиваются — рассинхрон и был той
-   «кривизной»: сперва оборот вспыхивал за 130мс, пока слово ещё ползло, потом
-   догонял с задержкой. Выбран этот темп (бывший ?rv=c): всё разом, подъём
-   оборота заметнее — так жест читается цельным.
-   Числа читает и JS (morphTitle в study-core.js), источник один. ?rv=a|b —
-   прежние варианты темпа, чтобы сравнить вживую. */
+   Раскрытие — ОДИН жест: вся карточка переходит в состояние ответа за одно и
+   то же время и по одной кривой. Двигаться нечему (слово просто встаёт на своё
+   место, см. ниже), поэтому и низ приезжает без подъёма — иначе верх выглядел
+   готовым сразу, а видео с текстом «догоняли».
+   Верх при этом НЕ гаснет в ноль: крупное слово, мигнув, читается как скачок —
+   оно проступает с половины (title-settle), а новые строки (чтение, линия,
+   оборот) с нуля. Длительность общая.
+   ?rv=a|b — прежние варианты темпа, чтобы сравнить вживую. */
 :root {
-    --reveal-dur: 240ms;                              /* переезд слова */
-    --reveal-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
-    --reveal-body-dur: 240ms;                         /* приезд оборота */
+    --reveal-body-dur: 240ms;
     --reveal-body-delay: 0ms;
-    --reveal-body-rise: 12px;
+    --reveal-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
     /* Сдвиг второй кнопки оценки — свой: он не про синхрон с оборотом, а про
        то, чтобы «Забыл» и «Помню» не всплывали одной плитой. */
     --reveal-stagger: 60ms;
 }
 
-/* A — прежний базовый темп: слово ведёт, оборот догоняет (60 + 200 = 260). */
+/* A — спокойнее и чуть длиннее. */
 :root.rv-a {
-    --reveal-dur: 260ms;
-    --reveal-body-dur: 200ms;
-    --reveal-body-delay: 60ms;
-    --reveal-body-rise: 8px;
+    --reveal-body-dur: 300ms;
 }
 
-/* B — «короче и жёстче»: тот же жест, но без долгого хвоста у кривой. */
+/* B — короче и жёстче: без длинного хвоста у кривой. */
 :root.rv-b {
-    --reveal-dur: 200ms;
+    --reveal-body-dur: 170ms;
     --reveal-ease: cubic-bezier(0.32, 0.9, 0.4, 1);
-    --reveal-body-dur: 160ms;
-    --reveal-body-delay: 40ms;
-    --reveal-body-rise: 6px;
 }
 
 /* Разделитель вопроса и ответа: нейтральная линия, тающая к краям.
@@ -342,6 +334,13 @@
     animation: none !important;
 }
 
+/* Слово в кадре подготовки — ровно в том виде, с которого начнётся его
+   проявление, иначе один кадр мелькнёт полная яркость. */
+.card-area.is-arming .word {
+    opacity: 0.5;
+    animation: none !important;
+}
+
 .back-side {
     display: none;
     flex-direction: column;
@@ -367,12 +366,10 @@
     overflow-x: hidden;
     overscroll-behavior: contain;
     scrollbar-width: none;
-    /* Оборот целиком — новое содержимое. Не просто проявляем, а подводим тем
-       же движением вверх, что и слово: голый фейд рядом с едущим титулом
-       читался как «остальное показалось резко», сколько его ни удлиняй.
-       Каскада по строкам НЕТ (его убирали как суетливый) — оборот приезжает
-       одним блоком. */
-    animation: back-rise var(--reveal-body-dur) var(--reveal-ease) var(--reveal-body-delay) backwards;
+    /* Оборот целиком — новое содержимое, проявляется одним блоком (каскада по
+       строкам нет, его убирали как суетливый). Без движения: верх карточки
+       двигаться не может, и подъём низа сразу выдавал бы их разными жестами. */
+    animation: back-in var(--reveal-body-dur) var(--reveal-ease) var(--reveal-body-delay) backwards;
 }
 .back-side--visible::-webkit-scrollbar { display: none; }
 
@@ -382,18 +379,21 @@
 }
 
 @keyframes back-in { from { opacity: 0; } }
-@keyframes back-rise { from { opacity: 0; transform: translateY(var(--reveal-body-rise)); } }
+/* Слово уже на экране — ему не «появляться», а перейти в вид ответа. Гашение в
+   ноль читалось бы как моргание, поэтому стартуем с половины. */
+@keyframes title-settle { from { opacity: 0.5; } }
 @keyframes rise-in { from { opacity: 0; transform: translateY(10px); } }
 
 /* Кнопки под карточкой всплывают лёгким каскадом при каждой смене состава
    («Показать ответ» → оценки и обратно на новой карточке). */
 .main.study .buttons > button {
-    animation: rise-in var(--reveal-dur) var(--reveal-ease) backwards;
+    animation: rise-in var(--reveal-body-dur) var(--reveal-ease) backwards;
 }
 .main.study .buttons > button:nth-child(2) { animation-delay: var(--reveal-stagger); }
 
 @media (prefers-reduced-motion: reduce) {
     .word,
+    .card-area:has(.back-side--visible) .word,
     .back-side--visible,
     .back-side--visible > *,
     .card-area:has(.back-side--visible) .front-side::after,
@@ -643,7 +643,7 @@
     font-size: clamp(24px, 2.5vw, 30px);
     font-weight: 500;
     letter-spacing: -0.01em;
-    animation: none;
+    animation: title-settle var(--reveal-body-dur) var(--reveal-ease) var(--reveal-body-delay) backwards;
 }
 
 /* Чтение — фуриганой над словом-титулом (как в манге): симметрично и без

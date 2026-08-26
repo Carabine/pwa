@@ -1435,16 +1435,9 @@
         function revealTokens() {
             if (revealCache) return revealCache;
             const cs = getComputedStyle(document.documentElement);
-            const raw = (cs.getPropertyValue('--reveal-dur') || '').trim();
-            const duration = cssMs(cs, '--reveal-dur', 240);
+            const raw = (cs.getPropertyValue('--reveal-body-dur') || '').trim();
             const tokens = {
-                duration,
-                easing: (cs.getPropertyValue('--reveal-ease') || '').trim()
-                    || 'cubic-bezier(0.2, 0.7, 0.3, 1)',
-                total: Math.max(
-                    duration,
-                    cssMs(cs, '--reveal-body-delay', 0) + cssMs(cs, '--reveal-body-dur', 240),
-                ),
+                total: cssMs(cs, '--reveal-body-delay', 0) + cssMs(cs, '--reveal-body-dur', 240),
             };
             // Стили ещё не доехали — отдаём умолчания, но НЕ кэшируем.
             if (raw) revealCache = tokens;
