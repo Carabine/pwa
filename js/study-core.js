@@ -1458,13 +1458,7 @@
             revealTokens();
         }
 
-        function revealTiming() {
-            const { duration, easing } = revealTokens();
-            return { duration, easing };
-        }
-
-        // Сколько всего длится раскрытие: дольше из двух — переезд титула и
-        // приезд оборота (у него бывает задержка старта).
+        // Сколько длится раскрытие — по нему закрывается окно доливки (страховка).
         function revealTotalMs() {
             if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 0;
             return revealTokens().total;
@@ -1541,95 +1535,14 @@
             revealTimer = setTimeout(flushReveal, total + 800);
         }
 
-        // ===== Переезд титульного ряда «вопрос → ответ» =====
-        // Слово и его чтение есть на ОБЕИХ сторонах карточки, просто в разных
-        // местах и размерах: слово из центра уезжает под самый верх и мельчает
-        // (36→22px), чтение из строки под словом — фуриганой над ним. Раньше
-        // весь титульный ряд гасили в ноль и зажигали заново: глаз ловил, что
-        // крупное слово моргнуло и оказалось не там — это и читалось как
-        // «скачок». Теперь эти двое не гаснут, а доезжают на transform (FLIP):
-        // раскладка уже финальная, анимируется только картинка, без reflow.
-        // Всё остальное на обороте — новое, его по-прежнему просто проявляем.
-        function titleBox(el) {
-            if (!el) return null;
-            const b = el.getBoundingClientRect();
-            if (!b.width && !b.height) return null;
-            // Только rect: getComputedStyle здесь — ещё один форсированный
-            // пересчёт стиля на :has()-раскладке, а масштаб и так виден по
-            // высоте. line-height у титула и фуриганы безразмерный, поэтому
-            // отношение высот равно отношению кеглей (36/22 = 41.4/25.3).
-            return { cx: b.left + b.width / 2, cy: b.top + b.height / 2, h: b.height };
-        }
-
-        function measureTitle() {
-            return {
-                word: titleBox(els.front.querySelector('.word')),
-                reading: titleBox(els.front.querySelector('.front-reading')),
-            };
-        }
-
-        // Первая фаза переезда: считаем дельты и СРАЗУ ставим слово с чтением в
-        // стартовое положение инлайновым transform. Делается в том же кадре, что
-        // и сборка ответа, — тогда «кадр подготовки» выглядит ровно как первый
-        // кадр анимации, и никакого скачка при её запуске нет.
-        function armTitle(before) {
-            if (!before) return [];
-            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return [];
-            const pairs = [
-                [before.word, els.front.querySelector('.word'), 1],
-                // Чтение меняет и место, и роль (подпись → фуригана), поэтому
-                // едет с лёгким проявлением: чистый переезд на таком масштабе
-                // читался бы как рывок.
-                [before.reading, els.front.querySelector('.word-furigana'), 0.45],
-            ];
-
-            // ВАЖНО: сначала меряем всё, потом пишем. Вперемешку каждый
-            // следующий getBoundingClientRect шёл бы уже по «грязной» раскладке
-            // и форсировал полный пересчёт: профиль показывал 59мс против 6мс.
-            const steps = [];
-            for (const [from, el, fromOpacity] of pairs) {
-                if (!from || !el || typeof el.animate !== 'function') continue;
-                const to = titleBox(el);
-                if (!to) continue;
-                const scale = from.h && to.h ? from.h / to.h : 1;
-                const dx = from.cx - to.cx;
-                const dy = from.cy - to.cy;
-                // Нечего двигать (перерисовка уже открытого оборота) — не мигаем.
-                if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(scale - 1) < 0.02) continue;
-                steps.push({
-                    el,
-                    fromOpacity,
-                    transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${scale.toFixed(3)})`,
-                });
-            }
-            for (const st of steps) {
-                st.el.style.transform = st.transform;
-                st.el.style.opacity = String(st.fromOpacity);
-            }
-            return steps;
-        }
-
-        // Вторая фаза: следующий кадр — снимаем инлайновые стили и тем же
-        // значением запускаем анимацию, поэтому картинка не дёргается.
-        function playTitle(steps) {
-            const timing = revealTiming();
-            return (steps || []).map((st) => {
-                st.el.style.transform = '';
-                st.el.style.opacity = '';
-                return st.el.animate([
-                    { transform: st.transform, opacity: st.fromOpacity },
-                    { transform: 'none', opacity: 1 },
-                ], timing);
-            });
-        }
-
         function renderBack() {
             const w = current.word;
             // Замеряем титульный ряд ДО перестройки — по этим числам поедет FLIP.
-            const titleBefore = els.back.classList.contains('back-side--visible') ? null : measureTitle();
+            // Открываем ли ответ впервые (а не перерисовываем уже открытый).
+            const opening = !els.back.classList.contains('back-side--visible');
             resetFitCache();        // оборот пересобирается — прошлый замер не про него
             // Кадр подготовки: оборот собирается спрятанным и без анимации.
-            if (titleBefore) cardArea().classList.add('is-arming');
+            if (opening) cardArea().classList.add('is-arming');
             els.back.innerHTML = '';
             els.back.classList.add('back-side--visible');
 
@@ -1905,14 +1818,12 @@
             // Кнопку-подсказку (ⓘ) убрали из интерфейса карточки — не показываем.
             if (els.hintBtn) els.hintBtn.classList.add('hidden');
 
-            // Последним делом — переезд слова и чтения на новые места. Именно
-            // здесь: раскладка оборота уже собрана и высоты посчитаны, значит
-            // конечные координаты титула окончательные.
-            // Ставим титул на старт переезда прямо сейчас — в кадре подготовки.
-            const steps = armTitle(titleBefore);
-            if (!titleBefore || !steps.length) {
-                // Перерисовка уже открытого оборота или reduced-motion: ждать
-                // нечего, снимаем подготовку и отпускаем очередь.
+            // Титул НЕ анимируем: слово просто встаёт на своё место ответа.
+            // Переезд из центра наверх пролетал прямо над кадром клипа и читался
+            // неопрятно — движение осталось только у самого ответа, который
+            // приезжает снизу одним блоком.
+            if (!opening) {
+                // Перерисовка уже открытого оборота — ждать нечего.
                 cardArea().classList.remove('is-arming');
                 flushReveal();
                 return;
@@ -1923,7 +1834,7 @@
             // после того, как подготовленный кадр показан.
             requestAnimationFrame(() => requestAnimationFrame(() => {
                 cardArea().classList.remove('is-arming');
-                openRevealWindow(playTitle(steps));
+                openRevealWindow();
             }));
         }
 
