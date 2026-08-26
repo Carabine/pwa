@@ -653,6 +653,29 @@
         // ========================================================================
         //  Rendering
         // ========================================================================
+        // Капсула счётчиков до загрузки данных. Пустой .study-stats схлопнут
+        // (правило :empty), поэтому при заходе в «Повторить всё» ряд «осталось /
+        // пройдено» возникал уже после ответа сервера и сдвигал карточку под
+        // собой. Заглушка собрана из ТЕХ ЖЕ классов и с настоящими подписями —
+        // высоту держит обычный strut, цифру подменяет .skel-bar, — так что
+        // появление настоящих чисел ничего не двигает.
+        function renderStatsSkeleton() {
+            if (!els.stats || els.stats.children.length) return;
+            const chip = (mod, label) =>
+                `<span class="stat stat--${mod}"><b><i class="skel skel-bar" style="width:16px"></i></b>` +
+                `<small>${escStat(label)}</small></span>`;
+            els.stats.innerHTML = scheduled
+                ? chip('new', t('study.new')) + chip('learn', t('study.learning')) + chip('due', t('study.review'))
+                : chip('learn', t('study.remaining')) + chip('new', t('study.doneCount'));
+        }
+
+        // Подписи приходят из i18n (не от пользователя), но в innerHTML идут —
+        // экранируем на всякий случай, как и везде в карточке.
+        function escStat(v) {
+            return String(v == null ? '' : v).replace(/[&<>"']/g, (c) =>
+                ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
         function renderStats() {
             if (!els.stats) return;
             const c = counts();
@@ -2077,6 +2100,9 @@
         }
 
         // ---- Bootstrap -----------------------------------------------------
+        // Место под капсулу счётчиков занимаем СРАЗУ, до похода в сеть.
+        renderStatsSkeleton();
+
         wireModal();
         wireSwipe();
         mountStudySettings();
