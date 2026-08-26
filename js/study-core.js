@@ -802,6 +802,18 @@
                 && studyPref('studySentenceRomaji') !== false) {
                 fetchSentenceTokens(current.word.sentence).catch(() => {});
             }
+            // И клип этой карточки — вне общей очереди докачки: пока человек
+            // думает над вопросом, он успевает лечь в IndexedDB, и к «Показать
+            // ответ» видео играет из браузера, а не тянется по сети.
+            if (typeof getClip === 'function' && typeof cacheMediaFromUrl === 'function') {
+                const w = current.word;
+                const clipSrc = videoSrcOf(w);
+                if (w.id && clipSrc && /^https?:\/\//.test(clipSrc)) {
+                    getClip(w.id).then((blob) => {
+                        if (!blob) cacheMediaFromUrl('clip', w.id, clipSrc);
+                    }).catch(() => {});
+                }
+            }
         }
 
         // Google Fonts отдаёт Noto Sans JP десятками subset'ов по диапазонам
@@ -1977,13 +1989,49 @@
             // Только серверные ссылки; уже закешированные пропускаются внутри.
             if (typeof cacheMediaFromUrl === 'function' && typeof getClip === 'function') {
                 const items = current ? [current, ...queue] : [...queue];
+                const targets = [];
                 for (const it of items) {
                     const w = it && it.word;
                     const src = w && videoSrcOf(w);
                     if (!w || !w.id || !src || !/^https?:\/\//.test(src)) continue;
-                    getClip(w.id).then((blob) => { if (!blob) cacheMediaFromUrl('clip', w.id, src); });
+                    targets.push({ id: w.id, src });
                 }
+                prefetchClips(targets);
             }
+        }
+
+        // Докачка идёт ПО ОЧЕРЕДИ и в порядке колоды, а не всем скопом. Раньше
+        // цикл дёргал докешивание сразу для всех карточек сессии: на входе в
+        // «Повторить всё» это 25 файлов и ~17 МБ одним залпом (замер
+        // _pp/clip-timing.js). На мобильном интернете клип ТЕКУЩЕЙ карточки
+        // стоял в этой же очереди и не мог пробиться — «видео грузится пару
+        // секунд». Теперь две дорожки, первая карточка в очереди первая, и
+        // старт с задержкой: сначала пусть догрузится сама страница.
+        let prefetchToken = 0;
+        function prefetchClips(targets) {
+            const my = ++prefetchToken;
+            if (!targets.length) return;
+            // «Экономия трафика» у пользователя — колоду вперёд не тянем,
+            // клипы приедут по одному, когда карточка откроется.
+            const conn = navigator.connection;
+            if (conn && conn.saveData) return;
+
+            const LANES = 2;
+            const HEAD_START = 900;   // мс форы текущей карточке и странице
+            let next = 0;
+            const lane = async () => {
+                while (next < targets.length && my === prefetchToken) {
+                    const item = targets[next++];
+                    try {
+                        const blob = await getClip(item.id);
+                        if (!blob) await cacheMediaFromUrl('clip', item.id, item.src);
+                    } catch { /* нет сети — докешируем в другой раз */ }
+                }
+            };
+            setTimeout(() => {
+                if (my !== prefetchToken) return;   // сессию уже перезапустили
+                for (let i = 0; i < LANES; i++) lane();
+            }, HEAD_START);
         }
 
         // ---- Keyboard shortcuts -------------------------------------------
