@@ -725,7 +725,14 @@
             return { again, good: formatDueHint(days) };
         }
 
+        function cardArea() {
+            return document.querySelector('.card-area') || els.back.parentElement || els.back;
+        }
+
         function renderFront() {
+            dropReveal();           // очередь прошлой карточки больше не нужна
+            resetFitCache();
+            cardArea().classList.remove('is-arming');
             els.back.innerHTML = '';
             els.back.classList.remove('back-side--visible');
             els.front.innerHTML = '';
@@ -761,6 +768,48 @@
             els.buttons.innerHTML = '';
             els.buttons.appendChild(makeButton(t('study.showAnswer'), 'show-btn', renderBack));
             // Кнопка «Уже знаю это слово» убрана по просьбе.
+
+            // Пока человек смотрит на вопрос — тихо подтягиваем японские
+            // начертания, которые понадобятся ОТВЕТУ (фраза, чтение).
+            warmJapaneseFont(current.word);
+        }
+
+        // Google Fonts отдаёт Noto Sans JP десятками subset'ов по диапазонам
+        // символов, и качает их ЛЕНИВО — в тот момент, когда на странице впервые
+        // появился нужный иероглиф. Для оборота это означало: жмёшь «Показать
+        // ответ», текст сперва рисуется подменным шрифтом, через сотни
+        // миллисекунд приезжает настоящий — и вся карточка переверстывается
+        // прямо посреди анимации. В трассе это один проход раскладки на 239мс
+        // (4x-медленный CPU) против 20мс на следующей карточке, у которой
+        // нужные subset'ы уже скачаны.
+        // Поэтому греем шрифт заранее, на ВОПРОСЕ: качается ровно то, что нужно
+        // строкам ответа, и к нажатию всё уже на месте.
+        const fontWarmed = new Set();
+        function warmJapaneseFont(w) {
+            if (!w || !document.fonts || typeof document.fonts.load !== 'function') return;
+            const text = [w.sentence, w.kana, w.word ?? w.kanji].filter(Boolean).join('');
+            if (!text || fontWarmed.has(text)) return;
+
+            // ВАЖНО: таблица Google Fonts подключена трюком media="print" +
+            // onload, поэтому в первые мгновения жизни страницы @font-face-ов
+            // ещё нет и load() честно возвращает НОЛЬ начертаний, ничего не
+            // качая. Поэтому отмечаем текст прогретым только при реальном
+            // успехе, а пустой ответ — повод попробовать ещё раз.
+            const attempt = (n) => {
+                let got = 0;
+                const jobs = ['400 15px "Noto Sans JP"', '500 22px "Noto Sans JP"'].map((font) => {
+                    try {
+                        return document.fonts.load(font, text)
+                            .then((faces) => { got += (faces || []).length; })
+                            .catch(() => {});
+                    } catch { return Promise.resolve(); }
+                });
+                Promise.all(jobs).then(() => {
+                    if (got) fontWarmed.add(text);
+                    else if (n < 3) setTimeout(() => attempt(n + 1), 400);
+                });
+            };
+            attempt(0);
         }
 
         function addLine(cls, text) {
@@ -973,6 +1022,20 @@
         // плавным transition (см. .back-media--reserved). Пол — 120px читаемости;
         // внутренний скролл оборота остаётся страховкой для крайности
         // «крохотный экран + очень длинный текст».
+        // Ключ входных данных подгонки. Пока он тот же, пересчитывать нечего:
+        // каждый пересчёт стоит нескольких ПРИНУДИТЕЛЬНЫХ раскладок (замер
+        // _pp/reveal-jank-local.js на 4x-медленном CPU: 296мс раскладки за 27
+        // проходов на одно раскрытие — больше, чем всё остальное вместе), а
+        // звали её на каждую доливку, часто с теми же числами: в логах подряд
+        // шли записи одного и того же height: 198px.
+        let lastFitKey = '';
+        function resetFitCache() { lastFitKey = ''; }
+
+        // Потолок клипа задан в CSS через clamp от вьюпорта — читаем его один
+        // раз на размер окна, а не на каждый вызов (чтение computed-стиля тут
+        // тоже форсирует пересчёт).
+        let ceilCache = { key: '', val: 340 };
+
         function fitBackMedia() {
             const back = els.back;
             if (!back.classList.contains('back-side--visible')) return;
@@ -987,6 +1050,18 @@
                 return;
             }
             const video = slot.querySelector('.clip-player video');
+
+            // Все чтения ключа — до единой записи, чтобы они уложились в одну
+            // раскладку.
+            const fitKey = [
+                slot.clientWidth,
+                back.clientHeight,
+                slot.children.length,
+                clipEl.className,
+                video ? video.videoWidth + 'x' + video.videoHeight : 'novideo',
+            ].join('|');
+            if (fitKey === lastFitKey) return;
+            lastFitKey = fitKey;
 
             // Стартовая точка анимации — фактически отрисованная высота слота.
             const wasReserved = slot.classList.contains('back-media--reserved');
@@ -1004,12 +1079,19 @@
                 if (child.offsetHeight > 0) extras += child.offsetHeight + 6;
             }
 
-            // Потолок из CSS (clamp зависит от вьюпорта): читаем computed без inline.
+            // Потолок из CSS (clamp зависит от вьюпорта): читаем computed без
+            // inline — но только когда размер окна сменился, иначе берём из кэша.
             let ceil = 340; // клип ещё едет — потолок как на ПК
             if (video) {
-                video.style.maxHeight = '';
-                const parsed = parseFloat(getComputedStyle(video).maxHeight);
-                if (Number.isFinite(parsed)) ceil = parsed;
+                const ceilKey = window.innerWidth + 'x' + window.innerHeight;
+                if (ceilCache.key === ceilKey) {
+                    ceil = ceilCache.val;
+                } else {
+                    video.style.maxHeight = '';
+                    const parsed = parseFloat(getComputedStyle(video).maxHeight);
+                    if (Number.isFinite(parsed)) ceil = parsed;
+                    ceilCache = { key: ceilKey, val: ceil };
+                }
             }
 
             // Проба «минимальный клип»: ставим слот на пол и смотрим, сколько
@@ -1298,6 +1380,128 @@
             return box;
         }
 
+        // ===== Тайминги раскрытия =====
+        function cssMs(cs, name, fallback) {
+            const raw = (cs.getPropertyValue(name) || '').trim();
+            const num = parseFloat(raw);
+            if (!Number.isFinite(num)) return fallback;
+            return /ms$/.test(raw) ? num : num * 1000;   // и «240ms», и «0.24s»
+        }
+
+        // Токены читаются РОВНО ОДИН раз за загрузку и кэшируются: getComputedStyle
+        // сразу после перестройки оборота — это форсированный пересчёт стиля всего
+        // документа, а он тут дорогой (карточка держится на :has()-селекторах).
+        // Профиль показывал 51мс в getPropertyValue ровно в кадре старта анимации.
+        let revealCache = null;
+        function revealTokens() {
+            if (revealCache) return revealCache;
+            const cs = getComputedStyle(document.documentElement);
+            const raw = (cs.getPropertyValue('--reveal-dur') || '').trim();
+            const duration = cssMs(cs, '--reveal-dur', 240);
+            const tokens = {
+                duration,
+                easing: (cs.getPropertyValue('--reveal-ease') || '').trim()
+                    || 'cubic-bezier(0.2, 0.7, 0.3, 1)',
+                total: Math.max(
+                    duration,
+                    cssMs(cs, '--reveal-body-delay', 0) + cssMs(cs, '--reveal-body-dur', 240),
+                ),
+            };
+            // Стили ещё не доехали — отдаём умолчания, но НЕ кэшируем.
+            if (raw) revealCache = tokens;
+            return tokens;
+        }
+
+        // Прогреваем кэш заранее, пока никакая анимация не идёт.
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => revealTokens(), { once: true });
+        } else {
+            revealTokens();
+        }
+
+        function revealTiming() {
+            const { duration, easing } = revealTokens();
+            return { duration, easing };
+        }
+
+        // Сколько всего длится раскрытие: дольше из двух — переезд титула и
+        // приезд оборота (у него бывает задержка старта).
+        function revealTotalMs() {
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 0;
+            return revealTokens().total;
+        }
+
+        // ===== Окно раскрытия =====
+        // Пока едет анимация ответа, оборот НЕЛЬЗЯ достраивать: вставка клипа,
+        // замена фразы ромадзи-ячейками и каждый вызов fitBackMedia — это
+        // принудительный пересчёт раскладки внутри поддерева, которое прямо
+        // сейчас анимируется. Замер (_pp/reveal-jank.js) ловил именно это:
+        // клип влетал на 73мс, стили слота переписывались на 117мс, ячейки — на
+        // 163мс, и в анимации терялись кадры (пропуски 32мс и 48мс) — «рвано».
+        // Теперь всё, что приходит асинхронно, ждёт конца анимации: место под
+        // клип уже зарезервировано, так что ожидание ничего не двигает.
+        let revealOpen = false;
+        let revealTimer = 0;
+        let revealQueue = [];
+
+        function flushReveal() {
+            revealOpen = false;
+            clearTimeout(revealTimer);
+            const queued = revealQueue;
+            revealQueue = [];
+            for (const fn of queued) {
+                try { fn(); } catch (e) { console.error(e); }
+            }
+        }
+
+        // Ушли с карточки — накопленное выбрасываем, а не доигрываем: рисовать
+        // клип прошлого слова в уже очищенный оборот незачем.
+        function dropReveal() {
+            revealOpen = false;
+            clearTimeout(revealTimer);
+            revealQueue = [];
+        }
+
+        // Отложить достройку оборота до конца анимации. Проверки актуальности
+        // карточки живут внутри самих колбэков и сработают уже при запуске —
+        // ушедшая карточка ничего не дорисует.
+        function afterReveal(fn) {
+            if (!revealOpen) { fn(); return; }
+            revealQueue.push(fn);
+        }
+
+        // Окно закрывается по КОНЦУ САМИХ анимаций, а не по таймеру от сборки
+        // оборота. Разница принципиальная: сборка ответа — тяжёлый кадр (на
+        // небыстром телефоне это сотни миллисекунд), а анимации стартуют только
+        // после него. Таймер от сборки успевал истечь уже посреди движения, и
+        // отложенная доливка била ровно туда, откуда её убирали.
+        function openRevealWindow(anims) {
+            revealQueue = [];
+            const total = revealTotalMs();
+            if (!total) { revealOpen = false; return; }
+            revealOpen = true;
+            clearTimeout(revealTimer);
+
+            const waits = [];
+            for (const a of anims || []) {
+                if (a && a.finished) waits.push(a.finished.catch(() => {}));
+            }
+            // Оборот анимируется через CSS — его конец ловим событием.
+            waits.push(new Promise((resolve) => {
+                const onEnd = (e) => {
+                    if (e.target !== els.back) return;      // не ловим чужие анимации
+                    els.back.removeEventListener('animationend', onEnd);
+                    resolve();
+                };
+                els.back.addEventListener('animationend', onEnd);
+            }));
+            Promise.all(waits).then(() => { if (revealOpen) flushReveal(); });
+
+            // Страховка: вкладка в фоне, анимации отключены системой и т.п. —
+            // ждать вечно нельзя, иначе клип не появится вовсе.
+            revealTimer = setTimeout(flushReveal, total + 800);
+        }
+
         // ===== Переезд титульного ряда «вопрос → ответ» =====
         // Слово и его чтение есть на ОБЕИХ сторонах карточки, просто в разных
         // местах и размерах: слово из центра уезжает под самый верх и мельчает
@@ -1311,11 +1515,11 @@
             if (!el) return null;
             const b = el.getBoundingClientRect();
             if (!b.width && !b.height) return null;
-            return {
-                cx: b.left + b.width / 2,
-                cy: b.top + b.height / 2,
-                fs: parseFloat(getComputedStyle(el).fontSize) || 0,
-            };
+            // Только rect: getComputedStyle здесь — ещё один форсированный
+            // пересчёт стиля на :has()-раскладке, а масштаб и так виден по
+            // высоте. line-height у титула и фуриганы безразмерный, поэтому
+            // отношение высот равно отношению кеглей (36/22 = 41.4/25.3).
+            return { cx: b.left + b.width / 2, cy: b.top + b.height / 2, h: b.height };
         }
 
         function measureTitle() {
@@ -1325,52 +1529,68 @@
             };
         }
 
-        // Длительность и кривая переезда — из тех же CSS-токенов, по которым
-        // живёт приезд оборота (--reveal-* в study.css). Иначе половинки жеста
-        // разъезжаются: правишь CSS, а слово продолжает ехать по старому.
-        function revealTiming() {
-            const cs = getComputedStyle(document.documentElement);
-            const raw = (cs.getPropertyValue('--reveal-dur') || '').trim();
-            const num = parseFloat(raw);
-            const dur = Number.isFinite(num)
-                ? (/ms$/.test(raw) ? num : num * 1000)   // и «260ms», и «0.26s»
-                : 260;
-            const ease = (cs.getPropertyValue('--reveal-ease') || '').trim()
-                || 'cubic-bezier(0.2, 0.7, 0.3, 1)';
-            return { duration: dur, easing: ease };
-        }
-
-        function morphTitle(before) {
-            if (!before) return;
-            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-            const timing = revealTiming();
+        // Первая фаза переезда: считаем дельты и СРАЗУ ставим слово с чтением в
+        // стартовое положение инлайновым transform. Делается в том же кадре, что
+        // и сборка ответа, — тогда «кадр подготовки» выглядит ровно как первый
+        // кадр анимации, и никакого скачка при её запуске нет.
+        function armTitle(before) {
+            if (!before) return [];
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return [];
             const pairs = [
                 [before.word, els.front.querySelector('.word'), 1],
                 // Чтение меняет и место, и роль (подпись → фуригана), поэтому
                 // едет с лёгким проявлением: чистый переезд на таком масштабе
-                // (17→13px) читался бы как рывок.
+                // читался бы как рывок.
                 [before.reading, els.front.querySelector('.word-furigana'), 0.45],
             ];
+
+            // ВАЖНО: сначала меряем всё, потом пишем. Вперемешку каждый
+            // следующий getBoundingClientRect шёл бы уже по «грязной» раскладке
+            // и форсировал полный пересчёт: профиль показывал 59мс против 6мс.
+            const steps = [];
             for (const [from, el, fromOpacity] of pairs) {
                 if (!from || !el || typeof el.animate !== 'function') continue;
                 const to = titleBox(el);
                 if (!to) continue;
-                const scale = from.fs && to.fs ? from.fs / to.fs : 1;
+                const scale = from.h && to.h ? from.h / to.h : 1;
                 const dx = from.cx - to.cx;
                 const dy = from.cy - to.cy;
                 // Нечего двигать (перерисовка уже открытого оборота) — не мигаем.
                 if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(scale - 1) < 0.02) continue;
-                el.animate([
-                    { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${scale.toFixed(3)})`, opacity: fromOpacity },
+                steps.push({
+                    el,
+                    fromOpacity,
+                    transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${scale.toFixed(3)})`,
+                });
+            }
+            for (const st of steps) {
+                st.el.style.transform = st.transform;
+                st.el.style.opacity = String(st.fromOpacity);
+            }
+            return steps;
+        }
+
+        // Вторая фаза: следующий кадр — снимаем инлайновые стили и тем же
+        // значением запускаем анимацию, поэтому картинка не дёргается.
+        function playTitle(steps) {
+            const timing = revealTiming();
+            return (steps || []).map((st) => {
+                st.el.style.transform = '';
+                st.el.style.opacity = '';
+                return st.el.animate([
+                    { transform: st.transform, opacity: st.fromOpacity },
                     { transform: 'none', opacity: 1 },
                 ], timing);
-            }
+            });
         }
 
         function renderBack() {
             const w = current.word;
             // Замеряем титульный ряд ДО перестройки — по этим числам поедет FLIP.
             const titleBefore = els.back.classList.contains('back-side--visible') ? null : measureTitle();
+            resetFitCache();        // оборот пересобирается — прошлый замер не про него
+            // Кадр подготовки: оборот собирается спрятанным и без анимации.
+            if (titleBefore) cardArea().classList.add('is-arming');
             els.back.innerHTML = '';
             els.back.classList.add('back-side--visible');
 
@@ -1394,14 +1614,14 @@
                 // Серверный клип: сначала офлайн-копия из IndexedDB (работает без
                 // сети), нет копии — играем с сервера и фоном докешируем.
                 const wid = w.id;
-                getClip(wid).then((blob) => {
+                getClip(wid).then((blob) => afterReveal(() => {
                     if (!current || current.word.id !== wid) return;
                     if (!els.back.classList.contains('back-side--visible')) return;
                     const playUrl = blob ? URL.createObjectURL(blob) : src;
                     mediaSlot.insertBefore(makeClipVideo(playUrl, w), mediaSlot.firstChild);
                     fitBackMedia();
                     if (!blob && typeof cacheMediaFromUrl === 'function') cacheMediaFromUrl('clip', wid, src);
-                });
+                }));
             } else if (src) {
                 mediaSlot.appendChild(makeClipVideo(src, w));
             } else if (w.noClip) {
@@ -1416,7 +1636,7 @@
                     pending = makeClipPending(isGuest ? 'clip.loading' : 'clip.preparing');
                     mediaSlot.appendChild(pending);
                 }
-                getClipUrl(wid).then((url) => {
+                getClipUrl(wid).then((url) => afterReveal(() => {
                     if (!current || current.word.id !== wid) return;
                     if (!els.back.classList.contains('back-side--visible')) return;
                     if (url) {
@@ -1432,7 +1652,7 @@
                         pending.replaceWith(makeClipPending('clip.unavailable', false));
                     }
                     // Вошедший: клипа ещё нет в IndexedDB — оставляем «готовится».
-                });
+                }));
             }
 
             // Свой звук карточки (добавляется в словаре): у вошедшего — с сервера
@@ -1442,7 +1662,7 @@
                 const audioUrlP = typeof getWordAudioUrl === 'function'
                     ? getWordAudioUrl(w)
                     : Promise.resolve(w.audio || '');
-                audioUrlP.then((url) => {
+                audioUrlP.then((url) => afterReveal(() => {
                     if (!url || !current || current.word.id !== wid) return;
                     if (!els.back.classList.contains('back-side--visible')) return;
                     const audio = document.createElement('audio');
@@ -1458,7 +1678,7 @@
                     // в том же кадре, чтобы оборот не переполнился на кадр и видео
                     // не «дёрнулось» под появившийся плеер звука.
                     fitBackMedia();
-                });
+                }));
             }
 
             // «Источник» — титр сразу под кадром (подпись к сцене, из которой
@@ -1523,7 +1743,7 @@
                     // ~200мс и fitBackMedia ужимал уже показанный клип — «видео
                     // скачет» на каждой карточке (ромадзи — режим по умолчанию).
                     jpLine.classList.add('sentence__jp--cells-reserve');
-                    fetchSentenceTokens(w.sentence).then((tokens) => {
+                    fetchSentenceTokens(w.sentence).then((tokens) => afterReveal(() => {
                         if (!tokens.length || !current || current.word.id !== wid) return;
                         if (!els.back.classList.contains('back-side--visible')) return;
                         // заменяем только японскую строку — перевод и искорка ИИ
@@ -1534,7 +1754,7 @@
                         // Ромадзи-ячейки выше плоской строки — перемеряем оборот
                         // синхронно, чтобы клип ужался в том же кадре, без скачка.
                         fitBackMedia();
-                    });
+                    }));
                 }
 
                 if (studyAiAvailable) {
@@ -1624,7 +1844,23 @@
             // Последним делом — переезд слова и чтения на новые места. Именно
             // здесь: раскладка оборота уже собрана и высоты посчитаны, значит
             // конечные координаты титула окончательные.
-            morphTitle(titleBefore);
+            // Ставим титул на старт переезда прямо сейчас — в кадре подготовки.
+            const steps = armTitle(titleBefore);
+            if (!titleBefore || !steps.length) {
+                // Перерисовка уже открытого оборота или reduced-motion: ждать
+                // нечего, снимаем подготовку и отпускаем очередь.
+                cardArea().classList.remove('is-arming');
+                flushReveal();
+                return;
+            }
+            // Двойной rAF: первый колбэк выполняется ещё ДО отрисовки кадра
+            // подготовки, и анимация, запущенная в нём, отсчитывалась бы от
+            // прошлого кадра — ровно та беда, от которой уходим. Второй уже
+            // после того, как подготовленный кадр показан.
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                cardArea().classList.remove('is-arming');
+                openRevealWindow(playTitle(steps));
+            }));
         }
 
         // Коллекция пустая — предлагаем готовую колоду, а не тупик
