@@ -256,6 +256,40 @@
     flex-shrink: 0;
 }
 
+/* ===== Тайминги открытия ответа =====
+   Раскрытие — ОДИН жест из двух частей: слово (и чтение) переезжает на новое
+   место трансформом, оборот приезжает следом. Обе части обязаны жить по одной
+   кривой и заканчиваться вместе, иначе получается то, что было: слово плавно
+   ползёт ещё 150мс после того, как ответ уже полностью проявился, — «слово
+   плавно, остальное резко».
+   Оборот стартует чуть позже и идёт короче: слово ведёт, ответ догоняет, финиш
+   общий (60 + 200 = 260). Числа читает и JS (morphTitle в study-core.js), так
+   что источник один. Варианты ?rv=b|c — чтобы сравнить темп вживую. */
+:root {
+    --reveal-dur: 260ms;                              /* переезд слова */
+    --reveal-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+    --reveal-body-dur: 200ms;                         /* приезд оборота */
+    --reveal-body-delay: 60ms;
+    --reveal-body-rise: 8px;
+}
+
+/* B — «короче и жёстче»: тот же жест, но без долгого хвоста у кривой. */
+:root.rv-b {
+    --reveal-dur: 200ms;
+    --reveal-ease: cubic-bezier(0.32, 0.9, 0.4, 1);
+    --reveal-body-dur: 160ms;
+    --reveal-body-delay: 40ms;
+    --reveal-body-rise: 6px;
+}
+
+/* C — «всё разом»: оборот трогается одновременно со словом, подъём заметнее. */
+:root.rv-c {
+    --reveal-dur: 240ms;
+    --reveal-body-dur: 240ms;
+    --reveal-body-delay: 0ms;
+    --reveal-body-rise: 12px;
+}
+
 /* Разделитель вопроса и ответа: нейтральная линия, тающая к краям.
    Рисует её ::after, а не border-image: линию нужно ПРОЯВИТЬ вместе с ответом
    (border-image не анимируется), иначе на открытии она возникала хлопком.
@@ -280,7 +314,7 @@
     height: 1px;
     background: linear-gradient(90deg,
         transparent, var(--border) 22%, var(--border) 78%, transparent);
-    animation: back-in 0.22s ease-out 0.04s backwards;
+    animation: back-in var(--reveal-body-dur) var(--reveal-ease) var(--reveal-body-delay) backwards;
 }
 
 .back-side {
@@ -308,10 +342,12 @@
     overflow-x: hidden;
     overscroll-behavior: contain;
     scrollbar-width: none;
-    /* Оборот целиком — новое содержимое, его просто проявляем. Небольшая
-       задержка даёт титулу тронуться первым: сначала слово поехало, следом
-       проступил ответ — вместо одновременной вспышки всего сразу. */
-    animation: back-in 0.22s ease-out 0.04s backwards;
+    /* Оборот целиком — новое содержимое. Не просто проявляем, а подводим тем
+       же движением вверх, что и слово: голый фейд рядом с едущим титулом
+       читался как «остальное показалось резко», сколько его ни удлиняй.
+       Каскада по строкам НЕТ (его убирали как суетливый) — оборот приезжает
+       одним блоком. */
+    animation: back-rise var(--reveal-body-dur) var(--reveal-ease) var(--reveal-body-delay) backwards;
 }
 .back-side--visible::-webkit-scrollbar { display: none; }
 
@@ -321,14 +357,15 @@
 }
 
 @keyframes back-in { from { opacity: 0; } }
+@keyframes back-rise { from { opacity: 0; transform: translateY(var(--reveal-body-rise)); } }
 @keyframes rise-in { from { opacity: 0; transform: translateY(10px); } }
 
 /* Кнопки под карточкой всплывают лёгким каскадом при каждой смене состава
    («Показать ответ» → оценки и обратно на новой карточке). */
 .main.study .buttons > button {
-    animation: rise-in 0.26s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+    animation: rise-in var(--reveal-dur) var(--reveal-ease) backwards;
 }
-.main.study .buttons > button:nth-child(2) { animation-delay: 0.06s; }
+.main.study .buttons > button:nth-child(2) { animation-delay: var(--reveal-body-delay); }
 
 @media (prefers-reduced-motion: reduce) {
     .word,

@@ -28,6 +28,14 @@
     const SCHEDULE_KEY = 'srs:schedule:v2';
     const DAYS_KEY = 'srs:days';       // days the user actually studied (for the streak)
 
+    // ?rv=b|c — примерить другой темп раскрытия ответа прямо в бою (как ?hub=
+    // у главной). Сами числа живут в --reveal-* (css/app/study.css), здесь
+    // только переключатель.
+    try {
+        const rv = new URLSearchParams(window.location.search).get('rv');
+        if (rv === 'b' || rv === 'c') document.documentElement.classList.add('rv-' + rv);
+    } catch { /* без URLSearchParams остаёмся на базовом темпе */ }
+
     // ---- ИИ-разбор предложения на обороте карточки -------------------------
     let studyAiAvailable = false;
     const studyExplainCache = new Map();   // разбор по тексту предложения — на сессию
@@ -1317,9 +1325,25 @@
             };
         }
 
+        // Длительность и кривая переезда — из тех же CSS-токенов, по которым
+        // живёт приезд оборота (--reveal-* в study.css). Иначе половинки жеста
+        // разъезжаются: правишь CSS, а слово продолжает ехать по старому.
+        function revealTiming() {
+            const cs = getComputedStyle(document.documentElement);
+            const raw = (cs.getPropertyValue('--reveal-dur') || '').trim();
+            const num = parseFloat(raw);
+            const dur = Number.isFinite(num)
+                ? (/ms$/.test(raw) ? num : num * 1000)   // и «260ms», и «0.26s»
+                : 260;
+            const ease = (cs.getPropertyValue('--reveal-ease') || '').trim()
+                || 'cubic-bezier(0.2, 0.7, 0.3, 1)';
+            return { duration: dur, easing: ease };
+        }
+
         function morphTitle(before) {
             if (!before) return;
             if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const timing = revealTiming();
             const pairs = [
                 [before.word, els.front.querySelector('.word'), 1],
                 // Чтение меняет и место, и роль (подпись → фуригана), поэтому
@@ -1339,7 +1363,7 @@
                 el.animate([
                     { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${scale.toFixed(3)})`, opacity: fromOpacity },
                     { transform: 'none', opacity: 1 },
-                ], { duration: 260, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)' });
+                ], timing);
             }
         }
 
