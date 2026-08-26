@@ -468,16 +468,19 @@
     margin: 0;
 }
 
-/* Скелетон клипа — держит место видео с первого кадра ответа, чтобы блок
-   видео проявлялся ВМЕСТЕ с текстом, а не подъезжал отдельно, когда клип
-   доехал. Геометрия та же, что у настоящего бокса: высота от слота, ширина
-   выведена из 16:9, — поэтому подмена скелетона на видео ничего не двигает.
-   Блик даёт общий класс .skel (css/app/motion.css). */
+/* Лоадер клипа — держит место видео с первого кадра ответа, чтобы блок видео
+   проявлялся ВМЕСТЕ с текстом, а не подъезжал отдельно. Геометрия та же, что у
+   настоящего кадра: высота от слота, ширина выведена из 16:9, — поэтому подмена
+   лоадера на видео ничего не двигает.
+   Вид по умолчанию — спиннер в спокойном кадре: он однозначно читается как
+   ожидание и совпадает со спиннером в статусе «видео готовится». Варианты
+   ?clip=1|2 — примерить другое (1 — бегущая полоса в дышащем кадре,
+   2 — прежний блик со стрелкой). */
 .card-area .clip-skel {
     /* Потолок ТОТ ЖЕ, что у настоящего кадра (.clip-player video ниже):
-       fitBackMedia меряет скелетон как видео и задаёт ему ту же высоту, а
-       ширину выводит 16:9. Иначе скелетон вставал в свой размер, и подмена на
-       видео перекраивала блок. */
+       fitBackMedia меряет лоадер как видео и задаёт ему ту же высоту, а ширину
+       выводит 16:9. Иначе лоадер вставал в свой размер, и подмена на видео
+       перекраивала блок. */
     max-height: clamp(160px, calc(100svh - 470px), 48svh);
     aspect-ratio: 16 / 9;
     width: auto;
@@ -485,19 +488,85 @@
     flex: 0 0 auto;
     min-height: 0;
     margin: 0 auto;
+    position: relative;
+    overflow: hidden;
     border-radius: 12px;
     box-shadow: 0 0 0 1px var(--border);
+    background: color-mix(in srgb, var(--text) 6%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* Иконка воспроизведения — намёк, что здесь будет видео. Цвет задаём явно:
-   у .skel текст прозрачный, а иконка рисуется currentColor. */
-.card-area .clip-skel__icon {
-    display: flex;
+.card-area .clip-skel__spinner {
+    width: 22px;
+    height: 22px;
+    border: 2px solid color-mix(in srgb, var(--text) 18%, transparent);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: clip-spin 0.7s linear infinite;
+}
+
+/* Бегущая полоса и «дыхание» кадра — детали варианта 1, по умолчанию молчат. */
+.card-area .clip-skel__bar { display: none; }
+
+@keyframes clip-breathe {
+    0%, 100% { background-color: color-mix(in srgb, var(--text) 5%, transparent); }
+    50% { background-color: color-mix(in srgb, var(--text) 9%, transparent); }
+}
+
+@keyframes clip-bar {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(363%); }
+}
+
+/* --- Варианты на выбор ------------------------------------------------- */
+/* 1 — тихий кадр: спиннера нет, снизу бежит тонкая полоса, фон мягко дышит. */
+:root.clip-load-1 .card-area .clip-skel {
+    animation: clip-breathe 1.8s var(--ease-in-out, ease-in-out) infinite;
+}
+:root.clip-load-1 .card-area .clip-skel__spinner { display: none; }
+:root.clip-load-1 .card-area .clip-skel__bar {
+    display: block;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 38%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    animation: clip-bar 1.25s var(--ease-in-out, ease-in-out) infinite;
+}
+
+/* 2 — прежний вид: общий блик приложения и стрелка воспроизведения. */
+:root.clip-load-2 .card-area .clip-skel {
+    background: rgba(255, 255, 255, 0.055);
+}
+:root.clip-load-2 .card-area .clip-skel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.055), transparent);
+    animation: skel-sweep 1.35s var(--ease-in-out, ease-in-out) infinite;
+}
+:root.clip-load-2 .card-area .clip-skel__spinner {
+    border: 0;
+    width: 26px;
+    height: 26px;
+    background: currentColor;
     color: var(--text-dim, var(--text-muted));
     opacity: 0.5;
+    border-radius: 0;
+    animation: none;
+    -webkit-mask: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card-area .clip-skel,
+    .card-area .clip-skel__bar,
+    .card-area .clip-skel__spinner { animation: none; }
 }
 
 /* Статус «видео готовится» внутри скелетона: у .skel текст прозрачный, поэтому
@@ -509,6 +578,16 @@
 
 .card-area .clip-skel .clip-spinner {
     margin-right: 8px;
+}
+
+/* Со статусом внутри лоадер перестаёт быть «просто ожиданием файла»: полоса и
+   дышащий фон уступают место понятной строке. */
+.card-area .clip-skel:has(.clip-skel__text) {
+    animation: none;
+}
+
+.card-area .clip-skel:has(.clip-skel__text) .clip-skel__bar {
+    display: none;
 }
 
 /* Видео сменяет скелетон коротким проявлением — без него подмена читается как

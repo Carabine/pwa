@@ -32,8 +32,12 @@
     // у главной). Сами числа живут в --reveal-* (css/app/study.css), здесь
     // только переключатель.
     try {
-        const rv = new URLSearchParams(window.location.search).get('rv');
+        const params = new URLSearchParams(window.location.search);
+        const rv = params.get('rv');
         if (rv === 'a' || rv === 'b') document.documentElement.classList.add('rv-' + rv);
+        // ?clip=1|2 — примерить другой лоадер видео в карточке.
+        const cl = params.get('clip');
+        if (cl === '1' || cl === '2') document.documentElement.classList.add('clip-load-' + cl);
     } catch { /* без URLSearchParams остаёмся на базовом темпе */ }
 
     // ---- ИИ-разбор предложения на обороте карточки -------------------------
@@ -1436,12 +1440,17 @@
         // бокса (16:9, высота от слота), так что подмена не двигает раскладку.
         function makeClipSkeleton() {
             const box = document.createElement('div');
-            box.className = 'clip-skel skel';
+            box.className = 'clip-skel';
             box.setAttribute('aria-hidden', 'true');
-            const icon = document.createElement('span');
-            icon.className = 'clip-skel__icon';
-            icon.innerHTML = '<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-            box.appendChild(icon);
+            // Внутри лежат детали всех вариантов лоадера, а показывает нужные
+            // CSS (см. .clip-skel в study.css): так вид переключается одним
+            // классом на <html> и не тянет за собой ветвления в JS.
+            const spinner = document.createElement('span');
+            spinner.className = 'clip-skel__spinner';
+            const bar = document.createElement('span');
+            bar.className = 'clip-skel__bar';
+            box.appendChild(spinner);
+            box.appendChild(bar);
             return box;
         }
 
