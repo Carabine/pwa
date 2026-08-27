@@ -201,9 +201,12 @@
 
     // indicator — элемент, показывающий «идёт загрузка» (искорка у предложения).
     // Может не иметь .btn-label — тогда просто крутим CSS-класс is-loading.
-    async function studyRunExplain(sentence, indicator) {
+    // word — слово карточки: от него зависит блок «как запомнить» (у карточки
+    // на чистой кане его нет — и мнемоники тоже не будет).
+    async function studyRunExplain(sentence, indicator, word) {
         const modal = getExplainModal();
-        const cached = studyExplainCache.get(sentence);
+        const key = (word || '') + '|' + sentence;
+        const cached = studyExplainCache.get(key);
         if (cached) { studyRenderExplain(modal.body, cached); modal.open(); return; }
         if (indicator && indicator._busy) return;
         if (indicator) { indicator._busy = true; indicator.classList.add('is-loading'); }
@@ -211,9 +214,11 @@
         let savedLabel;
         if (labelEl) { savedLabel = labelEl.textContent; labelEl.textContent = t('words.explaining'); }
         try {
-            const { data: res } = await client.get('explain', { params: { sentence }, timeout: 60000 });
+            const params = { sentence };
+            if (word) params.word = word;
+            const { data: res } = await client.get('explain', { params, timeout: 60000 });
             const data = res.data.explanation;
-            studyExplainCache.set(sentence, data);
+            studyExplainCache.set(key, data);
             studyRenderExplain(modal.body, data);
             modal.open();
         } catch (err) {
@@ -1878,7 +1883,7 @@
                     spark.innerHTML = AI_ICON;
                     spark.appendChild(sparkLabel);
                     sentenceLine.appendChild(spark);
-                    sentenceLine.addEventListener('click', () => studyRunExplain(w.sentence, spark));
+                    sentenceLine.addEventListener('click', () => studyRunExplain(w.sentence, spark, w.word ?? w.kanji));
                 }
             }
 

@@ -2829,15 +2829,17 @@ function renderExplain(data) {
 
 // Получить разбор реплики (из кеша или с сервера). Общий для кнопки в словарной
 // карточке и для иконки ИИ у реплики.
-async function fetchExplain(cue) {
-    const cached = explainCache.get(cue.text);
+// word — слово, ради которого открыли разбор: от него зависит блок «как
+// запомнить» (у иконки реплики слова нет, разбираем всю реплику).
+async function fetchExplain(cue, word) {
+    const key = (word || '') + '|' + cue.text;
+    const cached = explainCache.get(key);
     if (cached) return cached;
-    const { data: res } = await client.get('explain', {
-        params: { sentence: cue.text, context: cueContext(cue) },
-        timeout: 60000,
-    });
+    const params = { sentence: cue.text, context: cueContext(cue) };
+    if (word) params.word = word;
+    const { data: res } = await client.get('explain', { params, timeout: 60000 });
     const data = res.data.explanation;
-    explainCache.set(cue.text, data);
+    explainCache.set(key, data);
     return data;
 }
 
@@ -2856,7 +2858,7 @@ popupExplainBtn.addEventListener('click', async () => {
     if (window.animeiTrack) window.animeiTrack('explain', 'player');
 
     try {
-        const data = await fetchExplain(ctx.cue);
+        const data = await fetchExplain(ctx.cue, ctx.tok?.base || ctx.tok?.surface);
         // Пока ждали ответ, могли открыть другое слово той же реплики — это ок,
         // разбор относится к реплике, а не к слову
         if (!popup.hidden && state.popupContext?.cue.text === sentence) {
