@@ -518,6 +518,32 @@
     padding: 2px 6px;
 }
 
+/* ---- Выбор формата экспорта в Anki ---- */
+.anki-export { display: grid; gap: 10px; margin-bottom: 14px; }
+.anki-export__opt {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    cursor: pointer;
+}
+.anki-export__opt:disabled { opacity: 0.5; cursor: default; }
+@media (hover: hover) and (pointer: fine) {
+    .anki-export__opt:hover:not(:disabled) { border-color: var(--primary); }
+}
+.anki-export__name { display: block; font-size: 15px; font-weight: 600; }
+.anki-export__hint {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
 /* ---- Модалки известных слов (импорт и просмотр) ---- */
 .known-modal { max-width: 520px; }
 .known-modal__hint {

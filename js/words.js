@@ -561,6 +561,13 @@ function renderMenuChoices() {
     }
 }
 
+// Закрыть меню «⋯» снаружи. Пункт, который открывает модалку, ОБЯЗАН вызвать
+// это сам и тут же открыть слой — в одном обработчике. Иначе меню закроется
+// позже (на всплытии), и AnimeiBack.close снесёт всё, что над ним, вместе с
+// новой модалкой; а закрыть меню раньше нельзя — между обработчиками браузер
+// прогоняет микрозадачи, и отложенный history.go() уводит history из-под слоя.
+let closeWordsMenu = () => {};
+
 function initMenu() {
     const btn = document.getElementById('words-menu-btn');
     const menu = document.getElementById('words-menu');
@@ -583,6 +590,7 @@ function initMenu() {
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
     menu.addEventListener('click', () => closeMenu());
+    closeWordsMenu = closeMenu;
 }
 
 // ---------- Известные слова: импорт и просмотр ----------
@@ -614,6 +622,7 @@ function openModal(buildBody) {
 
 function openKnownImport() {
     if (!window.KnownWords) return;
+    closeWordsMenu();
     openModal((box, close) => {
         box.innerHTML = `
             <div class="deck-editor__title">${esc(t('known.import'))}</div>
@@ -808,6 +817,7 @@ async function knownToDeck(words, progress) {
 
 function openKnownManager() {
     if (!window.KnownWords) return;
+    closeWordsMenu();
     openModal((box, close) => {
         box.innerHTML = `
             <div class="deck-editor__title">${esc(t('known.title'))} <span class="dictionary__count" id="known-total"></span></div>
@@ -904,10 +914,11 @@ function openKnownManager() {
 }
 
 // ---------- Экспорт в Anki (.apkg) ----------
-// Полноценная колода: карточки с теми же полями, что у нас, но вместо видео —
-// аудио, которое сервер вырезает из клипа по окну trimStart..trimEnd. Гостевые
-// клипы и локальный звук карточек лежат в браузере (IndexedDB) — прикладываем
-// их к запросу файлами "<id>.clip.mp4" / "<id>.custom.<ext>".
+// Полноценная колода: карточки с теми же полями, что у нас. Медиа сервер режет
+// из клипа по окну trimStart..trimEnd — либо звук (лёгкая колода), либо сам
+// видеофрагмент (Anki умеет видео тем же тегом [sound:...]). Гостевые клипы и
+// локальный звук карточек лежат в браузере (IndexedDB) — прикладываем их к
+// запросу файлами "<id>.clip.mp4" / "<id>.custom.<ext>".
 
 function audioBlobExt(blob) {
     const t = String(blob?.type || '').toLowerCase();
@@ -918,17 +929,52 @@ function audioBlobExt(blob) {
     return 'webm';
 }
 
-async function exportAnki() {
-    const btn = document.getElementById('export-anki-btn');
+// Выбор формата колоды. Видео тяжелее в разы и собирается дольше — поэтому
+// спрашиваем, а не решаем за пользователя; по умолчанию звук.
+function openAnkiExport() {
+    closeWordsMenu();
+    openModal((box, close) => {
+        box.innerHTML = `
+            <div class="deck-editor__title">${esc(t('words.exportAnki'))}</div>
+            <div class="anki-export">
+                <button class="anki-export__opt" id="anki-audio">
+                    <span class="anki-export__name">${esc(t('words.exportAnki.audio'))}</span>
+                    <span class="anki-export__hint">${esc(t('words.exportAnki.audioHint'))}</span>
+                </button>
+                <button class="anki-export__opt" id="anki-video">
+                    <span class="anki-export__name">${esc(t('words.exportAnki.video'))}</span>
+                    <span class="anki-export__hint">${esc(t('words.exportAnki.videoHint'))}</span>
+                </button>
+            </div>
+            <p class="known-modal__hint" id="anki-status" hidden></p>
+            <div class="deck-editor__actions">
+                <button class="btn btn--ghost" id="anki-cancel">${esc(t('words.cancel'))}</button>
+            </div>
+        `;
+        const statusEl = box.querySelector('#anki-status');
+        const run = async (withVideo) => {
+            box.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+            statusEl.hidden = false;
+            statusEl.textContent = withVideo ? t('words.exportAnki.busyVideo') : t('words.exportAnki.busy');
+            const ok = await exportAnki(withVideo);
+            close();
+            showSnackbar(ok ? t('words.exportAnki.done') : t('words.exportAnki.fail'),
+                { duration: 4000, type: ok ? 'info' : 'error' });
+        };
+        box.querySelector('#anki-audio').addEventListener('click', () => run(false));
+        box.querySelector('#anki-video').addEventListener('click', () => run(true));
+        box.querySelector('#anki-cancel').addEventListener('click', close);
+    });
+}
+
+// Собирает и скачивает .apkg. true — колода ушла в загрузки.
+async function exportAnki(withVideo) {
     const words = await fetchWords();
     if (!words.length) {
         showSnackbar(t('words.empty'), { duration: 3000 });
-        return;
+        return false;
     }
 
-    btn.disabled = true;
-    const oldText = btn.textContent;
-    btn.textContent = t('words.exportAnki.busy');
     try {
         const fd = new FormData();
         const payload = [];
@@ -953,24 +999,22 @@ async function exportAnki() {
             }
         }
         fd.append('words', JSON.stringify(payload));
+        if (withVideo) fd.append('video', '1');
 
-        // Сервер режет ffmpeg-ом аудио на каждое слово — большим коллекциям
-        // нужно время, поэтому таймаут щедрый.
+        // Сервер режет ffmpeg-ом медиа на каждое слово — большим коллекциям
+        // нужно время, а перекодировать видео ещё дольше: таймаут щедрый.
         const { data } = await client.post('words/export/anki', fd, {
-            responseType: 'blob', timeout: 300000,
+            responseType: 'blob', timeout: withVideo ? 1800000 : 300000,
         });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(data);
         a.download = 'animei.apkg';
         a.click();
         URL.revokeObjectURL(a.href);
-        showSnackbar(t('words.exportAnki.done'), { duration: 4000 });
+        return true;
     } catch (err) {
         console.error('Anki export failed:', err);
-        showSnackbar(t('words.exportAnki.fail'), { duration: 4000 });
-    } finally {
-        btn.disabled = false;
-        btn.textContent = oldText;
+        return false;
     }
 }
 
@@ -1038,7 +1082,7 @@ window.addEventListener('DOMContentLoaded', () => {
     initMenu();
     renderMenuChoices();
     document.getElementById('export-btn')?.addEventListener('click', exportWords);
-    document.getElementById('export-anki-btn')?.addEventListener('click', exportAnki);
+    document.getElementById('export-anki-btn')?.addEventListener('click', openAnkiExport);
     document.getElementById('import-known-btn')?.addEventListener('click', openKnownImport);
     document.getElementById('known-btn')?.addEventListener('click', openKnownManager);
     updateKnownMenuLabel();
