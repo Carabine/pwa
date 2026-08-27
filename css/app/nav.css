@@ -50,8 +50,10 @@
     transition: opacity var(--transition);
 }
 
-.header__logo--link:hover {
-    opacity: 0.85;
+@media (hover: hover) and (pointer: fine) {
+    .header__logo--link:hover {
+        opacity: 0.85;
+    }
 }
 
 .header__left, .header__right {
@@ -103,9 +105,11 @@
     transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 
-.icon-btn:hover {
-    background: var(--card);
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .icon-btn:hover {
+        background: var(--card);
+        color: var(--text);
+    }
 }
 
 /* ========== PROFILE DROPDOWN ========== */
@@ -146,8 +150,10 @@
     transition: background var(--transition);
 }
 
-.profile-menu a:hover {
-    background: var(--border);
+@media (hover: hover) and (pointer: fine) {
+    .profile-menu a:hover {
+        background: var(--border);
+    }
 }
 
 .profile-menu a .nav-icon {
@@ -229,9 +235,11 @@
     transition: background-color var(--transition), color var(--transition);
 }
 
-.sidebar a:hover {
-    color: var(--text);
-    background: var(--card);
+@media (hover: hover) and (pointer: fine) {
+    .sidebar a:hover {
+        color: var(--text);
+        background: var(--card);
+    }
 }
 
 .sidebar a.active {
@@ -267,8 +275,10 @@
     font-size: 14px;
 }
 
-.sidebar__site:hover {
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .sidebar__site:hover {
+        color: var(--text);
+    }
 }
 
 /* Версия приложения — аккуратный футер внизу сайдбара. Элемент лежит в HTML
@@ -568,8 +578,10 @@
     text-decoration: none;
 }
 
-.header__search-ac-item:hover {
-    background: var(--surface);
+@media (hover: hover) and (pointer: fine) {
+    .header__search-ac-item:hover {
+        background: var(--surface);
+    }
 }
 
 .header__search-ac-item img,

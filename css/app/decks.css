@@ -57,7 +57,9 @@
     cursor: pointer;
     transition: border-color var(--transition), background var(--transition);
 }
-.deck-pick:hover { border-color: var(--primary); }
+@media (hover: hover) and (pointer: fine) {
+    .deck-pick:hover { border-color: var(--primary); }
+}
 /* Фильтр включён — обводка подсвечена, чтобы это было видно без чтения текста. */
 .deck-pick--on { border-color: var(--primary); background: rgba(124, 140, 248, 0.12); }
 .deck-pick__emoji { font-size: 16px; line-height: 1; }
@@ -99,7 +101,9 @@
     white-space: nowrap;
     transition: border-color var(--transition), background var(--transition), color var(--transition);
 }
-.deck-chip:hover { border-color: var(--primary); }
+@media (hover: hover) and (pointer: fine) {
+    .deck-chip:hover { border-color: var(--primary); }
+}
 .deck-chip--add { color: var(--text-muted); border-style: dashed; }
 .deck-chip__count {
     font-size: 11px;
@@ -222,7 +226,9 @@
     text-align: left;
     transition: border-color var(--transition), background var(--transition);
 }
-.deck-sheet__row:hover { border-color: var(--primary); }
+@media (hover: hover) and (pointer: fine) {
+    .deck-sheet__row:hover { border-color: var(--primary); }
+}
 .deck-sheet__row.is-on { border-color: var(--success); background: rgba(16, 185, 129, 0.08); }
 .deck-sheet__emoji { font-size: 18px; }
 .deck-sheet__name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -251,7 +257,9 @@
     cursor: pointer;
     transition: border-color var(--transition);
 }
-.deck-sheet__create:hover { border-color: var(--primary); }
+@media (hover: hover) and (pointer: fine) {
+    .deck-sheet__create:hover { border-color: var(--primary); }
+}
 
 /* ---- Редактор колоды (создание/управление) ---- */
 .deck-editor {
@@ -287,7 +295,9 @@
     cursor: pointer;
     transition: border-color var(--transition), transform var(--transition);
 }
-.deck-editor__emoji:hover { transform: translateY(-1px); }
+@media (hover: hover) and (pointer: fine) {
+    .deck-editor__emoji:hover { transform: translateY(-1px); }
+}
 .deck-editor__emoji.is-sel { border-color: var(--primary); background: rgba(124, 140, 248, 0.14); }
 
 .deck-editor__input {
@@ -319,7 +329,9 @@
     cursor: pointer;
     transition: border-color var(--transition);
 }
-.deck-editor__delete:hover { border-color: var(--danger); }
+@media (hover: hover) and (pointer: fine) {
+    .deck-editor__delete:hover { border-color: var(--danger); }
+}
 
 /* На широком экране показываем sheet/редактор по центру, а не прижатым к низу. */
 @media (min-width: 640px) {

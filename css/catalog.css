@@ -166,9 +166,11 @@ html, body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-.anime-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 18px 42px -12px rgba(79, 70, 229, 0.55);
+@media (hover: hover) and (pointer: fine) {
+    .anime-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 42px -12px rgba(79, 70, 229, 0.55);
+    }
 }
 
 .anime-card__poster {
@@ -184,8 +186,10 @@ html, body {
     transition: transform 0.45s ease;
 }
 
-.anime-card:hover .anime-card__poster img {
-    transform: scale(1.07);
+@media (hover: hover) and (pointer: fine) {
+    .anime-card:hover .anime-card__poster img {
+        transform: scale(1.07);
+    }
 }
 
 /* Затемнение снизу — чтобы название читалось поверх постера */
@@ -196,8 +200,10 @@ html, body {
     transition: background var(--transition);
 }
 
-.anime-card:hover .anime-card__shade {
-    background: linear-gradient(to top, rgba(10, 10, 15, 0.96) 0%, rgba(20, 8, 30, 0.5) 45%, rgba(30, 10, 45, 0.25) 100%);
+@media (hover: hover) and (pointer: fine) {
+    .anime-card:hover .anime-card__shade {
+        background: linear-gradient(to top, rgba(10, 10, 15, 0.96) 0%, rgba(20, 8, 30, 0.5) 45%, rgba(30, 10, 45, 0.25) 100%);
+    }
 }
 
 /* Рейтинг */
@@ -302,7 +308,9 @@ html, body {
     transition: border-color var(--transition), background var(--transition), color var(--transition);
 }
 
-.catalog-chip:hover { border-color: var(--primary); }
+@media (hover: hover) and (pointer: fine) {
+    .catalog-chip:hover { border-color: var(--primary); }
+}
 
 .catalog-chip--active {
     background: var(--primary);
@@ -341,9 +349,11 @@ html, body {
     transition: border-color var(--transition), color var(--transition);
 }
 
-.pick-chip:hover {
-    border-color: var(--primary);
-    color: var(--primary);
+@media (hover: hover) and (pointer: fine) {
+    .pick-chip:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
 }
 
 /* Кнопка play по наведению */
@@ -372,9 +382,11 @@ html, body {
     fill: #fff;
 }
 
-.anime-card:hover .anime-card__play {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+@media (hover: hover) and (pointer: fine) {
+    .anime-card:hover .anime-card__play {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
 }
 
 /* Инфо снизу */

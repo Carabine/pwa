@@ -47,8 +47,10 @@
     border-radius: 3px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: var(--text-dim);
+@media (hover: hover) and (pointer: fine) {
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-dim);
+    }
 }
 
 /* ========== UTILITIES ========== */
@@ -125,8 +127,10 @@ a[href$="watch.html"] {
     flex-shrink: 0;
 }
 
-.lang-select:hover {
-    border-color: var(--primary);
+@media (hover: hover) and (pointer: fine) {
+    .lang-select:hover {
+        border-color: var(--primary);
+    }
 }
 
 /* ========== Слова сессии просмотра (главная + панель в плеере) ========== */
@@ -147,8 +151,10 @@ a[href$="watch.html"] {
     margin: 0;
 }
 
-.session-word:hover {
-    background: var(--surface);
+@media (hover: hover) and (pointer: fine) {
+    .session-word:hover {
+        background: var(--surface);
+    }
 }
 
 .session-word input {

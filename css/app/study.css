@@ -198,10 +198,12 @@
 /* display:flex перебивает атрибут hidden — прячем явно, когда карточки нет. */
 .card-edit-btn[hidden] { display: none; }
 
-.card-edit-btn:hover {
-    opacity: 1;
-    background: var(--surface);
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .card-edit-btn:hover {
+        opacity: 1;
+        background: var(--surface);
+        color: var(--text);
+    }
 }
 
 /* Счётчики, прогресс и кнопки оценки не сжимаем — ужимается только карточка. */
@@ -765,7 +767,9 @@
 
 .word-furigana--speak { cursor: pointer; transition: color var(--transition); }
 
-.word-furigana--speak:hover { color: var(--text-muted); }
+@media (hover: hover) and (pointer: fine) {
+    .word-furigana--speak:hover { color: var(--text-muted); }
+}
 
 .word-furigana--speak:focus-visible {
     outline: 2px solid var(--primary-hover);
@@ -878,8 +882,10 @@
     font-size: 13px;
 }
 
-.starter-save-btn:hover:not(:disabled) {
-    background: rgba(79, 70, 229, 0.14);
+@media (hover: hover) and (pointer: fine) {
+    .starter-save-btn:hover:not(:disabled) {
+        background: rgba(79, 70, 229, 0.14);
+    }
 }
 
 .starter-save-btn:disabled {
@@ -903,8 +909,10 @@
     vertical-align: middle;
 }
 
-.speak-btn:hover {
-    opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+    .speak-btn:hover {
+        opacity: 1;
+    }
 }
 
 /* ---- Ромадзи предложения (настройка обучения) ---- */
@@ -961,9 +969,11 @@
     transition: color var(--transition), border-color var(--transition);
 }
 
-.sentence--ai:hover {
-    color: var(--text);
-    border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+@media (hover: hover) and (pointer: fine) {
+    .sentence--ai:hover {
+        color: var(--text);
+        border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+    }
 }
 
 /* Кнопка ИИ — маленькая круглая иконка-«искорка» в правом верхнем углу карточки
@@ -1007,11 +1017,13 @@
     outline-offset: 2px;
 }
 
-.sentence__spark:hover {
-    transform: scale(1.08);
-    filter: brightness(1.08);
-    box-shadow: 0 5px 16px -2px rgba(124, 140, 248, 0.95);
-    animation: none;
+@media (hover: hover) and (pointer: fine) {
+    .sentence__spark:hover {
+        transform: scale(1.08);
+        filter: brightness(1.08);
+        box-shadow: 0 5px 16px -2px rgba(124, 140, 248, 0.95);
+        animation: none;
+    }
 }
 
 .sentence__spark .ai-icon {
@@ -1077,9 +1089,11 @@
     transition: background var(--transition), transform 0.15s ease, border-color var(--transition);
 }
 
-.main.study .show-btn:hover {
-    background: var(--border);
-    transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+    .main.study .show-btn:hover {
+        background: var(--border);
+        transform: translateY(-1px);
+    }
 }
 
 /* «Уже знаю» — триаж новой карточки: ещё тише «Показать ответ», почти ссылка.
@@ -1099,8 +1113,10 @@
     transition: color var(--transition);
 }
 
-.main.study .know-btn:hover {
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .main.study .know-btn:hover {
+        color: var(--text);
+    }
 }
 
 /* Оценка памяти — две мягкие плашки, а не «светофор» из залитых красной/зелёной
@@ -1135,16 +1151,20 @@
     color: var(--success-hover);
 }
 
-.main.study .keep-word-btn:hover {
-    background: color-mix(in srgb, var(--danger) 26%, var(--card));
-    border-color: color-mix(in srgb, var(--danger) 62%, transparent);
-    transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+    .main.study .keep-word-btn:hover {
+        background: color-mix(in srgb, var(--danger) 26%, var(--card));
+        border-color: color-mix(in srgb, var(--danger) 62%, transparent);
+        transform: translateY(-1px);
+    }
 }
 
-.main.study .bury-word-btn:hover {
-    background: color-mix(in srgb, var(--success) 26%, var(--card));
-    border-color: color-mix(in srgb, var(--success) 62%, transparent);
-    transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+    .main.study .bury-word-btn:hover {
+        background: color-mix(in srgb, var(--success) 26%, var(--card));
+        border-color: color-mix(in srgb, var(--success) 62%, transparent);
+        transform: translateY(-1px);
+    }
 }
 
 .main.study .buttons button:active {
@@ -1234,9 +1254,11 @@
     line-height: 1;
 }
 
-.clip-trim__btn:hover {
-    border-color: var(--primary);
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .clip-trim__btn:hover {
+        border-color: var(--primary);
+        color: var(--text);
+    }
 }
 
 /* ---- Кнопка и панель настроек обучения ---- */
@@ -1258,9 +1280,11 @@
     z-index: 20;
 }
 
-.study-settings-btn:hover {
-    color: var(--text);
-    border-color: var(--primary);
+@media (hover: hover) and (pointer: fine) {
+    .study-settings-btn:hover {
+        color: var(--text);
+        border-color: var(--primary);
+    }
 }
 
 .study-settings-panel {
@@ -1357,9 +1381,11 @@
     transition: background var(--transition), color var(--transition);
 }
 
-.card-explain-btn:hover {
-    background: rgba(124, 140, 248, 0.20);
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .card-explain-btn:hover {
+        background: rgba(124, 140, 248, 0.20);
+        color: var(--text);
+    }
 }
 
 .card-explain-out {
@@ -1510,9 +1536,11 @@
     transition: background var(--transition), color var(--transition);
 }
 
-.explain-modal__close:hover {
-    background: var(--border);
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .explain-modal__close:hover {
+        background: var(--border);
+        color: var(--text);
+    }
 }
 
 /* Тело — единственная прокручиваемая область. min-height:0 обязателен, иначе
@@ -1869,9 +1897,11 @@
     transition: border-color .2s ease, transform .2s ease;
 }
 
-.deck-choice__opt:hover {
-    border-color: var(--primary);
-    transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+    .deck-choice__opt:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
 }
 
 .deck-choice__opt--core {

@@ -170,7 +170,6 @@ window.I18N_UK = {
         'kwords.menu': 'Вибрати вже відомі слова',
         'kwords.title': 'Уже відомі слова',
         'kwords.sub': 'Познач знайомі слова цієї серії: вони не потраплять до авто-колоди та зарахуються в покриття.',
-        'kwords.search': 'Пошук за словом або читанням…',
         'kwords.filter.all': 'Усі',
         'kwords.filter.new': 'Нові',
         'kwords.filter.known': 'Знаю',

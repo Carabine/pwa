@@ -170,7 +170,6 @@ window.I18N_EN = {
         'kwords.menu': 'Pick words you already know',
         'kwords.title': 'Words you already know',
         'kwords.sub': 'Mark the words you already know: they stay out of the auto-deck and count towards coverage.',
-        'kwords.search': 'Search by word or reading…',
         'kwords.filter.all': 'All',
         'kwords.filter.new': 'New',
         'kwords.filter.known': 'Known',

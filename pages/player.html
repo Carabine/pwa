@@ -332,21 +332,19 @@
                 </div>
                 <button class="edeck__close" id="kwords-close" aria-label="Закрыть">✕</button>
             </div>
+            <!-- Одна строка: фильтр слева, массовая отметка и счётчик справа.
+                 Поиска здесь нет намеренно — слова отсортированы (незнакомые
+                 сверху, по частоте), и глазами их находят быстрее, чем набором. -->
             <div class="kwords__tools">
-                <label class="kwords__search">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" id="kwords-search" autocomplete="off" spellcheck="false"
-                           data-i18n-placeholder="kwords.search" placeholder="Поиск по слову или чтению…">
-                </label>
                 <div class="kwords__filters" id="kwords-filters">
                     <button type="button" class="kwords__filter is-on" data-filter="all" data-i18n="kwords.filter.all">Все</button>
                     <button type="button" class="kwords__filter" data-filter="new" data-i18n="kwords.filter.new">Новые</button>
                     <button type="button" class="kwords__filter" data-filter="known" data-i18n="kwords.filter.known">Знаю</button>
                 </div>
-            </div>
-            <div class="edeck__toolbar">
-                <button type="button" class="kwords__all" id="kwords-all" data-i18n="kwords.markVisible">Отметить видимые</button>
-                <span class="edeck__count" id="kwords-count"></span>
+                <div class="kwords__tools-right">
+                    <button type="button" class="kwords__all" id="kwords-all" data-i18n="kwords.markVisible">Отметить видимые</button>
+                    <span class="edeck__count" id="kwords-count"></span>
+                </div>
             </div>
             <div class="edeck__list kwords__list" id="kwords-list"></div>
             <div class="edeck__foot">

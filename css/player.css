@@ -163,9 +163,11 @@ html, body {
     margin-left: 1px;
 }
 
-.player-ui__bigplay:hover {
-    transform: translate(-50%, -50%) scale(1.07);
-    box-shadow: 0 12px 40px -4px rgba(124, 140, 248, 0.75), 0 0 0 14px rgba(124, 140, 248, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+@media (hover: hover) and (pointer: fine) {
+    .player-ui__bigplay:hover {
+        transform: translate(-50%, -50%) scale(1.07);
+        box-shadow: 0 12px 40px -4px rgba(124, 140, 248, 0.75), 0 0 0 14px rgba(124, 140, 248, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
 }
 
 .video-wrap.is-paused .player-ui__bigplay {
@@ -251,14 +253,18 @@ html, body {
     transition: transform 0.15s ease;
 }
 
-.player-ui__seek:hover::before,
+@media (hover: hover) and (pointer: fine) {
+    .player-ui__seek:hover::before,
 .player-ui__seek:hover .player-ui__seek-buffered,
 .player-ui__seek:hover .player-ui__seek-fill {
-    height: 6px;
+        height: 6px;
+    }
 }
 
-.player-ui__seek:hover .player-ui__seek-knob {
-    transform: translateY(-50%) scale(1);
+@media (hover: hover) and (pointer: fine) {
+    .player-ui__seek:hover .player-ui__seek-knob {
+        transform: translateY(-50%) scale(1);
+    }
 }
 
 /* Ряд кнопок */
@@ -286,9 +292,11 @@ html, body {
     height: 22px;
 }
 
-.player-ui__btn:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
+@media (hover: hover) and (pointer: fine) {
+    .player-ui__btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+    }
 }
 
 .player-ui__vol {
@@ -438,8 +446,10 @@ html, body {
     flex-shrink: 0;
 }
 
-.player-ui__speed:hover {
-    background: rgba(255, 255, 255, 0.16);
+@media (hover: hover) and (pointer: fine) {
+    .player-ui__speed:hover {
+        background: rgba(255, 255, 255, 0.16);
+    }
 }
 
 .player-ui__speed.is-custom {
@@ -462,8 +472,10 @@ html, body {
     flex-shrink: 0;
 }
 
-.player-ui__quality:hover {
-    background: rgba(255, 255, 255, 0.16);
+@media (hover: hover) and (pointer: fine) {
+    .player-ui__quality:hover {
+        background: rgba(255, 255, 255, 0.16);
+    }
 }
 
 .player-ui__quality.is-custom {
@@ -521,9 +533,11 @@ html, body {
     cursor: pointer;
 }
 
-.player-ui__quality-opt:hover,
+@media (hover: hover) and (pointer: fine) {
+    .player-ui__quality-opt:hover,
 .player-ui__speed-opt:hover {
-    background: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.12);
+    }
 }
 
 .player-ui__quality-opt.is-active,
@@ -584,9 +598,11 @@ html, body {
     transition: background 0.12s ease, text-decoration-color 0.12s ease;
 }
 
-.tok--learnable:hover {
-    background: rgba(79, 70, 229, 0.45);
-    text-decoration-color: transparent;
+@media (hover: hover) and (pointer: fine) {
+    .tok--learnable:hover {
+        background: rgba(79, 70, 229, 0.45);
+        text-decoration-color: transparent;
+    }
 }
 
 /* Уже в словаре — тусклая зелёная черта, пунктир убираем. border-radius: 0
@@ -642,10 +658,12 @@ html, body {
     display: inline-flex;
 }
 
-.now-cue__ai:hover,
+@media (hover: hover) and (pointer: fine) {
+    .now-cue__ai:hover,
 .cue__ai:hover {
-    color: var(--pink);
-    background: rgba(124, 140, 248, 0.12);
+        color: var(--pink);
+        background: rgba(124, 140, 248, 0.12);
+    }
 }
 
 .now-cue__ai .ai-icon,
@@ -853,8 +871,10 @@ html, body {
     transition: border-color var(--transition);
 }
 
-.control-group select:hover {
-    border-color: var(--text-dim);
+@media (hover: hover) and (pointer: fine) {
+    .control-group select:hover {
+        border-color: var(--text-dim);
+    }
 }
 
 /* Сезонов у тайтла нет — зарезервированный слот схлопывается. На десктопе все
@@ -909,8 +929,10 @@ html, body {
     font-size: 12.5px;
 }
 
-.chip-btn:hover {
-    border-color: var(--primary);
+@media (hover: hover) and (pointer: fine) {
+    .chip-btn:hover {
+        border-color: var(--primary);
+    }
 }
 
 .chip-btn--accent {
@@ -942,8 +964,10 @@ html, body {
     cursor: pointer;
 }
 
-.subs-fix-link:hover {
-    color: var(--text-muted);
+@media (hover: hover) and (pointer: fine) {
+    .subs-fix-link:hover {
+        color: var(--text-muted);
+    }
 }
 
 .hotkeys {
@@ -964,10 +988,15 @@ html, body {
     cursor: pointer;
 }
 
-.hotkeys__toggle:hover,
 .hotkeys__toggle.is-open {
     border-color: var(--pink);
     color: var(--text-muted);
+}
+@media (hover: hover) and (pointer: fine) {
+    .hotkeys__toggle:hover {
+        border-color: var(--pink);
+        color: var(--text-muted);
+    }
 }
 
 .hotkeys-hint {
@@ -1146,8 +1175,10 @@ html, body {
     padding: 2px 6px;
 }
 
-.subs-picker__close:hover {
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .subs-picker__close:hover {
+        color: var(--text);
+    }
 }
 
 .subs-picker__sync {
@@ -1165,7 +1196,9 @@ html, body {
     cursor: pointer;
 }
 
-.subs-precise-btn:hover { filter: brightness(1.06); }
+@media (hover: hover) and (pointer: fine) {
+    .subs-precise-btn:hover { filter: brightness(1.06); }
+}
 .subs-precise-btn:disabled { opacity: .6; cursor: default; }
 
 .subs-precise-hint {
@@ -1253,7 +1286,9 @@ html, body {
     cursor: pointer;
 }
 
-.subs-manual__reset:hover { color: var(--primary-hover); }
+@media (hover: hover) and (pointer: fine) {
+    .subs-manual__reset:hover { color: var(--primary-hover); }
+}
 
 /* Крупное «табло» текущего сдвига — редактируемое, сразу читается (в т.ч. когда
    автосинк поставил большой сдвиг). Отдельной строкой над кнопками шага; заменило
@@ -1322,7 +1357,9 @@ html, body {
     cursor: pointer;
 }
 
-.subs-manual__btn:hover { border-color: var(--primary); }
+@media (hover: hover) and (pointer: fine) {
+    .subs-manual__btn:hover { border-color: var(--primary); }
+}
 .subs-manual__btn:active { background: rgba(255, 255, 255, 0.06); }
 
 /* Подсказка одной аккуратной строкой под кнопками (по центру). */
@@ -1360,8 +1397,10 @@ html, body {
     transition: background 0.12s ease;
 }
 
-.subs-picker__item:hover {
-    background: rgba(255, 255, 255, 0.05);
+@media (hover: hover) and (pointer: fine) {
+    .subs-picker__item:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
 }
 
 .subs-picker__item--back {
@@ -1440,8 +1479,10 @@ html, body {
     transition: background 0.15s ease;
 }
 
-.cue:hover {
-    background: rgba(255, 255, 255, 0.04);
+@media (hover: hover) and (pointer: fine) {
+    .cue:hover {
+        background: rgba(255, 255, 255, 0.04);
+    }
 }
 
 .cue--active {
@@ -1571,8 +1612,10 @@ html, body {
     transition: background var(--transition), color var(--transition);
 }
 
-.reading-seg__btn:hover {
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .reading-seg__btn:hover {
+        color: var(--text);
+    }
 }
 
 .reading-seg__btn.active {
@@ -1757,7 +1800,9 @@ html, body {
     transition: color 0.15s ease;
 }
 
-.word-popup__known:hover .word-popup__known-box { border-color: var(--text-muted); }
+@media (hover: hover) and (pointer: fine) {
+    .word-popup__known:hover .word-popup__known-box { border-color: var(--text-muted); }
+}
 .word-popup__known.is-on { color: var(--text); }
 .word-popup__known.is-on .word-popup__known-box {
     background: var(--success);
@@ -1793,9 +1838,11 @@ html, body {
     transition: background 0.15s ease, color 0.15s ease;
 }
 
-.word-popup__close:hover {
-    background: var(--border);
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .word-popup__close:hover {
+        background: var(--border);
+        color: var(--text);
+    }
 }
 
 .word-popup__body {
@@ -1923,9 +1970,11 @@ html, body {
     transition: border-color 0.15s ease, color 0.15s ease;
 }
 
-.word-popup__explain-btn:hover {
-    border-color: var(--primary);
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .word-popup__explain-btn:hover {
+        border-color: var(--primary);
+        color: var(--text);
+    }
 }
 
 .word-popup__explain-btn:disabled {
@@ -2017,8 +2066,10 @@ html, body {
     transition: box-shadow 0.2s ease, transform 0.1s ease;
 }
 
-.word-popup__save:hover {
-    box-shadow: var(--shadow-pink);
+@media (hover: hover) and (pointer: fine) {
+    .word-popup__save:hover {
+        box-shadow: var(--shadow-pink);
+    }
 }
 
 .word-popup__save:active {
@@ -3025,40 +3076,24 @@ html, body {
    сотни запросов к словарю ради слов, которые пользователь и так узнаёт. */
 .kwords { width: min(720px, 100%); }
 
+/* Единственная строка управления: фильтр слева, массовая отметка и счётчик
+   справа. Поля поиска здесь нет — список отсортирован (незнакомые сверху, по
+   частоте), и глазами слово находится быстрее, чем набором с клавиатуры. */
 .kwords__tools {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 16px 0;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
     flex-wrap: wrap;
 }
 
-.kwords__search {
+.kwords__tools-right {
     display: flex;
     align-items: center;
-    gap: 7px;
-    flex: 1 1 180px;
-    min-width: 0;
-    padding: 6px 10px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    color: var(--text-muted);
-    text-transform: none;
-    letter-spacing: normal;
-}
-
-.kwords__search svg { flex-shrink: 0; }
-
-.kwords__search input {
-    flex: 1 1 auto;
-    min-width: 0;
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 13px;
+    gap: 10px;
+    font-size: 12.5px;
 }
 
 .kwords__filters {
@@ -3179,7 +3214,7 @@ html, body {
 }
 
 @media (max-width: 900px) {
-    .kwords__tools { padding: 8px 12px 0; }
+    .kwords__tools { padding: 7px 12px; }
     .kwords__list { padding: 10px 12px; gap: 6px; }
     .kw-chip { padding: 6px 10px; }
 }

@@ -102,8 +102,10 @@ audio {
     margin-left: 3px;
 }
 
-.clip-player__play:hover {
-    transform: translate(-50%, -50%) scale(1.08);
+@media (hover: hover) and (pointer: fine) {
+    .clip-player__play:hover {
+        transform: translate(-50%, -50%) scale(1.08);
+    }
 }
 
 /* Кнопка Play видна только на паузе */
@@ -140,8 +142,10 @@ audio {
     filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
 }
 
-.clip-player__mute:hover {
-    opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+    .clip-player__mute:hover {
+        opacity: 1;
+    }
 }
 
 .clip-player__mute svg {
@@ -164,11 +168,17 @@ audio {
     transition: width 0.18s ease, opacity 0.18s ease, margin 0.18s ease;
 }
 
-.clip-player__vol:hover .clip-player__vol-slider,
 .clip-player__vol:focus-within .clip-player__vol-slider {
     width: 72px;
     opacity: 1;
     margin: 0 2px 0 8px;
+}
+@media (hover: hover) and (pointer: fine) {
+    .clip-player__vol:hover .clip-player__vol-slider {
+        width: 72px;
+        opacity: 1;
+        margin: 0 2px 0 8px;
+    }
 }
 
 /* На тач-экранах ховера нет — по умолчанию ползунок СКРЫТ (не перекрывает кадр),

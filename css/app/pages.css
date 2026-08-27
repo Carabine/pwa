@@ -48,7 +48,9 @@
     cursor: pointer;
     transition: color var(--transition);
 }
-.pw-field__eye:hover { color: var(--text); }
+@media (hover: hover) and (pointer: fine) {
+    .pw-field__eye:hover { color: var(--text); }
+}
 /* Два svg: открытый глаз (пароль скрыт) и перечёркнутый (пароль показан). */
 .pw-field__eye svg:last-child { display: none; }
 .pw-field__eye.is-on svg:first-child { display: none; }
@@ -64,8 +66,10 @@
     text-align: center;
 }
 
-.login-form__toggle:hover {
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .login-form__toggle:hover {
+        color: var(--text);
+    }
 }
 
 .login-form__note {
@@ -231,7 +235,9 @@
 }
 /* display:flex класса сильнее UA-правила для [hidden] — прячем явно. */
 .words-menu[hidden] { display: none; }
-.words-menu button:hover { background: var(--surface); }
+@media (hover: hover) and (pointer: fine) {
+    .words-menu button:hover { background: var(--surface); }
+}
 .words-menu__hr {
     border: none;
     border-top: 1px solid var(--border);
@@ -314,7 +320,9 @@
     -webkit-touch-callout: none;
 }
 .word-row + .word-row { border-top: 1px solid var(--border); }
-.word-row:hover { background: var(--surface); }
+@media (hover: hover) and (pointer: fine) {
+    .word-row:hover { background: var(--surface); }
+}
 
 /* Фиксированная колонка под слово+чтение: переводы выстраиваются в ровный
    столбец, а длинный перевод не выдавливает японский текст. Длинное слово
@@ -386,7 +394,9 @@
     color: var(--text-muted);
     border-radius: 8px;
 }
-.word-row__more:hover { color: var(--text); background: var(--card); }
+@media (hover: hover) and (pointer: fine) {
+    .word-row__more:hover { color: var(--text); background: var(--card); }
+}
 
 /* Всплывающее меню действий слова (живёт в body, позиция ставится из JS). */
 .word-actions { min-width: 180px; }
@@ -481,7 +491,9 @@
     white-space: nowrap;
     transition: border-color var(--transition), background var(--transition);
 }
-.words-bulkbar__btn:hover:not(:disabled) { border-color: var(--primary); }
+@media (hover: hover) and (pointer: fine) {
+    .words-bulkbar__btn:hover:not(:disabled) { border-color: var(--primary); }
+}
 .words-bulkbar__btn:disabled { opacity: 0.4; cursor: default; }
 .words-bulkbar__btn--primary {
     background: var(--primary);
@@ -489,9 +501,13 @@
     color: #0a0a0f;
     font-weight: 600;
 }
-.words-bulkbar__btn--primary:hover:not(:disabled) { border-color: var(--primary-hover); background: var(--primary-hover); }
+@media (hover: hover) and (pointer: fine) {
+    .words-bulkbar__btn--primary:hover:not(:disabled) { border-color: var(--primary-hover); background: var(--primary-hover); }
+}
 .words-bulkbar__danger { color: var(--danger); }
-.words-bulkbar__danger:hover:not(:disabled) { border-color: var(--danger); }
+@media (hover: hover) and (pointer: fine) {
+    .words-bulkbar__danger:hover:not(:disabled) { border-color: var(--danger); }
+}
 .words-bulkbar__x {
     background: none;
     border: none;
@@ -609,7 +625,9 @@
     cursor: pointer;
     padding: 0 3px;
 }
-.known-chip__x:hover { color: var(--danger); }
+@media (hover: hover) and (pointer: fine) {
+    .known-chip__x:hover { color: var(--danger); }
+}
 .known-modal__more {
     color: var(--text-dim);
     font-size: 12.5px;
@@ -641,10 +659,12 @@
     min-height: 168px;
 }
 
-.word-read-content:hover {
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
+@media (hover: hover) and (pointer: fine) {
+    .word-read-content:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
 }
 
 .word-card__head {
@@ -730,7 +750,9 @@
     border-radius: 8px;
     transition: color var(--transition), background var(--transition);
 }
-.word-card__menu:hover { color: var(--text); background: var(--surface); }
+@media (hover: hover) and (pointer: fine) {
+    .word-card__menu:hover { color: var(--text); background: var(--surface); }
+}
 
 .word-edit {
     display: flex;
@@ -844,9 +866,11 @@
     transition: background var(--transition), color var(--transition);
 }
 
-.word-modal__close:hover {
-    background: var(--border);
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .word-modal__close:hover {
+        background: var(--border);
+        color: var(--text);
+    }
 }
 
 /* Тело — единственная прокручиваемая область (форма + видео + звук). */
@@ -887,7 +911,9 @@
 }
 .word-modal__foot-left:empty { display: none; }
 .word-modal__delete { color: var(--danger); }
-.word-modal__delete:hover { border-color: var(--danger); }
+@media (hover: hover) and (pointer: fine) {
+    .word-modal__delete:hover { border-color: var(--danger); }
+}
 
 @keyframes word-modal-fade {
     from { opacity: 0; }
@@ -1033,10 +1059,12 @@
     cursor: default;
 }
 
-.word-row.is-skel:hover,
+@media (hover: hover) and (pointer: fine) {
+    .word-row.is-skel:hover,
 .word-card.is-skel:hover {
-    background: none;
-    transform: none;
-    box-shadow: none;
-    border-color: var(--border);
+        background: none;
+        transform: none;
+        box-shadow: none;
+        border-color: var(--border);
+    }
 }

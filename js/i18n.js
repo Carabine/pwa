@@ -174,7 +174,6 @@ const I18N = {
         'kwords.menu': 'Выбрать уже известные слова',
         'kwords.title': 'Уже известные слова',
         'kwords.sub': 'Отметь знакомые слова этой серии: они не попадут в авто-колоду и зачтутся в покрытие.',
-        'kwords.search': 'Поиск по слову или чтению…',
         'kwords.filter.all': 'Все',
         'kwords.filter.new': 'Новые',
         'kwords.filter.known': 'Знаю',

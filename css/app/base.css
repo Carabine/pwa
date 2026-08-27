@@ -92,6 +92,18 @@
     box-sizing: border-box;
 }
 
+/* Системная подсветка тапа на Android рисуется по ПРЯМОУГОЛЬНЫМ границам
+   элемента — на круглых кнопках, пилюлях и карточках она выглядит как чужая
+   рамка поверх нашей. Убираем её везде: подтверждение нажатия даёт своя
+   система отклика (см. «ТАКТИЛЬНЫЙ ОТКЛИК НА ТАП» в motion.css).
+
+   Там же общее правило проекта: любое :hover-правило живёт под
+   @media (hover: hover) and (pointer: fine) — на таче браузер оставляет
+   наведение висеть на последнем нажатом элементе. */
+a, button, label, summary, select, input, textarea, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+}
+
 html, body {
     height: 100%;
     /* Малый вьюпорт: высота считается так, будто адресная строка браузера ВИДНА
@@ -128,8 +140,10 @@ a {
     transition: color var(--transition);
 }
 
-a:hover {
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    a:hover {
+        color: var(--text);
+    }
 }
 
 button {

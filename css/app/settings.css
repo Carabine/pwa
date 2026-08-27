@@ -150,8 +150,10 @@
     transition: border-color var(--transition);
 }
 
-.settings-select:hover {
-    border-color: var(--text-dim);
+@media (hover: hover) and (pointer: fine) {
+    .settings-select:hover {
+        border-color: var(--text-dim);
+    }
 }
 
 .settings-select:focus {

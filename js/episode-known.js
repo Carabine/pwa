@@ -23,7 +23,6 @@
 
     const knownItem = document.getElementById('edeck-menu-known');
     const listEl = document.getElementById('kwords-list');
-    const searchEl = document.getElementById('kwords-search');
     const filtersEl = document.getElementById('kwords-filters');
     const countEl = document.getElementById('kwords-count');
     const allBtn = document.getElementById('kwords-all');
@@ -67,7 +66,6 @@
     let picked = new Set();  // отмечено сейчас (включая уже известные до открытия)
     let initial = new Set(); // что было известно на момент открытия — с ним и сверяем
     let filter = 'all';
-    let query = '';
 
     function collectWords() {
         const byBase = new Map();
@@ -115,10 +113,7 @@
     function matches(e) {
         if (filter === 'new' && picked.has(e.base)) return false;
         if (filter === 'known' && !picked.has(e.base)) return false;
-        if (!query) return true;
-        return e.base.includes(query)
-            || (e.reading && e.reading.includes(query))
-            || (e.romaji && e.romaji.includes(query));
+        return true;
     }
 
     // ---------- Отрисовка ----------
@@ -177,7 +172,7 @@
         return chip;
     }
 
-    // Список перерисовываем только при смене фильтра/поиска. По тапу меняем
+    // Список перерисовываем только при смене фильтра. По тапу меняем
     // класс самой плитки: иначе под фильтром «Новые» слово исчезало бы прямо
     // из-под пальца, и попасть в соседнее было бы невозможно.
     function renderList() {
@@ -231,16 +226,6 @@
             .forEach((b) => b.classList.toggle('is-on', b === btn));
         listEl.scrollTop = 0;
         renderList();
-    });
-
-    let searchTimer = null;
-    searchEl.addEventListener('input', () => {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
-            query = searchEl.value.trim().toLowerCase();
-            listEl.scrollTop = 0;
-            renderList();
-        }, 120);
     });
 
     // Затухание нижнего края списка (.edeck__list) снимаем на самом низу —
@@ -305,8 +290,6 @@
         // при первом же поиске, и глаз терял бы место.
         words.sort((a, b) => (initial.has(a.base) ? 1 : 0) - (initial.has(b.base) ? 1 : 0));
         filter = 'all';
-        query = '';
-        searchEl.value = '';
         filtersEl.querySelectorAll('.kwords__filter')
             .forEach((b) => b.classList.toggle('is-on', b.dataset.filter === 'all'));
         renderList();

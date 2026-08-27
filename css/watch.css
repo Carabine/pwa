@@ -34,11 +34,17 @@
     text-align: center;
 }
 
-.upload-box:hover,
 .upload-box.dragover {
     border-color: var(--primary);
     background: rgba(99, 102, 241, 0.05);
     color: var(--text);
+}
+@media (hover: hover) and (pointer: fine) {
+    .upload-box:hover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+        color: var(--text);
+    }
 }
 
 .upload-hint {
@@ -321,8 +327,10 @@
     transition: height 0.12s ease;
 }
 
-.pc-seek:hover {
-    height: 7px;
+@media (hover: hover) and (pointer: fine) {
+    .pc-seek:hover {
+        height: 7px;
+    }
 }
 
 .pc-seek::-webkit-slider-thumb {
@@ -336,8 +344,10 @@
     transition: transform 0.1s ease;
 }
 
-.pc-seek:hover::-webkit-slider-thumb {
-    transform: scale(1.25);
+@media (hover: hover) and (pointer: fine) {
+    .pc-seek:hover::-webkit-slider-thumb {
+        transform: scale(1.25);
+    }
 }
 
 .pc-seek::-moz-range-thumb {
@@ -371,9 +381,11 @@
     transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 
-.pc-btn:hover {
-    background: var(--border);
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .pc-btn:hover {
+        background: var(--border);
+        color: var(--text);
+    }
 }
 
 .pc-btn.active {
@@ -424,10 +436,15 @@
     outline: none;
 }
 
-.pc-speed:hover,
 .pc-speed:focus {
     border-color: var(--primary);
     color: var(--text);
+}
+@media (hover: hover) and (pointer: fine) {
+    .pc-speed:hover {
+        border-color: var(--primary);
+        color: var(--text);
+    }
 }
 
 /* Volume */
@@ -449,8 +466,10 @@
     transition: width 0.15s ease;
 }
 
-.pc-volume-wrap:hover .pc-volume {
-    width: 80px;
+@media (hover: hover) and (pointer: fine) {
+    .pc-volume-wrap:hover .pc-volume {
+        width: 80px;
+    }
 }
 
 .pc-volume::-webkit-slider-thumb {
@@ -570,8 +589,10 @@
     border-left: 3px solid transparent;
 }
 
-.sub-segment:hover {
-    background: var(--card);
+@media (hover: hover) and (pointer: fine) {
+    .sub-segment:hover {
+        background: var(--card);
+    }
 }
 
 .sub-segment.active {
@@ -603,18 +624,22 @@
     font-size: 16px;
 }
 
-.sub-word:hover {
-    background: var(--primary);
-    color: white;
+@media (hover: hover) and (pointer: fine) {
+    .sub-word:hover {
+        background: var(--primary);
+        color: white;
+    }
 }
 
 .sub-word--particle {
     color: var(--text-dim);
 }
 
-.sub-word--particle:hover {
-    background: var(--border);
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .sub-word--particle:hover {
+        background: var(--border);
+        color: var(--text);
+    }
 }
 
 .sub-word__reading {
@@ -630,8 +655,10 @@
     transition: opacity var(--transition);
 }
 
-.sub-word:hover .sub-word__reading {
-    opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+    .sub-word:hover .sub-word__reading {
+        opacity: 1;
+    }
 }
 
 .sub-segment__bottom {
@@ -671,14 +698,18 @@
     transition: background-color var(--transition), border-color var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
 }
 
-.sub-segment:hover .sub-ai-btn {
-    opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+    .sub-segment:hover .sub-ai-btn {
+        opacity: 1;
+    }
 }
 
-.sub-ai-btn:hover {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
+@media (hover: hover) and (pointer: fine) {
+    .sub-ai-btn:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
 }
 
 /* ========== SAVE MODAL ========== */

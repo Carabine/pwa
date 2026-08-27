@@ -29,12 +29,14 @@
     text-decoration: none;
 }
 
-.hub-card:hover {
-    background: var(--surface);
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .hub-card:hover {
+        background: var(--surface);
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+        color: var(--text);
+    }
 }
 
 .hub-card__icon {
@@ -92,11 +94,13 @@
     transition: border-color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
 }
 
-.continue-card:hover {
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.18);
-    color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+    .continue-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.18);
+        color: var(--text);
+    }
 }
 
 .continue-card__poster {
@@ -183,8 +187,10 @@
     transition: background 0.2s ease;
 }
 
-.session-card:hover .session-card__chip {
-    background: rgba(52, 211, 153, 0.16);
+@media (hover: hover) and (pointer: fine) {
+    .session-card:hover .session-card__chip {
+        background: rgba(52, 211, 153, 0.16);
+    }
 }
 
 .session-card__chip > svg {
@@ -225,9 +231,11 @@
     padding: 0;
 }
 
-.session-card__close:hover {
-    color: var(--text);
-    background: rgba(255, 255, 255, 0.07);
+@media (hover: hover) and (pointer: fine) {
+    .session-card__close:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.07);
+    }
 }
 
 .hub-card__label {
@@ -289,11 +297,13 @@
 
 .daily-plan[hidden] { display: none; }
 
-.daily-plan:hover {
-    color: var(--text);
-    transform: translateY(-2px);
-    border-color: var(--primary);
-    box-shadow: 0 10px 30px color-mix(in srgb, var(--primary) 22%, transparent);
+@media (hover: hover) and (pointer: fine) {
+    .daily-plan:hover {
+        color: var(--text);
+        transform: translateY(-2px);
+        border-color: var(--primary);
+        box-shadow: 0 10px 30px color-mix(in srgb, var(--primary) 22%, transparent);
+    }
 }
 
 .daily-plan__body {
@@ -420,9 +430,11 @@
     border-color: color-mix(in srgb, var(--success) 40%, var(--border));
 }
 
-.daily-plan--done:hover {
-    border-color: var(--success);
-    box-shadow: 0 10px 30px color-mix(in srgb, var(--success) 20%, transparent);
+@media (hover: hover) and (pointer: fine) {
+    .daily-plan--done:hover {
+        border-color: var(--success);
+        box-shadow: 0 10px 30px color-mix(in srgb, var(--success) 20%, transparent);
+    }
 }
 
 .daily-plan--done .daily-plan__eyebrow { color: var(--success-hover); }
@@ -547,14 +559,18 @@
     transition: border-color .2s ease, color .2s ease, background .2s ease;
 }
 
-.mini-card:hover {
-    border-color: var(--primary);
-    color: var(--text);
-    background: var(--surface);
+@media (hover: hover) and (pointer: fine) {
+    .mini-card:hover {
+        border-color: var(--primary);
+        color: var(--text);
+        background: var(--surface);
+    }
 }
 
 .mini-card__icon { display: flex; flex-shrink: 0; color: var(--text-dim); }
-.mini-card:hover .mini-card__icon { color: var(--primary); }
+@media (hover: hover) and (pointer: fine) {
+    .mini-card:hover .mini-card__icon { color: var(--primary); }
+}
 .mini-card__label { min-width: 0; }
 
 @media (max-width: 360px) {
@@ -721,9 +737,11 @@
     transition: color .2s ease, background .2s ease;
 }
 
-.install-hint__btn:hover {
-    color: var(--text);
-    background: var(--surface);
+@media (hover: hover) and (pointer: fine) {
+    .install-hint__btn:hover {
+        color: var(--text);
+        background: var(--surface);
+    }
 }
 
 .install-hint__close {
@@ -743,7 +761,9 @@
     transition: opacity .2s ease, background .2s ease;
 }
 
-.install-hint__close:hover { opacity: 1; background: var(--surface); }
+@media (hover: hover) and (pointer: fine) {
+    .install-hint__close:hover { opacity: 1; background: var(--surface); }
+}
 
 /* Инструкция для iOS — раскрывается по тапу, там нет beforeinstallprompt. */
 .install-hint__ios {
@@ -781,9 +801,11 @@
     border-radius: 50%;
 }
 
-.continue-card__close:hover {
-    color: var(--text);
-    background: var(--surface);
+@media (hover: hover) and (pointer: fine) {
+    .continue-card__close:hover {
+        color: var(--text);
+        background: var(--surface);
+    }
 }
 
 /* Праздник рубежа серии занятий («7 дней подряд») — показывается один раз
@@ -840,9 +862,11 @@
     cursor: default;
 }
 
-.hub .is-skel:hover {
-    transform: none;
-    box-shadow: none;
+@media (hover: hover) and (pointer: fine) {
+    .hub .is-skel:hover {
+        transform: none;
+        box-shadow: none;
+    }
 }
 
 /* У плана три состояния разной высоты, и какое отрисуется — знает
