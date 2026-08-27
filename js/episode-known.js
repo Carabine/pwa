@@ -281,10 +281,14 @@
         else hideModal();
     }
 
-    async function openModal() {
+    // Открываем СИНХРОННО, без await до AnimeiBack.open. Пункт меню, по которому
+    // сюда пришли, закрывает выпадашку — а та снимает свою запись из history
+    // отложенным history.go(-1). Пока мы ждали загрузку уровней JLPT, «назад»
+    // успевал сработать, и пришедший popstate закрывал только что открытую
+    // модалку (открывалась и тут же исчезала). Слой должен встать в стек в том
+    // же такте, что и клик: тогда AnimeiBack отдаст ему запись закрытого меню.
+    function openModal() {
         if (typeof video !== 'undefined' && video) video.pause();
-        // Уровень JLPT — украшение: не загрузился, значит просто без плашек.
-        try { if (window.JlptLevels) await JlptLevels.load(); } catch { /* без плашек */ }
 
         words = collectWords();
         if (!words.length) {
@@ -308,9 +312,35 @@
         layer = AnimeiBack.open(hideModal);
         listEl.scrollTop = 0;
         if (window.animeiTrack) window.animeiTrack('known_pick', 'open:' + words.length);
+
+        // Уровень JLPT — украшение: словарь мог ещё не загрузиться (первое
+        // открытие за сессию). Догружаем фоном и перерисовываем плашки, если
+        // модалку не успели закрыть; не загрузился — просто без плашек.
+        if (window.JlptLevels) {
+            JlptLevels.load().then(() => {
+                if (overlay.hidden) return;
+                let changed = false;
+                for (const e of words) {
+                    const lv = JlptLevels.level(e.base);
+                    if (lv !== e.level) { e.level = lv; changed = true; }
+                }
+                if (!changed) return;
+                const top = listEl.scrollTop;
+                renderList();
+                listEl.scrollTop = top;
+            }).catch(() => { /* без плашек */ });
+        }
     }
 
-    knownItem?.addEventListener('click', openModal);
+    // Меню закрываем ДО открытия модалки, вручную. Свой обработчик у .edeck-menu
+    // сработал бы позже нашего (всплытие), а AnimeiBack.close(menuLayer) закрывает
+    // не только сам слой, но и всё, что успело открыться выше, — то есть только
+    // что открытую модалку. В этом же порядке работает и передача записи history:
+    // закрытый слой оставляет свою запись новому, и «назад» не перепрыгивает.
+    knownItem?.addEventListener('click', () => {
+        closeMenu();
+        openModal();
+    });
     closeBtn.addEventListener('click', closeModal);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
     document.addEventListener('keydown', (e) => {
