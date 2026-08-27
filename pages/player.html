@@ -213,12 +213,27 @@
                 </div>
                 <div class="transcript__header-right">
                     <!-- Авто-колода: рядом со списком реплик, из которых
-                         она и собирается. Показывает кнопку episode-deck.js. -->
-                    <button class="transcript__fix transcript__fix--deck" id="episode-deck-btn" type="button" hidden
-                            data-i18n-title="edeck.btn.title"
-                            title="Собрать колоду из простых (N5–N4) слов этой серии">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 21 9-9"/><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M17.8 6.2 19 5"/><path d="M12.2 6.2 11 5"/></svg>
-                        <span data-i18n="edeck.btn">Авто-колода</span>
+                         она и собирается. Всю группу показывает episode-deck.js,
+                         когда субтитры серии загружены. -->
+                    <div class="transcript__deck" id="episode-deck-wrap" hidden>
+                        <button class="transcript__fix transcript__fix--deck" id="episode-deck-btn" type="button"
+                                data-i18n-title="edeck.btn.title"
+                                title="Собрать колоду из простых (N5–N4) слов этой серии">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 21 9-9"/><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M17.8 6.2 19 5"/><path d="M12.2 6.2 11 5"/></svg>
+                            <span data-i18n="edeck.btn">Авто-колода</span>
+                        </button>
+                        <!-- «⋯»: прочие действия со словами серии (js/episode-known.js) -->
+                        <button class="transcript__fix transcript__fix--more" id="episode-deck-more" type="button"
+                                aria-haspopup="true" aria-expanded="false" aria-controls="episode-deck-menu"
+                                data-i18n-title="edeck.more.title" title="Другие действия">⋯</button>
+                    </div>
+                </div>
+                <!-- Выпадашка живёт в шапке, а не в группе кнопок: шапка шире и
+                     задаёт меню предел ширины (в кино-режиме колонка узкая). -->
+                <div class="edeck-menu" id="episode-deck-menu" hidden>
+                    <button type="button" id="edeck-menu-known">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        <span data-i18n="kwords.menu">Выбрать уже известные слова</span>
                     </button>
                 </div>
             </div>
@@ -306,6 +321,40 @@
         </div>
     </div>
 
+    <!-- «Уже известные слова»: вся лексика серии одним экраном, тап = «это я
+         знаю» (js/episode-known.js). Отметки идут в known-store. -->
+    <div class="edeck-overlay" id="kwords-overlay" hidden>
+        <div class="edeck kwords" role="dialog" aria-modal="true" aria-labelledby="kwords-title">
+            <div class="edeck__head">
+                <div>
+                    <div class="edeck__title" id="kwords-title" data-i18n="kwords.title">Уже известные слова</div>
+                    <div class="edeck__sub" data-i18n="kwords.sub">Отметь знакомые слова этой серии: они не попадут в авто-колоду и зачтутся в покрытие.</div>
+                </div>
+                <button class="edeck__close" id="kwords-close" aria-label="Закрыть">✕</button>
+            </div>
+            <div class="kwords__tools">
+                <label class="kwords__search">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="kwords-search" autocomplete="off" spellcheck="false"
+                           data-i18n-placeholder="kwords.search" placeholder="Поиск по слову или чтению…">
+                </label>
+                <div class="kwords__filters" id="kwords-filters">
+                    <button type="button" class="kwords__filter is-on" data-filter="all" data-i18n="kwords.filter.all">Все</button>
+                    <button type="button" class="kwords__filter" data-filter="new" data-i18n="kwords.filter.new">Новые</button>
+                    <button type="button" class="kwords__filter" data-filter="known" data-i18n="kwords.filter.known">Знаю</button>
+                </div>
+            </div>
+            <div class="edeck__toolbar">
+                <button type="button" class="kwords__all" id="kwords-all" data-i18n="kwords.markVisible">Отметить видимые</button>
+                <span class="edeck__count" id="kwords-count"></span>
+            </div>
+            <div class="edeck__list kwords__list" id="kwords-list"></div>
+            <div class="edeck__foot">
+                <button class="edeck__create" id="kwords-save" data-i18n="kwords.saveIdle">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
     <div class="word-popup" id="word-popup" hidden>
         <div class="word-popup__head">
             <div>
@@ -387,6 +436,7 @@
 <script src="../js/player.js" defer></script>
 <script src="../js/player-ui.js" defer></script>
 <script src="../js/episode-deck.js" defer></script>
+<script src="../js/episode-known.js" defer></script>
 <script src="../js/stats.js" defer></script>
 </body>
 </html>

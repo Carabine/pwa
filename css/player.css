@@ -2926,6 +2926,232 @@ html, body {
 /* Во время сохранения список «замирает» — видно, что идёт работа. */
 .edeck--busy .edeck__list { opacity: 0.55; pointer-events: none; }
 
+/* ---------- «⋯» рядом с авто-колодой и её меню (js/episode-known.js) ---------- */
+/* Группа «Авто-колода + ⋯» показывается целиком, когда субтитры загружены. */
+.transcript__deck {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.transcript__deck[hidden] { display: none; }
+
+.transcript__fix--more {
+    padding: 3px 8px;
+    font-size: 14px;
+    line-height: 15px;
+    letter-spacing: 1px;
+}
+
+/* Выпадашка привязана к шапке субтитров: она задаёт и правый край, и предел
+   ширины — в кино-режиме колонка узкая, и меню не должно вылезать за панель
+   (у .transcript overflow: hidden — вылезшее просто обрежется). */
+.transcript__header { position: relative; }
+
+.edeck-menu {
+    position: absolute;
+    top: calc(100% - 2px);
+    right: 12px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    width: max-content;
+    min-width: min(240px, 100%);
+    max-width: calc(100% - 24px);
+    padding: 6px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+}
+
+/* display: flex сильнее UA-правила для [hidden] — прячем явно. */
+.edeck-menu[hidden] { display: none; }
+
+.edeck-menu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 10px;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: 1.3;
+    cursor: pointer;
+}
+
+.edeck-menu button:hover { background: var(--bg); }
+.edeck-menu button svg { flex-shrink: 0; opacity: 0.7; }
+
+/* ---------- «Уже известные слова»: вся лексика серии одним экраном ---------- */
+/* Слова показываем плитками, а не строками: их сотни, и задача одна — быстро
+   пробежать глазами и потыкать знакомые. Перевод не тянем намеренно — это
+   сотни запросов к словарю ради слов, которые пользователь и так узнаёт. */
+.kwords { width: min(720px, 100%); }
+
+.kwords__tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px 0;
+    flex-wrap: wrap;
+}
+
+.kwords__search {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex: 1 1 180px;
+    min-width: 0;
+    padding: 6px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.kwords__search svg { flex-shrink: 0; }
+
+.kwords__search input {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+}
+
+.kwords__filters {
+    display: inline-flex;
+    gap: 4px;
+    padding: 3px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+}
+
+.kwords__filter {
+    background: none;
+    border: none;
+    border-radius: 999px;
+    padding: 4px 10px;
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.kwords__filter.is-on {
+    background: var(--card);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+}
+
+.kwords__all {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--pink);
+    font-family: var(--font);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.kwords__list {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 8px;
+    padding: 12px 16px;
+}
+
+.kwords__empty {
+    width: 100%;
+    padding: 24px 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+}
+
+.kw-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 6px 12px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text);
+    font-family: var(--font);
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition);
+}
+
+.kw-chip:hover { border-color: var(--pink); }
+
+.kw-chip.is-on {
+    border-color: var(--pink);
+    background: rgba(124, 140, 248, 0.16);
+}
+
+/* Слово уже в коллекции (есть карточка): выглядит отмеченным, но снять нельзя —
+   карточки живут на странице «Мои слова», а не здесь. */
+.kw-chip:disabled {
+    cursor: default;
+    opacity: 0.55;
+    border-style: dashed;
+}
+
+.kw-chip__word {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.kw-chip__read {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.kw-chip__freq {
+    font-size: 10.5px;
+    color: var(--text-dim);
+}
+
+.kw-chip__badge {
+    font-size: 9.5px;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 1px 5px;
+    background: rgba(110, 231, 183, 0.14);
+    color: #6ee7b7;
+}
+
+.kw-chip__badge--n4 {
+    background: rgba(147, 197, 253, 0.14);
+    color: #93c5fd;
+}
+
+@media (max-width: 900px) {
+    .kwords__tools { padding: 8px 12px 0; }
+    .kwords__list { padding: 10px 12px; gap: 6px; }
+    .kw-chip { padding: 6px 10px; }
+}
+
 /* Низкий экран (телефон в альбомной, кино-режим): шапка с подзаголовком и
    крупный футер съедали почти весь список — ужимаем их, чтобы строк было видно
    больше, чем две. */

@@ -31,8 +31,11 @@
     ]);
 
     const btn = document.getElementById('episode-deck-btn');
+    // Показываем/прячем всю группу кнопок (колода + «⋯»), а не одну кнопку:
+    // меню действий рядом живёт по тем же условиям (js/episode-known.js).
+    const wrap = document.getElementById('episode-deck-wrap');
     const overlay = document.getElementById('edeck-overlay');
-    if (!btn || !overlay) return;
+    if (!btn || !wrap || !overlay) return;
 
     const listEl = document.getElementById('edeck-list');
     const subEl = document.getElementById('edeck-sub');
@@ -57,13 +60,20 @@
         return jlptPromise;
     }
 
+    // Тот же статичный словарь уровней нужен модалке «Уже известные слова»
+    // (js/episode-known.js) — отдаём загрузчик наружу, чтобы не тянуть файл дважды.
+    window.JlptLevels = {
+        load: loadJlpt,
+        level: (word) => (jlptMap && jlptMap[word]) || 0,
+    };
+
     // Кнопка появляется, когда субтитры серии загружены. Прямого события у
     // плеера нет — дешёвый поллинг раз в секунду (и скрываем при смене серии).
     setInterval(() => {
         // state — глобальная const из player.js (мы подключены после него).
         const has = !!(state.cues && state.cues.length);
-        if (btn.hidden === !has) return;
-        btn.hidden = !has;
+        if (wrap.hidden === !has) return;
+        wrap.hidden = !has;
     }, 1000);
 
     // ---------- Отбор кандидатов ----------
