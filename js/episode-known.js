@@ -6,6 +6,10 @@
 // (localStorage): слово сразу подсвечивается как знакомое, поднимает процент
 // покрытия серии и больше не предлагается в авто-колоде.
 //
+// Слова, на которые уже заведена карточка, в список не попадают: сделать с
+// ними здесь всё равно нечего (снять «знаю» = удалить карточку, а карточки
+// живут на странице «Мои слова»), и нетронутые плитки только сбивали.
+//
 // Переводы намеренно НЕ тянем: это сотни запросов к словарю (общий лимит — 300
 // за минуту на IP) ради слов, которые пользователь и так узнаёт в лицо. Чтение
 // и уровень JLPT берём локально — из токенов сабов и data/jlpt-n5n4.json.
@@ -61,10 +65,11 @@
 
     // ---------- Слова серии ----------
 
-    let words = [];          // [{ base, reading, romaji, count, level, card }]
+    let words = [];          // [{ base, reading, romaji, count, level }]
     let picked = new Set();  // отмечено сейчас (включая уже известные до открытия)
     let initial = new Set(); // что было известно на момент открытия — с ним и сверяем
     let filter = 'all';
+    let skipped = 0;         // слов серии, отсеянных как «уже есть карточка»
 
     function collectWords() {
         const byBase = new Map();
@@ -75,7 +80,7 @@
                 if (!base) continue;
                 let e = byBase.get(base);
                 if (!e) {
-                    e = { base, reading: '', romaji: '', count: 0, level: 0, card: false };
+                    e = { base, reading: '', romaji: '', count: 0, level: 0 };
                     byBase.set(base, e);
                 }
                 e.count++;
@@ -86,12 +91,16 @@
                 }
             }
         }
-        const list = [...byBase.values()];
+        // Слова, на которые уже заведена карточка, в список не берём вовсе.
+        // Раньше они показывались нетронутыми плитками, и это только сбивало:
+        // непонятно, почему не нажимаются (переключать их нельзя — снять «знаю»
+        // здесь означало бы удалить карточку, а карточки живут на странице
+        // «Мои слова»). Отметки known-store, наоборот, снимаются свободно.
+        const list = [...byBase.values()]
+            .filter((e) => !(state.knownWords.has(e.base) && !KnownWords.has(e.base)));
+        skipped = byBase.size - list.length;
         for (const e of list) {
             e.level = window.JlptLevels ? JlptLevels.level(e.base) : 0;
-            // «Уже знаю» из known-store снять можно, карточку из плеера — нет:
-            // она живёт на странице «Мои слова».
-            e.card = state.knownWords.has(e.base) && !KnownWords.has(e.base);
             if (typeof kanaToRomaji === 'function') {
                 e.romaji = kanaToRomaji(e.reading || e.base).toLowerCase();
             }
@@ -149,10 +158,6 @@
         chip.type = 'button';
         chip.className = 'kw-chip' + (picked.has(e.base) ? ' is-on' : '');
         chip.dataset.base = e.base;
-        if (e.card) {
-            chip.disabled = true;
-            chip.title = t('kwords.hasCard');
-        }
 
         const word = document.createElement('span');
         word.className = 'kw-chip__word';
@@ -199,9 +204,8 @@
         }
         // Кнопка-массовка работает по видимым: пока хоть одно не отмечено —
         // «отметить», когда отмечены все — «снять».
-        const togglable = visible.filter((e) => !e.card);
-        const allOn = togglable.length > 0 && togglable.every((e) => picked.has(e.base));
-        allBtn.hidden = togglable.length === 0;
+        const allOn = visible.length > 0 && visible.every((e) => picked.has(e.base));
+        allBtn.hidden = visible.length === 0;
         allBtn.dataset.mode = allOn ? 'off' : 'on';
         allBtn.textContent = allOn ? t('kwords.unmarkVisible') : t('kwords.markVisible');
         updateFoot();
@@ -209,7 +213,7 @@
 
     listEl.addEventListener('click', (e) => {
         const chip = e.target.closest('.kw-chip');
-        if (!chip || chip.disabled) return;
+        if (!chip) return;
         const base = chip.dataset.base;
         if (picked.has(base)) picked.delete(base);
         else picked.add(base);
@@ -220,7 +224,6 @@
     allBtn.addEventListener('click', () => {
         const on = allBtn.dataset.mode === 'on';
         for (const e of words.filter(matches)) {
-            if (e.card) continue;
             if (on) picked.add(e.base);
             else picked.delete(e.base);
         }
@@ -292,7 +295,10 @@
 
         words = collectWords();
         if (!words.length) {
-            showSnackbar(t('kwords.none'), { duration: 3500 });
+            // Пусто по двум разным причинам: субтитры ещё не разобраны или на
+            // все слова серии уже заведены карточки — второе стоит сказать
+            // отдельно, иначе выглядит как поломка.
+            showSnackbar(t(skipped ? 'kwords.allCards' : 'kwords.none'), { duration: 3500 });
             return;
         }
         picked = new Set(words.filter((e) => state.knownWords.has(e.base)).map((e) => e.base));

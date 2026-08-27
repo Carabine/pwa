@@ -182,7 +182,7 @@ window.I18N_EN = {
         'kwords.savedRemoved': 'Unmarked: {r}',
         'kwords.none': 'This episode’s words aren’t parsed yet',
         'kwords.empty': 'Nothing found',
-        'kwords.hasCard': 'Already in your collection — cards live on the “My words” page',
+        'kwords.allCards': 'Every word from this episode is already in your collection',
         'subs.sync.title': 'Subtitle sync',
         'subs.precise.btn': '🎯 Precisely sync to audio',
         'subs.precise.hint': 'We’ll find the exact offset from the audio and save it forever for this episode.',
