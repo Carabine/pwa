@@ -2431,62 +2431,63 @@ html, body {
     }
 
     /* Нижняя панель контролов на телефоне занимала слишком много кадра
-       (почти 2/5 видео) — делаем её компактной. */
+       (68px — почти треть видео). Ужимаем ещё: 53px, при этом кнопки остаются
+       28px — нижняя граница для уверенного попадания пальцем. */
     .player-ui__bottom {
-        padding: 10px 8px 6px;
+        padding: 6px 8px 5px;
     }
 
     .player-ui__row {
-        gap: 3px;
-        margin-top: 4px;
+        gap: 2px;
+        margin-top: 2px;
     }
 
-    /* Кнопки 32px и gap 3px — попап громкости доводим до кнопки Play */
+    /* Кнопки 28px и gap 2px — попап громкости доводим до кнопки Play */
     .player-ui__vol.is-open .player-ui__vol-popup {
-        left: -35px;
+        left: -30px;
     }
 
     .player-ui__btn {
-        width: 32px;
-        height: 32px;
-        border-radius: 9px;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
     }
 
     .player-ui__btn svg {
-        width: 19px;
-        height: 19px;
+        width: 17px;
+        height: 17px;
     }
 
     .player-ui__time {
-        font-size: 11px;
-        margin-left: 5px;
+        font-size: 10.5px;
+        margin-left: 4px;
     }
 
     .player-ui__speed,
     .player-ui__quality {
-        min-width: 36px;
-        height: 24px;
-        padding: 0 8px;
-        font-size: 11.5px;
+        min-width: 30px;
+        height: 21px;
+        padding: 0 7px;
+        font-size: 10.5px;
     }
 
     /* Полоса перемотки: тонкая, но по ней всё ещё легко попасть */
     .player-ui__seek {
-        height: 16px;
+        height: 12px;
     }
 
     .player-ui__seek::before,
     .player-ui__seek-buffered,
     .player-ui__seek-fill {
-        height: 4px;
+        height: 3px;
     }
 
     /* На тач-экране нет hover — ползунок позиции показываем всегда */
     .player-ui__seek-knob {
         transform: translateY(-50%) scale(1);
-        width: 13px;
-        height: 13px;
-        right: -6.5px;
+        width: 11px;
+        height: 11px;
+        right: -5.5px;
     }
 
     /* Слайдер громкости на таче раскрывается тапом по кнопке звука (класс
