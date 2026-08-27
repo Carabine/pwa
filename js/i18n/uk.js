@@ -214,6 +214,7 @@ window.I18N_UK = {
         'explain.translation': 'Переклад',
         'explain.parts': 'По частинах',
         'explain.grammar': 'Граматика',
+        'explain.mnemonics': 'Як запам’ятати',
         'controls.reading.title': 'Читання над словами: кана ⇄ ромадзі',
         'controls.reading.kana': 'Кана над словами',
         'controls.reading.romaji': 'Ромадзі над словами',

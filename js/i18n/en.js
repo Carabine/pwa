@@ -214,6 +214,7 @@ window.I18N_EN = {
         'explain.translation': 'Translation',
         'explain.parts': 'Piece by piece',
         'explain.grammar': 'Grammar',
+        'explain.mnemonics': 'How to remember',
         'controls.reading.title': 'Reading above words: kana ⇄ romaji',
         'controls.reading.kana': 'Kana above words',
         'controls.reading.romaji': 'Romaji above words',

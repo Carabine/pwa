@@ -117,6 +117,36 @@
             }
             section(t('explain.grammar'), list);
         }
+        // Блок «как запомнить»: иероглиф + слово-ключ, ключи-радикалы и короткая
+        // история — та же логика, что у WaniKani/jpdb и метода Хайсига.
+        if (data.mnemonics?.length) {
+            const list = document.createElement('div');
+            for (const m of data.mnemonics) {
+                const row = document.createElement('div');
+                row.className = 'explain__part explain__mnemo';
+                const jp = document.createElement('span');
+                jp.className = 'explain__jp';
+                jp.textContent = m.kanji;
+                const key = document.createElement('span');
+                key.className = 'explain__reading';
+                key.textContent = m.keyword ? ' ' + m.keyword : '';
+                row.append(jp, key);
+                if (m.parts) {
+                    const parts = document.createElement('div');
+                    parts.className = 'explain__keys';
+                    parts.textContent = m.parts;
+                    row.appendChild(parts);
+                }
+                if (m.story) {
+                    const story = document.createElement('div');
+                    story.className = 'explain__meaning';
+                    story.textContent = m.story;
+                    row.appendChild(story);
+                }
+                list.appendChild(row);
+            }
+            section(t('explain.mnemonics'), list);
+        }
     }
 
     // Модалка ИИ-разбора: один оверлей на всё приложение, переиспользуем его.

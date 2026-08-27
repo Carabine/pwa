@@ -2725,6 +2725,37 @@ function renderExplainSection(title, node) {
     popupExplain.appendChild(sec);
 }
 
+// Блок «как запомнить»: иероглиф + слово-ключ, из каких ключей собран и
+// короткая история — та же логика, что у WaniKani/jpdb и метода Хайсига.
+function buildMnemonics(items) {
+    const list = document.createElement('div');
+    for (const m of items) {
+        const row = document.createElement('div');
+        row.className = 'explain__part explain__mnemo';
+        const jp = document.createElement('span');
+        jp.className = 'explain__jp';
+        jp.textContent = m.kanji;
+        const key = document.createElement('span');
+        key.className = 'explain__reading';
+        key.textContent = m.keyword ? ' ' + m.keyword : '';
+        row.append(jp, key);
+        if (m.parts) {
+            const parts = document.createElement('div');
+            parts.className = 'explain__keys';
+            parts.textContent = m.parts;
+            row.appendChild(parts);
+        }
+        if (m.story) {
+            const story = document.createElement('div');
+            story.className = 'explain__meaning';
+            story.textContent = m.story;
+            row.appendChild(story);
+        }
+        list.appendChild(row);
+    }
+    return list;
+}
+
 function renderExplain(data) {
     popupExplain.innerHTML = '';
 
@@ -2784,6 +2815,10 @@ function renderExplain(data) {
             list.appendChild(row);
         }
         renderExplainSection(t('explain.grammar'), list);
+    }
+
+    if (data.mnemonics?.length) {
+        renderExplainSection(t('explain.mnemonics'), buildMnemonics(data.mnemonics));
     }
 
     popupExplain.hidden = false;

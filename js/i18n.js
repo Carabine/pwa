@@ -218,6 +218,7 @@ const I18N = {
         'explain.translation': 'Перевод',
         'explain.parts': 'По частям',
         'explain.grammar': 'Грамматика',
+        'explain.mnemonics': 'Как запомнить',
         'controls.reading.title': 'Чтение над словами: кана ⇄ ромадзи',
         'controls.reading.kana': 'Кана над словами',
         'controls.reading.romaji': 'Ромадзи над словами',
