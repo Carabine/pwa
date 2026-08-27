@@ -761,6 +761,7 @@
 
         function renderFront() {
             dropReveal();           // очередь прошлой карточки больше не нужна
+            releaseActiveClip();    // клип прошлой карточки больше не нужен
             resetFitCache();
             cardArea().classList.remove('is-arming');
             els.back.innerHTML = '';
@@ -1261,13 +1262,14 @@
             if (video.readyState >= 1) wrap.classList.remove('clip-player--sizing');
             else video.addEventListener('loadedmetadata',
                 () => wrap.classList.remove('clip-player--sizing'), { once: true });
-            // blob-URL из IndexedDB освобождаем, как только видео загрузило данные
-            // (элемент дальше держит blob сам) — иначе URL'ы копились бы до
-            // перезагрузки вкладки. Для http-ссылок revoke — безвредный no-op.
-            if (typeof src === 'string' && src.startsWith('blob:')) {
-                if (video.readyState >= 2) { try { URL.revokeObjectURL(src); } catch (e) { /* ок */ } }
-                else video.addEventListener('loadeddata', () => URL.revokeObjectURL(src), { once: true });
-            }
+            // blob-URL держим живым, пока карточка на экране, и отзываем при
+            // переходе к следующей (releaseActiveClip). Раньше он отзывался сразу
+            // после загрузки — расчёт был на то, что элемент дальше держит blob
+            // сам. На десктопе так и есть, а мобильные браузеры при повторном
+            // запуске (клип доиграл, человек жмёт «play» ещё раз) заново читают
+            // источник — и упирались в отозванную ссылку: play() тихо
+            // отклонялся, кнопка выглядела сломанной.
+            if (typeof src === 'string' && src.startsWith('blob:')) activeClipUrl = src;
             // Стартом/остановкой управляем вручную (нужно окно [tStart..tEnd]).
             video.autoplay = false;
             video.loop = false;
@@ -1602,6 +1604,7 @@
             // Открываем ли ответ впервые (а не перерисовываем уже открытый).
             const opening = !els.back.classList.contains('back-side--visible');
             resetFitCache();        // оборот пересобирается — прошлый замер не про него
+            releaseActiveClip();    // старое видео сейчас будет выброшено вместе с оборотом
             // Кадр подготовки: оборот собирается спрятанным и без анимации.
             if (opening) cardArea().classList.add('is-arming');
             els.back.innerHTML = '';
@@ -2106,6 +2109,15 @@
             // вовсе. Держим его крошечным и прозрачным (см. .clip-warm).
             (document.querySelector('.card-area') || document.body).appendChild(video);
             warmedClip = { id: w.id, video, url };
+        }
+
+        // blob-URL клипа, который сейчас показан в карточке. Освобождаем его при
+        // смене карточки: раньше этого места элемент обязан читать источник.
+        let activeClipUrl = null;
+        function releaseActiveClip() {
+            if (!activeClipUrl) return;
+            try { URL.revokeObjectURL(activeClipUrl); } catch (e) { /* уже отозван */ }
+            activeClipUrl = null;
         }
 
         function takeWarmedClip(id) {
