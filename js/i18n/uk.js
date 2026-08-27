@@ -175,7 +175,6 @@ window.I18N_UK = {
         'kwords.filter.known': 'Знаю',
         'kwords.markVisible': 'Позначити видимі',
         'kwords.unmarkVisible': 'Зняти видимі',
-        'kwords.selected': 'позначено {n} з {m}',
         'kwords.saveIdle': 'Зберегти',
         'kwords.save': 'Зберегти ({n})',
         'kwords.saved': 'Позначено як відомі: +{a}',

@@ -179,7 +179,6 @@ const I18N = {
         'kwords.filter.known': 'Знаю',
         'kwords.markVisible': 'Отметить видимые',
         'kwords.unmarkVisible': 'Снять видимые',
-        'kwords.selected': 'отмечено {n} из {m}',
         'kwords.saveIdle': 'Сохранить',
         'kwords.save': 'Сохранить ({n})',
         'kwords.saved': 'Отмечено как известные: +{a}',

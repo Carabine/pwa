@@ -175,7 +175,6 @@ window.I18N_EN = {
         'kwords.filter.known': 'Known',
         'kwords.markVisible': 'Mark visible',
         'kwords.unmarkVisible': 'Unmark visible',
-        'kwords.selected': '{n} of {m} marked',
         'kwords.saveIdle': 'Save',
         'kwords.save': 'Save ({n})',
         'kwords.saved': 'Marked as known: +{a}',

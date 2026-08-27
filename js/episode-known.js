@@ -24,7 +24,6 @@
     const knownItem = document.getElementById('edeck-menu-known');
     const listEl = document.getElementById('kwords-list');
     const filtersEl = document.getElementById('kwords-filters');
-    const countEl = document.getElementById('kwords-count');
     const allBtn = document.getElementById('kwords-all');
     const saveBtn = document.getElementById('kwords-save');
     const closeBtn = document.getElementById('kwords-close');
@@ -126,9 +125,19 @@
         return { added, removed };
     }
 
+    // Счётчики у вкладок — они же заменяют бывшую подпись «отмечено N из M»:
+    // «Знаю» и есть число отмеченных, «Все» — сколько слов в серии. Числа
+    // живые: тап по плитке списка не перерисовывает, поэтому обновляем здесь.
+    function updateTabs() {
+        const known = words.filter((e) => picked.has(e.base)).length;
+        const n = { all: words.length, new: words.length - known, known };
+        filtersEl.querySelectorAll('.kwords__filter').forEach((b) => {
+            b.querySelector('i').textContent = n[b.dataset.filter];
+        });
+    }
+
     function updateFoot() {
-        countEl.textContent = t('kwords.selected')
-            .replace('{n}', picked.size).replace('{m}', words.length);
+        updateTabs();
         const { added, removed } = changes();
         const n = added + removed;
         saveBtn.disabled = n === 0;

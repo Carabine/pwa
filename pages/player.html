@@ -332,19 +332,20 @@
                 </div>
                 <button class="edeck__close" id="kwords-close" aria-label="Закрыть">✕</button>
             </div>
-            <!-- Одна строка: фильтр слева, массовая отметка и счётчик справа.
+            <!-- Одна строка: вкладки-фильтры со счётчиками слева, массовая
+                 отметка справа. Счётчик отмеченных отдельной подписи не требует —
+                 его показывает вкладка «Знаю» (её число живое).
                  Поиска здесь нет намеренно — слова отсортированы (незнакомые
-                 сверху, по частоте), и глазами их находят быстрее, чем набором. -->
-            <div class="kwords__tools">
+                 сверху, по частоте), и глазами их находят быстрее, чем набором.
+                 Подпись вкладки лежит в <span>: applyI18n переписывает
+                 textContent целиком и стёр бы счётчик. -->
+            <div class="kwords__tabs">
                 <div class="kwords__filters" id="kwords-filters">
-                    <button type="button" class="kwords__filter is-on" data-filter="all" data-i18n="kwords.filter.all">Все</button>
-                    <button type="button" class="kwords__filter" data-filter="new" data-i18n="kwords.filter.new">Новые</button>
-                    <button type="button" class="kwords__filter" data-filter="known" data-i18n="kwords.filter.known">Знаю</button>
+                    <button type="button" class="kwords__filter is-on" data-filter="all"><span data-i18n="kwords.filter.all">Все</span><i></i></button>
+                    <button type="button" class="kwords__filter" data-filter="new"><span data-i18n="kwords.filter.new">Новые</span><i></i></button>
+                    <button type="button" class="kwords__filter" data-filter="known"><span data-i18n="kwords.filter.known">Знаю</span><i></i></button>
                 </div>
-                <div class="kwords__tools-right">
-                    <button type="button" class="kwords__all" id="kwords-all" data-i18n="kwords.markVisible">Отметить видимые</button>
-                    <span class="edeck__count" id="kwords-count"></span>
-                </div>
+                <button type="button" class="kwords__all" id="kwords-all" data-i18n="kwords.markVisible">Отметить видимые</button>
             </div>
             <div class="edeck__list kwords__list" id="kwords-list"></div>
             <div class="edeck__foot">
