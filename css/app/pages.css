@@ -519,24 +519,43 @@
 }
 
 /* ---- Выбор формата экспорта в Anki ---- */
+/* Подпись стоит НАД полем, а не сбоку: это <label>, а глобальный стиль лейблов
+   капсит текст (ЧТО ВЫГРУЖАЕМ) — в модалке, где и заголовок, и подсказки идут
+   обычным регистром, метка смотрелась чужой. Плюс ряд «подпись слева + список
+   справа» отдавал под одно слово половину ширины, и поле оказывалось короче
+   кнопок под ним. */
 .anki-export__deck {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: block;
     margin-bottom: 14px;
     color: var(--text-muted);
     font-size: 13px;
+    text-transform: none;
+    letter-spacing: normal;
 }
+.anki-export__deck > span {
+    display: block;
+    margin-bottom: 6px;
+}
+/* Свой шеврон (как у .settings-select): нативная стрелка Chrome липнет к рамке
+   и игнорирует padding-right — визуально выглядело как поле без отступа. */
 .anki-export__deck select {
-    flex: 1;
+    display: block;
+    width: 100%;
     min-width: 0;
-    padding: 9px 12px;
-    background: var(--surface);
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding: 11px 40px 11px 14px;   /* левый отступ совпал с .deck-editor__input */
+    background-color: var(--surface);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 13px center;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text);
-    font-size: 14px;
+    font-size: 15px;
     font-family: inherit;
+    cursor: pointer;
 }
 .anki-export__deck select:focus { outline: none; border-color: var(--primary); }
 .anki-export__deck select:disabled { opacity: 0.5; }
@@ -563,6 +582,30 @@
     color: var(--text-muted);
     font-size: 13px;
     line-height: 1.45;
+}
+
+/* Сборка идёт до пары минут, и на это время кнопки гаснут. Без вращающегося
+   кружка модалка выглядела просто зависшей, поэтому строка статуса — не
+   обычный абзац, а центрированная строка со спиннером. */
+.anki-export__status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.anki-export__status[hidden] { display: none; }
+.anki-export__status::before {
+    content: '';
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: clip-spin 0.7s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    .anki-export__status::before { animation: none; }
 }
 
 /* ---- Модалки известных слов (импорт и просмотр) ---- */
