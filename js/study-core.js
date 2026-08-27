@@ -38,6 +38,9 @@
         // ?clip=1|2 — примерить другой лоадер видео в карточке.
         const cl = params.get('clip');
         if (cl === '1' || cl === '2') document.documentElement.classList.add('clip-load-' + cl);
+        // ?noblur=1 — убрать размытие под ИИ-разбором (проверка догадки о том,
+        // что именно оно роняет слой видео на телефоне).
+        if (params.get('noblur') === '1') document.documentElement.classList.add('no-blur');
     } catch { /* без URLSearchParams остаёмся на базовом темпе */ }
 
     // ---- ИИ-разбор предложения на обороте карточки -------------------------
@@ -1643,9 +1646,23 @@
                     .then((blob) => afterReveal(() => {
                     if (!current || current.word.id !== wid) return;
                     if (!els.back.classList.contains('back-side--visible')) return;
-                    // Элемент уже прогрет на вопросе — показываем его как есть:
-                    // он и файл прочитал, и стоит на нужном кадре.
-                    const warm = takeWarmedClip(wid);
+                    // Элемент берём ТОЛЬКО если он реально загрузился. iOS
+                    // игнорирует preload у video, созданного без действия
+                    // человека: такой элемент так и остаётся пустым, и,
+                    // переиспользованный, показывал бы чёрный кадр, который не
+                    // играет. readyState < 2 — выбрасываем и строим обычный.
+                    const warmCandidate = takeWarmedClip(wid);
+                    let warm = null;
+                    if (warmCandidate) {
+                        if (warmCandidate.video.readyState >= 2) {
+                            warm = warmCandidate;
+                        } else {
+                            if (warmCandidate.video.parentNode) {
+                                warmCandidate.video.parentNode.removeChild(warmCandidate.video);
+                            }
+                            try { URL.revokeObjectURL(warmCandidate.url); } catch (e) { /* ок */ }
+                        }
+                    }
                     // Скачать не вышло (нет сети) — последняя попытка: играем
                     // прямо с сервера, как раньше.
                     const playUrl = warm ? warm.url : (blob ? URL.createObjectURL(blob) : src);

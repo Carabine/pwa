@@ -1439,6 +1439,16 @@
     animation: explain-fade 0.15s ease;
 }
 
+/* Полноэкранный backdrop-filter поверх играющего видео — известная причина
+   «видео стало чёрным» на части мобильных GPU (слой видео теряется при
+   перекомпозиции). Проверить это на своём телефоне можно без деплоя:
+   ?noblur=1 убирает размытие, оставляя более плотную подложку. */
+:root.no-blur .explain-modal {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(5, 5, 10, 0.82);
+}
+
 /* display:flex перебивает штатное поведение атрибута hidden — прячем явно */
 .explain-modal[hidden] {
     display: none;
