@@ -208,7 +208,18 @@
         allBtn.hidden = visible.length === 0;
         allBtn.dataset.mode = allOn ? 'off' : 'on';
         allBtn.textContent = allOn ? t('kwords.unmarkVisible') : t('kwords.markVisible');
+        updateFade();
         updateFoot();
+    }
+
+    // Затухание нижнего края списка (.edeck__list) означает «дальше есть ещё».
+    // Снимаем его не только на самом низу, но и когда прокручивать нечего:
+    // на коротком списке (или широком окне, где всё влезло в пару рядов) низ
+    // выцветал без причины — последний ряд плиток выглядел выключенным.
+    function updateFade() {
+        const scrollable = listEl.scrollHeight > listEl.clientHeight + 1;
+        const atBottom = listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - 2;
+        listEl.classList.toggle('is-bottom', !scrollable || atBottom);
     }
 
     listEl.addEventListener('click', (e) => {
@@ -240,12 +251,10 @@
         renderList();
     });
 
-    // Затухание нижнего края списка (.edeck__list) снимаем на самом низу —
-    // иначе последний ряд плиток выглядит блёклым.
-    listEl.addEventListener('scroll', () => {
-        const atBottom = listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - 2;
-        listEl.classList.toggle('is-bottom', atBottom);
-    });
+    listEl.addEventListener('scroll', updateFade);
+    // Поворот экрана, кино-режим, смена ширины окна — плиток в ряду становится
+    // больше или меньше, и список может перестать (или начать) прокручиваться.
+    window.addEventListener('resize', () => { if (!overlay.hidden) updateFade(); });
 
     // ---------- Открытие и закрытие ----------
 
@@ -317,6 +326,9 @@
         overlay.hidden = false;
         layer = AnimeiBack.open(hideModal);
         listEl.scrollTop = 0;
+        // Только теперь у списка есть размеры: пока оверлей был hidden, он не
+        // занимал места, и «нужно ли затухание низа» посчиталось бы неверно.
+        updateFade();
         if (window.animeiTrack) window.animeiTrack('known_pick', 'open:' + words.length);
 
         // Уровень JLPT — украшение: словарь мог ещё не загрузиться (первое

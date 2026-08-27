@@ -2980,7 +2980,14 @@ html, body {
     font-weight: 600;
 }
 
-.edeck__create:disabled { opacity: 0.6; }
+/* Неактивная кнопка градиент не носит: под opacity он всё равно оставался
+   яркой «главной кнопкой», и модалка, где ещё ничего не отмечено, выглядела
+   так, будто кнопка просто не нажимается. Плоская подложка читается честнее. */
+.edeck__create:disabled {
+    background: var(--bg);
+    color: var(--text-dim);
+    opacity: 1;
+}
 
 /* Во время сохранения список «замирает» — видно, что идёт работа. */
 .edeck--busy .edeck__list { opacity: 0.55; pointer-events: none; }
@@ -3194,6 +3201,12 @@ html, body {
     border-color: transparent;
     background: var(--bg);
     color: var(--text-muted);
+}
+
+/* В светлой теме фон страницы отличается от карточки всего на пару процентов —
+   отметка почти сливалась с неотмеченной плиткой. Здесь нужен свой серый. */
+:root[data-theme="light"] .kw-chip.is-on {
+    background: rgba(15, 23, 42, 0.07);
 }
 
 .kw-chip.is-on .kw-chip__badge,
