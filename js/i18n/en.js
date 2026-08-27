@@ -78,6 +78,7 @@ window.I18N_EN = {
         'auth.toRegister': 'No account? Create one',
         'auth.toLogin': 'Already have an account? Sign in',
         'auth.loggedOut': 'You are signed out',
+        'auth.sessionExpired': 'Session expired — please sign in again',
         'auth.optional': 'Signing in is optional — you can learn without an account',
         'auth.back': '← Back to the app',
         'auth.needFields': 'Enter your email and password',

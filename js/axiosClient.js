@@ -21,7 +21,7 @@ function processQueue(error) {
     failedQueue = [];
 }
 
-function createAxiosClient({ options, getCurrentAccessToken, getCurrentRefreshToken, refreshTokenUrl, logout, setRefreshedTokens }) {
+function createAxiosClient({ options, getCurrentAccessToken, getCurrentRefreshToken, refreshTokenUrl, endSession, setRefreshedTokens }) {
     const client = axios.create(options);
 
     client.interceptors.request.use(
@@ -59,50 +59,69 @@ function createAxiosClient({ options, getCurrentAccessToken, getCurrentRefreshTo
             const originalRequest = error.config;
             if (!originalRequest) return Promise.reject(error);
 
+            // Про сессию говорит только 401 с TokenExpiredError. Всё остальное
+            // (503 от перезапуска бэкенда, 429 лимитера, обрыв сети) к токенам
+            // отношения не имеет — молча отдаём ошибку вызывающему коду.
+            const expired = error.response?.status === 401
+                && error.response?.data?.message === 'TokenExpiredError';
+            if (!expired || originalRequest.url === refreshTokenUrl) return Promise.reject(error);
+
             originalRequest.headers = JSON.parse(JSON.stringify(originalRequest.headers || {}));
             const refreshToken = await getCurrentRefreshToken();
-
-            const handleError = (error) => {
-                processQueue(error);
-                logout();
+            if (!refreshToken) {
+                // Access есть, refresh нет — восстанавливать нечего.
+                endSession();
                 return Promise.reject(error);
+            }
+
+            // Счётчик попыток вместо флага: одна повторная попытка после обмена
+            // токенов — норма, но зацикливаться нельзя.
+            originalRequest._retry = (originalRequest._retry || 0) + 1;
+            if (originalRequest._retry > 2) return Promise.reject(error);
+
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                }).then(() => client(originalRequest))
+                  .catch((err) => Promise.reject(err));
+            }
+
+            isRefreshing = true;
+
+            // Обмен не удался. Из аккаунта выкидываем ТОЛЬКО если сервер прямо
+            // отказал в refresh-токене (401/403). Раньше сюда же попадали
+            // сетевые сбои и 5xx на перезапуске бэкенда — и сессия умирала на
+            // ровном месте.
+            const onRefreshFailed = (err) => {
+                // Пока мы ходили за парой, токен в хранилище сменился — значит
+                // соседняя страница успела обновиться первой (при переходах в
+                // приложении это обычное дело). Наш отказ не про сессию:
+                // повторяем исходный запрос уже с новым токеном.
+                if (getCurrentRefreshToken() !== refreshToken) {
+                    processQueue(null);
+                    return client(originalRequest);
+                }
+                processQueue(err);
+                if ([401, 403].includes(err?.response?.status)) endSession();
+                return Promise.reject(err);
             };
 
-            if (
-                refreshToken &&
-                error.response?.status === 401 &&
-                error.response.data.message === 'TokenExpiredError' &&
-                originalRequest?.url !== refreshTokenUrl &&
-                originalRequest?._retry !== true
-            ) {
-                if (isRefreshing) {
-                    return new Promise((resolve, reject) => {
-                        failedQueue.push({ resolve, reject });
-                    }).then(() => client(originalRequest))
-                      .catch((err) => Promise.reject(err));
-                }
-
-                isRefreshing = true;
-                originalRequest._retry = true;
-
-                return client
-                    .post(refreshTokenUrl, { refreshToken })
-                    .then((res) => {
-                        setRefreshedTokens({
-                            accessToken: res.data?.accessToken,
-                            refreshToken: res.data?.refreshToken
-                        });
-                        processQueue(null);
-                        return client(originalRequest);
-                    }, handleError)
-                    .finally(() => { isRefreshing = false; });
-            }
-
-            if (error.response?.status === 401 && error.response?.data?.message === 'TokenExpiredError') {
-                return handleError(error);
-            }
-
-            return Promise.reject(error);
+            return client
+                .post(refreshTokenUrl, { refreshToken })
+                .then((res) => {
+                    // Пустой ответ не должен затирать рабочие токены строкой
+                    // "undefined" — тогда следующий заход был бы уже мимо.
+                    if (!res.data?.accessToken || !res.data?.refreshToken) {
+                        return onRefreshFailed(new Error('Empty refresh response'));
+                    }
+                    setRefreshedTokens({
+                        accessToken: res.data.accessToken,
+                        refreshToken: res.data.refreshToken
+                    });
+                    processQueue(null);
+                    return client(originalRequest);
+                }, onRefreshFailed)
+                .finally(() => { isRefreshing = false; });
         }
     );
 
@@ -130,6 +149,19 @@ function logout() {
     storageRemove('animei:isAdmin'); // чтобы у следующего юзера не мигала ссылка «Админка»
 }
 
+// Сессия оборвалась не по нажатию «Выйти», а потому что сервер отказал в
+// обновлении токенов. Молчаливый выход выглядит как баг («меня опять
+// разлогинило») — говорим об этом прямо и подсвечиваем шапку сразу, не дожидаясь
+// перезагрузки страницы.
+function endSession() {
+    if (!getCurrentAccessToken() && !getCurrentRefreshToken()) return;   // уже вышли
+    logout();
+    if (typeof renderAuthState === 'function') renderAuthState();
+    if (typeof showSnackbar === 'function' && typeof t === 'function') {
+        showSnackbar(t('auth.sessionExpired'), { duration: 6000, type: 'error' });
+    }
+}
+
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -148,7 +180,7 @@ const client = createAxiosClient({
     getCurrentAccessToken,
     getCurrentRefreshToken,
     refreshTokenUrl: REFRESH_TOKEN_URL,
-    logout,
+    endSession,
     setRefreshedTokens
 });
 

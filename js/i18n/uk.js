@@ -78,6 +78,7 @@ window.I18N_UK = {
         'auth.toRegister': 'Немає акаунта? Створити',
         'auth.toLogin': 'Уже є акаунт? Увійти',
         'auth.loggedOut': 'Ви вийшли з акаунта',
+        'auth.sessionExpired': 'Сесія завершилась — увійдіть знову',
         'auth.optional': 'Вхід не обов’язковий — вчитися можна й без акаунта',
         'auth.back': '← До застосунку',
         'auth.needFields': 'Введи пошту й пароль',

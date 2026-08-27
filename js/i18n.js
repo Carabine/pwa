@@ -82,6 +82,7 @@ const I18N = {
         'auth.toRegister': 'Нет аккаунта? Создать',
         'auth.toLogin': 'Уже есть аккаунт? Войти',
         'auth.loggedOut': 'Вы вышли из аккаунта',
+        'auth.sessionExpired': 'Сессия истекла — войдите снова',
         'auth.optional': 'Вход не обязателен — учиться можно и без аккаунта',
         'auth.back': '← В приложение',
         'auth.needFields': 'Введи почту и пароль',
