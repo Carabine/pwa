@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.332';
+const APP_VERSION = 'v0.0.333';
 
 /* ========== Кнопка «Назад» закрывает открытый слой ==========
    Сайдбар, модалки, шторки и выпадающие меню — «слои» поверх страницы. На
@@ -231,9 +231,16 @@ if ('serviceWorker' in navigator) {
     let swReloading = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (swReloading) return;
-        // НЕ перезагружаем страницу с видео (плеер): reload обрывал загрузку HLS
-        // («видео не грузится с первого раза»).
-        if (document.querySelector('video')) return;
+        // НЕ перезагружаем, пока видео ИГРАЕТ (плеер): reload обрывал загрузку
+        // HLS («видео не грузится с первого раза»). Раньше условием было простое
+        // наличие <video> на странице, но в карточке обучения он есть почти
+        // всегда (клип и его прогрев) — из-за этого установленное приложение
+        // могло неделями сидеть на старой версии.
+        const playing = Array.prototype.some.call(
+            document.querySelectorAll('video'),
+            (v) => !v.paused && !v.ended && v.readyState > 2,
+        );
+        if (playing) return;
         // НЕ перезагружаем сразу после захода. Приложение многостраничное с
         // network-first — свежие CSS/JS приходят при КАЖДОЙ загрузке страницы, а
         // reload на старте лишь показывал лоадер второй раз («двойной лоадер»:
@@ -245,6 +252,23 @@ if ('serviceWorker' in navigator) {
         swReloading = true;
         window.location.reload();
     });
+
+    // Установленное приложение живёт в фоне неделями: событие load случается
+    // там раз в запуск, а вместе с ним и единственная проверка обновления.
+    // Поэтому проверяем ещё и при каждом возвращении в приложение — не чаще
+    // раза в минуту, чтобы не дёргать сеть на каждое переключение вкладок.
+    let lastSwCheck = 0;
+    function checkSwUpdate() {
+        if (document.visibilityState !== 'visible') return;
+        const now = Date.now();
+        if (now - lastSwCheck < 60000) return;
+        lastSwCheck = now;
+        navigator.serviceWorker.getRegistration()
+            .then((reg) => { if (reg) reg.update(); })
+            .catch(() => { /* нет сети — проверим в следующий раз */ });
+    }
+    document.addEventListener('visibilitychange', checkSwUpdate);
+    window.addEventListener('focus', checkSwUpdate);
 
     window.addEventListener('load', () => {
         // updateViaCache: 'none' — браузер не берёт сам скрипт SW из HTTP-кеша
