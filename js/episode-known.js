@@ -299,6 +299,11 @@
         }
         picked = new Set(words.filter((e) => state.knownWords.has(e.base)).map((e) => e.base));
         initial = new Set(picked);
+        // Незнакомые — наверх: работа идёт именно с ними, а уже известные (и
+        // те, на что есть карточка) внизу — просто для сверки. Порядок считаем
+        // один раз при открытии: иначе отмеченное слово прыгало бы вниз списка
+        // при первом же поиске, и глаз терял бы место.
+        words.sort((a, b) => (initial.has(a.base) ? 1 : 0) - (initial.has(b.base) ? 1 : 0));
         filter = 'all';
         query = '';
         searchEl.value = '';
