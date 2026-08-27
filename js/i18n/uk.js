@@ -337,6 +337,8 @@ window.I18N_UK = {
         'words.exportAnki': 'Експорт в Anki',
         'words.exportAnki.title': 'Готова колода з аудіо або відео з ваших кліпів',
         'words.exportAnki.busy': 'Готуємо колоду…',
+        'words.exportAnki.deck': 'Що вивантажуємо',
+        'words.exportAnki.deckAll': 'Усі слова',
         'words.exportAnki.busyVideo': 'Ріжемо відео… це займе пару хвилин',
         'words.exportAnki.audio': 'Зі звуком',
         'words.exportAnki.audioHint': 'Слово, переклад, приклад і звук із кліпу. Легкий файл',

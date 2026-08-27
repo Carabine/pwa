@@ -929,13 +929,37 @@ function audioBlobExt(blob) {
     return 'webm';
 }
 
-// Выбор формата колоды. Видео тяжелее в разы и собирается дольше — поэтому
+// Что выгружать: все слова, конкретная наша колода или «Без колоды».
+// Считаем по загруженному списку слов — так цифры совпадают с тем, что видно
+// на странице (в колоде могли остаться id уже удалённых слов).
+function ankiDeckOptions() {
+    const decks = window.Decks ? Decks.all() : [];
+    const opts = [{ id: '', label: t('words.exportAnki.deckAll'), n: allWords.length }];
+    for (const d of decks) {
+        opts.push({ id: d.id, label: `${d.emoji} ${d.name}`, n: allWords.filter((w) => Decks.has(d.id, w.id)).length });
+    }
+    const loose = window.Decks ? allWords.filter((w) => Decks.decksOf(w.id).length === 0).length : 0;
+    if (decks.length && loose) opts.push({ id: '__none__', label: t('decks.noDeck'), n: loose });
+    return decks.length ? opts : [];
+}
+
+// Выбор колоды и формата. Видео тяжелее в разы и собирается дольше — поэтому
 // спрашиваем, а не решаем за пользователя; по умолчанию звук.
 function openAnkiExport() {
     closeWordsMenu();
     openModal((box, close) => {
+        const deckOpts = ankiDeckOptions();
+        const active = (window.DecksUI && DecksUI.activeDeckId()) || '';
+        const deckRow = deckOpts.length ? `
+            <label class="anki-export__deck">
+                <span>${esc(t('words.exportAnki.deck'))}</span>
+                <select id="anki-deck">
+                    ${deckOpts.map((o) => `<option value="${esc(o.id)}"${o.id === active ? ' selected' : ''}>${esc(o.label)} (${o.n})</option>`).join('')}
+                </select>
+            </label>` : '';
         box.innerHTML = `
             <div class="deck-editor__title">${esc(t('words.exportAnki'))}</div>
+            ${deckRow}
             <div class="anki-export">
                 <button class="anki-export__opt" id="anki-audio">
                     <span class="anki-export__name">${esc(t('words.exportAnki.audio'))}</span>
@@ -952,11 +976,13 @@ function openAnkiExport() {
             </div>
         `;
         const statusEl = box.querySelector('#anki-status');
+        const deckEl = box.querySelector('#anki-deck');
         const run = async (withVideo) => {
-            box.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+            const deckId = deckEl ? deckEl.value : '';
+            box.querySelectorAll('button, select').forEach((b) => { b.disabled = true; });
             statusEl.hidden = false;
             statusEl.textContent = withVideo ? t('words.exportAnki.busyVideo') : t('words.exportAnki.busy');
-            const ok = await exportAnki(withVideo);
+            const ok = await exportAnki(withVideo, deckId);
             close();
             showSnackbar(ok ? t('words.exportAnki.done') : t('words.exportAnki.fail'),
                 { duration: 4000, type: ok ? 'info' : 'error' });
@@ -967,9 +993,15 @@ function openAnkiExport() {
     });
 }
 
-// Собирает и скачивает .apkg. true — колода ушла в загрузки.
-async function exportAnki(withVideo) {
-    const words = await fetchWords();
+// Собирает и скачивает .apkg. deckId — наша колода ('' = все слова,
+// '__none__' = слова вне колод); её имя уезжает на сервер, чтобы карточки легли
+// в подколоду «Animei::<имя>». true — колода ушла в загрузки.
+async function exportAnki(withVideo, deckId) {
+    const all = await fetchWords();
+    const deck = (deckId && deckId !== '__none__' && window.Decks) ? Decks.get(deckId) : null;
+    let words = all;
+    if (deck) words = all.filter((w) => Decks.has(deck.id, w.id));
+    else if (deckId === '__none__' && window.Decks) words = all.filter((w) => Decks.decksOf(w.id).length === 0);
     if (!words.length) {
         showSnackbar(t('words.empty'), { duration: 3000 });
         return false;
@@ -1000,6 +1032,7 @@ async function exportAnki(withVideo) {
         }
         fd.append('words', JSON.stringify(payload));
         if (withVideo) fd.append('video', '1');
+        if (deck) fd.append('deck', deck.name);
 
         // Сервер режет ffmpeg-ом медиа на каждое слово — большим коллекциям
         // нужно время, а перекодировать видео ещё дольше: таймаут щедрый.
@@ -1008,7 +1041,9 @@ async function exportAnki(withVideo) {
         });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(data);
-        a.download = 'animei.apkg';
+        // Имя файла по колоде: в загрузках сразу видно, что за колода.
+        const slug = deck ? deck.name.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').slice(0, 40) : '';
+        a.download = slug ? `animei-${slug}.apkg` : 'animei.apkg';
         a.click();
         URL.revokeObjectURL(a.href);
         return true;

@@ -337,6 +337,8 @@ window.I18N_EN = {
         'words.exportAnki': 'Export to Anki',
         'words.exportAnki.title': 'Ready-made deck with audio or video from your clips',
         'words.exportAnki.busy': 'Building the deck…',
+        'words.exportAnki.deck': 'What to export',
+        'words.exportAnki.deckAll': 'All words',
         'words.exportAnki.busyVideo': 'Encoding video… this takes a couple of minutes',
         'words.exportAnki.audio': 'With audio',
         'words.exportAnki.audioHint': 'Word, translation, example and audio from the clip. Small file',

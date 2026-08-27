@@ -341,6 +341,8 @@ const I18N = {
         'words.exportAnki': 'Экспорт в Anki',
         'words.exportAnki.title': 'Готовая колода с аудио или видео из ваших клипов',
         'words.exportAnki.busy': 'Готовим колоду…',
+        'words.exportAnki.deck': 'Что выгружаем',
+        'words.exportAnki.deckAll': 'Все слова',
         'words.exportAnki.busyVideo': 'Режем видео… это займёт пару минут',
         'words.exportAnki.audio': 'Со звуком',
         'words.exportAnki.audioHint': 'Слово, перевод, пример и звук из клипа. Лёгкий файл',

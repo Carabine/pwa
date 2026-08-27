@@ -519,6 +519,27 @@
 }
 
 /* ---- Выбор формата экспорта в Anki ---- */
+.anki-export__deck {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+.anki-export__deck select {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+}
+.anki-export__deck select:focus { outline: none; border-color: var(--primary); }
+.anki-export__deck select:disabled { opacity: 0.5; }
 .anki-export { display: grid; gap: 10px; margin-bottom: 14px; }
 .anki-export__opt {
     display: block;
