@@ -93,7 +93,6 @@ window.I18N_UK = {
         'catalog.empty': 'Нічого не знайшли — спробуй інше написання',
         'catalog.filter.all': 'Усі',
         'catalog.filter.easy': '🎓 Легші',
-        'catalog.picks': 'Перевірені прості тайтли:',
         'catalog.easyEmpty': 'У цьому списку простих тайтлів немає — спробуй добірку вище.',
         'catalog.diff.easy': '🎓 легше',
         'catalog.diff.medium': 'середньо',

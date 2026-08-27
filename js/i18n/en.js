@@ -93,7 +93,6 @@ window.I18N_EN = {
         'catalog.empty': 'Nothing found — try a different spelling',
         'catalog.filter.all': 'All',
         'catalog.filter.easy': '🎓 Easier',
-        'catalog.picks': 'Beginner-friendly picks:',
         'catalog.easyEmpty': 'No beginner-friendly titles in this list — try the picks above.',
         'catalog.diff.easy': '🎓 easier',
         'catalog.diff.medium': 'medium',

@@ -36,16 +36,4 @@ window.AnimeDifficulty = {
         38524: 'hard',   // Attack on Titan S3 Part 2
         40028: 'hard',   // Attack on Titan: Final Season
     },
-
-    // Проверенные простые тайтлы для новичков: тап по пилюле в каталоге
-    // запускает обычный поиск (q — запрос, label локализуется через labelKey
-    // при наличии, иначе показываем как есть).
-    easyPicks: [
-        { q: 'Shirokuma Cafe',   label: 'Кафе «У Белого Медведя»', en: 'Polar Bear Café' },
-        { q: 'Yuru Camp',        label: 'Лагерь на свежем воздухе', en: 'Laid-Back Camp' },
-        { q: 'Takagi',           label: 'Озорная Такаги', en: 'Teasing Master Takagi-san' },
-        { q: 'Horimiya',         label: 'Хоримия', en: 'Horimiya' },
-        { q: 'Flying Witch',     label: 'Летающая ведьма', en: 'Flying Witch' },
-        { q: 'Тоторо',           label: 'Мой сосед Тоторо', en: 'My Neighbor Totoro' },
-    ],
 };

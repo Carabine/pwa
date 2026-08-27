@@ -97,7 +97,6 @@ const I18N = {
         'catalog.empty': 'Ничего не нашли — попробуй другое написание',
         'catalog.filter.all': 'Все',
         'catalog.filter.easy': '🎓 Полегче',
-        'catalog.picks': 'Проверенные простые тайтлы:',
         'catalog.easyEmpty': 'В этом списке простых тайтлов нет — попробуй подборку выше.',
         'catalog.diff.easy': '🎓 полегче',
         'catalog.diff.medium': 'средне',

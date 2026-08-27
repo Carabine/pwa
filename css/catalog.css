@@ -320,44 +320,6 @@ html, body {
     color: #fff;
 }
 
-.catalog__picks {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-}
-
-/* display:flex перебил бы атрибут hidden — прячем явно. */
-.catalog__picks[hidden] {
-    display: none;
-}
-
-.catalog__picks-label {
-    font-size: 12.5px;
-    color: var(--text-dim);
-    margin-right: 2px;
-}
-
-.pick-chip {
-    padding: 5px 12px;
-    font-size: 12.5px;
-    color: var(--text);
-    background: none;
-    border: 1px dashed var(--border);
-    border-radius: 999px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: border-color var(--transition), color var(--transition);
-}
-
-@media (hover: hover) and (pointer: fine) {
-    .pick-chip:hover {
-        border-color: var(--primary);
-        color: var(--primary);
-    }
-}
-
 /* Кнопка play по наведению */
 .anime-card__play {
     position: absolute;

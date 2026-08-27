@@ -274,18 +274,16 @@ async function loadEasy() {
     }
 }
 
-// ---- Фильтр по сложности языка: чипы «Все / Полегче» + подборка-ярлыки.
+// ---- Фильтр по сложности языка: чипы «Все / Полегче».
 const chipsEl = document.getElementById('diff-chips');
-const picksEl = document.getElementById('easy-picks');
 
-// Только подсветка чипа/видимость подборки, без перезагрузки данных.
+// Только подсветка чипа, без перезагрузки данных.
 function markChip(val) {
     diffFilter = val;
     if (chipsEl) {
         chipsEl.querySelectorAll('.catalog-chip').forEach(b =>
             b.classList.toggle('catalog-chip--active', b.dataset.val === val));
     }
-    if (picksEl) picksEl.hidden = val !== 'easy';
 }
 
 function setDiffFilter(val) {
@@ -306,23 +304,6 @@ if (chipsEl) {
         const btn = e.target.closest('.catalog-chip');
         if (btn && btn.dataset.val !== diffFilter) setDiffFilter(btn.dataset.val);
     });
-}
-
-if (picksEl && window.AnimeDifficulty) {
-    for (const pick of window.AnimeDifficulty.easyPicks) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'pick-chip';
-        b.textContent = getLang() === 'ru' ? pick.label : (pick.en || pick.q);
-        b.addEventListener('click', () => {
-            // Пилюля — навигация к конкретному тайтлу: фильтр снимаем, чтобы
-            // сезоны/фильмы франшизы не прятались из-за неразмеченных id.
-            markChip('all');
-            searchInput.value = pick.q;
-            search(pick.q);
-        });
-        picksEl.appendChild(b);
-    }
 }
 
 if (initialQ.length >= 2) {
