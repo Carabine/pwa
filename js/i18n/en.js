@@ -88,7 +88,6 @@ window.I18N_EN = {
         'catalog.title': 'Catalog',
         'catalog.placeholder': 'Anime title — e.g. Frieren or Naruto',
         'header.search': 'Search anime',
-        'catalog.hint': 'Type a title — and watch with Japanese subtitles in seconds',
         'catalog.searching': 'Searching…',
         'catalog.empty': 'Nothing found — try a different spelling',
         'catalog.filter.all': 'All',

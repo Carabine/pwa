@@ -3,10 +3,9 @@
 // импорт «известных слов» из Anki/списков (known-store.js).
 
 // Экранируем пользовательский текст — он идёт и в разметку, и в атрибуты value.
+// Экранирование — единое escHtml из app.js (вызов отложен: порядок загрузки).
 function esc(s) {
-    return String(s ?? '').replace(/[&<>"]/g, (c) => (
-        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
-    ));
+    return escHtml(s ?? '');
 }
 
 const VIEW_KEY = 'animei:wordsView';   // list | cards
@@ -920,15 +919,6 @@ function openKnownManager() {
 // локальный звук карточек лежат в браузере (IndexedDB) — прикладываем их к
 // запросу файлами "<id>.clip.mp4" / "<id>.custom.<ext>".
 
-function audioBlobExt(blob) {
-    const t = String(blob?.type || '').toLowerCase();
-    if (t.includes('mpeg') || t.includes('mp3')) return 'mp3';
-    if (t.includes('mp4') || t.includes('m4a') || t.includes('aac')) return 'm4a';
-    if (t.includes('ogg')) return 'ogg';
-    if (t.includes('wav')) return 'wav';
-    return 'webm';
-}
-
 // Что выгружать: все слова, конкретная наша колода или «Без колоды».
 // Считаем по загруженному списку слов — так цифры совпадают с тем, что видно
 // на странице (в колоде могли остаться id уже удалённых слов).
@@ -970,8 +960,8 @@ function openAnkiExport() {
                     <span class="anki-export__hint">${esc(t('words.exportAnki.videoHint'))}</span>
                 </button>
             </div>
-            <p class="known-modal__hint" id="anki-status" hidden></p>
-            <div class="deck-editor__actions">
+            <p class="known-modal__hint anki-export__status" id="anki-status" hidden></p>
+            <div class="deck-editor__actions deck-editor__actions--single">
                 <button class="btn btn--ghost" id="anki-cancel">${esc(t('words.cancel'))}</button>
             </div>
         `;

@@ -1,78 +1,61 @@
-// Транслитерация каны (хирагана/катакана) в ромадзи по системе Хепбёрна.
-// Используется в режиме обучения, когда пользователь выбрал ромадзи вместо
-// хираганы. Наружу: window.kanaToRomaji(str).
+// Транслитерация каны (хирагана/катакана) в ромадзи (упрощённый Хепбёрн).
+// Единственная таблица на всё приложение: плеер, режимы обучения, колоды.
+// Наружу: window.kanaToRomaji(str).
 
 (function () {
-    const digraph = {
-        'きゃ': 'kya', 'きゅ': 'kyu', 'きょ': 'kyo',
-        'ぎゃ': 'gya', 'ぎゅ': 'gyu', 'ぎょ': 'gyo',
-        'しゃ': 'sha', 'しゅ': 'shu', 'しょ': 'sho',
-        'じゃ': 'ja', 'じゅ': 'ju', 'じょ': 'jo',
-        'ちゃ': 'cha', 'ちゅ': 'chu', 'ちょ': 'cho',
-        'にゃ': 'nya', 'にゅ': 'nyu', 'にょ': 'nyo',
-        'ひゃ': 'hya', 'ひゅ': 'hyu', 'ひょ': 'hyo',
-        'びゃ': 'bya', 'びゅ': 'byu', 'びょ': 'byo',
-        'ぴゃ': 'pya', 'ぴゅ': 'pyu', 'ぴょ': 'pyo',
-        'みゃ': 'mya', 'みゅ': 'myu', 'みょ': 'myo',
-        'りゃ': 'rya', 'りゅ': 'ryu', 'りょ': 'ryo',
+    const DIGRAPHS = {
+        'きゃ': 'kya', 'きゅ': 'kyu', 'きょ': 'kyo', 'しゃ': 'sha', 'しゅ': 'shu', 'しょ': 'sho',
+        'ちゃ': 'cha', 'ちゅ': 'chu', 'ちょ': 'cho', 'にゃ': 'nya', 'にゅ': 'nyu', 'にょ': 'nyo',
+        'ひゃ': 'hya', 'ひゅ': 'hyu', 'ひょ': 'hyo', 'みゃ': 'mya', 'みゅ': 'myu', 'みょ': 'myo',
+        'りゃ': 'rya', 'りゅ': 'ryu', 'りょ': 'ryo', 'ぎゃ': 'gya', 'ぎゅ': 'gyu', 'ぎょ': 'gyo',
+        'じゃ': 'ja', 'じゅ': 'ju', 'じょ': 'jo', 'びゃ': 'bya', 'びゅ': 'byu', 'びょ': 'byo',
+        'ぴゃ': 'pya', 'ぴゅ': 'pyu', 'ぴょ': 'pyo', 'ぢゃ': 'ja', 'ぢゅ': 'ju', 'ぢょ': 'jo',
+        'てぃ': 'ti', 'でぃ': 'di', 'ふぁ': 'fa', 'ふぃ': 'fi', 'ふぇ': 'fe', 'ふぉ': 'fo',
+        'しぇ': 'she', 'ちぇ': 'che', 'じぇ': 'je', 'うぃ': 'wi', 'うぇ': 'we', 'ゔ': 'vu',
     };
 
-    const single = {
+    const MONO = {
         'あ': 'a', 'い': 'i', 'う': 'u', 'え': 'e', 'お': 'o',
         'か': 'ka', 'き': 'ki', 'く': 'ku', 'け': 'ke', 'こ': 'ko',
-        'が': 'ga', 'ぎ': 'gi', 'ぐ': 'gu', 'げ': 'ge', 'ご': 'go',
         'さ': 'sa', 'し': 'shi', 'す': 'su', 'せ': 'se', 'そ': 'so',
-        'ざ': 'za', 'じ': 'ji', 'ず': 'zu', 'ぜ': 'ze', 'ぞ': 'zo',
         'た': 'ta', 'ち': 'chi', 'つ': 'tsu', 'て': 'te', 'と': 'to',
-        'だ': 'da', 'ぢ': 'ji', 'づ': 'zu', 'で': 'de', 'ど': 'do',
         'な': 'na', 'に': 'ni', 'ぬ': 'nu', 'ね': 'ne', 'の': 'no',
         'は': 'ha', 'ひ': 'hi', 'ふ': 'fu', 'へ': 'he', 'ほ': 'ho',
-        'ば': 'ba', 'び': 'bi', 'ぶ': 'bu', 'べ': 'be', 'ぼ': 'bo',
-        'ぱ': 'pa', 'ぴ': 'pi', 'ぷ': 'pu', 'ぺ': 'pe', 'ぽ': 'po',
         'ま': 'ma', 'み': 'mi', 'む': 'mu', 'め': 'me', 'も': 'mo',
         'や': 'ya', 'ゆ': 'yu', 'よ': 'yo',
         'ら': 'ra', 'り': 'ri', 'る': 'ru', 'れ': 're', 'ろ': 'ro',
-        'わ': 'wa', 'ゐ': 'wi', 'ゑ': 'we', 'を': 'wo', 'ん': 'n',
-        'ゃ': 'ya', 'ゅ': 'yu', 'ょ': 'yo',
-        'ぁ': 'a', 'ぃ': 'i', 'ぅ': 'u', 'ぇ': 'e', 'ぉ': 'o',
-        'っ': '', '　': ' ', '、': ', ', '。': '. ',
+        'わ': 'wa', 'ゐ': 'i', 'ゑ': 'e', 'を': 'o', 'ん': 'n',
+        'が': 'ga', 'ぎ': 'gi', 'ぐ': 'gu', 'げ': 'ge', 'ご': 'go',
+        'ざ': 'za', 'じ': 'ji', 'ず': 'zu', 'ぜ': 'ze', 'ぞ': 'zo',
+        'だ': 'da', 'ぢ': 'ji', 'づ': 'zu', 'で': 'de', 'ど': 'do',
+        'ば': 'ba', 'び': 'bi', 'ぶ': 'bu', 'べ': 'be', 'ぼ': 'bo',
+        'ぱ': 'pa', 'ぴ': 'pi', 'ぷ': 'pu', 'ぺ': 'pe', 'ぽ': 'po',
+        'ぁ': 'a', 'ぃ': 'i', 'ぅ': 'u', 'ぇ': 'e', 'ぉ': 'o', 'ゃ': 'ya', 'ゅ': 'yu', 'ょ': 'yo', 'ー': '',
     };
-
-    // Катакана → хирагана (сдвиг на 0x60), чтобы работать одним словарём.
-    function toHira(s) {
-        return String(s).replace(/[ァ-ヶ]/g, (ch) =>
-            String.fromCharCode(ch.charCodeAt(0) - 0x60));
-    }
 
     function convert(input) {
         if (!input) return '';
-        const s = toHira(input);
+        // Катакану приводим к хирагане — таблица одна на обе слоговые азбуки
+        const s = String(input).replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
         let out = '';
         for (let i = 0; i < s.length; i++) {
-            const two = s.substr(i, 2);
-            if (digraph[two]) { out += digraph[two]; i++; continue; }
-
+            const two = s.slice(i, i + 2);
+            if (DIGRAPHS[two]) { out += DIGRAPHS[two]; i++; continue; }
             const ch = s[i];
-
-            // Сокуон っ — удвоение первой согласной следующего слога.
-            if (ch === 'っ') {
-                const nextTwo = s.substr(i + 1, 2);
-                const nextRo = digraph[nextTwo] || single[s[i + 1]] || '';
-                if (nextRo && /^[a-z]/.test(nextRo)) out += nextRo[0];
+            if (ch === 'っ' || ch === 'ッ') {
+                // маленькое цу удваивает согласный следующего слога (っち → tchi)
+                const nr = DIGRAPHS[s.slice(i + 1, i + 3)] || MONO[s[i + 1]] || '';
+                if (nr) out += nr[0] === 'c' ? 't' : nr[0];
                 continue;
             }
-
-            // Долгий знак ー — удлиняем предыдущую гласную.
-            if (ch === 'ー') {
-                const last = out.slice(-1);
-                if (/[aeiou]/.test(last)) out += last;
+            if (ch === 'ー') { // тире продлевает предыдущую гласную
+                const last = out[out.length - 1];
+                if ('aeiou'.includes(last)) out += last;
                 continue;
             }
-
-            if (single[ch] !== undefined) out += single[ch];
-            else out += ch; // не кана (иероглиф/латиница/цифра) — как есть
+            out += MONO[ch] ?? ch;
         }
-        return out.trim();
+        return out;
     }
 
     window.kanaToRomaji = convert;

@@ -14,13 +14,16 @@
     'use strict';
 
     // ---- Tunables ----------------------------------------------------------
-    const NEW_PER_DAY_DEFAULT = 20;  // сколько новых слов вводить в день, если настройка не менялась
 
     // Дневной лимит новых карточек — настройка (settings.html), а не константа:
     // «сохранил 100 слов за серию» не должно взрывать завтрашнее повторение.
+    // Дефолт берём из AnimeiSettings.DEFAULTS (канон — settings.js);
+    // литерал 20 — только на случай, когда settings.js не загружен вовсе.
     function newPerDay() {
-        const v = Number(window.AnimeiSettings ? window.AnimeiSettings.get('newPerDay') : NEW_PER_DAY_DEFAULT);
-        return Number.isFinite(v) && v > 0 ? v : NEW_PER_DAY_DEFAULT;
+        const S = window.AnimeiSettings;
+        const def = (S && Number(S.DEFAULTS.newPerDay) > 0) ? Number(S.DEFAULTS.newPerDay) : 20;
+        const v = Number(S ? S.get('newPerDay') : def);
+        return Number.isFinite(v) && v > 0 ? v : def;
     }
     const NEW_STEPS   = 2;       // correct answers needed to graduate a new/lapsed card
     const CRAM_STEPS  = 1;       // correct answers needed to clear a card in cram mode
@@ -713,9 +716,9 @@
 
         // Подписи приходят из i18n (не от пользователя), но в innerHTML идут —
         // экранируем на всякий случай, как и везде в карточке.
+        // Экранирование — единое escHtml из app.js (вызов отложен: порядок загрузки).
         function escStat(v) {
-            return String(v == null ? '' : v).replace(/[&<>"']/g, (c) =>
-                ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            return escHtml(v ?? '');
         }
 
         function renderStats() {
@@ -1267,15 +1270,19 @@
         }
         window.addEventListener('resize', scheduleFitBack);
 
+        // Иконки мини-плеера — на уровне модуля, а не внутри makeClipVideo:
+        // та зовётся на каждую карточку, пересобирать словарь незачем.
+        const CLIP_ICONS = {
+            play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72c0 .8.87 1.3 1.55.88l10.8-6.86a1.04 1.04 0 0 0 0-1.76L9.55 4.26A1.04 1.04 0 0 0 8 5.14z"/></svg>',
+            volume: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.3 5.7a9 9 0 0 1 0 12.6"/></svg>',
+            volumeLow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>',
+            muted: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><line x1="15" y1="9" x2="21" y2="15"/><line x1="21" y1="9" x2="15" y2="15"/></svg>',
+        };
+
         // Свой мини-плеер вместо нативных браузерных контролов: короткий клип
         // сам зациклен, поэтому нужны только Play/Pause по центру и кнопка звука.
         function makeClipVideo(src, w, warmedVideo) {
-            const ICONS = {
-                play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72c0 .8.87 1.3 1.55.88l10.8-6.86a1.04 1.04 0 0 0 0-1.76L9.55 4.26A1.04 1.04 0 0 0 8 5.14z"/></svg>',
-                volume: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.3 5.7a9 9 0 0 1 0 12.6"/></svg>',
-                volumeLow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>',
-                muted: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 3 9 3 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><line x1="15" y1="9" x2="21" y2="15"/><line x1="21" y1="9" x2="15" y2="15"/></svg>',
-            };
+            const ICONS = CLIP_ICONS;
 
             const wrap = document.createElement('div');
             wrap.className = 'clip-player';

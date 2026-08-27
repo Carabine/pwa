@@ -92,7 +92,6 @@ const I18N = {
         'catalog.title': 'Каталог',
         'catalog.placeholder': 'Название аниме — например, Фрирен или Naruto',
         'header.search': 'Поиск аниме',
-        'catalog.hint': 'Введи название — и смотри с японскими субтитрами через пару секунд',
         'catalog.searching': 'Ищем…',
         'catalog.empty': 'Ничего не нашли — попробуй другое написание',
         'catalog.filter.all': 'Все',
@@ -566,10 +565,16 @@ function detectLang() {
     return 'ru';
 }
 
+// t() зовётся на каждый переводимый узел и в циклах рендера — язык считаем один
+// раз, а не читаем localStorage при каждом вызове. Смена языка перезагружает
+// страницу (mountLangSwitcher), так что кэш устареть не может.
+let cachedLang = null;
 function getLang() {
+    if (cachedLang) return cachedLang;
     const saved = localStorage.getItem(LANG_KEY);
     // Явный выбор пользователя важнее системного языка.
-    return I18N[saved] ? saved : detectLang();
+    cachedLang = I18N[saved] ? saved : detectLang();
+    return cachedLang;
 }
 
 function t(key) {

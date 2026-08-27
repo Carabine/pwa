@@ -143,7 +143,6 @@
    нажатие перебивает подъём карточки, а не спорит с ним. */
 .btn:active:not(:disabled),
 .icon-btn:active,
-.hub-card:active,
 .mini-card:active,
 .continue-card:active:not(.is-skel),
 .session-card:active:not(.is-skel) .session-card__chip,

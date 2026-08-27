@@ -1,8 +1,11 @@
 // Локально ходим на локальный бэкенд, на проде — на тот же хост,
-// с которого открыта страница (nginx проксирует /api на бэкенд)
+// с которого открыта страница (nginx проксирует /api на бэкенд).
+// Канонический origin API — window.ANIMEI_ORIGIN: остальные скрипты берут его
+// отсюда, а не повторяют детект localhost у себя.
 const domain = ['localhost', '127.0.0.1', ''].includes(window.location.hostname)
     ? 'http://localhost:3005'
     : window.location.origin;
+window.ANIMEI_ORIGIN = domain;
 const refreshTokenKey = 'animei:refreshToken';
 const accessTokenKey = 'animei:accessToken';
 

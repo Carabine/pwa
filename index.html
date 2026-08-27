@@ -120,7 +120,9 @@
             // поэтому нужное определяем здесь. Расчёт зеркалит srsSummary()
             // из js/study-core.js: правим в обоих местах.
             var words = json('words');
-            var list = Array.isArray(words) ? words : [];
+            // Как в srsSummary(): записи без id не считаются коллекцией —
+            // иначе тут резервировался бы «план», а app.js рисовал «пусто».
+            var list = (Array.isArray(words) ? words : []).filter(function (w) { return w && w.id; });
             var token = null;
             try { token = localStorage.getItem('animei:accessToken'); } catch (e) { /* приватный режим */ }
             var planSlot;
@@ -134,9 +136,7 @@
                 var todayKey = key(new Date());
                 var due = 0, fresh = 0;
                 for (var n = 0; n < list.length; n++) {
-                    var it = list[n];
-                    if (!it || !it.id) continue;
-                    var sc = sched[it.id];
+                    var sc = sched[list[n].id];
                     if (!sc) fresh++;
                     else if (sc.due <= todayKey) due++;
                 }

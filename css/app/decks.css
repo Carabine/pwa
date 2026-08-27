@@ -316,6 +316,12 @@
 .deck-editor__actions { display: flex; gap: 8px; justify-content: flex-end; }
 .deck-editor__actions .btn { flex: 1 1 auto; }
 
+/* Ряд с единственной кнопкой (в экспорте это «Отмена»). Растянутая во всю
+   ширину, она читалась третьим равнозначным вариантом рядом с «Со звуком» и
+   «С видео» — а это отказ, а не действие. */
+.deck-editor__actions--single { justify-content: center; }
+.deck-editor__actions--single .btn { flex: 0 0 auto; padding: 10px 30px; }
+
 .deck-editor__delete {
     display: block;
     width: 100%;

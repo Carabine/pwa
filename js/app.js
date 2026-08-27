@@ -1,7 +1,14 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.357';
+const APP_VERSION = 'v0.0.358';
+
+// Путь от корня приложения (/app/), одинаково работающий с главной и с
+// подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
+// однажды уже сломал регистрацию SW с подстраницы (см. registerServiceWorker).
+function appUrl(rel) {
+    return (window.location.pathname.includes('/pages/') ? '../' : './') + rel;
+}
 
 /* ========== Кнопка «Назад» закрывает открытый слой ==========
    Сайдбар, модалки, шторки и выпадающие меню — «слои» поверх страницы. На
@@ -181,8 +188,7 @@ function maybeAddAdminLink() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar || typeof isSignedIn !== 'function' || !isSignedIn()) return;
 
-    const inPages = window.location.pathname.includes('/pages/');
-    const href = (inPages ? './' : './pages/') + 'admin.html';
+    const href = appUrl('pages/admin.html');
     const addLink = () => {
         if (sidebar.querySelector('.sidebar__admin')) return;
         const a = document.createElement('a');
@@ -204,8 +210,7 @@ function maybeAddAdminLink() {
     if (cached === 'yes') addLink();
     if (!token) return;
 
-    const base = ['localhost', '127.0.0.1', ''].includes(location.hostname)
-        ? 'http://localhost:3005' : location.origin;
+    const base = window.ANIMEI_ORIGIN || location.origin;
     fetch(base + '/api/v1/admin/whoami', { headers: { Authorization: 'Bearer ' + token } })
         .then((r) => (r.ok ? r.json() : null))
         .then((j) => {
@@ -277,7 +282,7 @@ if ('serviceWorker' in navigator) {
         // резолвился в /app/pages/service-worker.js → 404, и SW там не регистрировался
         // (офлайн-кэш и авто-перезагрузка после деплоя не работали при заходе сразу
         // на подстраницу). Берём путь от корня приложения — работает с любой страницы.
-        const swUrl = (window.location.pathname.includes('/pages/') ? '../' : './') + 'service-worker.js';
+        const swUrl = appUrl('service-worker.js');
         navigator.serviceWorker.register(swUrl, { updateViaCache: 'none' })
             .then((reg) => {
                 console.log('SW registered');
@@ -388,26 +393,6 @@ function renderInstallHint() {
 
 // ========== Data Fetching ==========
 
-async function fetchAndDecode(url) {
-    const response = await fetch(url);
-    const data = await response.json();
-
-    const decodeHTML = (str) => {
-        const textarea = document.createElement('textarea');
-        textarea.innerHTML = str;
-        return textarea.value;
-    };
-
-    return JSON.parse(JSON.stringify(data), (_, value) =>
-        typeof value === 'string' ? decodeHTML(value) : value
-    );
-}
-
-function dataPath(file) {
-    const inPages = window.location.pathname.includes('/pages/');
-    return (inPages ? '../' : './') + 'data/' + file;
-}
-
 async function fetchDataFromServer() {
     try {
         // Вошёл — слова с сервера; гость — из локального хранилища.
@@ -460,8 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sidebar && !sidebar.querySelector('.sidebar__settings')) {
         const a = document.createElement('a');
         a.className = 'sidebar__settings';
-        const inPages = window.location.pathname.includes('/pages/');
-        a.href = (inPages ? './' : './pages/') + 'settings.html';
+        a.href = appUrl('pages/settings.html');
         a.setAttribute('data-i18n', 'nav.settings');
         a.textContent = (typeof t === 'function') ? t('nav.settings') : 'Settings';
         const siteLink = sidebar.querySelector('.sidebar__site');
@@ -536,8 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // относительный путь так же, как для ссылок «Настройки»/«Войти» ниже.
     const headerLogo = document.querySelector('.header__logo');
     if (headerLogo) {
-        const inPages = window.location.pathname.includes('/pages/');
-        const homeUrl = (inPages ? '../' : './') + 'index.html';
+        const homeUrl = appUrl('index.html');
         headerLogo.classList.add('header__logo--link');
         headerLogo.setAttribute('role', 'link');
         headerLogo.setAttribute('tabindex', '0');
@@ -582,8 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // иконки-лупы, по тапу поле выезжает. Каталог читает ?q= и сразу ищет.
     const searchForm = document.querySelector('.header__search');
     if (searchForm) {
-        const inPages = window.location.pathname.includes('/pages/');
-        searchForm.action = (inPages ? './' : './pages/') + 'catalog.html';
+        searchForm.action = appUrl('pages/catalog.html');
         const searchInput = searchForm.querySelector('.header__search-input');
         const searchToggle = searchForm.querySelector('.header__search-toggle');
         const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
@@ -713,7 +695,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const customCard = document.getElementById('custom-study-card');
     if (customCard && localStorage.getItem('animei:fromLanding') === '1'
         && !(typeof isLoggedIn === 'function' && isLoggedIn())) {
-        // display:none, а не hidden: у .hub-card свой display, он перебил бы [hidden]
+        // display:none, а не hidden: у .mini-card свой display, он перебил бы [hidden]
         customCard.style.display = 'none';
     }
 });
@@ -857,6 +839,14 @@ function renderSessionCard() {
 // («≈5 мин · 8 повторений · 5 новых → Начать»), а после выполнения — явное «на
 // сегодня всё ✓» с CTA обратно к просмотру. Данные (due/fresh/streak) уже
 // считает srsSummary(). Три визуальных варианта переключаются ?hub=1|2|3.
+
+// m:ss для плеера и watch-страницы; null/NaN → 0:00 (метаданные ещё не пришли).
+function formatTime(seconds) {
+    if (seconds == null || isNaN(seconds)) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return m + ':' + String(s).padStart(2, '0');
+}
 
 function escHtml(s) {
     return String(s).replace(/[&<>"']/g, (c) =>
@@ -1095,9 +1085,8 @@ function renderAuthState() {
     const menu = document.getElementById('profile-menu');
     if (!menu) return;
 
-    const isInPages = window.location.pathname.includes('/pages/');
-    const loginUrl = isInPages ? './login.html' : './pages/login.html';
-    const settingsUrl = isInPages ? './settings.html' : './pages/settings.html';
+    const loginUrl = appUrl('pages/login.html');
+    const settingsUrl = appUrl('pages/settings.html');
 
     if (typeof isLoggedIn === 'function' && isLoggedIn()) {
         const email = localStorage.getItem('animei:email');
@@ -1144,8 +1133,7 @@ function loadHlsJs() {
     if (!hlsLoadPromise) {
         hlsLoadPromise = new Promise((resolve, reject) => {
             const s = document.createElement('script');
-            const inPages = location.pathname.includes('/pages/');
-            s.src = (inPages ? '../' : './') + 'libs/hls/hls.min.js';
+            s.src = appUrl('libs/hls/hls.min.js');
             s.onload = () => resolve();
             s.onerror = () => {
                 hlsLoadPromise = null; // дать шанс повторной попытке

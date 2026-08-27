@@ -3,9 +3,8 @@
 // window.animeiTrack('event', 'деталь'). Никаких кук и внешних сервисов —
 // только случайный анонимный id в localStorage. IP пишет бэкенд.
 (function () {
-    var domain = ['localhost', '127.0.0.1', ''].includes(window.location.hostname)
-        ? 'http://localhost:3005'
-        : window.location.origin;
+    // Канонический origin API из axiosClient.js (грузится раньше на всех страницах).
+    var domain = window.ANIMEI_ORIGIN || window.location.origin;
 
     var KEY = 'animei:visitorId';
     var visitorId = localStorage.getItem(KEY);

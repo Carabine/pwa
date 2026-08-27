@@ -180,8 +180,7 @@ function loadStarterOrder() {
 let starterOrder = loadStarterOrder();
 
 function starterApiBase() {
-    return ['localhost', '127.0.0.1', ''].includes(location.hostname)
-        ? 'http://localhost:3005' : location.origin;
+    return window.ANIMEI_ORIGIN || location.origin;
 }
 
 function refreshStarterOrder() {
@@ -314,9 +313,7 @@ function starterMergedDeck() {
 function starterClipUrl(card) {
     if (!card.clip) return '';
     if (/^https?:\/\//.test(card.clip)) return card.clip;
-    const inPages = window.location.pathname.includes('/pages/');
-    const rel = (inPages ? '../' : './') + 'media/starter/' + card.clip;
-    return new URL(rel, window.location.href).href;
+    return new URL(appUrl('media/starter/' + card.clip), window.location.href).href;
 }
 
 // Переводы карточки на текущем языке интерфейса (запасной — русский).

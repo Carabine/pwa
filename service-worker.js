@@ -1,6 +1,6 @@
 // Пути относительные — SW живёт в /app/, поэтому './' указывает на /app/.
 // ВАЖНО: меняй номер версии при каждом деплое — иначе старый кеш не сбросится.
-const CACHE_NAME = 'animei-cache-v0.0.357';
+const CACHE_NAME = 'animei-cache-v0.0.358';
 const urlsToCache = [
     './',
     './index.html',
@@ -99,7 +99,7 @@ self.addEventListener('fetch', (event) => {
     // конструктор для них бросает исключение, поэтому их не трогаем.
     // Вендорные библиотеки (libs/) при деплое не меняются — им ревалидация не
     // нужна, пусть отдаются из HTTP-кеша по Cache-Control от nginx.
-    const sameOrigin = new URL(request.url).origin === self.location.origin;
+    const sameOrigin = url.origin === self.location.origin;
     const isVendorLib = url.pathname.includes('/libs/');
     const networkRequest = (sameOrigin && !isVendorLib && request.mode !== 'navigate')
         ? new Request(request, { cache: 'no-cache' })
@@ -109,7 +109,7 @@ self.addEventListener('fetch', (event) => {
         fetch(networkRequest)
             .then((response) => {
                 // Обновляем офлайн-копию только для своих ресурсов.
-                if (response.ok && new URL(request.url).origin === self.location.origin) {
+                if (response.ok && sameOrigin) {
                     const copy = response.clone();
                     caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
                 }

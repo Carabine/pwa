@@ -1,7 +1,6 @@
+// Канонический origin API из axiosClient.js (грузится раньше).
 const API_BASE = window.ANIMEI_API
-  || (['localhost', '127.0.0.1', ''].includes(window.location.hostname)
-    ? 'http://localhost:3005/api/v1'
-    : window.location.origin + '/api/v1');
+  || (window.ANIMEI_ORIGIN || window.location.origin) + '/api/v1';
 
 let segments = [];
 
@@ -18,7 +17,6 @@ const playerWrap = document.getElementById("player-wrap");
 const transcribeBtn = document.getElementById("transcribe-btn");
 const statusBar = document.getElementById("status-bar");
 const statusText = document.getElementById("status-text");
-const progressFill = document.getElementById("progress-fill");
 const subsPanel = document.getElementById("subs-panel");
 const subsCount = document.getElementById("subs-count");
 
@@ -556,20 +554,16 @@ function setLoadingProgress(pct) {
 // ========== UI HELPERS ==========
 
 function setStatus(text) { statusText.textContent = text; }
-function setProgress(pct) { progressFill.style.width = pct + "%"; }
 
-function formatTime(seconds) {
-  if (seconds == null || isNaN(seconds)) return "0:00";
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
+// formatTime — общий, из app.js.
 
 // ========== RENDER SUBTITLES ==========
 
 function renderSubtitles() {
   subsPanel.innerHTML = "";
   subsCount.textContent = segments.length + " segments";
+  // Список пересобран — подсветку активной реплики надо назначить заново.
+  lastActiveIndex = -1;
 
   segments.forEach((seg, i) => {
     const el = document.createElement("div");
@@ -671,24 +665,28 @@ function renderSubtitles() {
 
 let lastActiveIndex = -1;
 
+// Зовётся каждый кадр из syncLoop: активный индекс считаем по массиву segments,
+// DOM трогаем только когда реплика реально сменилась (2 класса вместо
+// querySelectorAll + toggle на каждом сегменте 60 раз в секунду).
 function syncSubtitles(time) {
-  const els = subsPanel.querySelectorAll(".sub-segment");
   let activeIndex = -1;
-
-  els.forEach((el, i) => {
+  for (let i = 0; i < segments.length; i++) {
     const seg = segments[i];
-    if (!seg) return;
-    const isActive = time >= seg.start && (seg.end == null || time < seg.end);
-    el.classList.toggle("active", isActive);
-    if (isActive) {
-      activeIndex = i;
-      if (i !== lastActiveIndex && !isElementInView(el, subsPanel)) {
-        el.scrollIntoView({ block: "center", behavior: "smooth" });
-      }
-    }
-  });
+    if (time >= seg.start && (seg.end == null || time < seg.end)) activeIndex = i;
+  }
 
   if (activeIndex !== lastActiveIndex) {
+    const prevEl = subsPanel.querySelector(".sub-segment.active");
+    if (prevEl) prevEl.classList.remove("active");
+    if (activeIndex >= 0) {
+      const el = subsPanel.querySelector(`.sub-segment[data-index="${activeIndex}"]`);
+      if (el) {
+        el.classList.add("active");
+        if (!isElementInView(el, subsPanel)) {
+          el.scrollIntoView({ block: "center", behavior: "smooth" });
+        }
+      }
+    }
     lastActiveIndex = activeIndex;
     if (activeIndex >= 0) {
       const seg = segments[activeIndex];

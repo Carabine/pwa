@@ -230,7 +230,6 @@
                     city: g.city || '',
                     isp: (g.connection && g.connection.isp) || ''
                 };
-                try { localStorage.setItem(GEO_LS, JSON.stringify(geoCache)); } catch (e) {}
                 return geoCache[ip];
             })
             .catch(function () { return null; }); // сетевые ошибки не кешируем — доберём в след. раз
@@ -245,7 +244,13 @@
             if (i >= queue.length) return Promise.resolve();
             return fetchGeo(queue[i++]).then(worker);
         }
-        Promise.all([worker(), worker(), worker(), worker()]).then(done, done);
+        // Кэш пишем один раз после всей пачки, а не после каждого IP —
+        // иначе N сериализаций растущего словаря подряд.
+        function finish() {
+            try { localStorage.setItem(GEO_LS, JSON.stringify(geoCache)); } catch (e) {}
+            done();
+        }
+        Promise.all([worker(), worker(), worker(), worker()]).then(finish, finish);
     }
 
     // Страна посетителя для фильтра; без гео — отдельная корзина «❓».

@@ -88,7 +88,6 @@ window.I18N_UK = {
         'catalog.title': 'Каталог',
         'catalog.placeholder': 'Назва аніме — наприклад, Фрірен або Naruto',
         'header.search': 'Пошук аніме',
-        'catalog.hint': 'Введи назву — і вже за кілька секунд дивись із японськими субтитрами',
         'catalog.searching': 'Шукаємо…',
         'catalog.empty': 'Нічого не знайшли — спробуй інше написання',
         'catalog.filter.all': 'Усі',

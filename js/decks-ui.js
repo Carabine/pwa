@@ -11,10 +11,9 @@
     function t(k) { return typeof window.t === 'function' ? window.t(k) : k; }
     function snack(msg) { if (typeof showSnackbar === 'function') showSnackbar(msg, { duration: 2000 }); }
 
+    // Экранирование — единое escHtml из app.js (вызов отложен: порядок загрузки).
     function esc(s) {
-        return String(s ?? '').replace(/[&<>"]/g, c => (
-            { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
-        ));
+        return escHtml(s ?? '');
     }
 
     function h(tag, cls, html) {

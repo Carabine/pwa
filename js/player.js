@@ -334,38 +334,6 @@ function renderTranslations() {
     });
 }
 
-// Старый рендер по источникам оставлен на случай отката: если у тайтла нет
-// чистого видео вовсе, выбор языков вырождается в единственный «оригинал».
-function renderTranslationsBySource() {
-    setSelectGhost(translationSelect, false);
-    translationSelect.innerHTML = '';
-    state.translations.forEach((tr, i) => {
-        const opt = document.createElement('option');
-        opt.value = i;
-        // Все дорожки теперь японские (дубляжи отфильтрованы) → флаг 🇯🇵 без
-        // «озвучки»; 🎙 остаётся только для фолбэка (тайтл без японской дорожки).
-        const label = isJpTrack(tr) ? '🇯🇵 ' : '🎙 ';
-        // Заголовок оригинальной дорожки (AllAnime/MegaPlay) приходит с бэкенда
-        // по-русски — локализуем через i18n; остальные — названия сабтитр-студий.
-        // AnimeJoy — тоже оригинал, но с отдельной подписью: он может стоять в
-        // списке рядом с AllAnime, и одинаковый ярлык на двух строках сбивал бы.
-        const isDirectOrig = tr.id === 'animejoy-sub';
-        const isOrig = tr.id === 'kickassanime-sub' || tr.id === 'allanime-sub'
-            || tr.id === 'megaplay-sub' || tr.title === 'Оригинал (яп.)';
-        // Метка языка вжатых субтитров источника (· рус./англ. сабы).
-        const sl = subBurnLang(tr);
-        const subTag = sl ? ' · ' + window.t(sl === 'en' ? 'player.subLangEn' : 'player.subLangRu') : '';
-        // Максимальное качество показываем прямо в списке: у KickAssAnime оно
-        // гуляет от тайтла к тайтлу, и юзер должен видеть это ДО выбора дорожки.
-        const qTag = tr.maxHeight ? ' · ' + tr.maxHeight + 'p' : '';
-        const name = isDirectOrig ? window.t('player.origJpDirect')
-            : isOrig ? window.t('player.origJp')
-                : tr.title;
-        opt.textContent = label + name + subTag + qTag;
-        translationSelect.appendChild(opt);
-    });
-}
-
 async function selectTranslation(index) {
     const opt = state.subOptions[index] || state.subOptions[0];
     if (!opt) return;
@@ -996,7 +964,7 @@ async function selectEpisode(index) {
 }
 
 function apiOrigin() {
-    return client.defaults.baseURL.replace(/\/api\/v1\/?$/, '');
+    return window.ANIMEI_ORIGIN || client.defaults.baseURL.replace(/\/api\/v1\/?$/, '');
 }
 
 // AnimeJoy отдаёт не плейлист, а готовый mp4 — hls.js тут не нужен и только
@@ -1677,58 +1645,9 @@ async function preciseSyncSubs() {
     }
 }
 
-function formatTime(sec) {
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return m + ':' + String(s).padStart(2, '0');
-}
-
-// ---------- Фуригана ----------
-// Чтение приходит с сервера хираганой для каждого слова. Над кандзи вешаем
-// его через <ruby>, совпадающую кану по краям (окуригану) оставляем как есть.
+// formatTime — общий, из app.js.
 
 const KANJI_RE = /[一-龯㐀-䶵々〆ヶ]/;
-
-function isKanaChar(ch) {
-    const c = ch.charCodeAt(0);
-    return (c >= 0x3041 && c <= 0x3096) || (c >= 0x30a1 && c <= 0x30fa) || ch === 'ー';
-}
-
-// 降る + ふる → [{text:'降', rt:'ふ'}, {text:'る', rt:null}]
-function furiganaSegments(surface, reading) {
-    if (!surface || !reading || !KANJI_RE.test(surface) || surface === reading) {
-        return [{ text: surface, rt: null }];
-    }
-
-    let s = surface, r = reading, head = '', tail = '';
-    while (s.length && r.length && isKanaChar(s[0]) && s[0] === r[0]) {
-        head += s[0]; s = s.slice(1); r = r.slice(1);
-    }
-    while (s.length && r.length && isKanaChar(s[s.length - 1]) && s[s.length - 1] === r[r.length - 1]) {
-        tail = s[s.length - 1] + tail; s = s.slice(0, -1); r = r.slice(0, -1);
-    }
-
-    const segs = [];
-    if (head) segs.push({ text: head, rt: null });
-    if (s) segs.push({ text: s, rt: r || null });
-    if (tail) segs.push({ text: tail, rt: null });
-    return segs.length ? segs : [{ text: surface, rt: null }];
-}
-
-function appendWithFurigana(el, surface, reading) {
-    for (const seg of furiganaSegments(surface, reading)) {
-        if (seg.rt) {
-            const ruby = document.createElement('ruby');
-            ruby.append(seg.text);
-            const rt = document.createElement('rt');
-            rt.textContent = seg.rt;
-            ruby.appendChild(rt);
-            el.appendChild(ruby);
-        } else {
-            el.append(seg.text);
-        }
-    }
-}
 
 // Один переключатель чтения над словами: кана ЛИБО ромадзи (без «выкл»).
 // Применяется и к центральному оверлею (buildWordCells), и к списку субтитров
@@ -1751,76 +1670,7 @@ function applyReadingPref() {
     if (typeof updateNowCue === 'function') updateNowCue(state.activeCueIndex);
 }
 
-// ---------- Ромадзи ----------
-// Транскрипция латиницей для тех, кто ещё не читает кану. Чтения приходят с
-// сервера хираганой — переводим их в ромадзи (упрощённый Хепбёрн).
-
-const ROMAJI_DIGRAPHS = {
-    'きゃ': 'kya', 'きゅ': 'kyu', 'きょ': 'kyo', 'しゃ': 'sha', 'しゅ': 'shu', 'しょ': 'sho',
-    'ちゃ': 'cha', 'ちゅ': 'chu', 'ちょ': 'cho', 'にゃ': 'nya', 'にゅ': 'nyu', 'にょ': 'nyo',
-    'ひゃ': 'hya', 'ひゅ': 'hyu', 'ひょ': 'hyo', 'みゃ': 'mya', 'みゅ': 'myu', 'みょ': 'myo',
-    'りゃ': 'rya', 'りゅ': 'ryu', 'りょ': 'ryo', 'ぎゃ': 'gya', 'ぎゅ': 'gyu', 'ぎょ': 'gyo',
-    'じゃ': 'ja', 'じゅ': 'ju', 'じょ': 'jo', 'びゃ': 'bya', 'びゅ': 'byu', 'びょ': 'byo',
-    'ぴゃ': 'pya', 'ぴゅ': 'pyu', 'ぴょ': 'pyo', 'ぢゃ': 'ja', 'ぢゅ': 'ju', 'ぢょ': 'jo',
-    'てぃ': 'ti', 'でぃ': 'di', 'ふぁ': 'fa', 'ふぃ': 'fi', 'ふぇ': 'fe', 'ふぉ': 'fo',
-    'しぇ': 'she', 'ちぇ': 'che', 'じぇ': 'je', 'うぃ': 'wi', 'うぇ': 'we', 'ゔ': 'vu',
-};
-
-const ROMAJI_MONO = {
-    'あ': 'a', 'い': 'i', 'う': 'u', 'え': 'e', 'お': 'o',
-    'か': 'ka', 'き': 'ki', 'く': 'ku', 'け': 'ke', 'こ': 'ko',
-    'さ': 'sa', 'し': 'shi', 'す': 'su', 'せ': 'se', 'そ': 'so',
-    'た': 'ta', 'ち': 'chi', 'つ': 'tsu', 'て': 'te', 'と': 'to',
-    'な': 'na', 'に': 'ni', 'ぬ': 'nu', 'ね': 'ne', 'の': 'no',
-    'は': 'ha', 'ひ': 'hi', 'ふ': 'fu', 'へ': 'he', 'ほ': 'ho',
-    'ま': 'ma', 'み': 'mi', 'む': 'mu', 'め': 'me', 'も': 'mo',
-    'や': 'ya', 'ゆ': 'yu', 'よ': 'yo',
-    'ら': 'ra', 'り': 'ri', 'る': 'ru', 'れ': 're', 'ろ': 'ro',
-    'わ': 'wa', 'ゐ': 'i', 'ゑ': 'e', 'を': 'o', 'ん': 'n',
-    'が': 'ga', 'ぎ': 'gi', 'ぐ': 'gu', 'げ': 'ge', 'ご': 'go',
-    'ざ': 'za', 'じ': 'ji', 'ず': 'zu', 'ぜ': 'ze', 'ぞ': 'zo',
-    'だ': 'da', 'ぢ': 'ji', 'づ': 'zu', 'で': 'de', 'ど': 'do',
-    'ば': 'ba', 'び': 'bi', 'ぶ': 'bu', 'べ': 'be', 'ぼ': 'bo',
-    'ぱ': 'pa', 'ぴ': 'pi', 'ぷ': 'pu', 'ぺ': 'pe', 'ぽ': 'po',
-    'ぁ': 'a', 'ぃ': 'i', 'ぅ': 'u', 'ぇ': 'e', 'ぉ': 'o', 'ゃ': 'ya', 'ゅ': 'yu', 'ょ': 'yo', 'ー': '',
-};
-
-function kanaToRomaji(input) {
-    if (!input) return '';
-    // Катакану приводим к хирагане — таблица одна на обе слоговые азбуки
-    const s = input.replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
-    let out = '';
-    for (let i = 0; i < s.length; i++) {
-        const two = s.slice(i, i + 2);
-        if (ROMAJI_DIGRAPHS[two]) { out += ROMAJI_DIGRAPHS[two]; i++; continue; }
-        const ch = s[i];
-        if (ch === 'っ' || ch === 'ッ') {
-            // маленькое цу удваивает согласный следующего слога (っち → tchi)
-            const nr = ROMAJI_DIGRAPHS[s.slice(i + 1, i + 3)] || ROMAJI_MONO[s[i + 1]] || '';
-            if (nr) out += nr[0] === 'c' ? 't' : nr[0];
-            continue;
-        }
-        if (ch === 'ー') { // тире продлевает предыдущую гласную
-            const last = out[out.length - 1];
-            if ('aeiou'.includes(last)) out += last;
-            continue;
-        }
-        out += ROMAJI_MONO[ch] ?? ch;
-    }
-    return out;
-}
-
-// Строка ромадзи для реплики: по чтениям токенов, знаки препинания без пробела
-function romajiForCue(cue) {
-    if (!cue.tokens || !cue.tokens.length) return '';
-    return cue.tokens
-        .map((tok) => kanaToRomaji(tok.reading || tok.surface))
-        .filter(Boolean)
-        .join(' ')
-        .replace(/\s+([.,!?、。」』】）)])/g, '$1')
-        .replace(/([「『【（(])\s+/g, '$1')
-        .trim();
-}
+// Ромадзи: window.kanaToRomaji из romaji.js (общая таблица на всё приложение).
 
 // Пословная раскладка (в стиле lexirise): каждое слово — отдельный столбик
 // [чтение сверху][слово]. Одинаково строит и ЦЕНТРАЛЬНЫЙ оверлей под видео, и
@@ -1884,6 +1734,9 @@ const AI_ICON_SVG = '<svg class="ai-icon" viewBox="0 0 24 24" fill="currentColor
 function renderTranscript() {
     transcriptList.querySelectorAll('.cue').forEach(el => el.remove());
 
+    // Сотни реплик вставляем одним куском: DocumentFragment вместо appendChild
+    // в живой список на каждую строку (рендер зовётся и при смене режима чтения).
+    const frag = document.createDocumentFragment();
     state.cues.forEach((cue, i) => {
         const div = document.createElement('div');
         div.className = 'cue';
@@ -1928,8 +1781,9 @@ function renderTranscript() {
             video.play().catch(() => {});
         });
 
-        transcriptList.appendChild(div);
+        frag.appendChild(div);
     });
+    transcriptList.appendChild(frag);
 
     // Сабы (пере)загружены — пересчитываем «ты знаешь N% слов серии».
     updateCoverage();
@@ -2031,9 +1885,21 @@ function markKnownEverywhere(base) {
         .forEach((tok) => tok.classList.add('tok--known'));
 }
 
+// Вызывается каждый кадр (cueSyncLoop) — сканировать с нуля дорого. Реплики
+// отсортированы, поэтому держим стартовый индекс: реплика, закончившаяся до t,
+// уже никогда не совпадёт. При перемотке назад, смене сдвига или новом списке
+// начинаем сначала — результат идентичен полному проходу.
+let cueScanFrom = 0, cueScanT = -1, cueScanOffset = 0, cueScanList = null;
 function findCueIndex(t) {
-    // Реплики отсортированы — ищем текущую по времени с учётом сдвига
-    for (let i = 0; i < state.cues.length; i++) {
+    if (state.cues !== cueScanList || t < cueScanT || state.offset !== cueScanOffset) {
+        cueScanFrom = 0;
+        cueScanList = state.cues;
+    }
+    cueScanT = t;
+    cueScanOffset = state.offset;
+    while (cueScanFrom < state.cues.length
+        && state.cues[cueScanFrom].end + state.offset < t) cueScanFrom++;
+    for (let i = cueScanFrom; i < state.cues.length; i++) {
         const c = state.cues[i];
         if (t >= c.start + state.offset && t <= c.end + state.offset) return i;
         if (c.start + state.offset > t) return -1;
@@ -2131,11 +1997,21 @@ function clearBurnedSubs() {
 
 // Отдельный цикл: учебные реплики (state.cues) и сабы источника живут независимо —
 // у них разные тайминги и разные источники, одно не должно гасить другое.
+let burnedScanFrom = 0, burnedScanT = -1, burnedScanList = null;
 function syncBurnedSub() {
     if (!burnedSub || !state.burnedCues.length) return;
     const t = video.currentTime;
+    // Тот же приём, что в findCueIndex: покадровый вызов, стартовый индекс
+    // двигаем мимо уже закончившихся реплик, при перемотке назад — сброс.
+    if (state.burnedCues !== burnedScanList || t < burnedScanT) {
+        burnedScanFrom = 0;
+        burnedScanList = state.burnedCues;
+    }
+    burnedScanT = t;
+    while (burnedScanFrom < state.burnedCues.length
+        && state.burnedCues[burnedScanFrom].end < t) burnedScanFrom++;
     let idx = -1;
-    for (let i = 0; i < state.burnedCues.length; i++) {
+    for (let i = burnedScanFrom; i < state.burnedCues.length; i++) {
         const c = state.burnedCues[i];
         if (t >= c.start && t <= c.end) { idx = i; break; }
         if (c.start > t) break;   // список отсортирован — дальше только позже
