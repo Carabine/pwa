@@ -1046,9 +1046,13 @@ html, body {
     font-weight: 500;
 }
 
-.transcript__fix:hover {
-    border-color: var(--pink);
-    color: var(--text);
+/* Только для мыши: на телефоне :hover «залипает» после тапа — кнопка так и
+   стоит подсвеченной, пока не нажмёшь другую. */
+@media (hover: hover) and (pointer: fine) {
+    .transcript__fix:hover {
+        border-color: var(--pink);
+        color: var(--text);
+    }
 }
 
 /* «Авто-колода» в шапке субтитров — тихая пилюля с палочкой: действие
@@ -2780,7 +2784,9 @@ html, body {
     flex-shrink: 0;
 }
 
-.edeck__close:hover:not(:disabled) { color: var(--text); }
+@media (hover: hover) and (pointer: fine) {
+    .edeck__close:hover:not(:disabled) { color: var(--text); }
+}
 
 .edeck__toolbar {
     display: flex;
@@ -2838,7 +2844,9 @@ html, body {
     cursor: pointer;
 }
 
-.edeck-row:hover { background: rgba(255, 255, 255, 0.03); }
+@media (hover: hover) and (pointer: fine) {
+    .edeck-row:hover { background: rgba(255, 255, 255, 0.03); }
+}
 
 .edeck-row input {
     margin-top: 4px;
@@ -2927,6 +2935,19 @@ html, body {
 .edeck--busy .edeck__list { opacity: 0.55; pointer-events: none; }
 
 /* ---------- «⋯» рядом с авто-колодой и её меню (js/episode-known.js) ---------- */
+/* Системная подсветка тапа на Android — серый прямоугольник по краям элемента:
+   на круглых плитках и пилюлях он выглядит как чужая рамка. Своего отклика
+   хватает: плитка тут же переключается, у пунктов меню и сегментов — :active. */
+.transcript__fix,
+.edeck-menu button,
+.edeck__close,
+.edeck-row,
+.edeck__create,
+.kw-chip,
+.kwords__filter,
+.kwords__all {
+    -webkit-tap-highlight-color: transparent;
+}
 /* Группа «Авто-колода + ⋯» показывается целиком, когда субтитры загружены. */
 .transcript__deck {
     display: inline-flex;
@@ -2990,7 +3011,12 @@ html, body {
     cursor: pointer;
 }
 
-.edeck-menu button:hover { background: var(--bg); }
+@media (hover: hover) and (pointer: fine) {
+    .edeck-menu button:hover { background: var(--bg); }
+}
+
+/* Тапу нужен отклик, раз системной подсветки больше нет. */
+.edeck-menu button:active { background: var(--bg); }
 .edeck-menu button svg { flex-shrink: 0; opacity: 0.7; }
 
 /* ---------- «Уже известные слова»: вся лексика серии одним экраном ---------- */
@@ -3056,6 +3082,8 @@ html, body {
     cursor: pointer;
 }
 
+.kwords__filter:active { color: var(--text); }
+
 .kwords__filter.is-on {
     background: var(--card);
     color: var(--text);
@@ -3103,7 +3131,9 @@ html, body {
     transition: border-color var(--transition), background var(--transition);
 }
 
-.kw-chip:hover { border-color: var(--pink); }
+@media (hover: hover) and (pointer: fine) {
+    .kw-chip:hover { border-color: var(--pink); }
+}
 
 .kw-chip.is-on {
     border-color: var(--pink);
