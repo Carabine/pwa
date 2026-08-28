@@ -21,6 +21,13 @@
         return String(name || '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX);
     }
 
+    // Аватарка колоды — только наш путь /catalog/deck-icon/<shikimoriId>
+    // (портрет главного персонажа, см. catalog.routes.js); всё прочее — мусор.
+    const ICON_RE = /^\/catalog\/deck-icon\/\d{1,10}$/;
+    function sanitizeIcon(v) {
+        return typeof v === 'string' && ICON_RE.test(v) ? v : '';
+    }
+
     // Читаем и чиним данные: терпим отсутствие ключа, битый JSON и мусор в полях.
     function load() {
         const parsed = lsJson(KEY);
@@ -33,6 +40,7 @@
                 id: d.id,
                 name: normalizeName(d.name) || (typeof t === 'function' ? t('decks.untitled') : 'Deck'),
                 emoji: EMOJIS.includes(d.emoji) ? d.emoji : EMOJIS[0],
+                icon: sanitizeIcon(d.icon),
                 wordIds: [...new Set(ids)],          // без дублей
                 createdAt: Number(d.createdAt) || Date.now(),
                 updatedAt: Number(d.updatedAt) || Number(d.createdAt) || Date.now(),
@@ -107,7 +115,7 @@
             if (!d) { dirty.delete(id); saveIdSet(DIRTY_KEY, dirty); continue; }
             try {
                 await client.put('decks/' + encodeURIComponent(id), {
-                    name: d.name, emoji: d.emoji, wordIds: d.wordIds, createdAt: d.createdAt,
+                    name: d.name, emoji: d.emoji, icon: d.icon || '', wordIds: d.wordIds, createdAt: d.createdAt,
                 });
                 dirty.delete(id); saveIdSet(DIRTY_KEY, dirty);
                 const synced = idSet(SYNCED_KEY); synced.add(id); saveIdSet(SYNCED_KEY, synced);
@@ -142,6 +150,7 @@
                 id: sd.id,
                 name: normalizeName(sd.name) || 'Deck',
                 emoji: EMOJIS.includes(sd.emoji) ? sd.emoji : EMOJIS[0],
+                icon: sanitizeIcon(sd.icon),
                 wordIds: [...new Set((sd.wordIds || []).filter((x) => typeof x === 'string'))],
                 createdAt: Number(sd.createdAt) || Date.now(),
                 updatedAt: Number(sd.updatedAt) || Date.now(),
@@ -180,12 +189,13 @@
         get(id) { return clone(find(id)); },
         count(id) { const d = find(id); return d ? d.wordIds.length : 0; },
 
-        create(name, emoji) {
+        create(name, emoji, icon) {
             const now = Date.now();
             const deck = {
                 id: makeId(),
                 name: normalizeName(name) || (typeof t === 'function' ? t('decks.untitled') : 'Deck'),
                 emoji: EMOJIS.includes(emoji) ? emoji : EMOJIS[0],
+                icon: sanitizeIcon(icon),
                 wordIds: [],
                 createdAt: now,
                 updatedAt: now,
@@ -194,6 +204,19 @@
             save();
             markDirty(deck.id);
             return clone(deck);
+        },
+
+        // Значок колоды для вставки в разметку: аватарка (портрет главного
+        // персонажа тайтла) или просто эмодзи. Строка безопасна без esc():
+        // icon прошёл sanitizeIcon, эмодзи — из EMOJIS.
+        iconHtml(d) {
+            if (!d) return '';
+            if (d.icon && ICON_RE.test(d.icon)) {
+                const base = (window.ANIMEI_ORIGIN || '') + '/api/v1';
+                return `<img class="deck-ico" src="${base}${d.icon}" alt="" loading="lazy"` +
+                    ` data-fb="${d.emoji}" onerror="this.outerHTML=this.dataset.fb">`;
+            }
+            return d.emoji;
         },
 
         rename(id, name) {

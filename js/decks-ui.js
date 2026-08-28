@@ -98,7 +98,7 @@
             let emoji = STACK_ICON;
             let name = t('decks.pickAll');
             let count = decks.length;
-            if (active) { emoji = esc(active.emoji); name = active.name; count = active.wordIds.length; }
+            if (active) { emoji = Decks.iconHtml(active); name = active.name; count = active.wordIds.length; }
             else if (this._activeId === '__none__') { emoji = '·'; name = t('decks.noDeck'); count = loose; }
 
             const pick = h('button', 'deck-pick' + (this._activeId ? ' deck-pick--on' : ''),
@@ -154,7 +154,7 @@
             };
 
             addRow(null, STACK_ICON, t('decks.allWords'), total);
-            for (const d of Decks.all()) addRow(d.id, d.emoji, d.name, d.wordIds.length);
+            for (const d of Decks.all()) addRow(d.id, Decks.iconHtml(d), d.name, d.wordIds.length);
             const loose = this._looseCount();
             if (loose > 0) addRow('__none__', '·', t('decks.noDeck'), loose);
 
@@ -222,7 +222,7 @@
             if (!member.length) return;
             const wrap = h('div', 'word-card__decks');
             for (const d of member) {
-                const chip = h('span', 'word-deck-chip', `${d.emoji}<span>${esc(d.name)}</span>`);
+                const chip = h('span', 'word-deck-chip', `${Decks.iconHtml(d)}<span>${esc(d.name)}</span>`);
                 chip.title = d.name;
                 wrap.appendChild(chip);
             }
@@ -264,7 +264,7 @@
             if (!decks.length) list.appendChild(h('div', 'deck-sheet__empty', esc(t('decks.noneYet'))));
             for (const d of decks) {
                 const row = h('button', 'deck-sheet__row',
-                    `<span class="deck-sheet__emoji">${d.emoji}</span>` +
+                    `<span class="deck-sheet__emoji">${Decks.iconHtml(d)}</span>` +
                     `<span class="deck-sheet__name">${esc(d.name)}</span>` +
                     `<span class="deck-chip__count">${d.wordIds.length}</span>`);
                 row.addEventListener('click', () => finishAdd(d));
@@ -322,7 +322,7 @@
                 for (const d of decks) {
                     const on = Decks.has(d.id, word.id);
                     const row = h('button', 'deck-sheet__row' + (on ? ' is-on' : ''),
-                        `<span class="deck-sheet__emoji">${d.emoji}</span>` +
+                        `<span class="deck-sheet__emoji">${Decks.iconHtml(d)}</span>` +
                         `<span class="deck-sheet__name">${esc(d.name)}</span>` +
                         `<span class="deck-sheet__check">${on ? '✓' : ''}</span>`);
                     row.addEventListener('click', () => {

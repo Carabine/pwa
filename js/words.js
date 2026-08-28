@@ -276,15 +276,17 @@ function buildRow(wordData) {
     const row = document.createElement('div');
     row.className = 'word-row' + (selected.has(wordData.id) ? ' is-selected' : '');
 
-    // Значки: ⏳ готовящегося клипа + эмодзи колод. Повторы одного эмодзи
-    // (две колоды с одним значком) сливаем в один, подсказки объединяем.
+    // Значки: ⏳ готовящегося клипа + значки колод (аватарка тайтла или эмодзи).
+    // Повторы одного значка (две колоды с одним эмодзи) сливаем в один,
+    // подсказки объединяем.
     const badges = [];
     if (clipBadge(wordData) === 'pending') badges.push({ emoji: '⏳', title: t('words.videoPreparing'), cls: 'word-card__clip word-card__clip--pending' });
     if (window.Decks) {
         for (const d of Decks.decksOf(wordData.id)) {
-            const dup = badges.find((b) => b.emoji === d.emoji);
+            const ico = Decks.iconHtml(d);
+            const dup = badges.find((b) => b.emoji === ico);
             if (dup) dup.title += `, ${d.name}`;
-            else badges.push({ emoji: d.emoji, title: d.name, cls: '' });
+            else badges.push({ emoji: ico, title: d.name, cls: '' });
         }
     }
     const badgesHtml = badges

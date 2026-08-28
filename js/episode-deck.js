@@ -387,8 +387,12 @@
         try { await state.syncPromise; } catch { /* автосинк не критичен */ }
 
         // 📺, не 🎬: у слов серии всегда есть клип со значком 🎬 — в списке слов
-        // два одинаковых эмодзи подряд читались как дубль.
-        const deck = window.Decks.create(deckName(), '📺');
+        // два одинаковых эмодзи подряд читались как дубль. Аватарка колоды —
+        // портрет главного персонажа тайтла (наш /catalog/deck-icon/<id>);
+        // эмодзи остаётся фоллбэком, если картинка не загрузится.
+        const animeId = new URLSearchParams(location.search).get('id');
+        const icon = animeId && /^\d{1,10}$/.test(animeId) ? '/catalog/deck-icon/' + animeId : '';
+        const deck = window.Decks.create(deckName(), '📺', icon);
         let done = 0;
         let failed = 0;
         const total = picked.length;

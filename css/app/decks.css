@@ -63,6 +63,18 @@
 /* Фильтр включён — обводка подсвечена, чтобы это было видно без чтения текста. */
 .deck-pick--on { border-color: var(--primary); background: rgba(124, 140, 248, 0.12); }
 .deck-pick__emoji { font-size: 16px; line-height: 1; }
+/* Аватарка колоды (портрет главного персонажа тайтла): размер задаётся
+   шрифтом контекста, поэтому одна и та же разметка живёт и в пилюле, и в
+   пикере, и в значках у слов. */
+.deck-ico {
+    width: 1.25em;
+    height: 1.25em;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 50% 12%;
+    display: inline-block;
+    vertical-align: -0.25em;
+}
 /* SVG-стопка «все колоды/все слова» — размер под соседний эмодзи-ряд. */
 .deck-pick__emoji svg { display: block; width: 16px; height: 16px; }
 .deck-sheet__emoji svg { display: block; width: 18px; height: 18px; margin: 3px 0; }
