@@ -847,11 +847,23 @@
     .word-card__menu:hover { color: var(--text); background: var(--surface); }
 }
 
+/* Форма в модалке — компактная: глобальный .form-group даёт margin-bottom
+   16px поверх gap (выходило 28px между полями), инпуты ужимаем по вертикали. */
 .word-edit {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
+.word-edit .form-group { margin-bottom: 0; }
+.word-edit .form-group label {
+    font-size: 11px;
+    margin-bottom: 2px;
+}
+.word-edit .form-group input,
+.word-edit .form-group textarea {
+    padding: 7px 12px;
+}
+.word-edit .form-group textarea { min-height: 56px; }
 
 .word-edit__actions {
     display: flex;
@@ -944,7 +956,17 @@
     font-weight: 600;
 }
 
-.word-modal__close {
+/* Справа в шапке — иконки «Удалить»/«В колоды» (словарь) и крестик,
+   одинаковыми круглыми кнопками. */
+.word-modal__head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.word-modal__close,
+.word-modal__hbtn {
     flex-shrink: 0;
     width: 30px;
     height: 30px;
@@ -958,9 +980,11 @@
     line-height: 1;
     transition: background var(--transition), color var(--transition);
 }
+.word-modal__hbtn { font-size: 14px; }
 
 @media (hover: hover) and (pointer: fine) {
-    .word-modal__close:hover {
+    .word-modal__close:hover,
+    .word-modal__hbtn:hover {
         background: var(--border);
         color: var(--text);
     }
@@ -996,23 +1020,8 @@
     white-space: nowrap;
 }
 
-/* Слева в подвале — иконки «Удалить» и «В колоды» (словарь); справа —
-   отмена/сохранить текстом. Иконки вместо надписей: четыре текстовые кнопки
-   не влезали в одну строку узкой модалки. */
-.word-modal__foot-left {
-    display: flex;
-    gap: 8px;
-    margin-right: auto;
-}
-.word-modal__foot-left:empty { display: none; }
-.word-modal__foot .word-modal__ibtn {
-    width: 38px;
-    min-width: 38px;
-    padding: 0;
-    font-size: 16px;
-}
 @media (hover: hover) and (pointer: fine) {
-    .word-modal__delete:hover { border-color: var(--danger); }
+    .word-modal__delete:hover { background: rgba(239, 68, 68, 0.18); color: var(--danger); }
 }
 
 @keyframes word-modal-fade {
