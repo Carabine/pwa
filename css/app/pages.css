@@ -928,7 +928,6 @@
 }
 
 .word-modal__dialog {
-    position: relative;   /* якорь для углового крестика */
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -945,7 +944,6 @@
 .word-modal__head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
     padding: 13px 16px;
     border-bottom: 1px solid var(--border);
@@ -957,17 +955,14 @@
     font-weight: 600;
 }
 
-/* Справа в шапке — иконки действий над карточкой («Удалить»/«В колоды»,
-   словарь) круглыми кнопками. Крестик — не действие, а часть модалки:
-   тихий глиф без подложки, прижат к самому углу диалога, действия
-   отодвинуты от него (padding-right шапки). */
+/* Действия над карточкой («Удалить»/«В колоды», словарь) — круглые кнопки
+   слева, одной группой с заголовком: слева «про карточку», справа —
+   крестик закрытия как часть модалки. */
 .word-modal__head-actions {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
-    margin-left: auto;
-    padding-right: 30px;
 }
 
 .word-modal__hbtn {
@@ -986,29 +981,25 @@
 .word-modal__hbtn svg { display: block; }
 
 .word-modal__close {
-    position: absolute;
-    top: 7px;
-    right: 7px;
-    width: 28px;
-    height: 28px;
+    flex-shrink: 0;
+    margin-left: auto;
+    width: 30px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: transparent;
-    color: var(--text-muted);
-    font-size: 19px;
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 18px;
     line-height: 1;
     transition: background var(--transition), color var(--transition);
 }
 
 @media (hover: hover) and (pointer: fine) {
-    .word-modal__hbtn:hover {
-        background: var(--border);
-        color: var(--text);
-    }
+    .word-modal__hbtn:hover,
     .word-modal__close:hover {
-        background: var(--surface);
+        background: var(--border);
         color: var(--text);
     }
 }
