@@ -302,6 +302,9 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
+    /* overflow:hidden у flex-ребёнка обнуляет min-height:auto — список сжимался
+       под высоту экрана и .dictionary было нечего скроллить. */
+    flex-shrink: 0;
     /* padding-bottom от grid-вида рисовался бы пустой полосой внутри карты */
     padding-bottom: 0;
     margin-bottom: 24px;
