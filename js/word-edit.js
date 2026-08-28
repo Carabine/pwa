@@ -121,13 +121,37 @@
         return box;
     }
 
+    // Скопировать карточку текстом: «слово（чтение） — перевод» + пример.
+    // Живёт здесь, чтобы и меню модалки, и меню «⋯» списка (words.js)
+    // пользовались одним кодом.
+    async function copyWord(w) {
+        const head = `${w.kanji || ''}${w.kana ? `（${w.kana}）` : ''}${w.translation ? ` — ${w.translation}` : ''}`;
+        const lines = [head];
+        if (w.sentence) lines.push(w.sentence);
+        if (w.sentenceTranslation) lines.push(w.sentenceTranslation);
+        const text = lines.join('\n');
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch {
+            // Старый запасной путь: скрытая textarea + execCommand.
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+        }
+        showSnackbar(t('words.copied'), { duration: 2000 });
+    }
+
     // Редактирование карточки слова — модальным окном. onSaved зовём после
     // успешного сохранения (перерисовать список / карточку обучения). Правку
     // видео-фрагмента и звука монтируем внутрь: они сохраняются сами, отдельно.
-    // opts.onDelete / opts.onDecks (необязательные) добавляют в шапку иконки
-    // «Удалить» и «В колоды» — у компактного списка словаря нет своих кнопок.
-    // Иконки живут рядом с крестиком (в подвал четыре кнопки не влезали),
-    // подвал — только «Отмена»/«Сохранить».
+    // Действия над словом (В колоды/Скопировать/Удалить) — в меню «⋯» рядом с
+    // крестиком, как у строк списка: шапка остаётся чистой (заголовок + ⋯ + ×).
+    // opts.onDelete / opts.onDecks (необязательные) добавляют свои пункты.
     function open(wordData, onSaved, opts) {
         opts = opts || {};
         const overlay = document.createElement('div');
@@ -137,10 +161,11 @@
                 <div class="word-modal__head">
                     <span class="word-modal__title">${esc(t('words.edit'))}</span>
                     <span class="word-modal__head-actions">
-                        ${opts.onDelete ? `<button class="word-modal__hbtn word-modal__delete delete-btn" type="button" title="${esc(t('words.bulkDelete'))}" aria-label="${esc(t('words.bulkDelete'))}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : ''}
-                        ${opts.onDecks ? `<button class="word-modal__hbtn decks-btn" type="button" title="${esc(t('decks.add'))}" aria-label="${esc(t('decks.add'))}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="M2 12.65l9.17 4.16a2 2 0 0 0 1.66 0l4.5-2.04"/><path d="M2 17.65l9.17 4.16a2 2 0 0 0 1.66 0l4.5-2.04"/><path d="M20.5 13.5v6"/><path d="M17.5 16.5h6"/></svg></button>` : ''}
+                        <span class="word-modal__kebab-wrap">
+                            <button class="word-modal__hbtn word-modal__kebab kebab-btn" type="button" title="${esc(t('words.actions'))}" aria-label="${esc(t('words.actions'))}" aria-haspopup="menu">⋯</button>
+                        </span>
+                        <button class="word-modal__close" type="button" aria-label="${esc(t('words.cancel'))}">&times;</button>
                     </span>
-                    <button class="word-modal__close" type="button" aria-label="${esc(t('words.cancel'))}">&times;</button>
                 </div>
                 <div class="word-modal__body"><div class="word-edit"></div></div>
                 <div class="word-modal__foot">
@@ -167,13 +192,45 @@
         const modal = modalLayer(overlay, {
             backdropEvent: 'mousedown',
             stopEsc: true,
-            onHide: () => overlay.remove(),
+            onHide: () => { closeMenu(); overlay.remove(); },
         });
         const close = modal.close;
         overlay.querySelector('.word-modal__close').addEventListener('click', close);
         overlay.querySelector('.cancel-btn').addEventListener('click', close);
-        overlay.querySelector('.delete-btn')?.addEventListener('click', () => { close(); opts.onDelete(); });
-        overlay.querySelector('.decks-btn')?.addEventListener('click', () => opts.onDecks());
+
+        // Меню «⋯»: В колоды / Скопировать / Удалить. Разметка и стили те же,
+        // что у меню строк списка (.words-menu), якорь — обёртка кнопки.
+        const kebab = overlay.querySelector('.kebab-btn');
+        let menuEl = null;
+        const onDocClick = (e) => {
+            if (!e.target.closest('.words-menu') && !e.target.closest('.kebab-btn')) closeMenu();
+        };
+        function closeMenu() {
+            if (!menuEl) return;
+            menuEl.remove();
+            menuEl = null;
+            document.removeEventListener('click', onDocClick, true);
+        }
+        kebab.addEventListener('click', () => {
+            if (menuEl) { closeMenu(); return; }
+            menuEl = document.createElement('div');
+            menuEl.className = 'words-menu word-actions';
+            menuEl.innerHTML = [
+                opts.onDecks ? `<button data-act="decks">${esc(t('decks.add'))}</button>` : '',
+                `<button data-act="copy">${esc(t('words.copy'))}</button>`,
+                opts.onDelete ? `<hr class="words-menu__hr"><button data-act="delete" class="word-actions__danger">${esc(t('words.bulkDelete'))}</button>` : '',
+            ].join('');
+            menuEl.addEventListener('click', (e) => {
+                const act = e.target.closest('[data-act]')?.dataset.act;
+                if (!act) return;
+                closeMenu();
+                if (act === 'decks') opts.onDecks();
+                else if (act === 'copy') copyWord(wordData);
+                else if (act === 'delete') { close(); opts.onDelete(); }
+            });
+            kebab.parentElement.appendChild(menuEl);
+            document.addEventListener('click', onDocClick, true);
+        });
         overlay.querySelector('.save-btn').addEventListener('click', async () => {
             const patch = {
                 kanji: kanji.input.value,
@@ -196,5 +253,5 @@
         if (matchMedia('(hover: hover) and (pointer: fine)').matches) kanji.input.focus();
     }
 
-    window.AnimeiWordEdit = { open };
+    window.AnimeiWordEdit = { open, copyWord };
 })();

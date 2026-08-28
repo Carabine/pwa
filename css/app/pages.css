@@ -955,15 +955,17 @@
     font-weight: 600;
 }
 
-/* Действия над карточкой («Удалить»/«В колоды», словарь) — круглые кнопки
-   слева, одной группой с заголовком: слева «про карточку», справа —
-   крестик закрытия как часть модалки. */
+/* Справа в шапке — «⋯» (все действия над словом в выпадающем меню, как у
+   строк списка) и крестик закрытия. Шапка остаётся чистой. */
 .word-modal__head-actions {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+    margin-left: auto;
 }
+.word-modal__kebab-wrap { position: relative; display: flex; }
+.word-modal__kebab { font-size: 17px; }
 
 .word-modal__hbtn {
     flex-shrink: 0;
@@ -982,7 +984,6 @@
 
 .word-modal__close {
     flex-shrink: 0;
-    margin-left: auto;
     width: 30px;
     height: 30px;
     display: flex;
@@ -1034,9 +1035,6 @@
     white-space: nowrap;
 }
 
-@media (hover: hover) and (pointer: fine) {
-    .word-modal__delete:hover { background: rgba(239, 68, 68, 0.18); color: var(--danger); }
-}
 
 @keyframes word-modal-fade {
     from { opacity: 0; }

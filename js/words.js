@@ -150,29 +150,6 @@ function toggleSelected(id) {
 
 // ---------- Меню действий слова («⋯») ----------
 
-// Текст для копирования: «слово（чтение） — перевод» + пример с переводом.
-async function copyWordText(w) {
-    const head = `${w.kanji || ''}${w.kana ? `（${w.kana}）` : ''}${w.translation ? ` — ${w.translation}` : ''}`;
-    const lines = [head];
-    if (w.sentence) lines.push(w.sentence);
-    if (w.sentenceTranslation) lines.push(w.sentenceTranslation);
-    const text = lines.join('\n');
-    try {
-        await navigator.clipboard.writeText(text);
-    } catch {
-        // Старый запасной путь: скрытая textarea + execCommand.
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        ta.remove();
-    }
-    showSnackbar(t('words.copied'), { duration: 2000 });
-}
-
 // Всплывающее меню у «⋯» слова: Изменить / В колоды / Скопировать / Удалить.
 // Живёт в body (список обрезал бы его overflow'ом), позиционируется у кнопки.
 let wordActionsEl = null;
@@ -222,7 +199,7 @@ function openWordActions(anchor, wordData) {
         closeWordActions();
         if (act === 'edit') openWord(wordData);
         else if (act === 'decks' && window.DecksUI) DecksUI.openSheet(wordData);
-        else if (act === 'copy') copyWordText(wordData);
+        else if (act === 'copy') AnimeiWordEdit.copyWord(wordData);
         else if (act === 'del') confirmRemove(wordData);
     });
 
