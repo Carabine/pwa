@@ -361,6 +361,10 @@
             if (editing && !deck) return;
 
             let chosen = deck ? deck.emoji : Decks.EMOJIS[0];
+            // Аватарка тайтла (колоды серий): первая ячейка палитры. Выбор
+            // эмодзи её не удаляет, а выключает — вернуть можно в любой момент.
+            const avatarSrc = deck ? Decks.iconSrc(deck) : '';
+            let useIcon = deck ? Decks.iconEnabled(deck) : false;
 
             const overlay = h('div', 'deck-sheet__overlay');
             const box = h('div', 'deck-editor');
@@ -380,12 +384,22 @@
             box.appendChild(h('div', 'deck-editor__title', esc(editing ? t('decks.manage') : t('decks.newTitle'))));
 
             const palette = h('div', 'deck-editor__emojis');
+            const select = (b) => {
+                palette.querySelectorAll('.deck-editor__emoji').forEach(x => x.classList.remove('is-sel'));
+                b.classList.add('is-sel');
+            };
+            if (avatarSrc) {
+                const b = h('button', 'deck-editor__emoji deck-editor__avatar' + (useIcon ? ' is-sel' : ''),
+                    `<img src="${avatarSrc}" alt="" title="${esc(t('decks.avatar'))}">`);
+                b.addEventListener('click', () => { useIcon = true; select(b); });
+                palette.appendChild(b);
+            }
             Decks.EMOJIS.forEach((e) => {
-                const b = h('button', 'deck-editor__emoji' + (e === chosen ? ' is-sel' : ''), e);
+                const b = h('button', 'deck-editor__emoji' + (!useIcon && e === chosen ? ' is-sel' : ''), e);
                 b.addEventListener('click', () => {
                     chosen = e;
-                    palette.querySelectorAll('.deck-editor__emoji').forEach(x => x.classList.remove('is-sel'));
-                    b.classList.add('is-sel');
+                    useIcon = false;
+                    select(b);
                 });
                 palette.appendChild(b);
             });
@@ -406,6 +420,7 @@
                 if (editing) {
                     Decks.rename(id, name);
                     Decks.setEmoji(id, chosen);
+                    Decks.setIconEnabled(id, useIcon);
                     this.refresh();
                     this._ctx.onChange();
                     finish(Decks.get(id));

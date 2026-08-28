@@ -362,6 +362,7 @@ window.I18N_UK = {
         'decks.study': 'Вчити',
         'decks.manage': 'Керування колодою',
         'decks.add': 'До колод',
+        'decks.avatar': 'Аватарка тайтлу',
         'decks.sheetTitle': 'Додати до колод',
         'decks.noneYet': 'Колод ще немає — створіть першу',
         'decks.newTitle': 'Нова колода',

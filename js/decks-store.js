@@ -23,9 +23,14 @@
 
     // Аватарка колоды — только наш путь /catalog/deck-icon/<shikimoriId>
     // (портрет главного персонажа, см. catalog.routes.js); всё прочее — мусор.
-    const ICON_RE = /^\/catalog\/deck-icon\/\d{1,10}$/;
+    // Префикс «off:» — аватарка выключена юзером (показывается эмодзи), но
+    // путь сохранён, чтобы её можно было вернуть в редакторе колоды.
+    const ICON_RE = /^(off:)?\/catalog\/deck-icon\/\d{1,10}$/;
     function sanitizeIcon(v) {
         return typeof v === 'string' && ICON_RE.test(v) ? v : '';
+    }
+    function iconEnabled(d) {
+        return !!(d && d.icon && !d.icon.startsWith('off:'));
     }
 
     // Читаем и чиним данные: терпим отсутствие ключа, битый JSON и мусор в полях.
@@ -206,15 +211,40 @@
             return clone(deck);
         },
 
+        // Абсолютный URL аватарки (и выключенной тоже — для превью в
+        // редакторе); '' если аватарки нет.
+        iconSrc(d) {
+            const p = ((d && d.icon) || '').replace(/^off:/, '');
+            if (!/^\/catalog\/deck-icon\/\d{1,10}$/.test(p)) return '';
+            return (window.ANIMEI_ORIGIN || '') + '/api/v1' + p;
+        },
+
+        iconEnabled(d) { return iconEnabled(d); },
+
+        // Включить/выключить аватарку (путь сохраняется в обоих состояниях).
+        setIconEnabled(id, on) {
+            const d = find(id);
+            if (!d || !d.icon) return;
+            const bare = d.icon.replace(/^off:/, '');
+            const next = on ? bare : 'off:' + bare;
+            if (next === d.icon) return;
+            d.icon = next;
+            d.updatedAt = Date.now();
+            save();
+            markDirty(id);
+        },
+
         // Значок колоды для вставки в разметку: аватарка (портрет главного
         // персонажа тайтла) или просто эмодзи. Строка безопасна без esc():
         // icon прошёл sanitizeIcon, эмодзи — из EMOJIS.
         iconHtml(d) {
             if (!d) return '';
-            if (d.icon && ICON_RE.test(d.icon)) {
-                const base = (window.ANIMEI_ORIGIN || '') + '/api/v1';
-                return `<img class="deck-ico" src="${base}${d.icon}" alt="" loading="lazy"` +
-                    ` data-fb="${d.emoji}" onerror="this.outerHTML=this.dataset.fb">`;
+            if (iconEnabled(d)) {
+                const src = Decks.iconSrc(d);
+                if (src) {
+                    return `<img class="deck-ico" src="${src}" alt="" loading="lazy"` +
+                        ` data-fb="${d.emoji}" onerror="this.outerHTML=this.dataset.fb">`;
+                }
             }
             return d.emoji;
         },

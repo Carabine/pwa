@@ -362,6 +362,7 @@ window.I18N_EN = {
         'decks.study': 'Study',
         'decks.manage': 'Manage deck',
         'decks.add': 'To decks',
+        'decks.avatar': 'Title avatar',
         'decks.sheetTitle': 'Add to decks',
         'decks.noneYet': 'No decks yet — create the first one',
         'decks.newTitle': 'New deck',

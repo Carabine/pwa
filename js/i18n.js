@@ -366,6 +366,7 @@ const I18N = {
         'decks.study': 'Учить',
         'decks.manage': 'Управление колодой',
         'decks.add': 'В колоды',
+        'decks.avatar': 'Аватарка тайтла',
         'decks.sheetTitle': 'Добавить в колоды',
         'decks.noneYet': 'Колод пока нет — создайте первую',
         'decks.newTitle': 'Новая колода',

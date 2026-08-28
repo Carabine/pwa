@@ -317,6 +317,14 @@
     .deck-editor__emoji:hover { transform: translateY(-1px); }
 }
 .deck-editor__emoji.is-sel { border-color: var(--primary); background: rgba(124, 140, 248, 0.14); }
+/* Первая ячейка палитры — аватарка тайтла (у колод серий). */
+.deck-editor__avatar img {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    object-fit: cover;
+    display: block;
+}
 
 .deck-editor__input {
     width: 100%;
