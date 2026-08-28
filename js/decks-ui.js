@@ -25,6 +25,11 @@
 
     const HINT_KEY = 'animei:decksHintDismissed';
 
+    // Значок «все колоды/все слова» — нейтральная SVG-стопка карточек в стиле
+    // остальных иконок интерфейса (эмодзи 🗂 в мелком размере читался плохо).
+    // Размеры задаёт CSS (.deck-pick__emoji svg / .deck-sheet__emoji svg).
+    const STACK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="13" height="13" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/></svg>';
+
     const UI = {
         _activeId: null,
         _ctx: null,   // { chips, study, hint, getWords, onChange }
@@ -89,14 +94,14 @@
             if (this._activeId === '__none__' && loose === 0) this._activeId = null;
 
             const active = this._activeId && this._activeId !== '__none__' ? Decks.get(this._activeId) : null;
-            let emoji = '🗂';
+            let emoji = STACK_ICON;
             let name = t('decks.pickAll');
             let count = decks.length;
-            if (active) { emoji = active.emoji; name = active.name; count = active.wordIds.length; }
+            if (active) { emoji = esc(active.emoji); name = active.name; count = active.wordIds.length; }
             else if (this._activeId === '__none__') { emoji = '·'; name = t('decks.noDeck'); count = loose; }
 
             const pick = h('button', 'deck-pick' + (this._activeId ? ' deck-pick--on' : ''),
-                `<span class="deck-pick__emoji">${esc(emoji)}</span>` +
+                `<span class="deck-pick__emoji">${emoji}</span>` +
                 `<span class="deck-pick__name">${esc(name)}</span>` +
                 `<span class="deck-pick__count">${count}</span>` +
                 '<span class="deck-pick__caret">▾</span>');
@@ -135,10 +140,11 @@
             const total = (this._ctx.getWords() || []).length;
 
             // Строка списка: значок, имя, счётчик и галочка у текущего фильтра.
+            // ico начинается с '<' — это доверенная SVG (STACK_ICON), не экранируем.
             const addRow = (id, ico, label, n) => {
                 const on = this._activeId === id;
                 const row = h('button', 'deck-sheet__row' + (on ? ' is-on' : ''),
-                    `<span class="deck-sheet__emoji">${esc(ico)}</span>` +
+                    `<span class="deck-sheet__emoji">${ico.startsWith('<') ? ico : esc(ico)}</span>` +
                     `<span class="deck-sheet__name">${esc(label)}</span>` +
                     `<span class="deck-chip__count">${n}</span>` +
                     `<span class="deck-sheet__check">${on ? '✓' : ''}</span>`);
@@ -146,7 +152,7 @@
                 list.appendChild(row);
             };
 
-            addRow(null, '🗂', t('decks.allWords'), total);
+            addRow(null, STACK_ICON, t('decks.allWords'), total);
             for (const d of Decks.all()) addRow(d.id, d.emoji, d.name, d.wordIds.length);
             const loose = this._looseCount();
             if (loose > 0) addRow('__none__', '·', t('decks.noDeck'), loose);

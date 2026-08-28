@@ -63,6 +63,9 @@
 /* Фильтр включён — обводка подсвечена, чтобы это было видно без чтения текста. */
 .deck-pick--on { border-color: var(--primary); background: rgba(124, 140, 248, 0.12); }
 .deck-pick__emoji { font-size: 16px; line-height: 1; }
+/* SVG-стопка «все колоды/все слова» — размер под соседний эмодзи-ряд. */
+.deck-pick__emoji svg { display: block; width: 16px; height: 16px; }
+.deck-sheet__emoji svg { display: block; width: 18px; height: 18px; margin: 3px 0; }
 .deck-pick__name {
     flex: 1 1 auto;
     min-width: 0;

@@ -981,6 +981,7 @@
     transition: background var(--transition), color var(--transition);
 }
 .word-modal__hbtn { font-size: 14px; }
+.word-modal__hbtn svg { display: block; }
 
 @media (hover: hover) and (pointer: fine) {
     .word-modal__close:hover,
