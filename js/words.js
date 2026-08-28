@@ -174,12 +174,13 @@ function openWordActions(anchor, wordData) {
     closeWordActions();
     const menu = document.createElement('div');
     menu.className = 'words-menu word-actions';
+    const ico = AnimeiWordEdit.menuIcons;
     menu.innerHTML = `
-        <button data-act="edit">${esc(t('words.edit'))}</button>
-        <button data-act="decks">${esc(t('decks.add'))}</button>
-        <button data-act="copy">${esc(t('words.copy'))}</button>
+        <button data-act="edit">${ico.edit}${esc(t('words.edit'))}</button>
+        <button data-act="decks">${ico.decks}${esc(t('decks.add'))}</button>
+        <button data-act="copy">${ico.copy}${esc(t('words.copy'))}</button>
         <hr class="words-menu__hr">
-        <button data-act="del" class="word-actions__danger">${esc(t('words.bulkDelete'))}</button>
+        <button data-act="del" class="word-actions__danger">${ico.del}${esc(t('words.bulkDelete'))}</button>
     `;
     document.body.appendChild(menu);
     wordActionsEl = menu;

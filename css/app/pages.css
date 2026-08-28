@@ -221,7 +221,7 @@
 .words-menu button {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 9px;
     width: 100%;
     padding: 10px 12px;
     background: none;
@@ -234,6 +234,7 @@
     cursor: pointer;
 }
 /* display:flex класса сильнее UA-правила для [hidden] — прячем явно. */
+.words-menu button svg { flex: 0 0 auto; }
 .words-menu[hidden] { display: none; }
 @media (hover: hover) and (pointer: fine) {
     .words-menu button:hover { background: var(--surface); }

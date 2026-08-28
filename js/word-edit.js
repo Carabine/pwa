@@ -121,6 +121,16 @@
         return box;
     }
 
+    // Иконки пунктов меню действий над словом — общие для меню «⋯» модалки
+    // и меню «⋯» строк списка (words.js берёт их из AnimeiWordEdit.menuIcons).
+    const ICON = (inner) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+    const MENU_ICONS = {
+        edit: ICON('<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>'),
+        decks: ICON('<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="M2 12.65l9.17 4.16a2 2 0 0 0 1.66 0l4.5-2.04"/><path d="M2 17.65l9.17 4.16a2 2 0 0 0 1.66 0l4.5-2.04"/><path d="M20.5 13.5v6"/><path d="M17.5 16.5h6"/>'),
+        copy: ICON('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>'),
+        del: ICON('<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>'),
+    };
+
     // Скопировать карточку текстом: «слово（чтение） — перевод» + пример.
     // Живёт здесь, чтобы и меню модалки, и меню «⋯» списка (words.js)
     // пользовались одним кодом.
@@ -216,9 +226,9 @@
             menuEl = document.createElement('div');
             menuEl.className = 'words-menu word-actions';
             menuEl.innerHTML = [
-                opts.onDecks ? `<button data-act="decks">${esc(t('decks.add'))}</button>` : '',
-                `<button data-act="copy">${esc(t('words.copy'))}</button>`,
-                opts.onDelete ? `<hr class="words-menu__hr"><button data-act="delete" class="word-actions__danger">${esc(t('words.bulkDelete'))}</button>` : '',
+                opts.onDecks ? `<button data-act="decks">${MENU_ICONS.decks}${esc(t('decks.add'))}</button>` : '',
+                `<button data-act="copy">${MENU_ICONS.copy}${esc(t('words.copy'))}</button>`,
+                opts.onDelete ? `<hr class="words-menu__hr"><button data-act="delete" class="word-actions__danger">${MENU_ICONS.del}${esc(t('words.bulkDelete'))}</button>` : '',
             ].join('');
             menuEl.addEventListener('click', (e) => {
                 const act = e.target.closest('[data-act]')?.dataset.act;
@@ -253,5 +263,5 @@
         if (matchMedia('(hover: hover) and (pointer: fine)').matches) kanji.input.focus();
     }
 
-    window.AnimeiWordEdit = { open, copyWord };
+    window.AnimeiWordEdit = { open, copyWord, menuIcons: MENU_ICONS };
 })();
