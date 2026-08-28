@@ -44,6 +44,37 @@ audio {
     font-size: 13px;
 }
 
+/* Кнопка «Нарезать заново»: заметная под плашкой ошибки, призрачная (--ghost)
+   под рабочим клипом — на случай «клип есть, но нарезался криво». */
+.clip-edit__recut {
+    display: inline-block;
+    margin: -4px 0 12px;
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.clip-edit__recut:hover {
+    border-color: var(--primary);
+}
+
+.clip-edit__recut--ghost {
+    border-color: transparent;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 4px 0;
+}
+
+.clip-edit__recut--ghost:hover {
+    color: var(--text);
+    border-color: transparent;
+}
+
 .clip-spinner {
     flex-shrink: 0;
     width: 15px;

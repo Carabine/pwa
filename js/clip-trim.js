@@ -235,6 +235,22 @@
         const container = document.createElement('div');
         container.className = 'clip-edit';
 
+        const isGuest = typeof w.id === 'string' && w.id.startsWith('local-');
+        const expected = w && w.id && Number(w.videoEnd) > Number(w.videoStart);
+        // Кому доступна повторная нарезка: вошедшему — серверная ручка /recut
+        // (источник хранится в Word.sourceUrl), гостю — повторный /words/clip,
+        // пока в его слове жива ссылка videoUrl.
+        const canRecut = !!expected && (!isGuest || !!w.videoUrl);
+
+        function recutButton(ghost) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'clip-edit__recut' + (ghost ? ' clip-edit__recut--ghost' : '');
+            btn.textContent = tr('clip.recut');
+            btn.addEventListener('click', (e) => { e.stopPropagation(); recut(); });
+            return btn;
+        }
+
         function mount(src) {
             container.innerHTML = '';
             container.classList.remove('clip-edit--pending');
@@ -244,10 +260,17 @@
             const clip = makeClipVideo(src, w);
             const editor = buildTrimEditor(clip, w);
             container.append(title, clip, editor);
+            // Файл может оказаться битым (нарезка оборвалась на середине) —
+            // тогда вместо чёрного квадрата честная плашка с кнопкой рекатки.
+            clip._video.addEventListener('error', () => {
+                showPending('clip.unavailable', false, canRecut);
+            }, { once: true });
+            if (canRecut) container.appendChild(recutButton(true));
         }
 
-        // Заглушка вместо пустоты: «видео готовится / загружается».
-        function showPending(msgKey, spinner) {
+        // Заглушка вместо пустоты: «видео готовится / загружается»;
+        // withRetry — добавить кнопку «Нарезать заново».
+        function showPending(msgKey, spinner, withRetry) {
             container.innerHTML = '';
             container.classList.add('clip-edit--pending');
             const note = document.createElement('div');
@@ -261,26 +284,62 @@
             txt.textContent = tr(msgKey);
             note.appendChild(txt);
             container.appendChild(note);
+            if (withRetry) container.appendChild(recutButton(false));
+        }
+
+        let recutting = false;
+        async function recut() {
+            if (recutting) return;
+            recutting = true;
+            showPending('clip.recutting', true);
+            try {
+                if (isGuest) {
+                    // Гость: повторный запрос нарезки, blob — обратно в IndexedDB.
+                    const blob = typeof requestClip === 'function' ? await requestClip(w, true) : null;
+                    const stored = blob && typeof putClip === 'function' ? await putClip(w.id, blob) : false;
+                    const url = stored && typeof getClipUrl === 'function' ? await getClipUrl(w.id) : '';
+                    if (!url) throw Object.assign(new Error('stale'), { stale: true });
+                    mount(url);
+                } else {
+                    const { data: res } = await client.post('words/' + w.id + '/recut', {}, { silentErrors: true });
+                    const url = res && res.data && res.data.url;
+                    if (!url) throw Object.assign(new Error('stale'), { stale: true });
+                    w.Video = { url };
+                    // Офлайн-копия старого (битого) клипа больше не годится.
+                    if (typeof deleteClip === 'function') deleteClip(w.id);
+                    // ?r= — мимо HTTP-кэша браузера: путь файла не изменился.
+                    mount(url + (url.includes('?') ? '&' : '?') + 'r=' + Date.now());
+                }
+                snack(tr('clip.recutDone'));
+            } catch (err) {
+                const status = err && err.response && err.response.status;
+                const stale = (err && err.stale) || status === 410 || status === 400;
+                showPending('clip.unavailable', false, true);
+                if (typeof showSnackbar === 'function') {
+                    showSnackbar(tr(stale ? 'clip.recutStale' : 'clip.recutFail'), { duration: 5000, type: 'error' });
+                }
+            } finally {
+                recutting = false;
+            }
         }
 
         const src = videoSrcOf(w);
         if (src) { mount(src); return container; }
 
-        const expected = w && w.id && Number(w.videoEnd) > Number(w.videoStart);
         if (!expected) return container;
 
-        const isGuest = typeof w.id === 'string' && w.id.startsWith('local-');
         if (isGuest && typeof getClipUrl === 'function') {
             // Клип гостя лежит в IndexedDB — тянем асинхронно, пока показываем спиннер.
             showPending('clip.loading', true);
             getClipUrl(w.id)
-                .then((url) => { url ? mount(url) : showPending('clip.unavailable', false); })
-                .catch(() => showPending('clip.unavailable', false));
+                .then((url) => { url ? mount(url) : showPending('clip.unavailable', false, canRecut); })
+                .catch(() => showPending('clip.unavailable', false, canRecut));
             return container;
         }
 
-        // Вошедший: клип режет сервер в фоне. Пока Video.url пуст — он ещё готовится.
-        showPending('clip.preparing', true);
+        // Вошедший: клип режет сервер в фоне. Пока Video.url пуст — он ещё
+        // готовится; если фон нарезки упал — кнопка запускает нарезку заново.
+        showPending('clip.preparing', true, canRecut);
         return container;
     }
 

@@ -16,7 +16,20 @@
                     '\n.statsview .session__steps > summary { list-style: none; cursor: pointer; padding: 8px 12px; color: var(--muted); font-size: 12px; user-select: none; }' +
                     '\n.statsview .session__steps > summary::-webkit-details-marker { display: none; }' +
                     '\n.statsview .session__steps[open] > summary { color: var(--accent); }' +
-                    '\n.statsview .session__steps > summary:hover { color: var(--text); }';
+                    '\n.statsview .session__steps > summary:hover { color: var(--text); }' +
+                    // Скролл-обёртка таблиц: на телефоне широкая таблица едет по
+                    // горизонтали внутри неё, а не распирает страницу.
+                    '\n.statsview .tblwrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 28px; border: 1px solid var(--border); border-radius: 12px; }' +
+                    '\n.statsview .tblwrap table { margin-top: 0; border-radius: 0; }' +
+                    '\n@media (max-width: 640px) {' +
+                    '\n.statsview .cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }' +
+                    '\n.statsview .card { padding: 12px; }' +
+                    '\n.statsview .card .value { font-size: 22px; }' +
+                    '\n.statsview th, .statsview td { padding: 8px 10px; font-size: 12px; white-space: nowrap; }' +
+                    '\n.statsview .tl__tag { min-width: 70px; }' +
+                    '\n.statsview .visitor__head { padding: 10px 12px; gap: 8px; }' +
+                    '\n.statsview .chart { height: 150px; }' +
+                    '\n}';
                 document.head.appendChild(st);
             }
             root.classList.add('statsview');
@@ -110,8 +123,8 @@
                        '</td><td class="num">' + fmt(p.visitors) + '</td></tr>';
             }).join('');
             gid('pages').innerHTML =
-                '<table><thead><tr><th>Страница</th><th class="num">Открытия</th><th class="num">Посетители</th></tr></thead><tbody>' +
-                rows + '</tbody></table>';
+                '<div class="tblwrap"><table><thead><tr><th>Страница</th><th class="num">Открытия</th><th class="num">Посетители</th></tr></thead><tbody>' +
+                rows + '</tbody></table></div>';
         }
     }
 
@@ -530,9 +543,9 @@
                 '</td><td class="num"><b>' + fmt(r.both) + '</b></td><td>' + (who || '—') + '</td></tr>';
         }).join('');
         el.innerHTML =
-            '<table><thead><tr><th>Неделя</th><th class="num">Смотрели</th>' +
+            '<div class="tblwrap"><table><thead><tr><th>Неделя</th><th class="num">Смотрели</th>' +
             '<th class="num">Повторяли</th><th class="num">Оба</th><th>Кто (оба)</th></tr></thead><tbody>' +
-            rows + '</tbody></table>';
+            rows + '</tbody></table></div>';
     }
 
     fetch(apiBase + '/api/v1/stats/weekly?weeks=8' + keyQ(), { headers: statsAuth() })

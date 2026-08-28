@@ -2805,6 +2805,87 @@ html, body {
     .edeck__close:hover:not(:disabled) { color: var(--text); }
 }
 
+/* Охват (эта серия / всё аниме) и уровень (N5 / N5+N4 / N4) — два сегмент-
+   переключателя в ряд; на узкой модалке переносятся. */
+.edeck__modes {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 10px 16px 0;
+}
+
+.edeck__seg {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    overflow: hidden;
+}
+
+.edeck__seg button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 6px 11px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.edeck__seg button + button {
+    border-left: 1px solid var(--border);
+}
+
+.edeck__seg button.is-on {
+    background: var(--grad, var(--primary));
+    color: #fff;
+}
+
+/* Прогресс скана/синка серий («Сканируем серии: 3/8…») */
+.edeck__scan {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.edeck__scan::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: edeck-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes edeck-spin {
+    to { transform: rotate(360deg); }
+}
+
+.edeck__scan[hidden] { display: none; }
+
+.edeck__empty {
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* Метка серии-источника примера у слова («эп 3») в режиме «всё аниме». */
+.edeck-row__ep {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1px 5px;
+    white-space: nowrap;
+}
+
 .edeck__toolbar {
     display: flex;
     justify-content: space-between;

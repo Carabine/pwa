@@ -56,7 +56,11 @@
     }
     .note b { color: var(--text); font-weight: 600; }
 
-    table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; }
+    /* Таблицы живут в скролл-обёртке .tblwrap: на телефоне широкая таблица
+       скроллится по горизонтали внутри неё, а не распирает всю страницу.
+       Скругление — на обёртке (overflow:hidden на самой таблице резал бы скролл). */
+    .tblwrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; background: var(--card); }
     th, td { text-align: left; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border); }
     th { color: var(--muted); font-weight: 500; background: var(--card2); }
     td.num, th.num { text-align: right; }
@@ -112,6 +116,26 @@
     .key-gate__input:focus { outline: none; border-color: var(--accent); }
     .key-gate__btn { padding: 12px; font-size: 15px; font-weight: 600; border: none; border-radius: 10px; background: var(--accent); color: #0f1115; cursor: pointer; }
     .key-gate__err { color: var(--bad); font-size: 13px; }
+
+    /* ---------- Телефон ---------- */
+    @media (max-width: 640px) {
+        body { padding: 14px 10px 40px; }
+        h1 { font-size: 18px; }
+        .tabs { gap: 6px; margin-bottom: 14px; }
+        .tabs button { padding: 7px 12px; flex: 1 1 auto; }
+        .cards { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 18px; }
+        .card { padding: 12px; }
+        .card .value { font-size: 22px; }
+        .section-title { margin: 18px 0 10px; }
+        /* Ячейки не переносим посимвольно — таблица скроллится в .tblwrap. */
+        th, td { padding: 8px 10px; font-size: 12px; white-space: nowrap; }
+        /* Редактор seed-карточек: клип во всю ширину, поля в одну колонку. */
+        .seed { padding: 12px; gap: 12px; }
+        .seed__clip { width: 100%; }
+        .seed__fields { grid-template-columns: 1fr; min-width: 0; }
+        .seed__actions { flex-wrap: wrap; }
+        .seed__actions .btn { flex: 1 1 auto; text-align: center; }
+    }
 </style>
 </head>
 <body>
@@ -231,6 +255,8 @@
         });
     }
     function fmt(n) { return (n || 0).toLocaleString('ru-RU'); }
+    // Таблица в скролл-обёртке — широкие таблицы на телефоне скроллятся сами.
+    function tbl(inner) { return '<div class="tblwrap"><table>' + inner + '</table></div>'; }
     function dt(s) { return s ? new Date(s).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'; }
 
     // ---------- Вкладки ----------
@@ -277,18 +303,18 @@
                 }).join('');
                 var bk = h.backupAgeHours >= 0 ? h.backupAgeHours + ' ч назад' : 'нет!';
                 document.getElementById('ovHealth').outerHTML =
-                    '<table><tr><th>Проверка</th><th>Статус</th></tr>' + rows +
+                    tbl('<tr><th>Проверка</th><th>Статус</th></tr>' + rows +
                     '<tr><td>Бэкап БД</td><td>' + esc(bk) + '</td></tr>' +
-                    '<tr><td>Проверено</td><td>' + dt(h.at) + '</td></tr></table>';
+                    '<tr><td>Проверено</td><td>' + dt(h.at) + '</td></tr>');
             } else {
                 document.getElementById('ovHealth').textContent = 'health-status.json ещё не создан (cron не отработал)';
             }
 
             document.getElementById('ovRecent').outerHTML =
-                '<table><tr><th>Email</th><th>Регистрация</th><th class="num">Слов</th></tr>' +
+                tbl('<tr><th>Email</th><th>Регистрация</th><th class="num">Слов</th></tr>' +
                 d.recentUsers.map(function (u) {
                     return '<tr><td>' + esc(u.email) + '</td><td>' + dt(u.createdAt) + '</td><td class="num">' + fmt(u.words) + '</td></tr>';
-                }).join('') + '</table>';
+                }).join(''));
         }).catch(function () {});
     }
     function cardHtml(label, value) {
@@ -433,14 +459,14 @@
             var el = document.getElementById('usersList');
             if (!r.data.length) { el.textContent = 'Пользователей нет'; return; }
             el.className = '';
-            el.innerHTML = '<table><tr><th>Email</th><th>Регистрация</th><th class="num">Слов</th>' +
+            el.innerHTML = tbl('<tr><th>Email</th><th>Регистрация</th><th class="num">Слов</th>' +
                 '<th class="num">Повторял слов</th><th>Последняя активность</th></tr>' +
                 r.data.map(function (u) {
                     var mark = u.isSeed ? ' <span style="color:var(--accent)">· seed</span>' : '';
                     return '<tr><td>' + esc(u.email) + mark + '</td><td>' + dt(u.createdAt) + '</td>' +
                         '<td class="num">' + fmt(u.words) + '</td><td class="num">' + fmt(u.reviewedWords) + '</td>' +
                         '<td>' + dt(u.lastSeen) + '</td></tr>';
-                }).join('') + '</table>';
+                }).join(''));
         }).catch(function () {});
     }
 
