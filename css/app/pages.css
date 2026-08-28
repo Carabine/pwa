@@ -375,6 +375,13 @@
     font-size: 12px;
     opacity: 0.85;
 }
+/* Значки — флексом и без базлайнового сдвига .deck-ico (он для текстовых
+   контекстов): иначе аватарка сидела на ~4px ниже вертикального центра. */
+.word-row__badges span {
+    display: inline-flex;
+    align-items: center;
+}
+.word-row__badges .deck-ico { vertical-align: 0; }
 /* Нет ни клипа, ни колод — пустой блок не должен добавлять лишние отступы. */
 .word-row__badges:empty { display: none; }
 
