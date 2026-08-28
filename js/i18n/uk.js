@@ -361,7 +361,7 @@ window.I18N_UK = {
         'decks.create': 'Створити колоду',
         'decks.study': 'Вчити',
         'decks.manage': 'Керування колодою',
-        'decks.add': 'До колод',
+        'decks.add': 'Додати до колоди',
         'decks.avatar': 'Аватарка тайтлу',
         'decks.lockedActive': 'Активна колода — зняти позначку не можна',
         'words.export.download': 'Завантажити',

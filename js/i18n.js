@@ -365,7 +365,7 @@ const I18N = {
         'decks.create': 'Создать колоду',
         'decks.study': 'Учить',
         'decks.manage': 'Управление колодой',
-        'decks.add': 'В колоды',
+        'decks.add': 'Добавить в колоду',
         'decks.avatar': 'Аватарка тайтла',
         'decks.lockedActive': 'Активная колода — снять отметку нельзя',
         'words.export.download': 'Скачать',

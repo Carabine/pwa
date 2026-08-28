@@ -1297,7 +1297,9 @@ async function loadSubtitles(episodeNumber = 1) {
     // (без модификатора это крупный центрированный текст для «не найдены»).
     subsStatus.classList.add('transcript__status--searching');
     setSubsSkeleton(true);
-    setSubsFixVisible(false);
+    // «Не те субтитры?» видна и во время загрузки: раньше её место в шапке
+    // пустовало, а ручной выбор файла полезен, не дожидаясь автоподбора.
+    setSubsFixVisible(true);
 
     try {
         // Субтитры подбираются автоматически по названию и номеру серии (ручного

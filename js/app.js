@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.392';
+const APP_VERSION = 'v0.0.393';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -705,6 +705,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!searchInput || searchInput.value.trim() === '') e.preventDefault();
         });
 
+        // Раскрытый поиск — слой для системной «Назад» (AnimeiBack): кнопка
+        // назад сворачивает поле, а не уводит со страницы.
+        let searchLayer = null;
+        const closeSearch = () => {
+            searchForm.classList.remove('is-open');
+            if (searchToggle) searchToggle.setAttribute('aria-expanded', 'false');
+            hideAc();
+        };
+        const closeSearchLayer = () => {
+            if (searchLayer && typeof AnimeiBack !== 'undefined') AnimeiBack.close(searchLayer);
+            else closeSearch();
+        };
+
         // Тап по лупе на телефоне раскрывает поле; повторный тап (когда уже
         // раскрыто и пусто) — сворачивает.
         if (searchToggle) {
@@ -712,26 +725,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!isMobile()) return;
                 e.stopPropagation();
                 const open = !searchForm.classList.contains('is-open');
-                searchForm.classList.toggle('is-open', open);
-                searchToggle.setAttribute('aria-expanded', String(open));
-                if (open && searchInput) searchInput.focus();
-                if (!open) hideAc();
+                if (open) {
+                    searchForm.classList.add('is-open');
+                    searchToggle.setAttribute('aria-expanded', 'true');
+                    if (searchInput) searchInput.focus();
+                    if (typeof AnimeiBack !== 'undefined') {
+                        searchLayer = AnimeiBack.open(() => { searchLayer = null; closeSearch(); });
+                    }
+                } else {
+                    closeSearchLayer();
+                }
             });
         }
 
         // Клик вне формы и Escape — сворачиваем раскрытое поле и прячем автокомплит.
         document.addEventListener('click', (e) => {
             if (!searchForm.contains(e.target)) {
-                searchForm.classList.remove('is-open');
-                if (searchToggle) searchToggle.setAttribute('aria-expanded', 'false');
-                hideAc();
+                if (searchForm.classList.contains('is-open')) closeSearchLayer();
+                else hideAc();
             }
         });
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                searchForm.classList.remove('is-open');
-                if (searchToggle) searchToggle.setAttribute('aria-expanded', 'false');
-                hideAc();
+                if (searchForm.classList.contains('is-open')) closeSearchLayer();
+                else hideAc();
             }
         });
     }

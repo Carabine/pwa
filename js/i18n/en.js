@@ -361,7 +361,7 @@ window.I18N_EN = {
         'decks.create': 'Create deck',
         'decks.study': 'Study',
         'decks.manage': 'Manage deck',
-        'decks.add': 'To decks',
+        'decks.add': 'Add to deck',
         'decks.avatar': 'Title avatar',
         'decks.lockedActive': 'Active deck — can’t be unchecked',
         'words.export.download': 'Download',
