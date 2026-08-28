@@ -91,9 +91,18 @@ async function saveWord(payload) {
     // указывает на само слово внутри клипа — его границы можно двигать ±1с.
     const wordDur = Number(data.videoEnd) - Number(data.videoStart);
     const lead = wordDur > 0 ? Math.min(CLIP_MARGIN, Number(data.videoStart)) : 0;
-    // Готовый общий клип (абсолютная ссылка, напр. стартовая колода /storage/*.mp4):
-    // не режем в браузере, а ссылаемся напрямую — word.video читает videoSrcOf.
-    const sharedUrl = /^https?:\/\//.test(String(data.videoUrl || '')) ? data.videoUrl : '';
+    // Готовый общий клип (стартовая колода) — не режем, а ссылаемся напрямую:
+    // ТОЛЬКО наши статичные mp4 (/storage/... или /app/media/starter/...).
+    // Раньше «общим» считалась ЛЮБАЯ абсолютная ссылка, а state.currentVideoUrl
+    // плеера абсолютный — гостевые слова из плеера оставались с HLS-манифестом
+    // вместо нарезанного клипа (манифест в <video> не играет и протухает).
+    const sharedUrl = (() => {
+        const s = String(data.videoUrl || '');
+        if (!/^https?:\/\//.test(s)) return '';
+        try {
+            return /^\/(?:storage|app\/media\/starter)\/[\w.-]+\.mp4$/.test(new URL(s).pathname) ? s : '';
+        } catch { return ''; }
+    })();
     const word = {
         id: makeLocalId(),
         ...data,
