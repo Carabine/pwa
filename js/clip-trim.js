@@ -40,7 +40,7 @@
     function persistTrim(id, s, e) {
         try { if (typeof updateWord === 'function') updateWord(id, { trimStart: s, trimEnd: e }); } catch { /* не критично */ }
         try {
-            const words = JSON.parse(localStorage.getItem('words') || '[]');
+            const words = lsJson('words', []);
             const idx = words.findIndex((x) => x && x.id === id);
             if (idx >= 0) {
                 words[idx].trimStart = s;

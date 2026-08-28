@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.359';
+const APP_VERSION = 'v0.0.360';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -738,8 +738,7 @@ function fillSlot(el, html, stagger) {
 function renderContinueCard() {
     const el = document.getElementById('continue-card');
     if (!el) return;
-    let lw = null;
-    try { lw = JSON.parse(localStorage.getItem('animei:lastWatch') || 'null'); } catch { /* битый JSON */ }
+    const lw = lsJson('animei:lastWatch');
     if (!lw || !lw.id || !lw.title) { dropSlot(el); return; }
 
     const p = new URLSearchParams({ id: lw.id, title: lw.title, name: lw.name || lw.title });
@@ -789,8 +788,7 @@ function renderContinueCard() {
 function renderSessionCard() {
     const el = document.getElementById('session-card');
     if (!el) return;
-    let s = null;
-    try { s = JSON.parse(localStorage.getItem('animei:lastSession') || 'null'); } catch { /* битый JSON */ }
+    const s = lsJson('animei:lastSession');
     if (!s || s.processed || !Array.isArray(s.words) || !s.words.length) { dropSlot(el); return; }
 
     fillSlot(el,
@@ -814,7 +812,7 @@ function renderSessionCard() {
 
     el.addEventListener('click', () => {
         try {
-            const picked = JSON.parse(localStorage.getItem('srs:pickedFirst') || '[]');
+            const picked = lsJson('srs:pickedFirst', []);
             for (const w of s.words) if (!picked.includes(w.id)) picked.push(w.id);
             localStorage.setItem('srs:pickedFirst', JSON.stringify(picked));
         } catch { /* недоступен */ }
@@ -868,8 +866,7 @@ function estimateMinutes(due, fresh) {
 // цели — поднимаем планку.
 function dailyTarget(remaining) {
     const day = dayKeyOf(new Date());
-    let saved = null;
-    try { saved = JSON.parse(localStorage.getItem('srs:planTarget') || 'null'); } catch { /* битый JSON */ }
+    const saved = lsJson('srs:planTarget');
     let target = (saved && saved.day === day) ? (saved.total || 0) : 0;
     if (!target || remaining > target) target = remaining;
     try { localStorage.setItem('srs:planTarget', JSON.stringify({ day, total: target })); } catch { /* недоступен */ }
@@ -879,7 +876,7 @@ function dailyTarget(remaining) {
 // Ссылка на незаконченный просмотр (для состояния «на сегодня всё»).
 function resumeHref() {
     try {
-        const lw = JSON.parse(localStorage.getItem('animei:lastWatch') || 'null');
+        const lw = lsJson('animei:lastWatch');
         if (lw && lw.id && lw.title) {
             const p = new URLSearchParams({ id: lw.id, title: lw.title, name: lw.name || lw.title });
             return './pages/player.html?' + p.toString();
@@ -912,8 +909,7 @@ function renderDailyPlan() {
     // локальным данным план выглядит «пустым», а после синка станет обычным —
     // это схлопывание и обратное разворачивание карточки. Такому держим
     // скелетон до ответа сервера: он уже занимает нужное место.
-    let cached = null;
-    try { cached = JSON.parse(localStorage.getItem('words') || 'null'); } catch { /* битый JSON */ }
+    const cached = lsJson('words');
     const waitForSync = !(Array.isArray(cached) && cached.length)
         && typeof isLoggedIn === 'function' && isLoggedIn();
 
@@ -1020,8 +1016,7 @@ function paintDailyPlan(el) {
 function renderWeekActivity() {
     const el = document.getElementById('week-strip');
     if (!el) return;
-    let days = [];
-    try { days = JSON.parse(localStorage.getItem('srs:days') || '[]'); } catch { /* битый JSON */ }
+    const days = lsJson('srs:days', []);
     const active = new Set(Array.isArray(days) ? days : []);
     if (!active.size) { dropSlot(el); return; } // ещё ни одного дня занятий — нечего показывать
 

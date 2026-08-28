@@ -5,7 +5,19 @@
 // выбор пользователя без переписывания их логики.
 //
 // Подключать РАНО (до i18n/app), чтобы тема применялась как можно быстрее.
-// Наружу: window.AnimeiSettings { get, set, all, DEFAULTS, effectiveTheme, applyTheme }.
+// Наружу: window.AnimeiSettings { get, set, all, DEFAULTS, effectiveTheme, applyTheme }
+// и глобальный lsJson().
+
+// Чтение JSON из localStorage: отсутствующее/битое значение → fallback.
+// Живёт здесь, потому что settings.js — первый наш скрипт на каждой странице.
+function lsJson(key, fallback = null) {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(key) ?? 'null');
+        return parsed ?? fallback;
+    } catch {
+        return fallback;
+    }
+}
 
 (function () {
     const KEY = 'animei:settings';
@@ -28,15 +40,7 @@
         studyAutoplayClip: true,       // автозапуск клипа на обороте карточки
     };
 
-    function readStore() {
-        try {
-            return { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(KEY)) || {}) };
-        } catch {
-            return { ...DEFAULTS };
-        }
-    }
-
-    const state = readStore();
+    const state = { ...DEFAULTS, ...lsJson(KEY, {}) };
 
     // Подхватываем актуальные значения из «легаси»-ключей, которые пишет плеер,
     // чтобы настройки отражали текущее состояние.

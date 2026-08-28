@@ -23,8 +23,7 @@
 
     // Читаем и чиним данные: терпим отсутствие ключа, битый JSON и мусор в полях.
     function load() {
-        let parsed = null;
-        try { parsed = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { parsed = null; }
+        const parsed = lsJson(KEY);
         const raw = (parsed && Array.isArray(parsed.decks)) ? parsed.decks : [];
         const out = [];
         for (const d of raw) {
@@ -67,7 +66,8 @@
 
     function signedIn() { return typeof isLoggedIn === 'function' && isLoggedIn(); }
     function idSet(key) {
-        try { return new Set(JSON.parse(localStorage.getItem(key) || '[]')); } catch { return new Set(); }
+        const arr = lsJson(key, []);
+        return new Set(Array.isArray(arr) ? arr : []);
     }
     function saveIdSet(key, set) {
         try { localStorage.setItem(key, JSON.stringify([...set])); } catch { /* тесно — не страшно */ }

@@ -329,8 +329,7 @@
     // Слова, сохранённые с лендинга (animei:guestWords с fromLanding). Приводим
     // к виду карточки обучения; самые свежие — первыми. Наружу для beginner-study.
     function landingWordsForStudy() {
-        let raw = [];
-        try { raw = JSON.parse(localStorage.getItem('animei:guestWords') || '[]'); } catch { raw = []; }
+        const raw = lsJson('animei:guestWords', []);
         return raw
             .filter((w) => w && w.fromLanding)
             .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
@@ -367,12 +366,8 @@
     // ---- Schedule storage --------------------------------------------------
     // schedule = { [wordId]: { interval, reps, lapses, due } }  (due is a dayKey)
     function loadSchedule() {
-        try {
-            const raw = JSON.parse(localStorage.getItem(SCHEDULE_KEY) ?? '{}');
-            return (raw && typeof raw === 'object') ? raw : {};
-        } catch {
-            return {};
-        }
+        const raw = lsJson(SCHEDULE_KEY, {});
+        return (raw && typeof raw === 'object') ? raw : {};
     }
 
     function saveSchedule(schedule) {
@@ -388,12 +383,8 @@
 
     // ---- Study days & streak ------------------------------------------------
     function loadStudyDays() {
-        try {
-            const raw = JSON.parse(localStorage.getItem(DAYS_KEY) ?? '[]');
-            return Array.isArray(raw) ? raw : [];
-        } catch {
-            return [];
-        }
+        const raw = lsJson(DAYS_KEY, []);
+        return Array.isArray(raw) ? raw : [];
     }
 
     function markStudiedToday() {
@@ -442,7 +433,7 @@
     // выигрывает вариант с бОльшим числом повторений, при равенстве — с более
     // поздней датой показа.
     function mergeServerSchedule() {
-        const words = JSON.parse(localStorage.getItem('words') ?? '[]');
+        const words = lsJson('words', []);
         const schedule = loadSchedule();
         let changed = false;
 
@@ -469,7 +460,7 @@
     // ---- Сводка для главной страницы ----------------------------------------
     // Сколько сегодня ждёт повторений и новых слов + серия дней.
     function srsSummary() {
-        const words = JSON.parse(localStorage.getItem('words') ?? '[]').filter(w => w && w.id);
+        const words = lsJson('words', []).filter(w => w && w.id);
         const schedule = loadSchedule();
         const today = dayKey(todayStart());
 
@@ -545,8 +536,7 @@
                 return ordered ? items : shuffle(items);
             }
 
-            const words = JSON.parse(localStorage.getItem('words') ?? '[]')
-                .filter(w => w && w.id);
+            const words = lsJson('words', []).filter(w => w && w.id);
 
             if (!scheduled) {
                 // Cram: every word, no schedule involved.
@@ -579,7 +569,7 @@
             // при сборке колоды — очистили (удалённые/битые id тоже).
             let picked = [];
             try {
-                const pickedIds = JSON.parse(localStorage.getItem('srs:pickedFirst') || '[]');
+                const pickedIds = lsJson('srs:pickedFirst', []);
                 if (Array.isArray(pickedIds) && pickedIds.length) {
                     const idSet = new Set(pickedIds.map(String));
                     picked = fresh.filter(w => idSet.has(String(w.id)));
@@ -2021,7 +2011,7 @@
 
             // Слов нет совсем — вместо «нечего повторять» предлагаем стартовый набор
             if (total === 0 && !deck && typeof STARTER_DECK !== 'undefined') {
-                const words = JSON.parse(localStorage.getItem('words') ?? '[]');
+                const words = lsJson('words', []);
                 if (!words.length) {
                     renderStarterOffer();
                     return;

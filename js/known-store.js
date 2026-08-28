@@ -11,8 +11,7 @@
     const MAX = 50000;   // защитный потолок: больше — бессмысленно и тяжело
 
     function load() {
-        let parsed = null;
-        try { parsed = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { parsed = null; }
+        const parsed = lsJson(KEY);
         const raw = (parsed && Array.isArray(parsed.words)) ? parsed.words : [];
         return new Set(raw.filter((w) => typeof w === 'string' && w).slice(0, MAX));
     }

@@ -171,10 +171,8 @@ function starterCard(card) {
 const STARTER_ORDER_KEY = 'animei:starterOrder';
 
 function loadStarterOrder() {
-    try {
-        const arr = JSON.parse(localStorage.getItem(STARTER_ORDER_KEY) || 'null');
-        return Array.isArray(arr) && arr.length ? arr : null;
-    } catch { return null; }
+    const arr = lsJson(STARTER_ORDER_KEY);
+    return Array.isArray(arr) && arr.length ? arr : null;
 }
 
 let starterOrder = loadStarterOrder();
@@ -267,8 +265,8 @@ function applyStarterCore(list) {
 }
 
 try {
-    applyStarterCore(JSON.parse(localStorage.getItem(STARTER_CORE_KEY) || 'null'));
-} catch { /* приватный режим/битый кэш — остаётся статичное ядро */ }
+    applyStarterCore(lsJson(STARTER_CORE_KEY));
+} catch { /* неожиданная форма кэша — остаётся статичное ядро */ }
 
 function refreshStarterCore() {
     try {

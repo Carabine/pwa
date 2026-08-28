@@ -13,11 +13,7 @@ function isSignedIn() {
 }
 
 function getGuestWords() {
-    try {
-        return JSON.parse(localStorage.getItem(GUEST_WORDS_KEY) || '[]');
-    } catch {
-        return [];
-    }
+    return lsJson(GUEST_WORDS_KEY, []);
 }
 
 function setGuestWords(words) {
@@ -138,8 +134,7 @@ async function fetchWords() {
             try { localStorage.setItem(WORDS_CACHE_KEY, JSON.stringify(words)); } catch { /* тесно в localStorage — не страшно */ }
             return words;
         } catch (err) {
-            let cached = null;
-            try { cached = JSON.parse(localStorage.getItem(WORDS_CACHE_KEY) || 'null'); } catch { cached = null; }
+            const cached = lsJson(WORDS_CACHE_KEY);
             if (Array.isArray(cached)) {
                 console.warn('Слова с сервера не загрузились — работаем по локальной копии');
                 return cached;

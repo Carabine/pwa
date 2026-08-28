@@ -638,9 +638,7 @@ function watchPosKey() {
 }
 
 function loadWatchPos() {
-    try {
-        return JSON.parse(localStorage.getItem(watchPosKey()) || 'null');
-    } catch { return null; }
+    return lsJson(watchPosKey());
 }
 
 function writeWatchPos(epIndex, epNum, time, dur) {
@@ -696,7 +694,7 @@ video.addEventListener('ended', () => {
             writeWatchPos(epIndex + 1, next.number ?? epIndex + 2, 0, 0);
         } else {
             localStorage.removeItem(watchPosKey());
-            const lw = JSON.parse(localStorage.getItem('animei:lastWatch') || 'null');
+            const lw = lsJson('animei:lastWatch');
             if (lw && String(lw.id) === String(shikimoriId)) localStorage.removeItem('animei:lastWatch');
         }
     } catch { /* localStorage может быть недоступен */ }
@@ -709,9 +707,7 @@ video.addEventListener('ended', () => {
 // главная строит карточку «в прошлый раз ты сохранил N слов», а конец серии —
 // панель «выбери и повтори». Смена тайтла или серии начинает новую сессию.
 function loadLastSession() {
-    try {
-        return JSON.parse(localStorage.getItem('animei:lastSession') || 'null');
-    } catch { return null; }
+    return lsJson('animei:lastSession');
 }
 
 function rememberSessionWord(word) {
@@ -788,7 +784,7 @@ function showSessionPanel(endedEpIndex) {
     studyBtn.addEventListener('click', () => {
         const ids = [...list.querySelectorAll('input:checked')].map((c) => c.dataset.id);
         try {
-            const picked = JSON.parse(localStorage.getItem('srs:pickedFirst') || '[]');
+            const picked = lsJson('srs:pickedFirst', []);
             for (const id of ids) if (!picked.includes(id)) picked.push(id);
             localStorage.setItem('srs:pickedFirst', JSON.stringify(picked));
             s.processed = true;
@@ -1914,10 +1910,8 @@ function findCueIndex(t) {
 let wordSeenMap = null;
 function loadWordSeen() {
     if (wordSeenMap) return wordSeenMap;
-    try {
-        wordSeenMap = JSON.parse(localStorage.getItem('animei:wordSeen') || '{}');
-        if (!wordSeenMap || typeof wordSeenMap !== 'object') wordSeenMap = {};
-    } catch { wordSeenMap = {}; }
+    wordSeenMap = lsJson('animei:wordSeen', {});
+    if (!wordSeenMap || typeof wordSeenMap !== 'object') wordSeenMap = {};
     return wordSeenMap;
 }
 
