@@ -386,7 +386,9 @@
         // как и одиночное сохранение из попапа.
         try { await state.syncPromise; } catch { /* автосинк не критичен */ }
 
-        const deck = window.Decks.create(deckName(), '🎬');
+        // 📺, не 🎬: у слов серии всегда есть клип со значком 🎬 — в списке слов
+        // два одинаковых эмодзи подряд читались как дубль.
+        const deck = window.Decks.create(deckName(), '📺');
         let done = 0;
         let failed = 0;
         const total = picked.length;

@@ -11,7 +11,7 @@
     const VERSION = 1;
     const NAME_MAX = 50;
     // Мини-палитра значков вместо тяжёлого эмодзи-пикера.
-    const EMOJIS = ['📚', '🎬', '🌸', '🔥', '⭐', '🍜', '🗾', '🎌', '🐱', '⚔️', '💬', '🎯'];
+    const EMOJIS = ['📚', '🎬', '📺', '🌸', '🔥', '⭐', '🍜', '🗾', '🎌', '🐱', '⚔️', '💬', '🎯'];
 
     function makeId() {
         return 'deck-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);

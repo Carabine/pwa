@@ -279,7 +279,8 @@
 
 .deck-editor__emojis {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    /* 13 значков: 7+6 ровнее, чем 6+6+1 */
+    grid-template-columns: repeat(7, 1fr);
     gap: 6px;
     margin-bottom: 14px;
 }

@@ -300,9 +300,23 @@ function buildRow(wordData) {
     const row = document.createElement('div');
     row.className = 'word-row' + (selected.has(wordData.id) ? ' is-selected' : '');
 
-    const deckEmojis = window.Decks
-        ? Decks.decksOf(wordData.id).map((d) => `<span title="${esc(d.name)}">${d.emoji}</span>`).join('')
-        : '';
+    // Значки: клип + эмодзи колод. Повторы одного эмодзи (🎬-клип рядом со
+    // старой 🎬-колодой серии, две колоды с одним значком) сливаем в один,
+    // подсказки объединяем.
+    const badges = [];
+    const clip = clipBadge(wordData);
+    if (clip === 'ready') badges.push({ emoji: '🎬', title: t('words.clip'), cls: 'word-card__clip' });
+    if (clip === 'pending') badges.push({ emoji: '⏳', title: t('words.videoPreparing'), cls: 'word-card__clip word-card__clip--pending' });
+    if (window.Decks) {
+        for (const d of Decks.decksOf(wordData.id)) {
+            const dup = badges.find((b) => b.emoji === d.emoji);
+            if (dup) dup.title += `, ${d.name}`;
+            else badges.push({ emoji: d.emoji, title: d.name, cls: '' });
+        }
+    }
+    const badgesHtml = badges
+        .map((b) => `<span${b.cls ? ` class="${b.cls}"` : ''} title="${esc(b.title)}">${b.emoji}</span>`)
+        .join('');
 
     row.innerHTML = `
         ${selectMode ? `<span class="word-check${selected.has(wordData.id) ? ' is-on' : ''}">✓</span>` : ''}
@@ -311,7 +325,7 @@ function buildRow(wordData) {
             ${wordData.kana ? `<span class="word-row__kana">${esc(wordData.kana)}</span>` : ''}
         </div>
         <div class="word-row__tr">${esc(wordData.translation || '')}</div>
-        <div class="word-row__badges">${clipBadgeHtml(wordData)}${deckEmojis}</div>
+        <div class="word-row__badges">${badgesHtml}</div>
         ${selectMode ? '' : `<span class="word-row__hover">
             <button class="word-row__more" title="${esc(t('words.actions'))}" aria-label="${esc(t('words.actions'))}">⋯</button>
         </span>`}
