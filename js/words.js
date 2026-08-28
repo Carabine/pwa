@@ -269,6 +269,12 @@ function buildCard(wordData) {
     return wordEl;
 }
 
+// В строке — только первое значение перевода: списки значений («важный,
+// дорогой») раздувают строку, полный перевод есть в карточке слова и в title.
+function firstMeaning(tr) {
+    return String(tr || '').split(/[,;；、]/)[0].trim();
+}
+
 // Компактная строка списка: одна линия «слово · чтение … перевод · значки».
 // Кнопки «⋯»/«×» есть только на устройствах с курсором и видны по hover;
 // на телефоне действия живут в карточке слова (тап) и режиме выбора (лонг-тап).
@@ -299,7 +305,7 @@ function buildRow(wordData) {
             <span class="word-row__kanji">${esc(wordData.kanji)}</span>
             ${wordData.kana ? `<span class="word-row__kana">${esc(wordData.kana)}</span>` : ''}
         </div>
-        <div class="word-row__tr">${esc(wordData.translation || '')}</div>
+        <div class="word-row__tr" title="${esc(wordData.translation || '')}">${esc(firstMeaning(wordData.translation))}</div>
         <div class="word-row__badges">${badgesHtml}</div>
         ${selectMode ? '' : `<span class="word-row__hover">
             <button class="word-row__more" title="${esc(t('words.actions'))}" aria-label="${esc(t('words.actions'))}">⋯</button>
