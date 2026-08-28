@@ -191,7 +191,9 @@
         });
 
         modal.open();
-        kanji.input.focus();
+        // Автофокус — только там, где есть физическая клавиатура: на таче он
+        // сразу выдвигал экранную клавиатуру поверх модалки.
+        if (matchMedia('(hover: hover) and (pointer: fine)').matches) kanji.input.focus();
     }
 
     window.AnimeiWordEdit = { open };

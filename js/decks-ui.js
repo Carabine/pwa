@@ -440,7 +440,11 @@
 
             overlay.appendChild(box);
             modal.open();
-            requestAnimationFrame(() => input.focus());
+            // Автофокус имени — только с физической клавиатурой: на таче он
+            // сразу выдвигал экранную клавиатуру поверх модалки.
+            if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+                requestAnimationFrame(() => input.focus());
+            }
         },
     };
 
