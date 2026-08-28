@@ -591,6 +591,11 @@
     cursor: pointer;
 }
 .anki-export__opt:disabled { opacity: 0.5; cursor: default; }
+/* Выбранный формат — как выбранная ячейка палитры колод. */
+.anki-export__opt.is-sel {
+    border-color: var(--primary);
+    background: rgba(124, 140, 248, 0.10);
+}
 @media (hover: hover) and (pointer: fine) {
     .anki-export__opt:hover:not(:disabled) { border-color: var(--primary); }
 }

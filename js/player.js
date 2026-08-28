@@ -1286,6 +1286,10 @@ async function loadSubtitles(episodeNumber = 1) {
     nowCueJp.textContent = '';
     nowCueRu.textContent = '';
     updateNowCue(-1);
+    // Пока субтитры едут, полоса реплики — скелетон-полоски (общий .skel из
+    // motion.css), а не пустая рамка. Снимаются любым updateNowCue/очисткой.
+    nowCueJp.innerHTML = '<span class="skel skel-bar" style="width: 72%"></span>';
+    nowCueRu.innerHTML = '<span class="skel skel-bar" style="width: 46%"></span>';
     renderTranscript();
     subsStatus.style.display = '';
     subsStatus.textContent = t('subs.searching');
@@ -1314,6 +1318,9 @@ async function loadSubtitles(episodeNumber = 1) {
         subsStatus.style.display = 'none';
         subsStatus.classList.remove('transcript__status--searching');
         setSubsSkeleton(false);
+        // Сабы готовы — скелетон из полосы реплики убираем (до первой реплики
+        // она штатно пустая).
+        if (nowCueIdx < 0) { nowCueJp.textContent = ''; nowCueRu.textContent = ''; }
         // Подобрали (или выбрали) файл — предлагаем сменить, если серия не та
         setSubsFixVisible(true);
 
@@ -1346,6 +1353,8 @@ async function loadSubtitles(episodeNumber = 1) {
     } catch (err) {
         console.error(err);
         setSubsSkeleton(false);
+        nowCueJp.textContent = '';
+        nowCueRu.textContent = '';
         subsStatus.classList.remove('transcript__status--searching');
         if (err.response?.status === 404) {
             // Сабов в архиве нет. Не тупик: можно смотреть без них или принести своё видео.

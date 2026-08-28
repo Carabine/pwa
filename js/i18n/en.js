@@ -363,6 +363,8 @@ window.I18N_EN = {
         'decks.manage': 'Manage deck',
         'decks.add': 'To decks',
         'decks.avatar': 'Title avatar',
+        'decks.lockedActive': 'Active deck — can’t be unchecked',
+        'words.export.download': 'Download',
         'decks.sheetTitle': 'Add to decks',
         'decks.noneYet': 'No decks yet — create the first one',
         'decks.newTitle': 'New deck',

@@ -932,24 +932,38 @@ function openAnkiExport() {
         box.innerHTML = `
             <div class="deck-editor__title">${esc(t('words.exportAnki'))}</div>
             ${deckRow}
-            <div class="anki-export">
-                <button class="anki-export__opt" id="anki-audio">
+            <div class="anki-export" role="radiogroup">
+                <button class="anki-export__opt is-sel" data-video="0" role="radio" aria-checked="true">
                     <span class="anki-export__name">${esc(t('words.exportAnki.audio'))}</span>
                     <span class="anki-export__hint">${esc(t('words.exportAnki.audioHint'))}</span>
                 </button>
-                <button class="anki-export__opt" id="anki-video">
+                <button class="anki-export__opt" data-video="1" role="radio" aria-checked="false">
                     <span class="anki-export__name">${esc(t('words.exportAnki.video'))}</span>
                     <span class="anki-export__hint">${esc(t('words.exportAnki.videoHint'))}</span>
                 </button>
             </div>
             <p class="known-modal__hint anki-export__status" id="anki-status" hidden></p>
-            <div class="deck-editor__actions deck-editor__actions--single">
+            <div class="deck-editor__actions">
                 <button class="btn btn--ghost" id="anki-cancel">${esc(t('words.cancel'))}</button>
+                <button class="btn btn--success" id="anki-go">${esc(t('words.export.download'))}</button>
             </div>
         `;
         const statusEl = box.querySelector('#anki-status');
         const deckEl = box.querySelector('#anki-deck');
-        const run = async (withVideo) => {
+        // Формат — переключатель-карточка (звук по умолчанию), сборка — кнопкой:
+        // раньше сами карточки запускали экспорт, и это read как «два действия».
+        let withVideo = false;
+        box.querySelectorAll('.anki-export__opt').forEach((opt) => {
+            opt.addEventListener('click', () => {
+                withVideo = opt.dataset.video === '1';
+                box.querySelectorAll('.anki-export__opt').forEach((o) => {
+                    const sel = o === opt;
+                    o.classList.toggle('is-sel', sel);
+                    o.setAttribute('aria-checked', sel ? 'true' : 'false');
+                });
+            });
+        });
+        box.querySelector('#anki-go').addEventListener('click', async () => {
             const deckId = deckEl ? deckEl.value : '';
             box.querySelectorAll('button, select').forEach((b) => { b.disabled = true; });
             statusEl.hidden = false;
@@ -958,9 +972,7 @@ function openAnkiExport() {
             close();
             showSnackbar(ok ? t('words.exportAnki.done') : t('words.exportAnki.fail'),
                 { duration: 4000, type: ok ? 'info' : 'error' });
-        };
-        box.querySelector('#anki-audio').addEventListener('click', () => run(false));
-        box.querySelector('#anki-video').addEventListener('click', () => run(true));
+        });
         box.querySelector('#anki-cancel').addEventListener('click', close);
     });
 }
@@ -1029,8 +1041,13 @@ async function exportAnki(withVideo, deckId) {
 // Формат — простой текст с табуляцией: слово, чтение, значение, предложение,
 // перевод предложения. Резервная копия; Anki такой файл тоже принимает.
 
-async function exportWords() {
-    const words = await fetchWords();
+// deckId — как у exportAnki: '' = все слова, '__none__' = вне колод, иначе id.
+async function exportWords(deckId) {
+    const all = await fetchWords();
+    const deck = (deckId && deckId !== '__none__' && window.Decks) ? Decks.get(deckId) : null;
+    let words = all;
+    if (deck) words = all.filter((w) => Decks.has(deck.id, w.id));
+    else if (deckId === '__none__' && window.Decks) words = all.filter((w) => Decks.decksOf(w.id).length === 0);
     if (!words.length) {
         showSnackbar(t('words.empty'), { duration: 3000 });
         return;
@@ -1045,9 +1062,38 @@ async function exportWords() {
     const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/plain;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'animei-words.txt';
+    a.download = deck ? `animei-${deck.name.replace(/[\\/:*?"<>|]+/g, ' ').trim()}.txt` : 'animei-words.txt';
     a.click();
     URL.revokeObjectURL(a.href);
+}
+
+// Текстовый экспорт: если есть колоды — сперва спрашиваем, какую выгружать
+// (тем же селектом, что у Anki-экспорта); без колод качаем сразу.
+function openTextExport() {
+    closeWordsMenu();
+    const deckOpts = ankiDeckOptions();
+    if (!deckOpts.length) { exportWords(''); return; }
+    openModal((box, close) => {
+        const active = (window.DecksUI && DecksUI.activeDeckId()) || '';
+        box.innerHTML = `
+            <div class="deck-editor__title">${esc(t('words.export'))}</div>
+            <label class="anki-export__deck">
+                <span>${esc(t('words.exportAnki.deck'))}</span>
+                <select id="text-deck">
+                    ${deckOpts.map((o) => `<option value="${esc(o.id)}"${o.id === active ? ' selected' : ''}>${esc(o.label)} (${o.n})</option>`).join('')}
+                </select>
+            </label>
+            <div class="deck-editor__actions">
+                <button class="btn btn--ghost" id="text-cancel">${esc(t('words.cancel'))}</button>
+                <button class="btn btn--success" id="text-go">${esc(t('words.export.download'))}</button>
+            </div>
+        `;
+        box.querySelector('#text-cancel').addEventListener('click', close);
+        box.querySelector('#text-go').addEventListener('click', () => {
+            exportWords(box.querySelector('#text-deck').value);
+            close();
+        });
+    });
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -1084,7 +1130,7 @@ window.addEventListener('DOMContentLoaded', () => {
     initLongPressGuard();
     initMenu();
     renderMenuChoices();
-    document.getElementById('export-btn')?.addEventListener('click', exportWords);
+    document.getElementById('export-btn')?.addEventListener('click', openTextExport);
     document.getElementById('export-anki-btn')?.addEventListener('click', openAnkiExport);
     document.getElementById('import-known-btn')?.addEventListener('click', openKnownImport);
     document.getElementById('known-btn')?.addEventListener('click', openKnownManager);

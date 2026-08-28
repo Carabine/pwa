@@ -367,6 +367,8 @@ const I18N = {
         'decks.manage': 'Управление колодой',
         'decks.add': 'В колоды',
         'decks.avatar': 'Аватарка тайтла',
+        'decks.lockedActive': 'Активная колода — снять отметку нельзя',
+        'words.export.download': 'Скачать',
         'decks.sheetTitle': 'Добавить в колоды',
         'decks.noneYet': 'Колод пока нет — создайте первую',
         'decks.newTitle': 'Новая колода',

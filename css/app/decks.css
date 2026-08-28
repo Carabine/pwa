@@ -32,21 +32,15 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    /* Низ компактный: у первой строки списка есть свой внутренний паддинг
-       ~11px, и большой внешний зазор читался как дыра. */
-    padding: 2px 0 6px;
-    margin-bottom: 4px;
+    /* Низ = 14px (8+6): в ритме отступов между блоками выше. */
+    padding: 2px 0 8px;
+    margin-bottom: 6px;
 }
 /* display:flex перебивает атрибут hidden — скрытые блоки оставались в потоке
    нулевой высоты, но с margin'ами (фантомные 16px над списком слов). */
 .deck-chips[hidden],
 .deck-study[hidden] { display: none; }
 
-/* На телефоне низ блока колод ещё компактнее. (Правило живёт здесь, а не в
-   pages.css: decks.css в бандле позже и перебил бы override.) */
-@media (max-width: 560px) {
-    .deck-chips { padding-bottom: 2px; }
-}
 
 /* Кнопка-селектор текущей колоды. На телефоне занимает всю ширину, на широком
    экране упирается в max-width — растянутая на 1000px кнопка выглядела нелепо.
@@ -154,6 +148,11 @@
     .deck-chip:hover { border-color: var(--primary); }
 }
 .deck-chip--add { color: var(--text-muted); border-style: dashed; }
+/* Кнопка-фильтр (воронка) справа от пилюли колод. */
+.deck-chip--filter { padding: 6px 11px; color: var(--text-muted); }
+.deck-chip--filter svg { width: 16px; height: 16px; display: block; }
+/* Активная колода в шторке слова: отметку снять нельзя. */
+.deck-sheet__row.is-locked { opacity: 0.6; cursor: default; }
 .deck-chip__count {
     font-size: 11px;
     padding: 1px 6px;

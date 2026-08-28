@@ -31,6 +31,9 @@
     // Размеры задаёт CSS (.deck-pick__emoji svg / .deck-sheet__emoji svg).
     const STACK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>';
 
+    // Кнопка-фильтр справа от пилюли: воронка, открывает шторку выбора колоды.
+    const FILTER_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>';
+
     const UI = {
         _activeId: null,
         _ctx: null,   // { chips, study, hint, getWords, onChange }
@@ -110,11 +113,13 @@
             pick.addEventListener('click', () => this._openPicker());
             box.appendChild(pick);
 
-            const add = h('button', 'deck-chip deck-chip--add deck-chip--pinned', '＋');
-            add.title = t('decks.createFirst');
-            add.setAttribute('aria-label', t('decks.createFirst'));
-            add.addEventListener('click', () => this._openEditor({ mode: 'create' }));
-            box.appendChild(add);
+            // Воронка-фильтр вместо прежнего «+»: плюс читался неочевидно, а
+            // создание колоды и так живёт в шторке («+ Создать колоду»).
+            const filter = h('button', 'deck-chip deck-chip--pinned deck-chip--filter', FILTER_ICON);
+            filter.title = t('decks.pickTitle');
+            filter.setAttribute('aria-label', t('decks.pickTitle'));
+            filter.addEventListener('click', () => this._openPicker());
+            box.appendChild(filter);
             box.hidden = false;
         },
 
@@ -321,17 +326,25 @@
                 }
                 for (const d of decks) {
                     const on = Decks.has(d.id, word.id);
-                    const row = h('button', 'deck-sheet__row' + (on ? ' is-on' : ''),
+                    // Слово из АКТИВНОЙ колоды не даём выкинуть отсюда: фильтр
+                    // открыт по ней, и случайный тап убирал бы слово из-под ног.
+                    const locked = on && d.id === this._activeId;
+                    const row = h('button', 'deck-sheet__row' + (on ? ' is-on' : '') + (locked ? ' is-locked' : ''),
                         `<span class="deck-sheet__emoji">${Decks.iconHtml(d)}</span>` +
                         `<span class="deck-sheet__name">${esc(d.name)}</span>` +
                         `<span class="deck-sheet__check">${on ? '✓' : ''}</span>`);
-                    row.addEventListener('click', () => {
-                        const nowOn = Decks.toggle(d.id, word.id);
-                        row.classList.toggle('is-on', nowOn);
-                        row.querySelector('.deck-sheet__check').textContent = nowOn ? '✓' : '';
-                        this.refresh();
-                        status(nowOn ? t('decks.added') : t('decks.removed'));
-                    });
+                    if (locked) {
+                        row.disabled = true;
+                        row.title = t('decks.lockedActive');
+                    } else {
+                        row.addEventListener('click', () => {
+                            const nowOn = Decks.toggle(d.id, word.id);
+                            row.classList.toggle('is-on', nowOn);
+                            row.querySelector('.deck-sheet__check').textContent = nowOn ? '✓' : '';
+                            this.refresh();
+                            status(nowOn ? t('decks.added') : t('decks.removed'));
+                        });
+                    }
                     list.appendChild(row);
                 }
             };
