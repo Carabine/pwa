@@ -258,34 +258,16 @@
 
     // ---------- Открытие и закрытие ----------
 
-    // В кино-режиме раскладка уходит в реальный fullscreen: браузер показывает
-    // только fullscreen-элемент и его потомков — на время показа переносим
-    // оверлей внутрь (так же поступают попап словаря и авто-колода).
-    let overlayHome = null;
-
-    function attachOverlay() {
-        const fs = document.fullscreenElement;
-        if (!fs || fs.contains(overlay)) return;
-        overlayHome = { parent: overlay.parentNode, next: overlay.nextSibling };
-        fs.appendChild(overlay);
-    }
-
-    function restoreOverlay() {
-        if (!overlayHome) return;
-        overlayHome.parent.insertBefore(overlay, overlayHome.next);
-        overlayHome = null;
-    }
-
-    document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement) restoreOverlay();
-    });
+    // Кино-режим: на время показа оверлей живёт внутри fullscreen-элемента
+    // (createFsPortal в app.js — общий с авто-колодой).
+    const fsPortal = createFsPortal(overlay);
 
     let layer = null;
 
     function hideModal() {
         layer = null;
         overlay.hidden = true;
-        restoreOverlay();
+        fsPortal.restore();
     }
 
     function closeModal() {
@@ -322,7 +304,7 @@
             .forEach((b) => b.classList.toggle('is-on', b.dataset.filter === 'all'));
         renderList();
 
-        attachOverlay();
+        fsPortal.attach();
         overlay.hidden = false;
         layer = AnimeiBack.open(hideModal);
         listEl.scrollTop = 0;

@@ -160,21 +160,14 @@
         if (window.AnimeiClipTrim) wrap.appendChild(window.AnimeiClipTrim.buildForWord(wordData));
         wrap.appendChild(buildTtsControl(wordData));
 
-        // «Назад» на телефоне закрывает редактор, а не уводит со страницы: слой
-        // регистрируем в общем менеджере (AnimeiBack в app.js).
-        let layer = null;
-        function hide() {
-            layer = null;
-            overlay.remove();
-            document.removeEventListener('keydown', onKey);
-        }
-        function close() {
-            if (layer) AnimeiBack.close(layer);
-            else hide();
-        }
-        function onKey(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } }
-
-        overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(); });
+        // mousedown вместо click: выделение текста в поле, отпущенное на фоне,
+        // не должно закрывать редактор. Удаляем без анимации (нет is-open стилей).
+        const modal = modalLayer(overlay, {
+            backdropEvent: 'mousedown',
+            stopEsc: true,
+            onHide: () => overlay.remove(),
+        });
+        const close = modal.close;
         overlay.querySelector('.word-modal__close').addEventListener('click', close);
         overlay.querySelector('.cancel-btn').addEventListener('click', close);
         overlay.querySelector('.delete-btn')?.addEventListener('click', () => { close(); opts.onDelete(); });
@@ -195,9 +188,7 @@
             showSnackbar(t('words.savedSnack'), { duration: 3000, type: 'success' });
         });
 
-        document.addEventListener('keydown', onKey);
-        document.body.appendChild(overlay);
-        layer = AnimeiBack.open(hide);
+        modal.open();
         kanji.input.focus();
     }
 

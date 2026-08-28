@@ -600,23 +600,10 @@ function openModal(buildBody) {
     overlay.className = 'deck-sheet__overlay';
     const box = document.createElement('div');
     box.className = 'deck-editor known-modal';
-    // «Назад» на телефоне закрывает модалку, а не уводит со страницы.
-    let layer = null;
-    const hide = () => {
-        layer = null;
-        overlay.classList.remove('is-open');
-        document.removeEventListener('keydown', onEsc);
-        setTimeout(() => overlay.remove(), 180);
-    };
-    const close = () => { if (layer) AnimeiBack.close(layer); else hide(); };
-    const onEsc = (e) => { if (e.key === 'Escape') close(); };
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-    document.addEventListener('keydown', onEsc);
-    buildBody(box, close);
+    const modal = modalLayer(overlay);
+    buildBody(box, modal.close);
     overlay.appendChild(box);
-    document.body.appendChild(overlay);
-    layer = AnimeiBack.open(hide);
-    requestAnimationFrame(() => overlay.classList.add('is-open'));
+    modal.open();
 }
 
 function openKnownImport() {

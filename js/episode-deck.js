@@ -284,30 +284,9 @@
         listEl.querySelectorAll('input').forEach((cb) => { cb.disabled = on; });
     }
 
-    // В кино-режиме раскладка уходит в реальный fullscreen, а браузер показывает
-    // только fullscreen-элемент и его потомков — модалка из body там была бы
-    // невидимой (так же переносят словарный попап, см. player-ui.js). Поэтому на
-    // время показа переносим оверлей внутрь fullscreen-элемента и возвращаем назад.
-    let overlayHome = null;
-
-    function attachOverlay() {
-        const fs = document.fullscreenElement;
-        if (!fs || fs.contains(overlay)) return;
-        overlayHome = { parent: overlay.parentNode, next: overlay.nextSibling };
-        fs.appendChild(overlay);
-    }
-
-    function restoreOverlay() {
-        if (!overlayHome) return;
-        overlayHome.parent.insertBefore(overlay, overlayHome.next);
-        overlayHome = null;
-    }
-
-    // Вышли из кино-режима с открытой модалкой — возвращаем оверлей в документ
-    // (иначе он остался бы висеть внутри бывшего fullscreen-элемента).
-    document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement) restoreOverlay();
-    });
+    // Кино-режим: на время показа оверлей живёт внутри fullscreen-элемента
+    // (createFsPortal в app.js — общий с выбором известных слов).
+    const fsPortal = createFsPortal(overlay);
 
     // «Назад» на телефоне закрывает модалку, а не уводит с плеера — слой живёт
     // в общем менеджере (AnimeiBack в app.js).
@@ -316,7 +295,7 @@
     function hideModal() {
         layer = null;
         overlay.hidden = true;
-        restoreOverlay();
+        fsPortal.restore();
     }
 
     function closeModal() {
@@ -344,7 +323,7 @@
         }
         subEl.textContent = t('edeck.sub');
         renderList();
-        attachOverlay();
+        fsPortal.attach();
         overlay.hidden = false;
         layer = AnimeiBack.open(hideModal);
         listEl.scrollTop = 0;

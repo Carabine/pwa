@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.360';
+const APP_VERSION = 'v0.0.361';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -115,6 +115,67 @@ const AnimeiBack = (() => {
         },
     };
 })();
+
+// Перенос оверлея внутрь fullscreen-элемента на время показа: в реальном
+// fullscreen браузер показывает только fullscreen-элемент и его потомков,
+// поэтому модалка из body там была бы невидимой. attach() при открытии,
+// restore() при закрытии; выход из fullscreen с открытой модалкой возвращает
+// оверлей на место сам. Используют модалки плеера (episode-deck, episode-known);
+// у player-ui свой, более развитый перенос (moveIn/moveBack с целями).
+function createFsPortal(overlay) {
+    let home = null;
+    function attach() {
+        const fs = document.fullscreenElement;
+        if (!fs || fs.contains(overlay)) return;
+        home = { parent: overlay.parentNode, next: overlay.nextSibling };
+        fs.appendChild(overlay);
+    }
+    function restore() {
+        if (!home) return;
+        home.parent.insertBefore(overlay, home.next);
+        home = null;
+    }
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) restore();
+    });
+    return { attach, restore };
+}
+
+// Каркас модалки-оверлея (words, decks-ui, word-edit — раньше по копии в каждой).
+// Слой регистрируется в AnimeiBack («назад» на телефоне закрывает модалку, а не
+// страницу), Esc и клик/тап по фону закрывают; закрытие снимает слушатель
+// клавиатуры и прячет оверлей (по умолчанию — снять is-open и удалить после
+// анимации). Использование: const modal = modalLayer(overlay); …наполнить,
+// кнопкам отдать modal.close…; modal.open() — добавит в body и покажет.
+//   onHide    — полная замена умолчального скрытия (word-edit удаляет сразу);
+//   afterHide — доп. действия после скрытия (обновить счётчики, отдать результат);
+//   backdropEvent — 'mousedown' для форм: выделение текста, отпущенное на фоне,
+//                   не должно закрывать модалку по click;
+//   stopEsc   — не пускать Esc дальше (когда у страницы свой обработчик).
+function modalLayer(overlay, { backdropEvent = 'click', stopEsc = false, onHide, afterHide } = {}) {
+    let layer = null;
+    const hide = () => {
+        layer = null;
+        document.removeEventListener('keydown', onEsc);
+        if (onHide) {
+            onHide();
+        } else {
+            overlay.classList.remove('is-open');
+            setTimeout(() => overlay.remove(), 180);
+        }
+        if (afterHide) afterHide();
+    };
+    const close = () => { if (layer) AnimeiBack.close(layer); else hide(); };
+    const onEsc = (e) => { if (e.key === 'Escape') { if (stopEsc) e.stopPropagation(); close(); } };
+    const open = () => {
+        overlay.addEventListener(backdropEvent, (e) => { if (e.target === overlay) close(); });
+        document.addEventListener('keydown', onEsc);
+        document.body.appendChild(overlay);
+        layer = AnimeiBack.open(hide);
+        requestAnimationFrame(() => overlay.classList.add('is-open'));
+    };
+    return { open, close };
+}
 
 // Обычные ссылки внутри открытых слоёв (пункты сайдбара — основной случай)
 // уводят со страницы. Перехватываем на всплытии и уходим через navigate(), чтобы
