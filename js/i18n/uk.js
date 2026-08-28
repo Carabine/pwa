@@ -318,7 +318,6 @@ window.I18N_UK = {
         'words.filter': 'Пошук за словом або перекладом…',
         'words.filterShort': 'Пошук слова…',
         'words.nothingFound': 'Нічого не знайшлося',
-        'words.clip': 'Є відеофрагмент',
         'words.edit': 'Змінити',
         'words.cancel': 'Скасувати',
         'words.save': 'Зберегти',

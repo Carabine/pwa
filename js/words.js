@@ -22,7 +22,7 @@ let selectMode = false;
 const selected = new Set();
 
 // Пока сервер дорезает клип, слово помечено «готовится». Несколько раз тихо
-// перечитываем список, чтобы значок сам сменился на 🎬, когда клип появится.
+// перечитываем список, чтобы значок ⏳ сам исчез, когда клип появится.
 let clipRefreshLeft = 3;
 let clipRefreshScheduled = false;
 
@@ -100,10 +100,10 @@ function videoSrcOf(w) {
     return w.Video ? w.Video.url : (w.video || '');
 }
 
-// Состояние клипа для значка в списке:
-//   ready   — есть готовое видео (или клип гостя в браузере),
-//   pending — видео ещё режется на сервере (Video есть, url пуст),
-//   none    — клипа нет.
+// Состояние клипа: ready — есть готовое видео (или клип гостя в браузере),
+// pending — видео ещё режется на сервере (Video есть, url пуст), none — нет.
+// Значок показываем только для pending: клип есть почти у каждого слова,
+// поэтому «есть видео» ничего не сообщает.
 function clipBadge(w) {
     if (videoSrcOf(w)) return 'ready';
     const expected = Number(w.videoEnd) > Number(w.videoStart);
@@ -114,10 +114,8 @@ function clipBadge(w) {
 }
 
 function clipBadgeHtml(w) {
-    const badge = clipBadge(w);
-    if (badge === 'ready') return `<span class="word-card__clip" title="${esc(t('words.clip'))}">🎬</span>`;
-    if (badge === 'pending') return `<span class="word-card__clip word-card__clip--pending" title="${esc(t('words.videoPreparing'))}">⏳</span>`;
-    return '';
+    if (clipBadge(w) !== 'pending') return '';
+    return `<span class="word-card__clip word-card__clip--pending" title="${esc(t('words.videoPreparing'))}">⏳</span>`;
 }
 
 async function removeWord(wordData) {
@@ -300,13 +298,10 @@ function buildRow(wordData) {
     const row = document.createElement('div');
     row.className = 'word-row' + (selected.has(wordData.id) ? ' is-selected' : '');
 
-    // Значки: клип + эмодзи колод. Повторы одного эмодзи (🎬-клип рядом со
-    // старой 🎬-колодой серии, две колоды с одним значком) сливаем в один,
-    // подсказки объединяем.
+    // Значки: ⏳ готовящегося клипа + эмодзи колод. Повторы одного эмодзи
+    // (две колоды с одним значком) сливаем в один, подсказки объединяем.
     const badges = [];
-    const clip = clipBadge(wordData);
-    if (clip === 'ready') badges.push({ emoji: '🎬', title: t('words.clip'), cls: 'word-card__clip' });
-    if (clip === 'pending') badges.push({ emoji: '⏳', title: t('words.videoPreparing'), cls: 'word-card__clip word-card__clip--pending' });
+    if (clipBadge(wordData) === 'pending') badges.push({ emoji: '⏳', title: t('words.videoPreparing'), cls: 'word-card__clip word-card__clip--pending' });
     if (window.Decks) {
         for (const d of Decks.decksOf(wordData.id)) {
             const dup = badges.find((b) => b.emoji === d.emoji);

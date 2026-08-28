@@ -322,7 +322,6 @@ const I18N = {
         'words.filter': 'Поиск по слову или переводу…',
         'words.filterShort': 'Поиск слова…',
         'words.nothingFound': 'Ничего не нашлось',
-        'words.clip': 'Есть видеофрагмент',
         'words.edit': 'Изменить',
         'words.cancel': 'Отмена',
         'words.save': 'Сохранить',

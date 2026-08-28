@@ -996,14 +996,21 @@
     white-space: nowrap;
 }
 
-/* Слева в подвале — «Удалить» и «В колоды» (словарь); справа — отмена/сохранить. */
+/* Слева в подвале — иконки «Удалить» и «В колоды» (словарь); справа —
+   отмена/сохранить текстом. Иконки вместо надписей: четыре текстовые кнопки
+   не влезали в одну строку узкой модалки. */
 .word-modal__foot-left {
     display: flex;
     gap: 8px;
     margin-right: auto;
 }
 .word-modal__foot-left:empty { display: none; }
-.word-modal__delete { color: var(--danger); }
+.word-modal__foot .word-modal__ibtn {
+    width: 38px;
+    min-width: 38px;
+    padding: 0;
+    font-size: 16px;
+}
 @media (hover: hover) and (pointer: fine) {
     .word-modal__delete:hover { border-color: var(--danger); }
 }
@@ -1079,11 +1086,6 @@
         font-size: 18px;
         padding: 0 4px;
     }
-
-    /* Подвал карточки слова: «Удалить»/«В колоды» не влезают в одну строку
-       с «Отмена»/«Сохранить» — переносим их на свою строку. */
-    .word-modal__foot { flex-wrap: wrap; }
-    .word-modal__foot-left { flex-basis: 100%; }
 
     /* Строки списка: та же одна линия, но слово ужимается, перевод — справа.
        basis 0 — длинное слово усекается, а не выталкивает перевод. */

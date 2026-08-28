@@ -318,7 +318,6 @@ window.I18N_EN = {
         'words.filter': 'Search by word or meaning…',
         'words.filterShort': 'Search…',
         'words.nothingFound': 'Nothing found',
-        'words.clip': 'Has a video clip',
         'words.edit': 'Edit',
         'words.cancel': 'Cancel',
         'words.save': 'Save',

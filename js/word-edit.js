@@ -124,8 +124,10 @@
     // Редактирование карточки слова — модальным окном. onSaved зовём после
     // успешного сохранения (перерисовать список / карточку обучения). Правку
     // видео-фрагмента и звука монтируем внутрь: они сохраняются сами, отдельно.
-    // opts.onDelete / opts.onDecks (необязательные) добавляют в подвал кнопки
+    // opts.onDelete / opts.onDecks (необязательные) добавляют в подвал иконки
     // «Удалить» и «В колоды» — у компактного списка словаря нет своих кнопок.
+    // Слева иконки, справа текстовые «Отмена»/«Сохранить»: четыре текстовые
+    // кнопки не влезали в одну строку узкой модалки.
     function open(wordData, onSaved, opts) {
         opts = opts || {};
         const overlay = document.createElement('div');
@@ -139,8 +141,8 @@
                 <div class="word-modal__body"><div class="word-edit"></div></div>
                 <div class="word-modal__foot">
                     <span class="word-modal__foot-left">
-                        ${opts.onDelete ? `<button class="btn btn--ghost word-modal__delete delete-btn" type="button">${esc(t('words.bulkDelete'))}</button>` : ''}
-                        ${opts.onDecks ? `<button class="btn btn--ghost decks-btn" type="button">${esc(t('decks.add'))}</button>` : ''}
+                        ${opts.onDelete ? `<button class="btn btn--ghost word-modal__ibtn word-modal__delete delete-btn" type="button" title="${esc(t('words.bulkDelete'))}" aria-label="${esc(t('words.bulkDelete'))}">🗑</button>` : ''}
+                        ${opts.onDecks ? `<button class="btn btn--ghost word-modal__ibtn decks-btn" type="button" title="${esc(t('decks.add'))}" aria-label="${esc(t('decks.add'))}">📚</button>` : ''}
                     </span>
                     <button class="btn btn--ghost cancel-btn" type="button">${esc(t('words.cancel'))}</button>
                     <button class="btn btn--success save-btn" type="button">${esc(t('words.save'))}</button>
