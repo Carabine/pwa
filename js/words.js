@@ -1082,13 +1082,9 @@ window.addEventListener('DOMContentLoaded', () => {
     // устройства) — перерисовываем чипы и карточки.
     document.addEventListener('decks:changed', () => renderWords());
 
+    // Короткий плейсхолдер для узкого экрана ставит инлайн-скрипт в words.html
+    // (до первой отрисовки), i18n дальше сам берёт ключ из data-i18n-placeholder.
     const filterInput = document.getElementById('words-filter');
-    // На узком экране длинный плейсхолдер обрезается посреди слова.
-    if (filterInput && window.matchMedia('(max-width: 560px)').matches) {
-        filterInput.placeholder = t('words.filterShort');
-        // Чтобы смена языка тоже подставляла короткий вариант.
-        filterInput.setAttribute('data-i18n-placeholder', 'words.filterShort');
-    }
     filterInput?.addEventListener('input', () => {
         wordsFilter = filterInput.value.trim().toLowerCase();
         renderWords();

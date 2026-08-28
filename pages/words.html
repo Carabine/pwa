@@ -87,6 +87,16 @@
             <label class="words-filter">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input type="text" id="words-filter" autocomplete="off" data-i18n-placeholder="words.filter" placeholder="Поиск по слову или переводу…">
+                <!-- Короткий плейсхолдер для узкого экрана ставим ДО первой
+                     отрисовки — поздняя подмена из JS видна как мигание. -->
+                <script>
+                    (function () {
+                        if (!matchMedia('(max-width: 560px)').matches) return;
+                        var el = document.getElementById('words-filter');
+                        el.placeholder = 'Поиск слова…';
+                        el.setAttribute('data-i18n-placeholder', 'words.filterShort');
+                    })();
+                </script>
             </label>
             <!-- Инструменты: режим выбора и меню «⋯» (сортировка, вид, экспорт,
                  известные слова — всё низкочастотное убрано с глаз). Логика — words.js. -->
