@@ -67,6 +67,66 @@ function setSubsFixVisible(v) { subsFixBtn.hidden = !v; }
 const subsPreciseBtn = document.getElementById('subs-precise');
 const subsPreciseStatus = document.getElementById('subs-precise-status');
 
+// ---------- Не-Kodik источники («оригинал») ----------
+// Вся специфика источников — в одной таблице: loadStream и разбросанные раньше
+// if-по-провайдеру читают её. Новый источник видео = запись здесь (+ бэкенд:
+// роут и регистрация путей в services/streamPaths.js).
+//   endpoint/params/streamUrl — как получить поток;
+//   direct       — прямой mp4: нативный <video>, без hls.js (AnimeJoy);
+//   qualities    — эндпоинт отдаёт список качеств + auto-манифест (KAA);
+//   overlaySubs  — выбранный язык накладываем мягким слоем (KAA, чистый кадр);
+//   intro        — эндпоинт возвращает тайминги опенинга (res.data.intro);
+//   audioLang    — язык звука фиксирован источником (megaplay: всегда японский);
+//   burnLang     — язык субтитров, которые УВИДИТ пользователь (вжатых или
+//                  наложенных нами) — для подписи дорожки;
+//   pictureSub   — что вжато в саму картинку (null = чистый кадр); нет ключа —
+//                  решает isJpTrack;
+//   autoSyncable:false — автосинк пропускаем (alass не тянет аудио с их CDN);
+//   syncIntroEnd — передавать синку конец опенинга (сабы из архива без него,
+//                  и весь диалог смещён примерно на его длину).
+const PROVIDERS = {
+    // Оригинальная японская дорожка: свой эндпоинт, без выбора качества
+    // (в мастер-плейлисте свои варианты, hls.js выберет сам).
+    megaplay: {
+        endpoint: 'catalog/megaplay-stream',
+        params: (ep) => ({ mal: state.megaMal, ep: ep.number, type: 'sub' }),
+        streamUrl: (d) => d.hls,
+        intro: true,
+        audioLang: 'ja',
+        autoSyncable: false,
+        syncIntroEnd: true,
+    },
+    // Оригинальная японская дорожка (маппинг shikimori→showId→wixmp через наш
+    // прокси), без выбора качества; в картинку вжат английский саб.
+    allanime: {
+        endpoint: 'catalog/allanime-stream',
+        params: (ep) => ({ shikimoriId, ep: ep.number }),
+        streamUrl: (d) => d.hls,
+        burnLang: 'en',
+    },
+    // Японская дорожка прямым mp4 (не HLS). Качество выбирает бэкенд (берёт
+    // максимальное), поэтому переключателя нет; intro размечает сам AnimeJoy.
+    animejoy: {
+        endpoint: 'catalog/animejoy-stream',
+        params: (ep) => ({ shikimoriId, ep: ep.number }),
+        streamUrl: (d) => d.video,
+        direct: true,
+        intro: true,
+        pictureSub: 'ru',
+    },
+    // Чистое видео без вшитых субтитров, японская дорожка отдельно. Качество НЕ
+    // прячем: отдаём весь список как есть, чтобы в переключателе было честно
+    // видно, что доступно (у них бывает и 1080p, и только 360p).
+    kickassanime: {
+        endpoint: 'catalog/kickassanime-stream',
+        params: (ep) => ({ shikimoriId, ep: ep.number, sub: state.subLang || 'en' }),
+        qualities: true,
+        overlaySubs: true,
+        burnLang: 'en',
+        pictureSub: null,
+    },
+};
+
 const state = {
     translations: [],
     episodes: [],          // серии, показанные в дропдауне серий сейчас
@@ -181,8 +241,7 @@ async function init() {
             // AnimeJoy тоже запасной оригинал: прямой mp4 удобен пайплайну, но у
             // него вжат русский саб, а родная сабная дорожка Kodik точнее совпадает
             // с видео — поэтому Kodik остаётся приоритетнее.
-            const isFallbackOrig = (p) => p === 'megaplay' || p === 'allanime'
-                || p === 'animejoy' || p === 'kickassanime';
+            const isFallbackOrig = (p) => !!PROVIDERS[p];
             const aMp = isFallbackOrig(a.provider) ? 1 : 0;
             const bMp = isFallbackOrig(b.provider) ? 1 : 0;
             if (aMp !== bMp) return aMp - bMp;
@@ -230,7 +289,7 @@ function isJpTrack(tr) {
 // перевода сабов), поэтому по японскому аудио whisper запускался с `-l ru` и матчинг
 // всегда падал («не удалось»). Дубляж — на языке перевода.
 function trackAudioLang(tr) {
-    if (state.provider === 'megaplay') return 'ja';
+    if (PROVIDERS[state.provider]?.audioLang) return PROVIDERS[state.provider].audioLang;
     if (isJpTrack(tr)) return 'ja';
     return subsLang();
 }
@@ -244,8 +303,7 @@ function subBurnLang(tr) {
     // сами (см. loadBurnedSubs) — на экране пользователь увидит именно их,
     // поэтому метку ставим по тому, что реально будет видно, а не по тому,
     // вжат текст в кадр или нарисован слоем.
-    if (tr.provider === 'kickassanime') return 'en';
-    if (tr.provider === 'allanime') return 'en';
+    if (PROVIDERS[tr.provider]?.burnLang) return PROVIDERS[tr.provider].burnLang;
     if (isJpTrack(tr)) return 'ru';
     return null;
 }
@@ -256,8 +314,8 @@ function subBurnLang(tr) {
 // русский текст вжат в видео и никуда не денется.
 function pictureSubLang(tr) {
     if (!tr) return null;
-    if (tr.provider === 'kickassanime') return null;   // чистый кадр
-    if (tr.provider === 'animejoy') return 'ru';
+    const p = PROVIDERS[tr.provider];
+    if (p && 'pictureSub' in p) return p.pictureSub;
     if (isJpTrack(tr)) return 'ru';
     return null;
 }
@@ -343,10 +401,9 @@ async function selectTranslation(index) {
     state.provider = t.provider || 'kodik';
     if (window.animeiTrack) window.animeiTrack('voiceover', (isJpTrack(t) ? '🇯🇵 ' : '') + (t.title || ''));
     // Новая дорожка — свои сезоны/серии; сброс запомненного сезона обязателен.
-    // AllAnime, как и MegaPlay, — оригинальная дорожка без Kodik-машинерии серий:
+    // Не-Kodik источники — оригинальные дорожки без Kodik-машинерии серий:
     // рисуем 1..N по числу серий тайтла.
-    if (state.provider === 'megaplay' || state.provider === 'allanime'
-        || state.provider === 'animejoy' || state.provider === 'kickassanime') {
+    if (PROVIDERS[state.provider]) {
         await loadMegaplayEpisodes(t, true);
     } else {
         await loadEpisodes({ mediaType: t.mediaType, mediaId: t.mediaId, mediaHash: t.mediaHash }, true);
@@ -839,99 +896,33 @@ async function selectEpisode(index) {
     // Сабы под номер серии
     loadSubtitles(ep.number);
 
-    // AllAnime — оригинальная японская дорожка: свой эндпоинт (маппинг shikimori→
-    // showId → wixmp через наш прокси), без выбора качества (мастер-плейлист сам).
-    if (state.provider === 'allanime') {
+    // Не-Kodik источники («оригинал») — вся специфика в таблице PROVIDERS выше.
+    const prov = PROVIDERS[state.provider];
+    if (prov) {
         try {
-            const { data: res } = await client.get('catalog/allanime-stream', {
-                params: { shikimoriId, ep: ep.number },
-            });
-            state.qualities = {};
-            state.masterUrl = null;
-            state.megaIntro = null;
+            const { data: res } = await client.get(prov.endpoint, { params: prov.params(ep) });
+            state.qualities = prov.qualities ? (res.data.qualities || {}) : {};
+            state.masterUrl = prov.qualities ? (res.data.auto || null) : null;
+            state.megaIntro = prov.intro ? (res.data.intro || null) : null;
             state.pendingSeek = null;
-            state.currentVideoUrl = apiOrigin() + res.data.hls;
-            attachVideo(state.currentVideoUrl);
+            let url;
+            if (prov.qualities) {
+                const chosen = pickQuality();
+                url = chosen.url || Object.values(state.qualities)[0];
+            } else {
+                url = prov.streamUrl(res.data);
+            }
+            state.currentVideoUrl = apiOrigin() + url;
+            (prov.direct ? attachDirectVideo : attachVideo)(state.currentVideoUrl);
             updateQualityUI();
-            state.syncPromise = maybeAutoSync();
-        } catch (err) {
-            console.error(err);
-            videoLoading.classList.add('is-error');
-            videoLoading.textContent = t('player.streamError');
-        }
-        return;
-    }
-
-    // KickAssAnime — чистое видео без вшитых субтитров, японская дорожка отдельно.
-    // Качество НЕ прячем: отдаём весь список как есть, чтобы в переключателе было
-    // честно видно, что доступно у этого источника (у них бывает и 1080p, и только
-    // 360p — молчаливая подмена выглядела бы как поломка).
-    if (state.provider === 'kickassanime') {
-        try {
-            const { data: res } = await client.get('catalog/kickassanime-stream', {
-                params: { shikimoriId, ep: ep.number, sub: state.subLang || 'en' },
-            });
-            state.qualities = res.data.qualities || {};
-            state.masterUrl = res.data.auto || null;
-            state.megaIntro = null;
-            state.pendingSeek = null;
-            const chosen = pickQuality();
-            state.currentVideoUrl = apiOrigin() + (chosen.url || Object.values(state.qualities)[0]);
-            attachVideo(state.currentVideoUrl);
-            updateQualityUI();
+            // Выбранный язык — мягким слоем поверх чистой картинки (KAA);
             // «Оригинал» — ничего не накладываем, показываем как отдал источник.
-            if (state.subLang) loadBurnedSubs(res.data.subtitle);
+            if (prov.overlaySubs && state.subLang) loadBurnedSubs(res.data.subtitle);
             state.syncPromise = maybeAutoSync();
         } catch (err) {
             console.error(err);
             videoLoading.classList.add('is-error');
             videoLoading.textContent = t('player.streamError');
-        }
-        return;
-    }
-
-    // AnimeJoy — японская дорожка прямым mp4 (не HLS). Качество выбирает бэкенд
-    // (берёт максимальное из списка PlayerJS), поэтому переключателя качества нет.
-    // intro приходит с готовыми таймингами опенинга — их размечает сам AnimeJoy.
-    if (state.provider === 'animejoy') {
-        try {
-            const { data: res } = await client.get('catalog/animejoy-stream', {
-                params: { shikimoriId, ep: ep.number },
-            });
-            state.qualities = {};
-            state.masterUrl = null;
-            state.megaIntro = res.data.intro || null;
-            state.pendingSeek = null;
-            state.currentVideoUrl = apiOrigin() + res.data.video;
-            attachDirectVideo(state.currentVideoUrl);
-            updateQualityUI();
-            state.syncPromise = maybeAutoSync();
-        } catch (err) {
-            console.error(err);
-            videoLoading.classList.add('is-error');
-            videoLoading.textContent = t('player.streamError');
-        }
-        return;
-    }
-
-    // MegaPlay — оригинальная японская дорожка: свой эндпоинт, без выбора качества
-    // (в мастер-плейлисте свои варианты, hls.js выберет сам).
-    if (state.provider === 'megaplay') {
-        try {
-            const { data: res } = await client.get('catalog/megaplay-stream', {
-                params: { mal: state.megaMal, ep: ep.number, type: 'sub' },
-            });
-            state.qualities = {};
-            state.masterUrl = null;
-            state.megaIntro = res.data.intro || null;
-            state.pendingSeek = null;
-            state.currentVideoUrl = apiOrigin() + res.data.hls;
-            attachVideo(state.currentVideoUrl);
-            updateQualityUI();
-            state.syncPromise = maybeAutoSync();
-        } catch (err) {
-            console.error(err);
-            videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.streamError');
         }
         return;
     }
@@ -1440,8 +1431,8 @@ function setSyncing(on) {
 // время сразу при отрисовке сабов, а не только в момент запроса.
 function autoSyncEligible() {
     if (window.AnimeiSettings && window.AnimeiSettings.get('autoSyncSubs') === false) return false;
-    // MegaPlay не автосинкаем — см. maybeAutoSync (alass не тянет аудио с их CDN).
-    if (state.provider === 'megaplay') return false;
+    // Несинкуемые источники (megaplay) — см. maybeAutoSync.
+    if (PROVIDERS[state.provider]?.autoSyncable === false) return false;
     const key = offsetStorageKey();
     if (state.autoSyncKey === key) return false;
     if (localStorage.getItem(key) !== null) return false;
@@ -1462,11 +1453,11 @@ async function maybeAutoSync() {
     // один результат на серию; серверный Whisper-верификатор помогает НОВЫМ зрителям
     // серии через кэш — тем, у кого своего сохранённого сдвига ещё нет).
     if (localStorage.getItem(key) !== null) { state.autoSyncKey = key; setSyncing(false); return; }
-    // MegaPlay: alass не может вытащить аудио с их CDN (extractWav упирается в
-    // таймаут ~110с и возвращает «не смог») → автосинк только зря держит баннер
+    // autoSyncable:false (megaplay): alass не может вытащить аудио с их CDN
+    // (extractWav упирается в таймаут ~110с) → автосинк только зря держит баннер
     // «синхронизация» пару минут и всё равно ничего не находит. Пропускаем: для
     // японской дорожки синк делает кнопка «Не совпадают?» (точный подбор по звуку).
-    if (state.provider === 'megaplay') { state.autoSyncKey = key; setSyncing(false); return; }
+    if (PROVIDERS[state.provider]?.autoSyncable === false) { state.autoSyncKey = key; setSyncing(false); return; }
     state.autoSyncKey = key;
 
     // Отдаём реплики шире (до 340с) — бэкенд анализирует более длинное окно, чтобы
@@ -1490,9 +1481,9 @@ async function maybeAutoSync() {
     const audioLang = trackAudioLang(trSel);
     const cueTexts = inWin.map((c) => (audioLang === 'ja' ? (c.text || '') : (c.translation || c.text || '')));
 
-    // Для MegaPlay передаём конец интро — субтитры из архива обычно без него,
-    // и весь диалог смещён примерно на его длину (у автосинка иначе не тот диапазон).
-    const introEnd = (state.provider === 'megaplay' && state.megaIntro) ? state.megaIntro.end : 0;
+    // syncIntroEnd (megaplay): передаём конец интро — субтитры из архива обычно
+    // без него, и весь диалог смещён примерно на его длину.
+    const introEnd = (PROVIDERS[state.provider]?.syncIntroEnd && state.megaIntro) ? state.megaIntro.end : 0;
 
     // Показываем «синхронизируем…» и прячем тайм-коды на время запроса (может
     // занять секунды: бэкенд декодирует до ~340с звука через ffmpeg silencedetect).
@@ -1591,7 +1582,7 @@ async function preciseSyncSubs() {
     const audioLang = trackAudioLang(trSel);
     const cueTexts = inWin.map((c) => (audioLang === 'ja' ? (c.text || '') : (c.translation || c.text || '')));
     const seriesKey = shikimoriId + ':' + (trSel.id || trSel.provider || 'k') + ':s' + state.seasonIndex;
-    const introEnd = (state.provider === 'megaplay' && state.megaIntro) ? state.megaIntro.end : 0;
+    const introEnd = (PROVIDERS[state.provider]?.syncIntroEnd && state.megaIntro) ? state.megaIntro.end : 0;
     const key = offsetStorageKey();
 
     preciseBusy = true;
