@@ -139,9 +139,8 @@
                     <span class="word-modal__head-actions">
                         ${opts.onDelete ? `<button class="word-modal__hbtn word-modal__delete delete-btn" type="button" title="${esc(t('words.bulkDelete'))}" aria-label="${esc(t('words.bulkDelete'))}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : ''}
                         ${opts.onDecks ? `<button class="word-modal__hbtn decks-btn" type="button" title="${esc(t('decks.add'))}" aria-label="${esc(t('decks.add'))}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="13" height="13" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/></svg></button>` : ''}
-                        ${opts.onDelete || opts.onDecks ? '<span class="word-modal__head-sep" aria-hidden="true"></span>' : ''}
-                        <button class="word-modal__close" type="button" aria-label="${esc(t('words.cancel'))}">&times;</button>
                     </span>
+                    <button class="word-modal__close" type="button" aria-label="${esc(t('words.cancel'))}">&times;</button>
                 </div>
                 <div class="word-modal__body"><div class="word-edit"></div></div>
                 <div class="word-modal__foot">
