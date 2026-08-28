@@ -75,6 +75,26 @@
     display: inline-block;
     vertical-align: -0.25em;
 }
+/* Скелетон, пока аватарка грузится: у <img> нет ::after для общего .skel,
+   поэтому пульсируем подложку в тех же полупрозрачных тонах. Снимается
+   onload'ом в Decks.iconHtml. */
+.deck-ico--load {
+    background: rgba(255, 255, 255, 0.055);
+    animation: deck-ico-pulse 1.35s var(--ease-in-out, ease-in-out) infinite;
+}
+:root[data-theme="light"] .deck-ico--load {
+    background: rgba(30, 34, 60, 0.07);
+}
+@keyframes deck-ico-pulse {
+    50% { background-color: rgba(255, 255, 255, 0.13); }
+}
+:root[data-theme="light"] .deck-ico--load { animation-name: deck-ico-pulse-light; }
+@keyframes deck-ico-pulse-light {
+    50% { background-color: rgba(30, 34, 60, 0.13); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .deck-ico--load { animation: none; }
+}
 /* SVG-стопка «все колоды/все слова» — размер под соседний эмодзи-ряд. */
 .deck-pick__emoji svg { display: block; width: 16px; height: 16px; }
 .deck-sheet__emoji svg { display: block; width: 18px; height: 18px; margin: 3px 0; }

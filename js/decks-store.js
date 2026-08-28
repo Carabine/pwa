@@ -242,8 +242,10 @@
             if (iconEnabled(d)) {
                 const src = Decks.iconSrc(d);
                 if (src) {
-                    return `<img class="deck-ico" src="${src}" alt="" loading="lazy"` +
-                        ` data-fb="${d.emoji}" onerror="this.outerHTML=this.dataset.fb">`;
+                    // deck-ico--load — скелетон-подложка, пока картинка едет.
+                    return `<img class="deck-ico deck-ico--load" src="${src}" alt="" loading="lazy"` +
+                        ` data-fb="${d.emoji}" onload="this.classList.remove('deck-ico--load')"` +
+                        ` onerror="this.outerHTML=this.dataset.fb">`;
                 }
             }
             return d.emoji;
