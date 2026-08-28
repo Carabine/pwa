@@ -82,7 +82,9 @@
     background: rgba(255, 255, 255, 0.08);
     color: inherit;
 }
-.deck-pick__caret { flex: 0 0 auto; color: var(--text-muted); font-size: 11px; }
+/* Шеврон — SVG вместо текстового «▾»: тот был совсем мелким. */
+.deck-pick__caret { flex: 0 0 auto; display: flex; color: var(--text-muted); }
+.deck-pick__caret svg { width: 16px; height: 16px; }
 
 /* Кнопка создания колоды не сжимается — она всегда справа от селектора. */
 .deck-chip--pinned { flex: 0 0 auto; }
