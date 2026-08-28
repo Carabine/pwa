@@ -982,6 +982,25 @@
                     w.meaning = w.translation;
                     w.translatedSentence = w.sentenceTranslation;
                     reapplyCard();
+                }, {
+                    // Меню «⋯» — те же действия, что в словаре.
+                    onDecks: window.DecksUI ? () => DecksUI.openSheet(current.word) : null,
+                    onDelete: async () => {
+                        const w = current.word;
+                        const name = w.kanji || w.kana || '';
+                        if (!confirm(t('words.deleteConfirmOne').replace('{w}', name))) return;
+                        try {
+                            await deleteWord(w.id);
+                        } catch {
+                            showSnackbar(t('study.deleteFailed'), { duration: 3500, type: 'error' });
+                            return;
+                        }
+                        if (window.Decks) Decks.forgetWord(w.id);
+                        // Выкидываем все вхождения слова из очереди и идём дальше.
+                        queue = queue.filter((it) => !(it.word && it.word.id === w.id));
+                        total = Math.max(1, total - 1);
+                        advance();
+                    },
                 });
             });
             cardArea.appendChild(btn);

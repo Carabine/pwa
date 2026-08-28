@@ -478,6 +478,7 @@ window.I18N_EN = {
         'study.settings.title': 'Study settings',
         'study.settings.open': 'Study settings',
         'study.editCard': 'Edit card',
+        'study.deleteFailed': 'Could not delete the word',
         'study.transcription': 'Word transcription',
         'study.transcription.kana': 'Hiragana',
         'study.transcription.romaji': 'Romaji',

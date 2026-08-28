@@ -478,6 +478,7 @@ window.I18N_UK = {
         'study.settings.title': 'Налаштування навчання',
         'study.settings.open': 'Налаштування навчання',
         'study.editCard': 'Редагувати картку',
+        'study.deleteFailed': 'Не вдалося видалити слово',
         'study.transcription': 'Транскрипція слова',
         'study.transcription.kana': 'Хіраґана',
         'study.transcription.romaji': 'Ромадзі',

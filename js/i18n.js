@@ -482,6 +482,7 @@ const I18N = {
         'study.settings.title': 'Настройки обучения',
         'study.settings.open': 'Настройки обучения',
         'study.editCard': 'Редактировать карточку',
+        'study.deleteFailed': 'Не удалось удалить слово',
         'study.transcription': 'Транскрипция слова',
         'study.transcription.kana': 'Хирагана',
         'study.transcription.romaji': 'Ромадзи',

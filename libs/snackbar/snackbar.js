@@ -54,5 +54,14 @@ function applyPosition(container, position) {
     const [vertical, horizontal] = position.split('-');
     container.style.position = 'fixed';
     container.style[vertical] = '10px';
-    container.style[horizontal] = '20px';
+    // На телефоне тост по центру: прижатый к правому краю выглядел криво.
+    if (window.matchMedia('(max-width: 560px)').matches) {
+        container.style.left = '50%';
+        container.style.right = 'auto';
+        container.style.transform = 'translateX(-50%)';
+        container.style.width = 'max-content';
+        container.style.maxWidth = 'calc(100vw - 24px)';
+    } else {
+        container.style[horizontal] = '20px';
+    }
 }
