@@ -32,19 +32,20 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 2px 0 10px;
-    margin-bottom: 6px;
+    /* Низ компактный: у первой строки списка есть свой внутренний паддинг
+       ~11px, и большой внешний зазор читался как дыра. */
+    padding: 2px 0 6px;
+    margin-bottom: 4px;
 }
 /* display:flex перебивает атрибут hidden — скрытые блоки оставались в потоке
    нулевой высоты, но с margin'ами (фантомные 16px над списком слов). */
 .deck-chips[hidden],
 .deck-study[hidden] { display: none; }
 
-/* На телефоне низ блока колод компактнее: вместе с фиксом [hidden] отступ
-   до списка слов ужимается с 32px до 12px. (Правило живёт здесь, а не в
+/* На телефоне низ блока колод ещё компактнее. (Правило живёт здесь, а не в
    pages.css: decks.css в бандле позже и перебил бы override.) */
 @media (max-width: 560px) {
-    .deck-chips { padding-bottom: 6px; }
+    .deck-chips { padding-bottom: 2px; }
 }
 
 /* Кнопка-селектор текущей колоды. На телефоне занимает всю ширину, на широком
