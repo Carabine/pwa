@@ -980,8 +980,15 @@
     line-height: 1;
     transition: background var(--transition), color var(--transition);
 }
-.word-modal__hbtn { font-size: 14px; }
 .word-modal__hbtn svg { display: block; }
+
+/* Разделитель между действиями над карточкой и крестиком закрытия. */
+.word-modal__head-sep {
+    width: 1px;
+    height: 18px;
+    background: var(--border);
+    margin: 0 2px;
+}
 
 @media (hover: hover) and (pointer: fine) {
     .word-modal__close:hover,
