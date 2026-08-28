@@ -183,8 +183,8 @@
 /* ========== ДНЕВНОЙ ПЛАН ==========
    Ядро новой главной: учёба показана как конечная задача на сегодня
    («8 повторений · 5 новых · ≈5 мин → Начать»), а не как ссылка на раздел.
-   Наполняет app.js (renderDailyPlan). Три визуальных варианта переключаются
-   классом .hub-var-2/.hub-var-3 на <html> (?hub=1|2|3) — выбираем лучший. */
+   Наполняет app.js (renderDailyPlan). Раскладка — «кольцо-герой»: победитель
+   примерки вариантов ?hub= (свёрнута 28.08.2026). */
 .daily-plan {
     width: 100%;
     max-width: 400px;
@@ -228,7 +228,7 @@
 }
 
 .daily-plan__headline {
-    font-size: var(--fs-headline);
+    font-size: var(--fs-title);
     font-weight: 700;
     line-height: 1.15;
 }
@@ -280,10 +280,6 @@
     white-space: nowrap;
 }
 
-/* Кольцо и полоса прогресса — показываются только в своих вариантах. */
-.daily-plan__ring,
-.daily-plan__bar { display: none; }
-
 .daily-plan__ring {
     position: relative;
     width: 64px;
@@ -315,20 +311,6 @@
     font-weight: 700;
 }
 
-.daily-plan__bar {
-    height: 6px;
-    border-radius: 999px;
-    background: var(--border);
-    overflow: hidden;
-}
-
-.daily-plan__bar > span {
-    display: block;
-    height: 100%;
-    border-radius: 999px;
-    background: linear-gradient(90deg, var(--primary), var(--primary-hover));
-}
-
 /* Состояние «на сегодня всё» — зелёный акцент, вторичная CTA к просмотру. */
 .daily-plan--done {
     background: linear-gradient(135deg, color-mix(in srgb, var(--success) 12%, var(--card)), var(--card) 70%);
@@ -351,35 +333,6 @@
     color: var(--text);
     border: 1px solid var(--border);
 }
-
-/* Вариант оформления вешает на <html> скрипт-резерватор в <head> (?hub=2|3),
-   ДО первой отрисовки — раньше класс ставил app.js, и на этих URL карточка
-   перекраивалась уже после первого кадра. Вариант 1 — состояние по умолчанию,
-   поэтому он описан «от противного», без своего класса. */
-
-/* Вариант 1 — «кольцо-герой»: горизонтально, кольцо прогресса слева. */
-:root:not(.hub-var-2):not(.hub-var-3) .daily-plan__ring { display: block; }
-:root:not(.hub-var-2):not(.hub-var-3) .daily-plan__headline { font-size: var(--fs-title); }
-
-/* Вариант 2 — «карточка-задача»: вертикально, крупная цифра, полоса, CTA во всю ширину. */
-:root.hub-var-2 .daily-plan {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 20px;
-}
-:root.hub-var-2 .daily-plan__headline { font-size: var(--fs-display); }
-:root.hub-var-2 .daily-plan__bar { display: block; }
-:root.hub-var-2 .daily-plan__cta { width: 100%; padding: 13px; }
-
-/* Вариант 3 — «минимальный баннер»: тише фон, компактно, без кольца/полосы. */
-:root.hub-var-3 .daily-plan {
-    background: var(--card);
-    border-color: var(--border);
-    padding: 14px 16px;
-}
-:root.hub-var-3 .daily-plan__headline { font-size: var(--fs-title); }
-:root.hub-var-3 .daily-plan__eyebrow { display: none; }
 
 /* ========== НЕДЕЛЬНАЯ АКТИВНОСТЬ ========== */
 .week-strip {
@@ -574,10 +527,7 @@
 .daily-plan--done .daily-plan__body,
 :root.hub-slot-plan-done .daily-plan.is-skel .daily-plan__body { gap: 2px; }
 
-/* Селектор нарочно длинный: правило варианта оформления главной
-   (:root:not(.hub-var-2):not(.hub-var-3) .daily-plan__headline) весит четыре
-   класса, и коротким его не перебить. */
-:root .daily-plan.daily-plan--done .daily-plan__headline,
+.daily-plan--done .daily-plan__headline,
 :root.hub-slot-plan-done .daily-plan.is-skel .daily-plan__headline {
     font-size: var(--fs-body);
 }

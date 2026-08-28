@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.362';
+const APP_VERSION = 'v0.0.363';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -897,7 +897,7 @@ function renderSessionCard() {
 // Ядро новой главной: учёба показана как конечная порция на сегодня
 // («≈5 мин · 8 повторений · 5 новых → Начать»), а после выполнения — явное «на
 // сегодня всё ✓» с CTA обратно к просмотру. Данные (due/fresh/streak) уже
-// считает srsSummary(). Три визуальных варианта переключаются ?hub=1|2|3.
+// считает srsSummary().
 
 // m:ss для плеера и watch-страницы; null/NaN → 0:00 (метаданные ещё не пришли).
 function formatTime(seconds) {
@@ -1066,7 +1066,6 @@ function paintDailyPlan(el) {
         '<span class="daily-plan__eyebrow">' + escHtml(t('plan.title')) + '</span>' +
         '<span class="daily-plan__headline">≈ ' + mins + ' ' + escHtml(t('plan.min')) + '</span>' +
         '<div class="daily-plan__chips">' + chips.join('') + '</div>' +
-        '<div class="daily-plan__bar"><span style="width:' + Math.round(frac * 100) + '%"></span></div>' +
         '</div>' +
         '<span class="daily-plan__cta">' + escHtml(doneCount > 0 ? t('plan.resume') : t('plan.start')) + '</span>', 2);
     if (!planTracked && window.animeiTrack) { planTracked = true; window.animeiTrack('daily_plan', 'shown:' + remaining); }

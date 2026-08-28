@@ -31,20 +31,16 @@
     const SCHEDULE_KEY = 'srs:schedule:v2';
     const DAYS_KEY = 'srs:days';       // days the user actually studied (for the streak)
 
-    // ?rv=a|b — примерить прежние темпы раскрытия ответа прямо в бою (как ?hub=
-    // у главной). Сами числа живут в --reveal-* (css/app/study.css), здесь
-    // только переключатель.
+    // Примерочные URL-переключатели (визуальные варианты прямо в бою).
     try {
         const params = new URLSearchParams(window.location.search);
-        const rv = params.get('rv');
-        if (rv === 'a' || rv === 'b') document.documentElement.classList.add('rv-' + rv);
         // ?clip=1|2 — примерить другой лоадер видео в карточке.
         const cl = params.get('clip');
         if (cl === '1' || cl === '2') document.documentElement.classList.add('clip-load-' + cl);
         // ?noblur=1 — убрать размытие под ИИ-разбором (проверка догадки о том,
         // что именно оно роняет слой видео на телефоне).
         if (params.get('noblur') === '1') document.documentElement.classList.add('no-blur');
-    } catch { /* без URLSearchParams остаёмся на базовом темпе */ }
+    } catch { /* без URLSearchParams остаёмся на базовом виде */ }
 
     // ---- ИИ-разбор предложения на обороте карточки -------------------------
     let studyAiAvailable = false;
