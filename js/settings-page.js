@@ -7,10 +7,11 @@
     if (!S) return;
 
     // ---- Сегментированные переключатели (тема, размер субтитров) ----
-    function initSeg(id, key, onChange) {
+    // norm — нормализация сохранённого значения перед подсветкой (легаси).
+    function initSeg(id, key, onChange, norm) {
         const box = document.getElementById(id);
         if (!box) return;
-        const cur = String(S.get(key));
+        const cur = norm ? norm(S.get(key)) : String(S.get(key));
         box.querySelectorAll('button').forEach((btn) => {
             btn.classList.toggle('is-active', btn.dataset.val === cur);
             btn.addEventListener('click', () => {
@@ -24,6 +25,10 @@
     initSeg('set-theme', 'theme');
     initSeg('set-subSize', 'subSize');
     initSeg('set-newPerDay', 'newPerDay');
+    // Легаси-значения («Обе»/«Скрыть» из старых версий) = дефолт-ромадзи,
+    // как в transcriptionMode() (study-core.js).
+    initSeg('set-studyTranscription', 'studyTranscription', null,
+        (v) => (v === 'kana' ? 'kana' : 'romaji'));
 
     // ---- Язык ----
     const langSel = document.getElementById('set-language');

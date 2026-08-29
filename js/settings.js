@@ -35,7 +35,7 @@ function lsJson(key, fallback = null) {
         loopClips: false,              // зацикливать клипы слов в карточках
         // Режим обучения
         newPerDay: 20,                 // сколько новых карточек вводить в день (очередь сверх лимита ждёт)
-        studyTranscription: 'romaji',  // kana | romaji | both | none — транскрипция слова
+        studyTranscription: 'romaji',  // kana | romaji — транскрипция слова (легаси both/none = romaji)
         studySentenceRomaji: true,     // ромадзи над каждым словом предложения (при ромадзи-транскрипции)
         studyAutoplayClip: true,       // автозапуск клипа на обороте карточки
     };
