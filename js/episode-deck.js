@@ -560,6 +560,29 @@
             scanEl.textContent = t('edeck.sync').replace('{n}', set.epNumber);
             try { set.videoUrl = await resolveEpisodeStream(set.epIndex); } catch { set.videoUrl = ''; }
             set.offset = set.videoUrl ? await alignOffset(set, set.videoUrl) : 0;
+
+            // Контроль дрейфа (как в beginner-deck): сверяем одну реплику из
+            // середины серии по звуку; не сошлось — слова серии без клипов.
+            if (set.videoUrl) {
+                try {
+                    const mids = set.cues.filter((c) => c.start > 300 && (c.end - c.start) >= 1.6
+                        && (c.end - c.start) <= 6 && String(c.text || '').length >= 8);
+                    const probe = mids[Math.floor(mids.length / 2)];
+                    if (probe) {
+                        const { data: res } = await client.post('subtitles/verify-window', {
+                            videoUrl: set.videoUrl,
+                            start: Math.max(0, probe.start + set.offset - 1),
+                            duration: (probe.end - probe.start) + 3,
+                            text: probe.text,
+                        }, { timeout: 90000, silentErrors: true });
+                        const sim = res.data && res.data.sim;
+                        if (Number.isFinite(sim) && sim < 0.25) {
+                            console.warn('Дрейф сабов, серия без клипов:', set.epNumber, res.data);
+                            set.videoUrl = '';
+                        }
+                    }
+                } catch { /* сверка best-effort */ }
+            }
             return set;
         })();
         return set.ready;
