@@ -47,6 +47,7 @@ window.I18N_UK = {
         'beginner.anime.ph': 'Назва аніме…',
         'beginner.anime.empty': 'Нічого не знайшлося — спробуй іншу назву',
         'beginner.anime.back': '← Назад до вибору',
+        'beginner.anime.level': 'Рівень слів',
         'hub.continue': 'Продовжити перегляд',
         'hub.continue.ep': 'Серія',
         'hub.study': 'Навчання',

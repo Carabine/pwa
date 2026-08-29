@@ -51,6 +51,7 @@ const I18N = {
         'beginner.anime.ph': 'Название аниме…',
         'beginner.anime.empty': 'Ничего не нашлось — попробуй другое название',
         'beginner.anime.back': '← Назад к выбору',
+        'beginner.anime.level': 'Уровень слов',
         'hub.continue': 'Продолжить просмотр',
         'hub.continue.ep': 'Серия',
         'hub.study': 'Учёба',

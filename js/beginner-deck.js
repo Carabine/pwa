@@ -31,7 +31,9 @@ window.BeginnerDeck = (function () {
     let jlptMap = null;
     function loadJlpt() {
         if (jlptMap) return Promise.resolve(jlptMap);
-        return fetch('../data/jlpt-n5n4.json')
+        // Расширенный словарь до N3 (см. _deck/fetch-jlpt-n5n3.py) — у плеерной
+        // авто-колоды остался свой jlpt-n5n4.json.
+        return fetch('../data/jlpt-n5n3.json')
             .then((r) => { if (!r.ok) throw new Error('jlpt ' + r.status); return r.json(); })
             .then((data) => { jlptMap = data; return data; });
     }
@@ -43,14 +45,14 @@ window.BeginnerDeck = (function () {
     // ---------- Состояние открытой панели ----------
     let panel = null;
     let anime = null;         // выбранный тайтл из поиска
-    let level = '5';          // '5' | '54' | '4' — дефолт N5 (фича для новичка)
+    let level = '5';          // строка из цифр уровней: '5' | '54' | '4' | '43' | '3'
     let candidates = [];
-    let cueSets = null;       // [{ep, epNumber, cues, videoUrl?, offset?, ready?}]
+    let cueSets = null;       // [{src, epNumber, cues, videoUrl?, offset?, trMap?, ready?}]
     let scanning = false;
     let creating = false;
     let scanToken = 0;
 
-    const levelAllows = (lvl) => (level === '54' ? lvl === 5 || lvl === 4 : lvl === Number(level));
+    const levelAllows = (lvl) => level.includes(String(lvl));
 
     // ---------- Скан серий ----------
 
@@ -71,25 +73,46 @@ window.BeginnerDeck = (function () {
         return eps.map((ep) => ({ ep, trackId: track.id || 'k' }));
     }
 
-    async function scan(token) {
+    // Скан серий: параллельно (по SCAN_POOL) и БЕЗ перевода — серверу тогда
+    // достаточно распарсить сабы (быстро и кэшируется), а перевод фраз мы
+    // запросим при сохранении и только для нужных серий. Слова показываются
+    // по мере готовности серий (onEpisode), не дожидаясь всех.
+    const SCAN_POOL = 3;
+
+    async function scan(token, onEpisode) {
         let episodes = [];
         try { episodes = await loadEpisodes(); } catch { /* тайтла нет на источнике */ }
         const total = Math.min(episodes.length || SCAN_MAX, SCAN_MAX);
         const sets = [];
-        for (let i = 0; i < total; i++) {
-            if (token !== scanToken) return null;
-            setScan(t('edeck.scan').replace('{i}', i + 1).replace('{n}', total));
-            const epNumber = episodes[i] ? (episodes[i].ep.number != null ? episodes[i].ep.number : i + 1) : i + 1;
-            try {
-                const { data: res } = await client.get('subtitles/episode', {
-                    params: { title: anime.name || anime.russian, episode: epNumber, translate: subsLang() },
-                    timeout: 180000,
-                    silentErrors: true,
-                });
-                const cues = (res.data && res.data.cues) || [];
-                if (cues.length) sets.push({ src: episodes[i] || null, epNumber, cues });
-            } catch { /* серия без сабов — дальше */ }
-        }
+        let started = 0;
+        let doneCount = 0;
+        setScan(t('edeck.scan').replace('{i}', 1).replace('{n}', total));
+        const worker = async () => {
+            while (started < total) {
+                const i = started++;
+                if (token !== scanToken) return;
+                const epNumber = episodes[i] ? (episodes[i].ep.number != null ? episodes[i].ep.number : i + 1) : i + 1;
+                try {
+                    const { data: res } = await client.get('subtitles/episode', {
+                        params: { title: anime.name || anime.russian, episode: epNumber },
+                        timeout: 180000,
+                        silentErrors: true,
+                    });
+                    const cues = (res.data && res.data.cues) || [];
+                    if (token !== scanToken) return;
+                    if (cues.length) {
+                        sets.push({ src: episodes[i] || null, epNumber, cues });
+                        if (onEpisode) onEpisode(sets);
+                    }
+                } catch { /* серия без сабов — дальше */ }
+                doneCount++;
+                if (token === scanToken) {
+                    setScan(t('edeck.scan').replace('{i}', Math.min(doneCount + 1, total)).replace('{n}', total));
+                }
+            }
+        };
+        await Promise.all(Array.from({ length: SCAN_POOL }, worker));
+        if (token !== scanToken) return null;
         setScan('');
         return sets;
     }
@@ -142,12 +165,22 @@ window.BeginnerDeck = (function () {
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const is429 = (err) => err && err.response && err.response.status === 429;
 
+    // Кэш словаря на сессию панели: список пересобирается при каждом уровне и
+    // каждой досканированной серии — слова те же, дёргать словарь заново незачем.
+    const dictCache = new Map();
+
     async function fetchDict(entry) {
+        if (dictCache.has(entry.base)) {
+            entry.dict = dictCache.get(entry.base);
+            entry.translation = shortTranslation(entry.dict);
+            return;
+        }
         const { data: res } = await client.get('dictionary', {
             params: { q: entry.base, lang: (typeof getLang === 'function') ? getLang() : 'ru' },
             silentErrors: true,
         });
         entry.dict = (res.data && res.data[0]) || null;
+        dictCache.set(entry.base, entry.dict);
         entry.translation = shortTranslation(entry.dict);
     }
 
@@ -171,6 +204,19 @@ window.BeginnerDeck = (function () {
         set.ready = (async () => {
             set.videoUrl = '';
             set.offset = 0;
+            set.trMap = new Map();
+            // Перевод фраз серии (при скане не запрашивали — экономили время):
+            // одна загрузка переведённых сабов на серию, дальше по cue.start.
+            try {
+                const { data: res } = await client.get('subtitles/episode', {
+                    params: { title: anime.name || anime.russian, episode: set.epNumber, translate: subsLang() },
+                    timeout: 180000,
+                    silentErrors: true,
+                });
+                for (const c of (res.data && res.data.cues) || []) {
+                    if (c.translation) set.trMap.set(c.start, c.translation);
+                }
+            } catch { /* фразы поедут без перевода */ }
             if (!set.src) return set;   // тайтла нет на видео-источнике — без клипа
             try {
                 const { data: res } = await client.get('catalog/stream', {
@@ -230,7 +276,7 @@ window.BeginnerDeck = (function () {
             romaji: '',
             translation: entry.translation || shortTranslation(dict),
             sentence: cue.text,
-            sentenceTranslation: cue.translation || '',
+            sentenceTranslation: cue.translation || set.trMap.get(cue.start) || '',
             videoStart: Math.max(0, cue.start + (set.offset || 0)),
             videoEnd: cue.end + (set.offset || 0),
             videoUrl: set.videoUrl || '',
@@ -309,7 +355,7 @@ window.BeginnerDeck = (function () {
 
     function setBusy(on) {
         panel.classList.toggle('bdeck--busy', on);
-        panel.querySelectorAll('input, .bdeck__seg button, .deck-anime__back').forEach((x) => { x.disabled = on; });
+        panel.querySelectorAll('input, .bdeck__select, .deck-anime__back').forEach((x) => { x.disabled = on; });
     }
 
     function selectedEntries() {
@@ -343,6 +389,11 @@ window.BeginnerDeck = (function () {
 
     function renderList() {
         const listEl = panel.querySelector('.bdeck__list');
+        // Список пересобирается по мере скана — снятые галочки не теряем.
+        const unchecked = new Set();
+        listEl.querySelectorAll('.bdeck-row').forEach((row) => {
+            if (!row.querySelector('input').checked) unchecked.add(row.dataset.base);
+        });
         listEl.innerHTML = '';
         if (!candidates.length && !scanning) {
             const msg = document.createElement('div');
@@ -358,7 +409,7 @@ window.BeginnerDeck = (function () {
 
             const cb = document.createElement('input');
             cb.type = 'checkbox';
-            cb.checked = true;
+            cb.checked = !unchecked.has(e.base);
             cb.addEventListener('change', updateCount);
             row.appendChild(cb);
 
@@ -407,9 +458,17 @@ window.BeginnerDeck = (function () {
         candidates = [];
         renderList();
         if (!cueSets) {
-            cueSets = await scan(token);
+            // Слова показываем по мере скана серий — список пополняется живьём.
+            const partial = (sets) => {
+                if (token !== scanToken) return;
+                cueSets = sets;
+                candidates = collectCandidates();
+                renderList();
+                if (candidates.length) loadTranslations(candidates);
+            };
+            const sets = await scan(token, partial);
             if (token !== scanToken) return;
-            if (cueSets === null) { cueSets = []; }
+            cueSets = sets || [];
         }
         scanning = false;
         candidates = collectCandidates();
@@ -426,35 +485,47 @@ window.BeginnerDeck = (function () {
         panel = document.createElement('div');
         panel.className = 'deck-choice bdeck';
         panel.innerHTML =
-            '<div class="deck-choice__title"></div>' +
-            '<div class="bdeck__seg"></div>' +
+            '<div class="bdeck__head">' +
+                '<span class="bdeck__poster"></span>' +
+                '<span class="bdeck__headtxt"><b class="bdeck__title"></b><small class="bdeck__sub"></small></span>' +
+            '</div>' +
+            '<div class="bdeck__level"><span class="bdeck__level-label"></span><select class="bdeck__select"></select></div>' +
             '<div class="bdeck__bar"><label class="bdeck__all"><input type="checkbox" checked> <span></span></label>' +
             '<span class="bdeck__count"></span></div>' +
             '<div class="bdeck__scan" hidden></div>' +
             '<div class="bdeck__list"></div>' +
             '<button class="bdeck__create" type="button"></button>' +
             '<button class="deck-anime__back" type="button"></button>';
-        panel.querySelector('.deck-choice__title').textContent = String(animeTitle(anime) || '').slice(0, 60);
+        panel.querySelector('.bdeck__title').textContent = String(animeTitle(anime) || '').slice(0, 60);
+        panel.querySelector('.bdeck__sub').textContent = t('edeck.sub.anime');
         panel.querySelector('.bdeck__all span').textContent = t('edeck.selectAll');
+        panel.querySelector('.bdeck__level-label').textContent = t('beginner.anime.level');
 
-        const seg = panel.querySelector('.bdeck__seg');
-        for (const [val, label] of [['5', 'N5'], ['54', 'N5+N4'], ['4', 'N4']]) {
-            const b = document.createElement('button');
-            b.type = 'button';
-            b.dataset.level = val;
-            b.textContent = label;
-            b.classList.toggle('is-on', val === level);
-            b.addEventListener('click', () => {
-                if (creating || level === b.dataset.level) return;
-                level = b.dataset.level;
-                seg.querySelectorAll('button').forEach((x) => x.classList.toggle('is-on', x === b));
-                // Сабы уже отсканированы — пересобираем мгновенно из cueSets.
-                candidates = cueSets ? collectCandidates() : [];
-                renderList();
-                if (candidates.length) loadTranslations(candidates);
-            });
-            seg.appendChild(b);
+        // Постер тайтла из результата поиска (нет — панель живёт без него).
+        if (anime.posterPreview) {
+            const img = document.createElement('img');
+            img.src = anime.posterPreview;
+            img.alt = '';
+            img.addEventListener('error', () => img.remove(), { once: true });
+            panel.querySelector('.bdeck__poster').appendChild(img);
         }
+
+        const select = panel.querySelector('.bdeck__select');
+        for (const [val, label] of [['5', 'N5'], ['54', 'N5 + N4'], ['4', 'N4'], ['43', 'N4 + N3'], ['3', 'N3']]) {
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.textContent = label;
+            select.appendChild(opt);
+        }
+        select.value = level;
+        select.addEventListener('change', () => {
+            if (creating) { select.value = level; return; }
+            level = select.value;
+            // Сабы уже отсканированы — пересобираем мгновенно из cueSets.
+            candidates = cueSets ? collectCandidates() : [];
+            renderList();
+            if (candidates.length) loadTranslations(candidates);
+        });
 
         panel.querySelector('.bdeck__all input').addEventListener('change', (e) => {
             panel.querySelectorAll('.bdeck-row input').forEach((cb) => { cb.checked = e.target.checked; });

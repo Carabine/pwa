@@ -2009,30 +2009,62 @@
 
 .bdeck { max-width: 520px; }
 
-.bdeck__seg {
-    display: inline-flex;
-    align-self: center;
+/* Шапка: постер тайтла + название + подпись. */
+.bdeck__head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 4px 2px 2px;
+}
+
+.bdeck__poster { flex-shrink: 0; line-height: 0; }
+.bdeck__poster:empty { display: none; }
+
+.bdeck__poster img {
+    width: 56px;
+    height: 78px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+
+.bdeck__headtxt {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.bdeck__title { font-size: 17px; line-height: 1.25; }
+.bdeck__sub { font-size: 12.5px; color: var(--text-muted); line-height: 1.35; }
+
+/* Уровень слов — подпись + нативный селект. */
+.bdeck__level {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+}
+
+.bdeck__level-label { font-size: 13px; color: var(--text-muted); }
+
+.bdeck__select {
+    font: inherit;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 9px;
-    overflow: hidden;
-}
-
-.bdeck__seg button {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 13px;
-    padding: 7px 14px;
+    padding: 7px 10px;
+    outline: none;
     cursor: pointer;
-    white-space: nowrap;
 }
 
-.bdeck__seg button + button { border-left: 1px solid var(--border); }
-
-.bdeck__seg button.is-on {
-    background: var(--grad, var(--primary));
-    color: #fff;
-}
+.bdeck__select:focus { border-color: var(--primary); }
 
 .bdeck__bar {
     display: flex;

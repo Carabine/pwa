@@ -47,6 +47,7 @@ window.I18N_EN = {
         'beginner.anime.ph': 'Anime title…',
         'beginner.anime.empty': 'Nothing found — try another title',
         'beginner.anime.back': '← Back to options',
+        'beginner.anime.level': 'Word level',
         'hub.continue': 'Continue watching',
         'hub.continue.ep': 'Episode',
         'hub.study': 'Study',
