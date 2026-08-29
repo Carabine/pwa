@@ -1946,6 +1946,11 @@
     border-radius: var(--radius);
     color: var(--text);
     text-decoration: none;
+    /* Строка — <button>: возвращаем текстовые дефолты. */
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -1999,3 +2004,190 @@
 }
 
 .deck-anime__back:hover { color: var(--text); }
+
+/* ---------- Слова из выбранного аниме (js/beginner-deck.js) ---------- */
+
+.bdeck { max-width: 520px; }
+
+.bdeck__seg {
+    display: inline-flex;
+    align-self: center;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    overflow: hidden;
+}
+
+.bdeck__seg button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 7px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.bdeck__seg button + button { border-left: 1px solid var(--border); }
+
+.bdeck__seg button.is-on {
+    background: var(--grad, var(--primary));
+    color: #fff;
+}
+
+.bdeck__bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+}
+
+/* Строки и «Выбрать все» — <label>: глобальный стиль лейблов (base.css)
+   капсит и блочит текст, а глобальный input растягивает чекбокс в поле
+   ввода на всю ширину. Возвращаем нормальные чекбоксы и регистр. */
+.bdeck__all,
+.bdeck-row {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 0;
+}
+
+.bdeck__all input,
+.bdeck-row input {
+    width: 17px;
+    height: 17px;
+    padding: 0;
+    flex: none;
+    background: none;
+    border: none;
+    accent-color: var(--primary);
+}
+
+.bdeck__all {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.bdeck__count { color: var(--text-muted); font-size: 12.5px; }
+
+.bdeck__scan {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+}
+
+.bdeck__scan::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: bdeck-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes bdeck-spin { to { transform: rotate(360deg); } }
+
+.bdeck__scan[hidden] { display: none; }
+
+.bdeck__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    /* Внутренний скролл, чтобы кнопка «Создать» была всегда под рукой. */
+    max-height: min(52vh, 480px);
+    overflow-y: auto;
+}
+
+.bdeck__empty {
+    padding: 24px 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13.5px;
+}
+
+.bdeck-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+}
+
+.bdeck-row input { margin-top: 3px; }
+
+.bdeck-row__main { flex: 1 1 auto; min-width: 0; }
+
+.bdeck-row__top {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bdeck-row__word { font-size: 17px; font-weight: 700; }
+.bdeck-row__read { font-size: 12.5px; color: var(--text-muted); }
+
+.bdeck-row__badge {
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 1px 6px;
+    background: rgba(110, 231, 183, 0.14);
+    color: #6ee7b7;
+}
+
+.bdeck-row__badge--n4 {
+    background: rgba(147, 197, 253, 0.14);
+    color: #93c5fd;
+}
+
+.bdeck-row__freq { font-size: 11px; color: var(--text-muted); }
+
+.bdeck-row__tr {
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bdeck-row__tr--loading { color: var(--text-muted); }
+
+.bdeck-row__sent {
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bdeck__create {
+    width: 100%;
+    background: var(--grad, var(--primary));
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.bdeck__create:disabled { opacity: 0.55; cursor: default; }
+
+.bdeck--busy .bdeck-row { opacity: 0.6; pointer-events: none; }

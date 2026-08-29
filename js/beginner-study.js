@@ -92,8 +92,9 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
     main.prepend(box);
 
     // ---------- «Из любимого аниме»: поиск тайтла ----------
-    // Выбор тайтла ведёт в плеер с ?autodeck=anime: там уже загружены серии и
-    // субтитры, «Авто-колода» откроется сама в режиме «Всё аниме» (дефолт N5).
+    // Выбор тайтла открывает список простых слов прямо здесь
+    // (js/beginner-deck.js): скан сабов первых серий, галочки, «Создать
+    // колоду». Плеер для этого не нужен.
     function showAnimePicker(choiceBox) {
         choiceBox.hidden = true;
         if (window.animeiTrack) window.animeiTrack('beginner_deck', 'anime_search');
@@ -134,15 +135,11 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
                 return;
             }
             top.forEach((a) => {
-                const row = document.createElement('a');
+                // Кнопка, не ссылка: слова показываем прямо здесь
+                // (js/beginner-deck.js), в плеер не уводим.
+                const row = document.createElement('button');
+                row.type = 'button';
                 row.className = 'deck-anime__row';
-                const params = new URLSearchParams({
-                    id: a.shikimoriId,
-                    title: animeTitle(a),
-                    name: a.name || animeTitle(a),
-                    autodeck: 'anime',
-                });
-                row.href = './player.html?' + params.toString();
                 row.innerHTML = (a.posterPreview
                     ? '<img src="' + a.posterPreview + '" alt="" loading="lazy">'
                     : '<span class="deck-anime__noimg"></span>') +
@@ -155,7 +152,8 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
                 row.querySelector('b').textContent = animeTitle(a);
                 row.querySelector('small').textContent = [a.year, a.kind].filter(Boolean).join(' · ');
                 row.addEventListener('click', () => {
-                    if (window.animeiTrack) window.animeiTrack('beginner_deck', 'anime_go:' + a.shikimoriId);
+                    panel.hidden = true;
+                    window.BeginnerDeck.open(a, () => { panel.hidden = false; });
                 });
                 list.appendChild(row);
             });
