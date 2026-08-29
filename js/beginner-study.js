@@ -110,12 +110,15 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
         const input = panel.querySelector('.deck-anime__input');
         input.placeholder = t('beginner.anime.ph');
         const list = panel.querySelector('.deck-anime__list');
-        const back = panel.querySelector('.deck-anime__back');
-        back.textContent = t('beginner.anime.back');
-        back.addEventListener('click', () => {
+        // Слой в общем менеджере «Назад» (AnimeiBack, app.js): системная кнопка
+        // телефона закрывает панель поиска, а не уводит со страницы.
+        const layer = AnimeiBack.open(() => {
             panel.remove();
             choiceBox.hidden = false;
         });
+        const back = panel.querySelector('.deck-anime__back');
+        back.textContent = t('beginner.anime.back');
+        back.addEventListener('click', () => AnimeiBack.close(layer));
 
         const render = (items) => {
             list.innerHTML = '';

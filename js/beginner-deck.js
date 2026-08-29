@@ -44,6 +44,7 @@ window.BeginnerDeck = (function () {
 
     // ---------- Состояние открытой панели ----------
     let panel = null;
+    let backLayer = null;     // запись в AnimeiBack: «назад» телефона закрывает панель
     let anime = null;         // выбранный тайтл из поиска
     let level = '5';          // строка из цифр уровней: '5' | '54' | '4' | '43' | '3'
     let candidates = [];
@@ -341,7 +342,11 @@ window.BeginnerDeck = (function () {
             { duration: 4000, type: failed ? 'error' : undefined },
         );
         // Сразу к учёбе новой колоды: клипы догоняют в фоне («видео готовится»).
-        setTimeout(() => { location.href = './deck-study.html?deck=' + encodeURIComponent(deck.id); }, 1200);
+        // Уходим через AnimeiBack.navigate — он снимает записи слоёв из history,
+        // иначе «назад» с deck-study вернул бы сюда лишние пустые шаги.
+        setTimeout(() => {
+            AnimeiBack.navigate('./deck-study.html?deck=' + encodeURIComponent(deck.id));
+        }, 1200);
     }
 
     // ---------- UI ----------
@@ -354,12 +359,14 @@ window.BeginnerDeck = (function () {
     }
 
     function setBusy(on) {
+        if (!panel) return;   // панель могли снять кнопкой «назад» телефона
         panel.classList.toggle('bdeck--busy', on);
         panel.querySelectorAll('input, .bdeck__select, .deck-anime__back').forEach((x) => { x.disabled = on; });
     }
 
     function selectedEntries() {
         const out = [];
+        if (!panel) return out;
         panel.querySelectorAll('.bdeck-row input:checked').forEach((cb) => {
             const e = candidates[Number(cb.closest('.bdeck-row').dataset.idx)];
             if (e) out.push(e);
@@ -368,6 +375,7 @@ window.BeginnerDeck = (function () {
     }
 
     function updateCount() {
+        if (!panel) return;
         const n = selectedEntries().length;
         panel.querySelector('.bdeck__count').textContent =
             t('edeck.selected').replace('{n}', n).replace('{m}', candidates.length);
@@ -380,6 +388,7 @@ window.BeginnerDeck = (function () {
     }
 
     function updateRow(entry) {
+        if (!panel) return;
         const row = panel.querySelector(`.bdeck-row[data-base="${(window.CSS && CSS.escape) ? CSS.escape(entry.base) : entry.base}"]`);
         if (!row) return;
         const tr = row.querySelector('.bdeck-row__tr');
@@ -388,6 +397,7 @@ window.BeginnerDeck = (function () {
     }
 
     function renderList() {
+        if (!panel) return;
         const listEl = panel.querySelector('.bdeck__list');
         // Список пересобирается по мере скана — снятые галочки не теряем.
         const unchecked = new Set();
@@ -481,6 +491,8 @@ window.BeginnerDeck = (function () {
         level = '5';
         cueSets = null;
         if (panel) panel.remove();
+        panel = null;
+        if (backLayer) { AnimeiBack.close(backLayer); backLayer = null; }
 
         panel = document.createElement('div');
         panel.className = 'deck-choice bdeck';
@@ -532,13 +544,20 @@ window.BeginnerDeck = (function () {
             updateCount();
         });
         panel.querySelector('.bdeck__create').addEventListener('click', createDeck);
+        // Слой в AnimeiBack: системная кнопка «назад» телефона закрывает панель
+        // слов (и показывает поиск), а не уводит со страницы. Колбэк только
+        // прячет — history менеджер снимает сам.
+        backLayer = AnimeiBack.open(() => {
+            backLayer = null;
+            scanToken++;
+            if (panel) panel.remove();
+            panel = null;
+            if (onBack) onBack();
+        });
         panel.querySelector('.deck-anime__back').textContent = t('beginner.anime.back');
         panel.querySelector('.deck-anime__back').addEventListener('click', () => {
             if (creating) return;
-            scanToken++;
-            panel.remove();
-            panel = null;
-            if (onBack) onBack();
+            if (backLayer) AnimeiBack.close(backLayer);
         });
 
         document.querySelector('.main.study').prepend(panel);
