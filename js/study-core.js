@@ -83,7 +83,7 @@
                 // даже для чисто-канных слов (やっている → yatteiru); в режиме каны —
                 // только фуригана к словам с кандзи.
                 let readingText;
-                const romajiMode = studyPref('studyTranscription') === 'romaji'
+                const romajiMode = transcriptionMode() === 'romaji'
                     && typeof window.kanaToRomaji === 'function';
                 if (romajiMode) {
                     const rom = window.kanaToRomaji(b.reading || b.part);
@@ -233,6 +233,14 @@
     // ---- Настройки обучения (см. js/settings.js) ---------------------------
     function studyPref(key) {
         return window.AnimeiSettings ? window.AnimeiSettings.get(key) : undefined;
+    }
+
+    // Режим транскрипции: 'kana' | 'romaji'. У настройки раньше были ещё
+    // «Обе»/«Скрыть» — такое легаси-значение трактуем как ДЕФОЛТ (ромадзи),
+    // а не как кану: пользователи с «Обе» внезапно теряли ромадзи (жалоба
+    // «наклацал — и хирагана вместо ромадзи»). Кана — только явный выбор.
+    function transcriptionMode() {
+        return studyPref('studyTranscription') === 'kana' ? 'kana' : 'romaji';
     }
 
     // Иконка ИИ (спарклы) для кнопки «ИИ-разбор предложения».
@@ -806,7 +814,7 @@
             {
                 const w = current.word;
                 const kana = w.kana || '';
-                const romajiMode = studyPref('studyTranscription') === 'romaji';
+                const romajiMode = transcriptionMode() === 'romaji';
                 const reading = romajiMode
                     ? ((w.romaji && String(w.romaji).trim())
                         || (typeof window.kanaToRomaji === 'function' ? window.kanaToRomaji(kana) : ''))
@@ -830,7 +838,7 @@
             // перекроили бы его (шрифт — полной раскладкой, ячейки — высотой
             // фразы, из-за которой ужимался клип).
             warmJapaneseFont(current.word);
-            if (studyPref('studyTranscription') === 'romaji'
+            if (transcriptionMode() === 'romaji'
                 && studyPref('studySentenceRomaji') !== false) {
                 fetchSentenceTokens(current.word.sentence).catch(() => {});
             }
@@ -905,15 +913,15 @@
         // Чтение слова на ответе — фуриганой НАД словом-титулом (как в манге):
         // симметрично, без чипа-пилюли рядом с переводом («некрасиво в одну
         // строку») и без лишнего ряда в обороте — вертикаль уходит клипу.
-        // Транскрипция по настройке studyTranscription: kana (по умолчанию)
-        // или romaji. Живёт в .front-side; renderFront новой карточки лицо
+        // Транскрипция по настройке studyTranscription: romaji (по умолчанию)
+        // или kana. Живёт в .front-side; renderFront новой карточки лицо
         // очищает, а при reapplyCard (перерисовка оборота без очистки лица)
         // снимаем старую фуригану сами.
         function renderFurigana(w) {
             const old = els.front.querySelector('.word-furigana');
             if (old) old.remove();
 
-            const mode = studyPref('studyTranscription') === 'romaji' ? 'romaji' : 'kana';
+            const mode = transcriptionMode();
             const kana = w.kana || '';
             const romaji = (w.romaji && String(w.romaji).trim())
                 ? String(w.romaji).trim()
@@ -1039,8 +1047,8 @@
             const seg = document.createElement('div');
             seg.className = 'seg';
             // Только кана/ромадзи: «Обе» и «Скрыть» убраны (сохранённое старое
-            // значение трактуется как кана — см. renderTranscription).
-            const curTr = studyPref('studyTranscription') === 'romaji' ? 'romaji' : 'kana';
+            // значение трактуется как дефолт-ромадзи — см. transcriptionMode).
+            const curTr = transcriptionMode();
             [['kana', t('study.transcription.kana')], ['romaji', t('study.transcription.romaji')]]
                 .forEach(([val, label]) => {
                     const b = document.createElement('button');
@@ -1845,7 +1853,7 @@
                 els.back.appendChild(sentenceLine);
 
                 const wid = current && current.word.id;
-                const romajiMode = studyPref('studyTranscription') === 'romaji';
+                const romajiMode = transcriptionMode() === 'romaji';
                 const withRomaji = romajiMode && studyPref('studySentenceRomaji') !== false;
                 const cachedTokens = withRomaji ? sentenceTokensCache.get(w.sentence) : null;
                 if (withRomaji && cachedTokens && cachedTokens.length) {
