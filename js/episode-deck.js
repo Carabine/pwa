@@ -530,13 +530,15 @@
                 seriesKey: shikimoriId + ':' + (trSel.id || trSel.provider || 'k') + ':s' + state.seasonIndex,
                 introEnd: 0,
             }, { timeout: 130000, silentErrors: true });
-            const { offset, confidence, matched, method } = res.data || {};
-            // Пороги доверия — те же, что у автосинка плеера (maybeAutoSync).
+            const { offset, confidence, matched } = res.data || {};
+            // Пороги доверия — как у автосинка плеера (maybeAutoSync), но БЕЗ
+            // отсечки «мелкий сдвиг не применять»: она про показ субтитров, а
+            // здесь по сдвигу режутся клипы — секундный промах срезает начало
+            // фразы (ловили на «Монстре»: −1.1с при уверенности 0.9).
             const strong = confidence >= 0.6;
             const okModerate = confidence >= 0.4 && (matched || 0) >= 12 && Math.abs(offset) <= 20;
             const okSmall = confidence >= 0.34 && (matched || 0) >= 20 && Math.abs(offset) <= 6;
-            if (Number.isFinite(offset) && (strong || okModerate || okSmall)
-                && (Math.abs(offset) >= 1.2 || method === 'whisper-verified')) {
+            if (Number.isFinite(offset) && (strong || okModerate || okSmall)) {
                 return offset;
             }
         } catch { /* синк не сложился — режем по таймингам сабов как есть */ }

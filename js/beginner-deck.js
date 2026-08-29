@@ -243,13 +243,16 @@ window.BeginnerDeck = (function () {
                         seriesKey: anime.shikimoriId + ':' + (set.src.trackId || 'k') + ':s0',
                         introEnd: 0,
                     }, { timeout: 130000, silentErrors: true });
-                    const { offset, confidence, matched, method } = res.data || {};
-                    // Пороги доверия — как у автосинка плеера (maybeAutoSync).
+                    const { offset, confidence, matched } = res.data || {};
+                    // Пороги доверия — как у автосинка плеера (maybeAutoSync),
+                    // но БЕЗ отсечки «мелкий сдвиг не применять»: она про показ
+                    // субтитров (естественное упреждение), а здесь по сдвигу
+                    // режутся клипы — секундный промах срезает начало фразы и
+                    // цепляет хвост соседней (ловили на «Монстре»: −1.1с/0.9).
                     const strong = confidence >= 0.6;
                     const okModerate = confidence >= 0.4 && (matched || 0) >= 12 && Math.abs(offset) <= 20;
                     const okSmall = confidence >= 0.34 && (matched || 0) >= 20 && Math.abs(offset) <= 6;
-                    if (Number.isFinite(offset) && (strong || okModerate || okSmall)
-                        && (Math.abs(offset) >= 1.2 || method === 'whisper-verified')) {
+                    if (Number.isFinite(offset) && (strong || okModerate || okSmall)) {
                         set.offset = offset;
                     }
                 }
