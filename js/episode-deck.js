@@ -86,13 +86,24 @@
         level: (word) => (jlptMap && jlptMap[word]) || 0,
     };
 
+    // Приход со страницы новичка («Из любимого аниме», ?autodeck=anime):
+    // как только сабы загрузились — сами открываем модалку в режиме «всё
+    // аниме» (уровень задефолтится в N5 внутри). Один раз за загрузку.
+    let autoDeckPending = new URLSearchParams(location.search).get('autodeck') === 'anime';
+
     // Кнопка появляется, когда субтитры серии загружены. Прямого события у
     // плеера нет — дешёвый поллинг раз в секунду (и скрываем при смене серии).
     setInterval(() => {
         // state — глобальная const из player.js (мы подключены после него).
         const has = !!(state.cues && state.cues.length);
-        if (wrap.hidden === !has) return;
-        wrap.hidden = !has;
+        if (wrap.hidden !== !has) wrap.hidden = !has;
+        if (has && autoDeckPending) {
+            autoDeckPending = false;
+            scope = 'anime';
+            scopeSeg.querySelectorAll('button').forEach((x) => x.classList.toggle('is-on', x.dataset.scope === 'anime'));
+            setLevel('5', false);
+            openModal();
+        }
     }, 1000);
 
     // ---------- Отбор кандидатов ----------

@@ -1909,3 +1909,93 @@
 .deck-choice__txt { display: flex; flex-direction: column; gap: 3px; }
 .deck-choice__txt b { font-size: 16px; }
 .deck-choice__txt small { font-size: 12.5px; color: var(--text-muted); }
+
+/* display:flex выше перебил бы атрибут hidden (выбор прячется на время поиска). */
+.deck-choice[hidden] { display: none; }
+
+/* ---------- «Из любимого аниме»: поиск тайтла ---------- */
+
+.deck-anime__input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 16px;          /* 16px — iOS не зумит при фокусе */
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+}
+
+.deck-anime__input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.deck-anime__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.deck-anime__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    text-decoration: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .deck-anime__row:hover { border-color: var(--primary); }
+}
+
+.deck-anime__row img,
+.deck-anime__noimg {
+    width: 40px;
+    height: 56px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: var(--border);
+    flex-shrink: 0;
+}
+
+.deck-anime__txt {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.deck-anime__txt b {
+    font-size: 14.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.deck-anime__txt small { font-size: 12px; color: var(--text-muted); }
+
+.deck-anime__empty {
+    padding: 20px 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13.5px;
+}
+
+.deck-anime__back {
+    align-self: center;
+    margin-top: 4px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    cursor: pointer;
+    padding: 8px 14px;
+}
+
+.deck-anime__back:hover { color: var(--text); }

@@ -1,9 +1,12 @@
 // Режим для новичков: готовые колоды из starter-deck.js, проходятся как cram —
 // расписание не трогаем, на карточке есть кнопка «В коллекцию».
 //
-// Две разные вещи (?deck=):
+// Выбор (?deck=):
 //   core — 15 карточек-сцен с видеоклипами из культовых аниме;
-//   full — все 50 базовых слов (15 со сценами + 35 без видео).
+//   full — все 50 базовых слов (все со сценами);
+//   третья карточка «Из любимого аниме» — поиск тайтла, дальше плеер сам
+//   открывает «Авто-колоду» в режиме «Всё аниме» (?autodeck=anime, уровень
+//   там по умолчанию N5) — вся механика скана серий и клипов живёт в плеере.
 // Без параметра показываем выбор. CTA «Попробовать» с главной ведёт на core.
 //
 // Приход с лендинга (?from=landing): показываем сначала слова, которые
@@ -58,6 +61,10 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
         '<button class="deck-choice__opt deck-choice__opt--full">' +
         '<span class="deck-choice__num">50</span>' +
         '<span class="deck-choice__txt"><b></b><small></small></span>' +
+        '</button>' +
+        '<button class="deck-choice__opt deck-choice__opt--anime">' +
+        '<span class="deck-choice__num">📺</span>' +
+        '<span class="deck-choice__txt"><b></b><small></small></span>' +
         '</button>';
     box.querySelector('.deck-choice__title').textContent = t('beginner.choose');
     const core = box.querySelector('.deck-choice__opt--core');
@@ -66,6 +73,9 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
     const full = box.querySelector('.deck-choice__opt--full');
     full.querySelector('b').textContent = t('beginner.full');
     full.querySelector('small').textContent = t('beginner.full.sub');
+    const anime = box.querySelector('.deck-choice__opt--anime');
+    anime.querySelector('b').textContent = t('beginner.anime');
+    anime.querySelector('small').textContent = t('beginner.anime.sub');
 
     const pick = (kind) => {
         // Запоминаем выбор в адресе — перезагрузка не возвращает к вопросу.
@@ -77,6 +87,85 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
     };
     core.addEventListener('click', () => pick('core'));
     full.addEventListener('click', () => pick('full'));
+    anime.addEventListener('click', () => showAnimePicker(box));
 
     main.prepend(box);
+
+    // ---------- «Из любимого аниме»: поиск тайтла ----------
+    // Выбор тайтла ведёт в плеер с ?autodeck=anime: там уже загружены серии и
+    // субтитры, «Авто-колода» откроется сама в режиме «Всё аниме» (дефолт N5).
+    function showAnimePicker(choiceBox) {
+        choiceBox.hidden = true;
+        if (window.animeiTrack) window.animeiTrack('beginner_deck', 'anime_search');
+
+        const panel = document.createElement('div');
+        panel.className = 'deck-choice deck-anime';
+        panel.innerHTML =
+            '<div class="deck-choice__title"></div>' +
+            '<input class="deck-anime__input" type="search" autocomplete="off">' +
+            '<div class="deck-anime__list"></div>' +
+            '<button class="deck-anime__back" type="button"></button>';
+        panel.querySelector('.deck-choice__title').textContent = t('beginner.anime.pick');
+        const input = panel.querySelector('.deck-anime__input');
+        input.placeholder = t('beginner.anime.ph');
+        const list = panel.querySelector('.deck-anime__list');
+        const back = panel.querySelector('.deck-anime__back');
+        back.textContent = t('beginner.anime.back');
+        back.addEventListener('click', () => {
+            panel.remove();
+            choiceBox.hidden = false;
+        });
+
+        const render = (items) => {
+            list.innerHTML = '';
+            const top = (items || []).slice(0, 8);
+            if (!top.length) {
+                const empty = document.createElement('div');
+                empty.className = 'deck-anime__empty';
+                empty.textContent = t('beginner.anime.empty');
+                list.appendChild(empty);
+                return;
+            }
+            top.forEach((a) => {
+                const row = document.createElement('a');
+                row.className = 'deck-anime__row';
+                const params = new URLSearchParams({
+                    id: a.shikimoriId,
+                    title: animeTitle(a),
+                    name: a.name || animeTitle(a),
+                    autodeck: 'anime',
+                });
+                row.href = './player.html?' + params.toString();
+                row.innerHTML = (a.posterPreview
+                    ? '<img src="' + a.posterPreview + '" alt="" loading="lazy">'
+                    : '<span class="deck-anime__noimg"></span>') +
+                    '<span class="deck-anime__txt"><b></b><small></small></span>';
+                row.querySelector('b').textContent = animeTitle(a);
+                row.querySelector('small').textContent = [a.year, a.kind].filter(Boolean).join(' · ');
+                row.addEventListener('click', () => {
+                    if (window.animeiTrack) window.animeiTrack('beginner_deck', 'anime_go:' + a.shikimoriId);
+                });
+                list.appendChild(row);
+            });
+        };
+
+        let timer = null;
+        let lastQ = '';
+        input.addEventListener('input', () => {
+            const q = input.value.trim();
+            lastQ = q;
+            clearTimeout(timer);
+            if (q.length < 2) { list.innerHTML = ''; return; }
+            timer = setTimeout(async () => {
+                try {
+                    const { data: res } = await client.get('catalog/search', { params: { q }, silentErrors: true });
+                    if (q !== lastQ) return;   // пришёл устаревший ответ
+                    render(res.data || []);
+                } catch { /* сеть — просто без результатов */ }
+            }, 350);
+        });
+
+        main.prepend(panel);
+        input.focus();
+    }
 })();
