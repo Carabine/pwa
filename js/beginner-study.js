@@ -63,7 +63,7 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
         '<span class="deck-choice__txt"><b></b><small></small></span>' +
         '</button>' +
         '<button class="deck-choice__opt deck-choice__opt--anime">' +
-        '<span class="deck-choice__num">📺</span>' +
+        '<span class="deck-choice__num">❤️</span>' +
         '<span class="deck-choice__txt"><b></b><small></small></span>' +
         '</button>';
     box.querySelector('.deck-choice__title').textContent = t('beginner.choose');
