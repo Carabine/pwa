@@ -68,6 +68,14 @@
 
     .msg { color: var(--muted); padding: 40px 0; text-align: center; }
 
+    /* Списки пользователей/регистраций — карточки-строки вместо таблиц:
+       читаются на любой ширине без горизонтального скролла. */
+    .ulist { display: flex; flex-direction: column; gap: 8px; }
+    .urow { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+    .urow__mail { font-size: 13.5px; font-weight: 600; word-break: break-all; }
+    .urow__meta { margin-top: 3px; color: var(--muted); font-size: 12px; display: flex; gap: 6px 14px; flex-wrap: wrap; }
+    .urow__meta b { color: var(--text); font-weight: 600; }
+
     /* Редактор seed-карточек */
     .seed { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; display: flex; gap: 16px; flex-wrap: wrap; }
     .seed__clip { width: 240px; flex-shrink: 0; }
@@ -127,8 +135,9 @@
         .card { padding: 12px; }
         .card .value { font-size: 22px; }
         .section-title { margin: 18px 0 10px; }
-        /* Ячейки не переносим посимвольно — таблица скроллится в .tblwrap. */
-        th, td { padding: 8px 10px; font-size: 12px; white-space: nowrap; }
+        /* Ячейки переносятся — таблицы влезают в экран без бокового скролла
+           (.tblwrap остаётся страховкой на совсем узких экранах). */
+        th, td { padding: 8px 10px; font-size: 12px; }
         /* Редактор seed-карточек: клип во всю ширину, поля в одну колонку. */
         .seed { padding: 12px; gap: 12px; }
         .seed__clip { width: 100%; }
@@ -311,10 +320,11 @@
             }
 
             document.getElementById('ovRecent').outerHTML =
-                tbl('<tr><th>Email</th><th>Регистрация</th><th class="num">Слов</th></tr>' +
-                d.recentUsers.map(function (u) {
-                    return '<tr><td>' + esc(u.email) + '</td><td>' + dt(u.createdAt) + '</td><td class="num">' + fmt(u.words) + '</td></tr>';
-                }).join(''));
+                '<div class="ulist">' + d.recentUsers.map(function (u) {
+                    return '<div class="urow"><div class="urow__mail">' + esc(u.email) + '</div>' +
+                        '<div class="urow__meta"><span>' + dt(u.createdAt) + '</span>' +
+                        '<span>слов <b>' + fmt(u.words) + '</b></span></div></div>';
+                }).join('') + '</div>';
         }).catch(function () {});
     }
     function cardHtml(label, value) {
@@ -459,14 +469,16 @@
             var el = document.getElementById('usersList');
             if (!r.data.length) { el.textContent = 'Пользователей нет'; return; }
             el.className = '';
-            el.innerHTML = tbl('<tr><th>Email</th><th>Регистрация</th><th class="num">Слов</th>' +
-                '<th class="num">Повторял слов</th><th>Последняя активность</th></tr>' +
-                r.data.map(function (u) {
-                    var mark = u.isSeed ? ' <span style="color:var(--accent)">· seed</span>' : '';
-                    return '<tr><td>' + esc(u.email) + mark + '</td><td>' + dt(u.createdAt) + '</td>' +
-                        '<td class="num">' + fmt(u.words) + '</td><td class="num">' + fmt(u.reviewedWords) + '</td>' +
-                        '<td>' + dt(u.lastSeen) + '</td></tr>';
-                }).join(''));
+            el.innerHTML = '<div class="ulist">' + r.data.map(function (u) {
+                var mark = u.isSeed ? ' <span style="color:var(--accent)">· seed</span>' : '';
+                return '<div class="urow"><div class="urow__mail">' + esc(u.email) + mark + '</div>' +
+                    '<div class="urow__meta">' +
+                    '<span>рег. ' + dt(u.createdAt) + '</span>' +
+                    '<span>был ' + dt(u.lastSeen) + '</span>' +
+                    '<span>слов <b>' + fmt(u.words) + '</b></span>' +
+                    '<span>повторял <b>' + fmt(u.reviewedWords) + '</b></span>' +
+                    '</div></div>';
+            }).join('') + '</div>';
         }).catch(function () {});
     }
 

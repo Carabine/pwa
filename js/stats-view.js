@@ -25,7 +25,8 @@
                     '\n.statsview .cards { grid-template-columns: repeat(2, 1fr); gap: 8px; }' +
                     '\n.statsview .card { padding: 12px; }' +
                     '\n.statsview .card .value { font-size: 22px; }' +
-                    '\n.statsview th, .statsview td { padding: 8px 10px; font-size: 12px; white-space: nowrap; }' +
+                    '\n.statsview th, .statsview td { padding: 8px 10px; font-size: 12px; }' +
+                    '\n.statsview td { word-break: break-word; }' +
                     '\n.statsview .tl__tag { min-width: 70px; }' +
                     '\n.statsview .visitor__head { padding: 10px 12px; gap: 8px; }' +
                     '\n.statsview .chart { height: 150px; }' +
