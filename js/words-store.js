@@ -108,7 +108,9 @@ async function saveWord(payload) {
         ...data,
         ...(sharedUrl ? { video: sharedUrl } : {}),
         trimStart: Number.isFinite(data.trimStart) ? data.trimStart : (wordDur > 0 ? lead : null),
-        trimEnd: Number.isFinite(data.trimEnd) ? data.trimEnd : (wordDur > 0 ? lead + wordDur : null),
+        // +0.35с хвоста, как на сервере: тайминг реплики в сабах часто
+        // кончается на последнем слоге, окно резало его (запас в клипе есть).
+        trimEnd: Number.isFinite(data.trimEnd) ? data.trimEnd : (wordDur > 0 ? lead + wordDur + 0.35 : null),
     };
     const words = getGuestWords();
     words.push(word);
