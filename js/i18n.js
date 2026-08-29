@@ -417,7 +417,6 @@ const I18N = {
         'words.view.list': 'Список',
         'words.view.cards': 'Карточки',
         'words.filters': 'Фильтры',
-        'words.filters.deck': 'Колода',
         'words.filters.sort': 'Сортировка',
         'words.filters.view': 'Вид',
         'words.filters.reset': 'Сбросить',

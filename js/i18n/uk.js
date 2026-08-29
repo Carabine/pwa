@@ -413,7 +413,6 @@ window.I18N_UK = {
         'words.view.list': 'Список',
         'words.view.cards': 'Картки',
         'words.filters': 'Фільтри',
-        'words.filters.deck': 'Колода',
         'words.filters.sort': 'Сортування',
         'words.filters.view': 'Вигляд',
         'words.filters.reset': 'Скинути',

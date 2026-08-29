@@ -521,18 +521,18 @@ function updateKnownMenuLabel() {
 }
 
 // ---------- Модалка «Фильтры» ----------
-// Раньше настройки показа списка жили в трёх разных местах: колода — в своей
-// шторке (её открывали ДВЕ кнопки), сортировка и вид — в меню «⋯» вперемешку с
-// экспортом и известными словами. Теперь всё, что меняет вид списка, — в одной
-// модалке, а в меню «⋯» остались только действия.
+// Раньше сортировка и вид лежали в меню «⋯» вперемешку с экспортом и
+// известными словами — там их никто не искал. Теперь всё, что меняет вид
+// списка, собрано в модалке под воронкой. Колода — отдельно, на пилюле слева:
+// это не «настройка показа», а навигация по коллекции, и её выбор виден прямо
+// в тулбаре без открытия чего-либо.
 
 const SORT_OPTS = [['new', 'words.sort.new'], ['old', 'words.sort.old'], ['az', 'words.sort.az']];
 const VIEW_OPTS = [['list', 'words.view.list'], ['cards', 'words.view.cards']];
 
-// Отличается ли текущий показ от умолчаний — по этому воронка получает точку.
+// Отличается ли показ от умолчаний — по этому воронка получает точку.
 function filtersActive() {
-    const deck = window.DecksUI ? DecksUI.activeDeckId() : null;
-    return !!deck || sortMode !== 'new' || viewMode !== 'list';
+    return sortMode !== 'new' || viewMode !== 'list';
 }
 
 function visibleCount() {
@@ -550,8 +550,6 @@ function openFilters() {
     // Перерисовываем содержимое на месте: выбор применяется сразу к списку под
     // модалкой, поэтому «ОК» не нужен — внизу только сброс и закрытие.
     const draw = () => {
-        const deckOpts = window.DecksUI ? DecksUI.deckOptions() : [];
-        const activeDeck = window.DecksUI ? DecksUI.activeDeckId() : null;
         const seg = (opts, cur, group) => opts.map(([v, k]) =>
             `<button class="wfilters__seg${v === cur ? ' is-on' : ''}" data-group="${group}" data-val="${v}">${esc(t(k))}</button>`).join('');
 
@@ -561,15 +559,6 @@ function openFilters() {
                 <button class="deck-sheet__x" data-act="close">×</button>
             </div>
             <div class="deck-sheet__list wfilters__list">
-                ${deckOpts.length > 1 ? `<div class="wfilters__label">${esc(t('words.filters.deck'))}</div>` : ''}
-                ${deckOpts.map((o) => `
-                    <button class="deck-sheet__row${o.id === activeDeck ? ' is-on' : ''}" data-deck="${esc(o.id == null ? '' : o.id)}">
-                        <span class="deck-sheet__emoji">${o.icon.startsWith('<') ? o.icon : esc(o.icon)}</span>
-                        <span class="deck-sheet__name">${esc(o.label)}</span>
-                        <span class="deck-chip__count">${o.n}</span>
-                        <span class="deck-sheet__check">${o.id === activeDeck ? '✓' : ''}</span>
-                    </button>`).join('')}
-                ${window.DecksUI ? `<button class="deck-sheet__create" data-act="create">＋ ${esc(t('decks.create'))}</button>` : ''}
                 <div class="wfilters__label">${esc(t('words.filters.sort'))}</div>
                 <div class="wfilters__segs">${seg(SORT_OPTS, sortMode, 'sort')}</div>
                 <div class="wfilters__label">${esc(t('words.filters.view'))}</div>
@@ -585,22 +574,12 @@ function openFilters() {
         const btn = e.target.closest('button');
         if (!btn) return;
         if (btn.dataset.act === 'close') { modal.close(); return; }
-        if (btn.dataset.act === 'create') {
-            if (window.DecksUI) DecksUI.openCreate((deck) => { if (deck) DecksUI.setActive(deck.id); draw(); });
-            return;
-        }
         if (btn.dataset.act === 'reset') {
-            if (window.DecksUI) DecksUI.setActive(null);
             sortMode = 'new';
             viewMode = 'list';
             localStorage.setItem(SORT_KEY, sortMode);
             localStorage.setItem(VIEW_KEY, viewMode);
             renderWords();
-            draw();
-            return;
-        }
-        if (btn.dataset.deck !== undefined) {
-            if (window.DecksUI) DecksUI.setActive(btn.dataset.deck || null);   // '' → «Все слова»
             draw();
             return;
         }
@@ -1170,7 +1149,7 @@ window.addEventListener('DOMContentLoaded', () => {
             hint: document.getElementById('deck-hint'),
             getWords: () => allWords,
             onChange: () => renderWords(),
-            // Пилюля колоды и воронка ведут в одну модалку показа списка.
+            // Воронка открывает модалку показа списка (сортировка, вид).
             onFilters: openFilters,
             filtersActive,
         });

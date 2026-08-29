@@ -110,18 +110,21 @@
                 `<span class="deck-pick__count">${count}</span>` +
                 '<span class="deck-pick__caret"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>');
             pick.setAttribute('aria-haspopup', 'dialog');
-            pick.addEventListener('click', () => this._pick());
+            pick.addEventListener('click', () => this._openPicker());
             box.appendChild(pick);
 
-            // Воронка открывает ту же модалку, что и пилюля: там весь показ
-            // списка — колода, сортировка и вид (words.js передаёт onFilters).
+            // Пилюля слева отвечает за колоду, воронка — за остальной показ
+            // списка (сортировка, вид): её модалку даёт страница через onFilters.
             const label = this._ctx.onFilters ? t('words.filters') : t('decks.pickTitle');
             const filter = h('button', 'deck-chip deck-chip--pinned deck-chip--filter', FILTER_ICON);
             filter.title = label;
             filter.setAttribute('aria-label', label);
             filter.classList.toggle('deck-chip--filter-on',
                 !!(this._ctx.filtersActive && this._ctx.filtersActive()));
-            filter.addEventListener('click', () => this._pick());
+            filter.addEventListener('click', () => {
+                if (this._ctx.onFilters) this._ctx.onFilters();
+                else this._openPicker();
+            });
             box.appendChild(filter);
             box.hidden = false;
         },
@@ -131,27 +134,7 @@
             return (this._ctx.getWords() || []).filter(w => Decks.decksOf(w.id).length === 0).length;
         },
 
-        _pick() {
-            if (this._ctx && this._ctx.onFilters) this._ctx.onFilters();
-            else this._openPicker();
-        },
-
-        // Список вариантов фильтра по колоде — для общей модалки фильтров.
-        deckOptions() {
-            const total = (this._ctx.getWords() || []).length;
-            const opts = [{ id: null, icon: STACK_ICON, label: t('decks.allWords'), n: total }];
-            for (const d of Decks.all()) opts.push({ id: d.id, icon: Decks.iconHtml(d), label: d.name, n: d.wordIds.length });
-            const loose = this._looseCount();
-            if (loose > 0) opts.push({ id: '__none__', icon: '·', label: t('decks.noDeck'), n: loose });
-            return opts;
-        },
-
-        setActive(id) { this._setActive(id); },
-
-        openCreate(then) { this._openEditor({ mode: 'create', then }); },
-
         // ---- Шторка выбора колоды (фильтр словаря) ---------------------------
-        // Запасной путь: страница не дала общей модалки фильтров.
         _openPicker() {
             const overlay = h('div', 'deck-sheet__overlay');
             const sheet = h('div', 'deck-sheet');

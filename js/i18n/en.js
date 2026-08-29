@@ -413,7 +413,6 @@ window.I18N_EN = {
         'words.view.list': 'List',
         'words.view.cards': 'Cards',
         'words.filters': 'Filters',
-        'words.filters.deck': 'Deck',
         'words.filters.sort': 'Sorting',
         'words.filters.view': 'View',
         'words.filters.reset': 'Reset',
