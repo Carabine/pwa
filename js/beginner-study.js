@@ -118,7 +118,14 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
 
         const render = (items) => {
             list.innerHTML = '';
-            const top = (items || []).slice(0, 8);
+            // Ещё не вышедшие тайтлы (год в будущем) — в хвост: сабов и серий
+            // у них нет, клик по ним приведёт в пустой плеер.
+            const nowYear = new Date().getFullYear();
+            const released = (a) => (Number(a.year) || 0) <= nowYear;
+            const top = (items || [])
+                .slice()
+                .sort((a, b) => Number(released(b)) - Number(released(a)))
+                .slice(0, 8);
             if (!top.length) {
                 const empty = document.createElement('div');
                 empty.className = 'deck-anime__empty';
@@ -140,6 +147,11 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
                     ? '<img src="' + a.posterPreview + '" alt="" loading="lazy">'
                     : '<span class="deck-anime__noimg"></span>') +
                     '<span class="deck-anime__txt"><b></b><small></small></span>';
+                // Битый постер (у анонсов их часто нет) → серая заглушка.
+                const img = row.querySelector('img');
+                if (img) img.addEventListener('error', () => {
+                    img.replaceWith(Object.assign(document.createElement('span'), { className: 'deck-anime__noimg' }));
+                }, { once: true });
                 row.querySelector('b').textContent = animeTitle(a);
                 row.querySelector('small').textContent = [a.year, a.kind].filter(Boolean).join(' · ');
                 row.addEventListener('click', () => {
