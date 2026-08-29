@@ -7,7 +7,14 @@
     const deck = window.Decks ? Decks.get(id) : null;
 
     const titleEl = document.querySelector('.deck-run-title');
-    if (titleEl) titleEl.textContent = deck ? `${deck.emoji} ${deck.name}` : '';
+    if (titleEl && deck) {
+        // Аватарка колоды (портрет персонажа тайтла) вместо голого эмодзи —
+        // тот же iconHtml, что в списках колод; эмодзи остаётся фолбэком.
+        titleEl.innerHTML = Decks.iconHtml(deck) + ' ';
+        titleEl.appendChild(document.createTextNode(deck.name));
+    } else if (titleEl) {
+        titleEl.textContent = '';
+    }
 
     if (!deck) { startStudy({ scheduled: false, deck: [] }); return; }
 
