@@ -2090,6 +2090,10 @@
     font-size: 13px;
 }
 
+/* display: flex сильнее UA-правила для [hidden]: до первых слов полоса
+   говорила бы «выбрано 0 из 0» — прячем её явно. */
+.bdeck__bar[hidden] { display: none; }
+
 /* Строки и «Выбрать все» — <label>: глобальный стиль лейблов (base.css)
    капсит и блочит текст, а глобальный input растягивает чекбокс в поле
    ввода на всю ширину. Возвращаем нормальные чекбоксы и регистр. */
@@ -2124,7 +2128,15 @@
 
 .bdeck__count { color: var(--text-muted); font-size: 12.5px; }
 
+/* Скан первых серий идёт секунды и десятки секунд. Одной подписи мало: под ней
+   полоса заполнения — по ней видно, что процесс движется и сколько осталось. */
 .bdeck__scan {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.bdeck__scan-row {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -2132,7 +2144,23 @@
     color: var(--text-muted);
 }
 
-.bdeck__scan::before {
+.bdeck__progress {
+    height: 3px;
+    border-radius: 999px;
+    background: var(--border);
+    overflow: hidden;
+}
+
+.bdeck__progress i {
+    display: block;
+    width: 6%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--grad, var(--primary));
+    transition: width var(--dur-3, 0.24s) var(--ease-out, ease);
+}
+
+.bdeck__scan-row::before {
     content: '';
     width: 12px;
     height: 12px;
@@ -2213,6 +2241,38 @@
 }
 
 .bdeck-row__freq { font-size: 11px; color: var(--text-muted); }
+
+/* Заглушки, пока скан несёт первые слова. Собраны из настоящих классов строки,
+   поэтому список не прыгает, когда слова приезжают. Каждая следующая мигает
+   чуть позже — рябь читается как «идёт работа», а не как сломанная вёрстка. */
+.bdeck-row--skel {
+    cursor: default;
+    pointer-events: none;
+}
+
+.bdeck-row--skel .skel::after { animation-delay: calc(var(--i, 0) * var(--stagger, 45ms)); }
+
+.bdeck-skel__box {
+    width: 15px;
+    height: 15px;
+    border-radius: 5px;
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+
+/* Строка результата поиска, пока ответ в пути. */
+.deck-anime__row--skel {
+    cursor: default;
+    pointer-events: none;
+}
+
+.deck-anime__row--skel .skel::after { animation-delay: calc(var(--i, 0) * var(--stagger, 45ms)); }
+
+/* Ширину колонки текста в живой строке задаёт само название; у заглушки текста
+   нет, поэтому колонку растягиваем — иначе полоски съезжаются в точки. */
+.deck-anime__row--skel .deck-anime__txt { flex: 1 1 auto; }
+.deck-anime__row--skel b,
+.deck-anime__row--skel small { display: block; width: 100%; }
 
 .bdeck-row__tr {
     margin-top: 2px;

@@ -162,6 +162,25 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
             });
         };
 
+        // Пока ищем — заглушки строк вместо пустоты: собраны из настоящих
+        // классов, поэтому результаты приходят на готовое место, а не двигают
+        // панель. Ставим их сразу по вводу, до сетевого запроса.
+        const showSkeleton = () => {
+            list.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                const row = document.createElement('div');
+                row.className = 'deck-anime__row deck-anime__row--skel';
+                row.style.setProperty('--i', i);
+                row.innerHTML =
+                    '<span class="skel deck-anime__noimg"></span>' +
+                    '<span class="deck-anime__txt">' +
+                        '<b><i class="skel skel-bar" style="width:' + (58 + i * 14) + '%"></i></b>' +
+                        '<small><i class="skel skel-bar" style="width:' + (30 + i * 8) + '%"></i></small>' +
+                    '</span>';
+                list.appendChild(row);
+            }
+        };
+
         let timer = null;
         let lastQ = '';
         input.addEventListener('input', () => {
@@ -169,12 +188,16 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
             lastQ = q;
             clearTimeout(timer);
             if (q.length < 2) { list.innerHTML = ''; return; }
+            showSkeleton();
             timer = setTimeout(async () => {
                 try {
                     const { data: res } = await client.get('catalog/search', { params: { q }, silentErrors: true });
                     if (q !== lastQ) return;   // пришёл устаревший ответ
                     render(res.data || []);
-                } catch { /* сеть — просто без результатов */ }
+                } catch {
+                    // Сеть не ответила — заглушки убираем, иначе будут «грузиться» вечно.
+                    if (q === lastQ) render([]);
+                }
             }, 350);
         });
 

@@ -87,7 +87,7 @@ window.BeginnerDeck = (function () {
         const sets = [];
         let started = 0;
         let doneCount = 0;
-        setScan(t('edeck.scan').replace('{i}', 1).replace('{n}', total));
+        setScan(0, total);
         const worker = async () => {
             while (started < total) {
                 const i = started++;
@@ -107,14 +107,12 @@ window.BeginnerDeck = (function () {
                     }
                 } catch { /* серия без сабов — дальше */ }
                 doneCount++;
-                if (token === scanToken) {
-                    setScan(t('edeck.scan').replace('{i}', Math.min(doneCount + 1, total)).replace('{n}', total));
-                }
+                if (token === scanToken) setScan(Math.min(doneCount, total), total);
             }
         };
         await Promise.all(Array.from({ length: SCAN_POOL }, worker));
         if (token !== scanToken) return null;
-        setScan('');
+        setScan(0, 0);
         return sets;
     }
 
@@ -378,11 +376,17 @@ window.BeginnerDeck = (function () {
 
     // ---------- UI ----------
 
-    function setScan(msg) {
+    // Скан идёт секунды и десятки секунд — человеку нужно видеть, что процесс
+    // движется и сколько осталось: подпись со счётчиком плюс полоса заполнения.
+    function setScan(done, total) {
         const el = panel && panel.querySelector('.bdeck__scan');
         if (!el) return;
-        el.hidden = !msg;
-        el.textContent = msg || '';
+        if (!total) { el.hidden = true; return; }
+        el.hidden = false;
+        el.querySelector('.bdeck__scan-txt').textContent =
+            t('edeck.scan').replace('{i}', done).replace('{n}', total);
+        const pct = Math.max(6, Math.round((done / total) * 100));
+        el.querySelector('.bdeck__progress i').style.width = pct + '%';
     }
 
     function setBusy(on) {
@@ -418,9 +422,28 @@ window.BeginnerDeck = (function () {
         if (!panel) return;
         const row = panel.querySelector(`.bdeck-row[data-base="${(window.CSS && CSS.escape) ? CSS.escape(entry.base) : entry.base}"]`);
         if (!row) return;
-        const tr = row.querySelector('.bdeck-row__tr');
-        tr.classList.remove('bdeck-row__tr--loading');
-        tr.textContent = entry.translation || '—';
+        // textContent затирает заглушку-полоску, поставленную при отрисовке.
+        row.querySelector('.bdeck-row__tr').textContent = entry.translation || '—';
+    }
+
+    // Заглушка строки слова: собрана из НАСТОЯЩИХ классов строки, поэтому
+    // занимает ровно столько же места, сколько потом займёт слово, — список не
+    // прыгает, когда скан приносит первые слова.
+    function skelRow(i) {
+        const row = document.createElement('div');
+        row.className = 'bdeck-row bdeck-row--skel';
+        row.style.setProperty('--i', i);
+        row.innerHTML =
+            '<span class="skel bdeck-skel__box"></span>' +
+            '<div class="bdeck-row__main">' +
+                '<div class="bdeck-row__top">' +
+                    '<span class="bdeck-row__word"><i class="skel skel-bar" style="width:' + (54 + (i % 3) * 22) + 'px"></i></span>' +
+                    '<span class="bdeck-row__read"><i class="skel skel-bar" style="width:' + (34 + (i % 2) * 18) + 'px"></i></span>' +
+                '</div>' +
+                '<div class="bdeck-row__tr"><i class="skel skel-bar" style="width:' + (46 + (i % 4) * 12) + '%"></i></div>' +
+                '<div class="bdeck-row__sent"><i class="skel skel-bar" style="width:' + (68 + (i % 3) * 10) + '%"></i></div>' +
+            '</div>';
+        return row;
     }
 
     function renderList() {
@@ -428,7 +451,7 @@ window.BeginnerDeck = (function () {
         const listEl = panel.querySelector('.bdeck__list');
         // Список пересобирается по мере скана — снятые галочки не теряем.
         const unchecked = new Set();
-        listEl.querySelectorAll('.bdeck-row').forEach((row) => {
+        listEl.querySelectorAll('.bdeck-row:not(.bdeck-row--skel)').forEach((row) => {
             if (!row.querySelector('input').checked) unchecked.add(row.dataset.base);
         });
         listEl.innerHTML = '';
@@ -438,6 +461,9 @@ window.BeginnerDeck = (function () {
             msg.textContent = t('edeck.empty');
             listEl.appendChild(msg);
         }
+        // Полоса «Выбрать все / выбрано 0 из 0» до первых слов говорит только
+        // о том, что ничего нет, — прячем её, пока список пуст.
+        panel.querySelector('.bdeck__bar').hidden = !candidates.length;
         candidates.forEach((e, i) => {
             const row = document.createElement('label');
             row.className = 'bdeck-row';
@@ -475,7 +501,7 @@ window.BeginnerDeck = (function () {
             const tr = document.createElement('div');
             tr.className = 'bdeck-row__tr';
             if (e.dict !== undefined) tr.textContent = e.translation || '—';
-            else { tr.classList.add('bdeck-row__tr--loading'); tr.textContent = '…'; }
+            else tr.innerHTML = '<i class="skel skel-bar" style="width:52%"></i>';
             main.appendChild(tr);
 
             const sent = document.createElement('div');
@@ -486,6 +512,10 @@ window.BeginnerDeck = (function () {
             row.appendChild(main);
             listEl.appendChild(row);
         });
+        if (scanning) {
+            const n = candidates.length ? 2 : 6;
+            for (let i = 0; i < n; i++) listEl.appendChild(skelRow(i));
+        }
         updateCount();
     }
 
@@ -531,7 +561,10 @@ window.BeginnerDeck = (function () {
             '<div class="bdeck__level"><span class="bdeck__level-label"></span><select class="bdeck__select"></select></div>' +
             '<div class="bdeck__bar"><label class="bdeck__all"><input type="checkbox" checked> <span></span></label>' +
             '<span class="bdeck__count"></span></div>' +
-            '<div class="bdeck__scan" hidden></div>' +
+            '<div class="bdeck__scan" hidden>' +
+                '<div class="bdeck__scan-row"><span class="bdeck__scan-txt"></span></div>' +
+                '<div class="bdeck__progress"><i></i></div>' +
+            '</div>' +
             '<div class="bdeck__list"></div>' +
             '<button class="bdeck__create" type="button"></button>' +
             '<button class="deck-anime__back" type="button"></button>';
