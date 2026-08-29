@@ -100,7 +100,7 @@
 
         gid('cards').innerHTML =
             card('Всего открытий', data.totalHits) +
-            card('Уникальных посетителей', data.totalVisitors) +
+            card('Посетителей (устройств)', data.totalVisitors) +
             card('Сегодня открытий', data.today.hits) +
             card('Сегодня посетителей', data.today.visitors);
 
@@ -449,7 +449,9 @@
         });
 
         var subEl = gid('visitors-sub');
-        subEl.textContent = data.count + ' уникальных IP за ' + data.days + ' дн.' +
+        // Устройств меньше, чем IP: мобильный CGNAT множит адреса одного телефона.
+        subEl.textContent = (data.people ? data.people + ' устройств · ' : '') +
+            data.count + ' уникальных IP за ' + data.days + ' дн.' +
             (countryFilter ? ' · по фильтру: ' + list.length + '.' : '') +
             ' Клик по строке раскрывает сессии: итог, путь по страницам и действия по порядку.';
 
