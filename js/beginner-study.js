@@ -176,6 +176,7 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
         });
 
         main.prepend(panel);
-        input.focus();
+        // Автофокус не ставим: на телефоне он тут же открывает клавиатуру и
+        // прыгает вьюпорт — пусть человек сам тапнет по полю.
     }
 })();

@@ -2007,7 +2007,14 @@
 
 /* ---------- Слова из выбранного аниме (js/beginner-deck.js) ---------- */
 
-.bdeck { max-width: 520px; }
+/* Панель — ровно в высоту экрана, скроллится только список слов (страница
+   без вертикального скролла): 85px = шапка 56 + паддинги main 5/12 + свой
+   отступ 12. Только dvh (см. правило про vh). */
+.bdeck {
+    max-width: 520px;
+    margin-top: 12px;
+    height: calc(100dvh - 85px);
+}
 
 /* Шапка: постер тайтла + название + подпись. */
 .bdeck__head {
@@ -2144,10 +2151,20 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    /* Внутренний скролл, чтобы кнопка «Создать» была всегда под рукой. */
-    max-height: min(52vh, 480px);
+    /* Внутренний скролл: список занимает всё, что осталось от панели,
+       кнопка «Создать» всегда под рукой. */
+    flex: 1 1 auto;
+    min-height: 120px;
     overflow-y: auto;
+    /* Зазор между карточками слов и полосой скролла + тонкая полоса. */
+    padding-right: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
 }
+
+.bdeck__list::-webkit-scrollbar { width: 5px; }
+.bdeck__list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.bdeck__list::-webkit-scrollbar-track { background: transparent; }
 
 .bdeck__empty {
     padding: 24px 0;
