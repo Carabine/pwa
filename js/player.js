@@ -879,9 +879,21 @@ function showSessionPanel(endedEpIndex) {
     if (window.animeiTrack) window.animeiTrack('session_card', 'player_shown:' + s.words.length);
 }
 
+// Номер «поколения» выбора серии. Запросы потока и субтитров асинхронные, и
+// ответ МЕДЛЕННОЙ первой серии мог прийти после быстрой второй — тогда в селекте
+// стояла вторая, а видео и/или субтитры были от первой. Каждый выбор серии
+// увеличивает счётчик, а всё, что пишет общий state после await, сперва
+// проверяет, что поколение не сменилось.
+function bumpEpisodeGen() {
+    state.epGen = (state.epGen || 0) + 1;
+    return state.epGen;
+}
+const isStaleGen = (gen) => gen !== state.epGen;
+
 async function selectEpisode(index) {
     const ep = state.episodes[index];
     if (!ep) return;
+    const gen = bumpEpisodeGen();
 
     episodeSelect.value = index;
     localStorage.setItem(epStorageKey(), String(index));
@@ -919,6 +931,9 @@ async function selectEpisode(index) {
     if (prov) {
         try {
             const { data: res } = await client.get(prov.endpoint, { params: prov.params(ep) });
+            // Пока ждали ответ, пользователь мог выбрать другую серию — тогда это
+            // видео уже чужое, и трогать общий state нельзя.
+            if (isStaleGen(gen)) return;
             state.qualities = prov.qualities ? (res.data.qualities || {}) : {};
             state.masterUrl = prov.qualities ? (res.data.auto || null) : null;
             state.megaIntro = prov.intro ? (res.data.intro || null) : null;
@@ -949,6 +964,7 @@ async function selectEpisode(index) {
         const { data: res } = await client.get('catalog/stream', {
             params: { type: 'seria', id: ep.id, hash: ep.hash },
         });
+        if (isStaleGen(gen)) return;   // серию успели переключить — ответ устарел
 
         // Kodik отдаёт по ссылке на каждое качество (360/480/720). По умолчанию
         // «Авто» (мастер-манифест, hls.js подстраивает уровень под скорость);
@@ -1290,6 +1306,9 @@ function setSubsSkeleton(on) {
 }
 
 async function loadSubtitles(episodeNumber = 1) {
+    // Поколение выбора серии на момент запроса: ответ по МЕДЛЕННОЙ серии не
+    // должен перетереть субтитры уже выбранной другой (см. bumpEpisodeGen).
+    const gen = state.epGen || 0;
     // Исключённые файлы (клик «попробовать другой») живут в рамках одной серии.
     if (state.subsExcludedEp !== episodeNumber) {
         state.subsExcluded = [];
@@ -1332,6 +1351,7 @@ async function loadSubtitles(episodeNumber = 1) {
             timeout: 180000,
         });
         const cues = res.data.cues;
+        if (isStaleGen(gen)) return;   // серию переключили, пока искали субтитры
 
         state.cues = cues;
         state.subsFile = res.data.file || '';

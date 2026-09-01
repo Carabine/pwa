@@ -170,6 +170,16 @@ async function deleteWord(id) {
 
 async function updateWord(id, patch) {
     if (isSignedIn()) {
+        // Через исходящий ящик (axiosClient.js): правка сначала ложится в
+        // localStorage, потом уходит на сервер. Без него правки, сделанные при
+        // обрыве связи, пропадали молча — интерфейс показывал новое значение, а
+        // при следующей загрузке возвращалось старое серверное (ловили на окне
+        // клипа: clip-trim зовёт updateWord вообще без await).
+        if (typeof queueWordPatch === 'function') {
+            queueWordPatch(id, patch);
+            await flushWordPatches();
+            return;
+        }
         await client.patch('words/' + id, patch);
         return;
     }
@@ -291,18 +301,22 @@ async function runGuestSync() {
                 }
             }
             // Свой звук гостя тоже переносим в аккаунт.
+            let audioMoved = true;
             if (saved?.id && typeof getAudio === 'function') {
                 const audioBlob = await getAudio(id);
                 if (audioBlob) {
                     const form = new FormData();
                     form.append('audio', audioBlob, 'audio.' + audioBlobExt(audioBlob));
-                    await client.post(`words/${saved.id}/audio`, form, {
+                    audioMoved = await client.post(`words/${saved.id}/audio`, form, {
                         headers: { 'Content-Type': undefined },
-                    }).catch(() => {});
+                    }).then(() => true).catch(() => false);
                 }
             }
             if (typeof deleteClip === 'function') await deleteClip(id);
-            if (typeof deleteAudio === 'function') await deleteAudio(id);
+            // Локальную запись стираем ТОЛЬКО если она реально уехала в аккаунт.
+            // Раньше ошибка загрузки проглатывалась, а blob всё равно удалялся —
+            // единственная копия своего звука пропадала молча.
+            if (audioMoved && typeof deleteAudio === 'function') await deleteAudio(id);
         } catch (err) {
             console.error('Не удалось перенести слово в аккаунт:', err);
             failed.push(w);

@@ -1,6 +1,6 @@
 // Пути относительные — SW живёт в /app/, поэтому './' указывает на /app/.
 // ВАЖНО: меняй номер версии при каждом деплое — иначе старый кеш не сбросится.
-const CACHE_NAME = 'animei-cache-v0.0.426';
+const CACHE_NAME = 'animei-cache-v0.0.427';
 // Полный список генерит deploy/build-pwa.mjs из содержимого dist (страницы,
 // css, js, libs; скрытая админка исключена) и подставляет сюда при сборке.
 // В исходнике — только app-shell: без сборки SW тоже работает, офлайн беднее.
@@ -55,6 +55,17 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/proxy/') || request.destination === 'video'
         || request.destination === 'audio' || request.headers.has('range')) {
+        return;
+    }
+
+    // ЛИЧНЫЕ ответы API мимо кэша. Ключ Cache API — это URL, пользователя он не
+    // различает, поэтому закэшированные карточки, колоды и профиль одного
+    // аккаунта доставались следующему, кто сядет за этот браузер и потеряет
+    // сеть. Офлайн-копия личных данных живёт в самом приложении
+    // (animei:wordsCache и прочее) и чистится при смене аккаунта.
+    // Безличное (каталог, субтитры, словарь) кэшируем как раньше — на нём
+    // держится офлайн-каталог.
+    if (/^\/api\/v1\/(words|decks|users|auth|stats)(\/|$)/.test(url.pathname)) {
         return;
     }
 

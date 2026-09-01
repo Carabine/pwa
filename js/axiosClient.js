@@ -153,11 +153,49 @@ function setRefreshedTokens(tokens) {
     storageSet(accessTokenKey, tokens.accessToken);
 }
 
+// Данные, принадлежащие АККАУНТУ, а не устройству. Их нельзя оставлять
+// следующему вошедшему: на одном ноутбуке спокойно живут два аккаунта, и раньше
+// после смены пользователя оставались чужие карточки, расписание повторений,
+// колоды и список «уже знаю» — а синк известных слов ещё и заливал их в новый
+// аккаунт (объединение локального с серверным). Гостевые слова
+// (animei:guestWords) сюда НЕ входят: они принадлежат этому браузеру и при входе
+// штатно переносятся в аккаунт.
+const ACCOUNT_SCOPED_KEYS = [
+    'words',                   // слепок карточек для офлайна и главной
+    'animei:wordsCache',
+    'srs:schedule:v2',         // расписание повторений
+    'srs:days',                // дни занятий (стрик)
+    'animei:srsOutbox',        // недосланные повторения
+    'animei:wordPatchOutbox',  // недосланные правки карточек
+    'animei:knownWords',       // «уже знаю»
+    'animei:knownOutbox',
+    'animei:decks',            // колоды и их очереди синка
+    'animei:decksDirty',
+    'animei:decksDeleted',
+    'animei:decksSynced',
+    'animei:lastSession',      // «продолжить сессию» на главной
+];
+
+function clearAccountScopedState() {
+    for (const key of ACCOUNT_SCOPED_KEYS) storageRemove(key);
+    // Личные ответы API мог сохранить и сервис-воркер (до v0.0.427 он кэшировал
+    // всё подряд). Чистим из его кэша только запросы к API — оболочка
+    // приложения (js/css/страницы) должна остаться, иначе следующий офлайн-старт
+    // окажется пустым.
+    if (typeof caches === 'undefined') return;
+    caches.keys().then((names) => Promise.all(names.map(async (name) => {
+        const cache = await caches.open(name);
+        const reqs = await cache.keys();
+        await Promise.all(reqs.map((r) => (r.url.includes('/api/') ? cache.delete(r) : null)));
+    }))).catch(() => { /* нет доступа к кэшу — не критично */ });
+}
+
 function logout() {
     storageRemove(refreshTokenKey);
     storageRemove(accessTokenKey);
     storageRemove('animei:email');
     storageRemove('animei:isAdmin'); // чтобы у следующего юзера не мигала ссылка «Админка»
+    clearAccountScopedState();
 }
 
 // Погасить на сервере ИМЕННО текущую сессию (см. POST /auth/logout). Раньше
@@ -251,7 +289,7 @@ function signalNetwork(alive) {
     if (alive === networkAlive) return;
     networkAlive = alive;
     window.dispatchEvent(new CustomEvent('animei:network', { detail: { online: alive } }));
-    if (alive) flushSrsOutbox();   // связь вернулась — досылаем накопленное
+    if (alive) { flushSrsOutbox(); flushWordPatches(); }   // связь вернулась — досылаем накопленное
 }
 window.ANIMEI_NET = { isOnline: () => networkAlive };
 
@@ -318,7 +356,72 @@ function flushSrsOutbox() {
     return srsFlushing;
 }
 
+// ========== Исходящий ящик правок карточки ==========
+// Правки слова (окно клипа из редактора обрезки, поля при ручном
+// редактировании) уходили «выстрелил и забыл»: при обрыве связи интерфейс
+// показывал новое значение, сервер оставался со старым, и при следующей загрузке
+// правка молча откатывалась. Копим по id слова, поля сливаем — последнее
+// значение поля побеждает.
+const WORD_PATCH_KEY = 'animei:wordPatchOutbox';
+
+function wordPatchRead() {
+    try {
+        const box = JSON.parse(localStorage.getItem(WORD_PATCH_KEY) ?? '{}');
+        return (box && typeof box === 'object') ? box : {};
+    } catch {
+        return {};
+    }
+}
+
+function wordPatchWrite(box) {
+    try {
+        if (!Object.keys(box).length) localStorage.removeItem(WORD_PATCH_KEY);
+        else localStorage.setItem(WORD_PATCH_KEY, JSON.stringify(box));
+    } catch { /* места нет — правка уйдёт при следующей попытке */ }
+}
+
+function queueWordPatch(id, patch) {
+    if (!id || !patch || typeof patch !== 'object') return;
+    if (String(id).startsWith('local-')) return;      // гостевые слова живут в браузере
+    const box = wordPatchRead();
+    box[id] = { ...(box[id] || {}), ...patch, at: Date.now() };
+    wordPatchWrite(box);
+}
+
+let patchFlushing = null;
+function flushWordPatches() {
+    if (patchFlushing) return patchFlushing;
+    if (!isLoggedIn() || navigator.onLine === false) return Promise.resolve(false);
+    const box = wordPatchRead();
+    const ids = Object.keys(box);
+    if (!ids.length) return Promise.resolve(true);
+
+    patchFlushing = (async () => {
+        let allSent = true;
+        for (const id of ids) {
+            const { at, ...patch } = box[id];
+            try {
+                await client.patch('words/' + encodeURIComponent(id), patch, { silentErrors: true });
+                const left = wordPatchRead();
+                // За время запроса слово могли поправить ещё раз — тогда там
+                // более свежая метка, и стирать её нельзя.
+                if (left[id] && left[id].at === at) { delete left[id]; wordPatchWrite(left); }
+            } catch (err) {
+                const status = err?.response?.status;
+                // Ответ сервера (в т.ч. 4xx — слово удалили, сессия кончилась) —
+                // повторять нечего; обрыв связи или 5xx оставляем на потом.
+                if (status && status < 500) {
+                    const left = wordPatchRead();
+                    if (left[id] && left[id].at === at) { delete left[id]; wordPatchWrite(left); }
+                } else allSent = false;
+            }
+        }
+        return allSent;
+    })().finally(() => { patchFlushing = null; });
+    return patchFlushing;
+}
+
 // Сеть вернулась — разгружаем сразу; при обычной загрузке страницы ждём пару
 // секунд, чтобы не соперничать с запросами самой страницы.
-window.addEventListener('online', () => { flushSrsOutbox(); });
-setTimeout(() => { flushSrsOutbox(); }, 2500);
+window.addEventListener('online', () => { flushSrsOutbox(); flushWordPatches(); });
+setTimeout(() => { flushSrsOutbox(); flushWordPatches(); }, 2500);

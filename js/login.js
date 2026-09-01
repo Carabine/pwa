@@ -38,6 +38,11 @@ async function submitAuth() {
     try {
         const { data } = await client.post(domain + path, { email, password }, { authorization: false });
         setRefreshedTokens(data);
+        // Остатки ПРЕДЫДУЩЕГО аккаунта (карточки, расписание, колоды, «уже
+        // знаю») чистим до того, как новая сессия начнёт синк: иначе они
+        // считались бы своими и уезжали в чужой аккаунт. Гостевые слова этим не
+        // затрагиваются — они переносятся строкой ниже.
+        clearAccountScopedState();
         localStorage.setItem('animei:email', email);
         // Переносим слова, сохранённые до входа, в аккаунт.
         await syncGuestWordsToAccount();
