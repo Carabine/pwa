@@ -7,8 +7,10 @@
 // Хранилище — localStorage, привязано к устройству (как и колоды).
 (function () {
     const KEY = 'animei:knownWords';
+    const OUTBOX_KEY = 'animei:knownOutbox';
     const VERSION = 1;
     const MAX = 50000;   // защитный потолок: больше — бессмысленно и тяжело
+    const BATCH = 1500;  // сервер принимает до 3000 слов за запрос
 
     function load() {
         const parsed = lsJson(KEY);
@@ -114,11 +116,128 @@
         return await new Response(stream).blob();
     }
 
+    // ---------- Синхронизация с аккаунтом ----------
+    // Локальная копия остаётся хозяином: она работает офлайн и у гостя. На сервер
+    // уходят НАКОПЛЕННЫЕ правки (очередь в localStorage переживает и офлайн, и
+    // закрытие вкладки), потом забираем объединённый список. Без этого известные
+    // слова жили только на одном устройстве, а от них зависят подсветка субтитров,
+    // процент покрытия серии и состав автоматических колод.
+    const signedIn = () => typeof isLoggedIn === 'function' && isLoggedIn() && typeof client !== 'undefined';
+
+    function outbox() {
+        const o = lsJson(OUTBOX_KEY, null);
+        return {
+            add: Array.isArray(o?.add) ? o.add : [],
+            remove: Array.isArray(o?.remove) ? o.remove : [],
+            clear: o?.clear === true,
+        };
+    }
+
+    function saveOutbox(o) {
+        try {
+            if (!o.add.length && !o.remove.length && !o.clear) localStorage.removeItem(OUTBOX_KEY);
+            else localStorage.setItem(OUTBOX_KEY, JSON.stringify(o));
+        } catch { /* места нет — синк подождёт */ }
+    }
+
+    // Слово в очереди живёт в одном экземпляре и в одном направлении: добавили
+    // после удаления — из «удалить» оно уходит, и наоборот.
+    function queue(kind, words) {
+        if (!signedIn()) return;
+        const list = (Array.isArray(words) ? words : [words]).filter((w) => typeof w === 'string' && w);
+        if (!list.length) return;
+        const o = outbox();
+        const other = kind === 'add' ? 'remove' : 'add';
+        const mine = new Set(o[kind]);
+        const theirs = new Set(o[other]);
+        for (const w of list) { mine.add(w); theirs.delete(w); }
+        o[kind] = [...mine].slice(-MAX);
+        o[other] = [...theirs];
+        saveOutbox(o);
+    }
+
+    let flushInFlight = null;
+    function flush() {
+        if (!flushInFlight) flushInFlight = runFlush().finally(() => { flushInFlight = null; });
+        return flushInFlight;
+    }
+
+    async function runFlush() {
+        if (!signedIn()) return;
+        const o = outbox();
+        if (!o.add.length && !o.remove.length && !o.clear) return;
+        // Импорт из Anki — это тысячи слов: шлём частями, каждую подтверждённую
+        // часть сразу вычёркиваем, чтобы обрыв на середине не откатывал всё.
+        try {
+            if (o.clear || o.remove.length) {
+                await client.post('words/known', {
+                    clear: o.clear, remove: o.remove.slice(0, BATCH),
+                }, { silentErrors: true });
+                const left = outbox();
+                left.clear = false;
+                left.remove = left.remove.filter((w) => !o.remove.slice(0, BATCH).includes(w));
+                saveOutbox(left);
+            }
+            while (outbox().add.length) {
+                const chunk = outbox().add.slice(0, BATCH);
+                await client.post('words/known', { add: chunk }, { silentErrors: true });
+                const left = outbox();
+                left.add = left.add.filter((w) => !chunk.includes(w));
+                saveOutbox(left);
+            }
+        } catch { /* нет связи — очередь осталась, отправим в следующий раз */ }
+    }
+
+    // Полный синк: сначала свои правки, потом забираем серверный список.
+    // Локальные слова, которых на сервере нет, — это НЕ удалённые, а ещё не
+    // отправленные (импорт до появления синка, вход в аккаунт после гостевой
+    // работы): их отправляем, а не теряем.
+    let syncInFlight = null;
+    function sync() {
+        if (!signedIn()) return Promise.resolve();
+        if (!syncInFlight) syncInFlight = runSync().finally(() => { syncInFlight = null; });
+        return syncInFlight;
+    }
+
+    async function runSync() {
+        await flush();
+        let words;
+        try {
+            const { data: res } = await client.get('words/known', { silentErrors: true });
+            words = Array.isArray(res?.data?.words) ? res.data.words : null;
+        } catch { return; }          // офлайн — живём по локальной копии
+        if (!words) return;
+
+        const server = new Set(words);
+        const localOnly = [...set].filter((w) => !server.has(w));
+        if (localOnly.length) {
+            queue('add', localOnly);
+            await flush();
+        }
+        const merged = new Set([...words, ...localOnly]);
+        // Ещё не отправленные удаления не должны «вернуться» с сервера.
+        for (const w of outbox().remove) merged.delete(w);
+        if (merged.size !== set.size || [...merged].some((w) => !set.has(w))) {
+            set.clear();
+            for (const w of merged) set.add(w);
+            save();
+            document.dispatchEvent(new CustomEvent('known:changed'));
+        }
+    }
+
+    if (signedIn()) setTimeout(sync, 0);
+    // Связь ожила — досылаем накопленное (событие из axiosClient.js по реальным
+    // запросам; системный 'online' врёт на вайфае без интернета, но как подсказка
+    // годится).
+    window.addEventListener('animei:network', (e) => { if (e.detail && e.detail.online) sync(); });
+    window.addEventListener('online', () => { sync(); });
+
     window.KnownWords = {
         all() { return [...set]; },
         count() { return set.size; },
         has(w) { return set.has(w); },
         parseImport,
+        sync,
 
         // Прочитать колоду .apkg: вынуть базу, отдать её серверу на разбор.
         // Возвращает [{ flds, learned }]; flds — поля заметки через \x1f.
@@ -136,25 +255,39 @@
 
         // Добавить пачку слов; возвращает, сколько было действительно новых.
         addMany(list) {
-            let added = 0;
+            const fresh = [];
             for (const w of list || []) {
                 if (typeof w !== 'string' || !w || set.has(w)) continue;
                 if (set.size >= MAX) break;
                 set.add(w);
-                added++;
+                fresh.push(w);
             }
-            if (added) save();
-            return added;
+            if (fresh.length) {
+                save();
+                queue('add', fresh);
+                flush();
+            }
+            return fresh.length;
         },
 
         remove(w) {
-            if (set.delete(w)) save();
+            if (set.delete(w)) {
+                save();
+                queue('remove', [w]);
+                flush();
+            }
         },
 
         clear() {
             if (!set.size) return;
             set.clear();
             save();
+            // На сервере тоже чистим целиком: перечислять тысячи слов в очереди
+            // бессмысленно, для этого у эндпоинта есть флаг clear.
+            if (signedIn()) {
+                saveOutbox({ add: [], remove: [], clear: true });
+                flush();
+            }
         },
     };
 })();
