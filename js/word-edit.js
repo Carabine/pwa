@@ -99,6 +99,7 @@
                 if (!url) throw new Error('audio not stored');
                 await refresh();
                 showSnackbar(t('words.ttsDone'), { duration: 2500, type: 'success' });
+                if (window.animeiTrack) animeiTrack('tts', 'card');
             } catch (err) {
                 console.error('Не удалось сгенерировать озвучку:', err);
                 genBtn.textContent = oldLabel;

@@ -247,7 +247,11 @@
             btn.type = 'button';
             btn.className = 'clip-edit__recut' + (ghost ? ' clip-edit__recut--ghost' : '');
             btn.textContent = tr('clip.recut');
-            btn.addEventListener('click', (e) => { e.stopPropagation(); recut(); });
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (window.animeiTrack) animeiTrack('clip_recut', 'click');
+                recut();
+            });
             return btn;
         }
 

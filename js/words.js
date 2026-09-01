@@ -525,11 +525,13 @@ function renderBulkBar(visibleWords) {
     });
     bar.querySelector('#bulk-deck').addEventListener('click', () => {
         if (!selected.size || !window.DecksUI) return;
+        if (window.animeiTrack) animeiTrack('words_bulk', 'to_deck:' + selected.size);
         DecksUI.openBulkSheet([...selected], () => { exitSelect(); });
     });
     bar.querySelector('#bulk-undeck')?.addEventListener('click', () => {
         if (!selected.size || !window.Decks) return;
         const removed = Decks.removeMany(deckActive, [...selected]);
+        if (window.animeiTrack) animeiTrack('words_bulk', 'from_deck:' + removed);
         showSnackbar(t('words.removedFromDeckN').replace('{n}', removed), { duration: 2500 });
         exitSelect();
     });
@@ -579,6 +581,7 @@ function renderBulkBar(visibleWords) {
             }
         });
         await Promise.all(workers);
+        if (window.animeiTrack) animeiTrack('words_bulk', 'delete:' + done);
 
         showSnackbar(t('words.bulkDeleted').replace('{n}', done), { duration: 3000 });
         if (failed) showSnackbar(t('words.bulkDeleteFailed').replace('{n}', failed), { duration: 4000, type: 'error' });
@@ -872,6 +875,7 @@ function openKnownImport() {
         box.querySelector('#known-cancel').addEventListener('click', close);
         doBtn.addEventListener('click', () => {
             const added = KnownWords.addMany(parsed);
+            if (window.animeiTrack) animeiTrack('known_import', String(added));
             showSnackbar(
                 added ? t('known.imported').replace('{n}', added) : t('known.nothingNew'),
                 { duration: 3500 },
@@ -1143,6 +1147,8 @@ async function exportAnki(withVideo, deckId) {
         const { data } = await client.post('words/export/anki', fd, {
             responseType: 'blob', timeout: withVideo ? 1800000 : 300000,
         });
+        // Экспорт в Anki: со звуком или с видео и сколько карточек ушло.
+        if (window.animeiTrack) animeiTrack('anki_export', (withVideo ? 'video:' : 'audio:') + payload.length);
         const a = document.createElement('a');
         a.href = URL.createObjectURL(data);
         // Имя файла по колоде: в загрузках сразу видно, что за колода.

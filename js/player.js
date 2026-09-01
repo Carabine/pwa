@@ -1110,6 +1110,8 @@ function attachVideo(hlsUrl) {
                 hls.recoverMediaError();
                 return;
             }
+            // Видео не поднялось даже после ретраев — сигнал о больном источнике.
+            if (window.animeiTrack) animeiTrack('video_error', String(data.type || 'unknown'));
             videoLoading.style.display = 'flex';
             videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.videoError') + data.type;
         });
@@ -1401,6 +1403,8 @@ async function loadSubtitles(episodeNumber = 1) {
         if (err.response?.status === 404) {
             // Сабов в архиве нет. Не тупик: можно смотреть без них или принести своё видео.
             subsStatus.textContent = '';
+            // Сигнал качества: к серии вообще не нашлось субтитров.
+            if (window.animeiTrack) animeiTrack('subs_missing', (titleRomaji || '') + ' · эп ' + episodeNumber);
             subsStatus.append(t('subs.notFound'));
             subsStatus.appendChild(document.createElement('br'));
             const link = document.createElement('a');
@@ -1666,6 +1670,7 @@ async function preciseSyncSubs() {
                 refreshOffsetDisplay();
             }
             setPreciseLoading(false);
+            if (window.animeiTrack) animeiTrack('subs_precise', bySiblings ? 'consensus' : 'ok');
             const msg = t(bySiblings ? 'subs.precise.consensus' : 'subs.precise.done');
             if (subsPreciseStatus) subsPreciseStatus.textContent = msg;
             showSnackbar(msg, { duration: 3500 });
@@ -1676,6 +1681,7 @@ async function preciseSyncSubs() {
             // нашёлся», а скорее ФАЙЛ от другой серии: говорим об этом прямо и
             // предлагаем взять следующий кандидат из архива.
             const wrongFile = r.reason === 'no-match' && (r.votes || 0) <= 2 && !!state.subsFile;
+            if (window.animeiTrack) animeiTrack('subs_precise', wrongFile ? 'wrong_file' : (r.reason || 'fail'));
             // Подбор оборвался не по существу (перезапуск бэкенда, занятый верификатор) —
             // это «повтори», а не «не получилось»: следующая попытка обычно проходит.
             const lost = r.reason === 'lost' || r.reason === 'busy' || r.unknown;

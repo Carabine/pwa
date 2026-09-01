@@ -445,6 +445,7 @@
                     finish(Decks.get(id));
                 } else {
                     const created = Decks.create(name, chosen);
+                    if (window.animeiTrack) animeiTrack('deck', 'create');
                     localStorage.setItem(HINT_KEY, '1');
                     snack(t('decks.created'));
                     this.refresh();

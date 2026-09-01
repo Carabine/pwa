@@ -136,7 +136,15 @@
         autosync: 'автосинк', explain: 'разбор', onboarding: 'онбординг',
         setting: 'настройка', password_change: 'сменил пароль',
         srs_review: 'повторил', resume: 'продолжил', session_card: 'итог сессии',
-        episode_end: 'досмотрел серию', daily_plan: 'план дня', catalog: 'каталог'
+        episode_end: 'досмотрел серию', daily_plan: 'план дня', catalog: 'каталог',
+        // Было без подписей, хотя события шлются давно:
+        install: 'установка', beginner_deck: 'колода новичка', episode_deck: 'колода серии',
+        known_word: 'уже знаю', known_pick: 'разбор известных', streak_milestone: 'рубеж стрика',
+        // Фичи, появившиеся после первой версии статистики:
+        deck: 'колода', words_bulk: 'массово в словаре', anki_export: 'экспорт Anki',
+        known_import: 'импорт известных', tts: 'озвучка карточки', clip_recut: 'пересобрал клип',
+        subs_precise: 'точный подбор сабов', subs_missing: 'НЕТ СУБТИТРОВ',
+        video_error: 'ВИДЕО НЕ ПОШЛО', offline: 'офлайн', auth: 'аккаунт'
     };
     var PAGE_LABELS = {
         'app/index': 'главная', 'app/catalog': 'каталог', 'app/player': 'плеер',
@@ -168,6 +176,30 @@
             case 'resume':
                 return { shown: 'увидел кнопку «продолжить»', click: 'нажал «продолжить»', dismiss: 'закрыл «продолжить»' }[p]
                     || (p.indexOf('seek:') === 0 ? 'перемотка на ' + p.slice(5) + ' с' : p);
+            case 'words_bulk': {
+                var mb = p.match(/^(to_deck|from_deck|delete):(\d+)$/);
+                if (!mb) return p;
+                if (mb[1] === 'to_deck') return 'отправил ' + mb[2] + ' сл. в колоду';
+                if (mb[1] === 'from_deck') return 'убрал ' + mb[2] + ' сл. из колоды';
+                return 'удалил ' + mb[2] + ' сл.';
+            }
+            case 'anki_export': {
+                var ma = p.match(/^(video|audio):(\d+)$/);
+                return ma ? ('выгрузил ' + ma[2] + ' карт. ' + (ma[1] === 'video' ? 'с видео' : 'со звуком')) : p;
+            }
+            case 'known_import': return 'добавил ' + p + ' известных слов';
+            case 'deck': return p === 'create' ? 'создал колоду' : p;
+            case 'tts': return 'озвучил карточку';
+            case 'clip_recut': return 'пересобрал клип';
+            case 'subs_precise':
+                return { ok: 'точный подбор помог', consensus: 'сдвиг взят у соседних серий',
+                    wrong_file: 'файл оказался от другой серии', 'no-match': 'совпадений не нашлось',
+                    lost: 'подбор оборвался', busy: 'подбор был занят' }[p] || p;
+            case 'subs_missing': return 'субтитров нет: ' + p;
+            case 'video_error': return 'видео не поднялось (' + p + ')';
+            case 'offline': return p === 'on' ? 'потерял сеть' : 'сеть вернулась';
+            case 'auth':
+                return { login: 'вошёл', register: 'зарегистрировался', logout: 'вышел' }[p] || p;
             case 'session_card':
                 if (p.indexOf('home_shown') === 0) return 'увидел итог сессии на главной (' + (p.split(':')[1] || '?') + ' слов)';
                 if (p.indexOf('player_shown') === 0) return 'увидел итог сессии в плеере (' + (p.split(':')[1] || '?') + ' слов)';

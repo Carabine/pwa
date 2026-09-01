@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.429';
+const APP_VERSION = 'v0.0.431';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -393,6 +393,7 @@ if ('serviceWorker' in navigator) {
     function setState(offline) {
         if (offline === shown) return;
         shown = offline;
+        if (window.animeiTrack) animeiTrack('offline', offline ? 'on' : 'off');
         render(offline);
         if (!offline && typeof showSnackbar === 'function' && typeof t === 'function') {
             // Тихо подтверждаем возврат: пользователь мог ждать именно этого,
@@ -1250,6 +1251,7 @@ function renderAuthState() {
             // Сначала гасим сессию на сервере (иначе refresh-токен остаётся
             // рабочим ещё 90 дней), потом чистим локально. Нет сети — выходим
             // всё равно: revokeCurrentSession ждёт не дольше 4 секунд.
+            if (window.animeiTrack) animeiTrack('auth', 'logout');
             if (typeof revokeCurrentSession === 'function') await revokeCurrentSession();
             logout();
             // Флаг переживает перезагрузку, снекбар — нет: показать его прямо

@@ -46,6 +46,7 @@ async function submitAuth() {
         localStorage.setItem('animei:email', email);
         // Переносим слова, сохранённые до входа, в аккаунт.
         await syncGuestWordsToAccount();
+        if (window.animeiTrack) animeiTrack('auth', authMode === 'login' ? 'login' : 'register');
         showSnackbar(t('auth.success'), { duration: 2000, type: 'success' });
         window.location.href = '../index.html';
     } catch (err) {

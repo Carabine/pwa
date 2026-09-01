@@ -145,6 +145,17 @@
         .seed__actions { flex-wrap: wrap; }
         .seed__actions .btn { flex: 1 1 auto; text-align: center; }
     }
+    .udecks-btn { padding: 2px 9px; border: 1px solid var(--line); border-radius: 999px; background: none;
+        color: var(--muted); font-size: 11px; cursor: pointer; font-family: inherit; }
+    .udecks-btn:hover { color: var(--fg); }
+    .udecks { margin-top: 8px; padding-left: 2px; }
+    .udecks__sum { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    .udeck { margin-bottom: 10px; }
+    .udeck__head { font-size: 12px; margin-bottom: 3px; }
+    .udeck__list { margin: 0; padding-left: 18px; font-size: 12px; color: var(--muted); }
+    .udeck__list li { margin: 1px 0; }
+    .udeck__kana { opacity: 0.7; }
+    .udeck__rep { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -471,15 +482,51 @@
             el.className = '';
             el.innerHTML = '<div class="ulist">' + r.data.map(function (u) {
                 var mark = u.isSeed ? ' <span style="color:var(--accent)">· seed</span>' : '';
-                return '<div class="urow"><div class="urow__mail">' + esc(u.email) + mark + '</div>' +
+                return '<div class="urow" data-uid="' + esc(u.id) + '"><div class="urow__mail">' + esc(u.email) + mark + '</div>' +
                     '<div class="urow__meta">' +
                     '<span>рег. ' + dt(u.createdAt) + '</span>' +
                     '<span>был ' + dt(u.lastSeen) + '</span>' +
                     '<span>слов <b>' + fmt(u.words) + '</b></span>' +
                     '<span>повторял <b>' + fmt(u.reviewedWords) + '</b></span>' +
-                    '</div></div>';
+                    '<button class="udecks-btn" data-uid="' + esc(u.id) + '">колоды</button>' +
+                    '</div><div class="udecks" hidden></div></div>';
             }).join('') + '</div>';
+            el.querySelectorAll('.udecks-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () { toggleDecks(btn); });
+            });
         }).catch(function () {});
+    }
+
+    // Колоды пользователя: только чтение, разворачиваются прямо в строке.
+    // Грузим по первому нажатию и запоминаем — повторное нажатие просто прячет.
+    function toggleDecks(btn) {
+        var row = btn.closest('.urow');
+        var box = row.querySelector('.udecks');
+        if (!box.hidden) { box.hidden = true; btn.textContent = 'колоды'; return; }
+        box.hidden = false;
+        btn.textContent = 'скрыть';
+        if (box.dataset.loaded) return;
+        box.innerHTML = '<div class="msg">Загрузка…</div>';
+        api('/users/' + encodeURIComponent(btn.dataset.uid) + '/decks').then(function (r) {
+            var d = r.data;
+            box.dataset.loaded = '1';
+            if (!d.decks.length) {
+                box.innerHTML = '<div class="msg">Колод нет · слов всего ' + fmt(d.totalWords) + '</div>';
+                return;
+            }
+            box.innerHTML = '<div class="udecks__sum">слов всего <b>' + fmt(d.totalWords) +
+                '</b> · вне колод <b>' + fmt(d.looseWords) + '</b></div>' +
+                d.decks.map(function (deck) {
+                    var words = deck.words.map(function (w) {
+                        var rep = w.srsReps ? ' <span class="udeck__rep">×' + w.srsReps + '</span>' : '';
+                        return '<li><b>' + esc(w.kanji) + '</b> <span class="udeck__kana">' + esc(w.kana) + '</span> — ' +
+                            esc(w.translation) + rep + '</li>';
+                    }).join('');
+                    return '<div class="udeck"><div class="udeck__head">' + esc(deck.emoji || '📦') + ' <b>' +
+                        esc(deck.name) + '</b> · ' + fmt(deck.words.length) + ' сл. · изм. ' + dt(deck.updatedAt) +
+                        '</div><ul class="udeck__list">' + words + '</ul></div>';
+                }).join('');
+        }).catch(function () { box.innerHTML = '<div class="msg">Не удалось загрузить</div>'; });
     }
 
     loadOverview();
