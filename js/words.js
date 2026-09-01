@@ -370,6 +370,16 @@ function attachLongPress(row, wordData) {
     row.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
+// Затухание нижней строки списка: только пока есть куда крутить. Скролл живёт
+// внутри .words-list лишь на ПК (css/app/pages.css); на телефоне список не
+// прокручивается сам по себе и условие просто не срабатывает.
+function updateListFade() {
+    const el = document.querySelector('.words-list');
+    if (!el) return;
+    el.classList.toggle('is-fade', el.scrollHeight - el.clientHeight - el.scrollTop > 4);
+    el.classList.toggle('is-fade-top', el.scrollTop > 4);
+}
+
 function renderWords() {
     closeWordActions();   // меню могло висеть у строки, которой больше нет
     const wordsListEl = document.querySelector('.words-list');
@@ -386,6 +396,7 @@ function renderWords() {
                 <a class="btn btn--primary" href="./catalog.html">${t('words.openCatalog')}</a>
             </div>`;
         renderBulkBar([]);
+        updateListFade();
         return;
     }
 
@@ -413,6 +424,7 @@ function renderWords() {
         wordsListEl.innerHTML = `<p class="words-nothing">${msg}</p>`;
         if (window.DecksUI) DecksUI.refresh();
         renderBulkBar(words);
+        updateListFade();
         return;
     }
 
@@ -426,6 +438,8 @@ function renderWords() {
 
     // Есть слова с ещё не готовым клипом — тихо перепроверим их чуть позже.
     if (words.some((w) => clipBadge(w) === 'pending')) scheduleClipRefresh();
+
+    updateListFade();
 }
 
 // ---------- Режим выбора и массовые действия ----------
@@ -1173,6 +1187,9 @@ window.addEventListener('DOMContentLoaded', () => {
         if (selectMode) exitSelect();
         else enterSelect();
     });
+
+    document.querySelector('.words-list')?.addEventListener('scroll', updateListFade, { passive: true });
+    window.addEventListener('resize', updateListFade);
 
     initLongPressGuard();
     initMenu();

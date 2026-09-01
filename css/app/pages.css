@@ -1068,6 +1068,53 @@
     to { opacity: 1; transform: none; }
 }
 
+/* ========== DICTIONARY — ПК: прокручивается сам список ==========
+   На мышином десктопе скроллилась вся колонка .dictionary. Колонка уже окна
+   (max-width 1080), поэтому полоса прокрутки висела посреди пустого поля, а
+   строки резались об шапку — карточка списка теряла верхние скругления.
+   Здесь скроллится только сам список: заголовок, поиск и колоды стоят на
+   месте, полоса прижата к правому краю карточки. .dictionary оставляем
+   прокручиваемой как запас — если одна шапка выше экрана, скроллится она. */
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+    .dictionary {
+        min-height: 0;
+    }
+
+    /* Специфичность 0,2,0 — перебивает flex-shrink:0 у .words-list--rows,
+       который держал список нескукоженным ради скролла всей колонки. */
+    .dictionary .words-list {
+        /* Растягивать нельзя (короткий список раздуло бы пустой карточкой на
+           весь экран) — только сжимать до свободного места. */
+        flex: 0 1 auto;
+        /* Ниже этого список уже не список: пусть лучше скроллится колонка. */
+        min-height: 240px;
+        overflow-y: auto;
+    }
+
+    /* Нижняя строка не обрывается по горизонту, а гаснет — видно, что список
+       продолжается. Классы вешает js/words.js и только пока есть куда крутить:
+       иначе маска съедала бы низ карточки и сам ползунок. */
+    .dictionary .words-list.is-fade {
+        -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+        mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+    }
+
+    /* Сетка карточек — без общей рамки, поэтому верхний ряд, уезжающий вверх,
+       тоже гасим. У списка строк рамка есть: там верхнее затухание размыло бы
+       скругление и границу карточки. */
+    .dictionary .words-list:not(.words-list--rows).is-fade-top {
+        -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24px);
+        mask-image: linear-gradient(to bottom, transparent, #000 24px);
+    }
+
+    .dictionary .words-list:not(.words-list--rows).is-fade.is-fade-top {
+        -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24px,
+            #000 calc(100% - 24px), transparent);
+        mask-image: linear-gradient(to bottom, transparent, #000 24px,
+            #000 calc(100% - 24px), transparent);
+    }
+}
+
 /* ========== DICTIONARY — MOBILE ========== */
 @media (max-width: 560px) {
     .dictionary {
