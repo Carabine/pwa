@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.425';
+const APP_VERSION = 'v0.0.426';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -1245,8 +1245,12 @@ function renderAuthState() {
 
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
+        logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
+            // Сначала гасим сессию на сервере (иначе refresh-токен остаётся
+            // рабочим ещё 90 дней), потом чистим локально. Нет сети — выходим
+            // всё равно: revokeCurrentSession ждёт не дольше 4 секунд.
+            if (typeof revokeCurrentSession === 'function') await revokeCurrentSession();
             logout();
             // Флаг переживает перезагрузку, снекбар — нет: показать его прямо
             // здесь бессмысленно, страница тут же перезагрузится и убьёт его.

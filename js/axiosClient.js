@@ -160,6 +160,19 @@ function logout() {
     storageRemove('animei:isAdmin'); // чтобы у следующего юзера не мигала ссылка «Админка»
 }
 
+// Погасить на сервере ИМЕННО текущую сессию (см. POST /auth/logout). Раньше
+// «Выйти» чистил только localStorage, и refresh-токен оставался годен все свои
+// 90 дней. Best-effort и с коротким таймаутом: нет сети — выходим локально, но
+// не заставляем человека ждать.
+async function revokeCurrentSession() {
+    const refreshToken = getCurrentRefreshToken();
+    if (!refreshToken) return;
+    try {
+        await client.post('auth/logout', { refreshToken },
+            { timeout: 4000, silentErrors: true, authorization: false });
+    } catch { /* офлайн или сервер молчит — локальный выход всё равно делаем */ }
+}
+
 // Сессия оборвалась не по нажатию «Выйти», а потому что сервер отказал в
 // обновлении токенов. Молчаливый выход выглядит как баг («меня опять
 // разлогинило») — говорим об этом прямо и подсвечиваем шапку сразу, не дожидаясь
