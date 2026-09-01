@@ -103,8 +103,18 @@
     }
 
     // Отправить очереди на сервер. Ошибки глотаем: офлайн-правки доедут при
-    // следующей загрузке страницы (очереди лежат в localStorage).
-    async function flushQueues() {
+    // следующей попытке (очереди лежат в localStorage).
+    // Разгрузку зовут теперь из нескольких мест (правка колоды, возврат связи,
+    // системный `online`, старт страницы), а браузер на восстановление сети шлёт
+    // сразу два события — без этого флага одна и та же колода уходила на сервер
+    // по три раза подряд (проверено на проде).
+    let flushInFlight = null;
+    function flushQueues() {
+        if (!flushInFlight) flushInFlight = runFlush().finally(() => { flushInFlight = null; });
+        return flushInFlight;
+    }
+
+    async function runFlush() {
         if (!signedIn() || typeof client === 'undefined') return;
         const deleted = idSet(DELETED_KEY);
         for (const id of deleted) {
@@ -367,4 +377,14 @@
     // Автосинк вошедшего при каждой загрузке страницы: подтягиваем колоды с
     // других устройств и допушиваем офлайн-правки. Тихо, сеть не обязательна.
     if (signedIn()) setTimeout(syncWithServer, 0);
+
+    // Правки, сделанные без сети, раньше лежали до СЛЕДУЮЩЕЙ загрузки страницы:
+    // человек мог доделать колоду в метро, выйти на воздух и сидеть в том же
+    // открытом приложении — на сервер ничего не уезжало. Теперь досылаем, как
+    // только связь снова заработала. Основной сигнал — animei:network из
+    // axiosClient.js (по реальным запросам), системный 'online' — как подсказка.
+    window.addEventListener('animei:network', (e) => {
+        if (e.detail && e.detail.online) flushQueues();
+    });
+    window.addEventListener('online', () => { flushQueues(); });
 })();

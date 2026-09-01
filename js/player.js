@@ -678,8 +678,18 @@ function navigateToSeason(season) {
     window.location.href = 'player.html?' + params.toString();
 }
 
+// Источник в ключах «где я остановился». У разных дорожек РАЗНЫЕ нарезки (Kodik
+// режет интро/пересказ, KickAssAnime и AnimeJoy — нет) и РАЗНЫЕ списки серий,
+// поэтому один общий номер серии и таймкод на все источники промахивались: после
+// смены дорожки «продолжить» попадало не туда. Строим часть ключа так же, как в
+// offsetStorageKey — по id дорожки (или провайдеру).
+function trackKeyPart() {
+    const tr = selectedTrack();
+    return tr.id || tr.provider || 'k';
+}
+
 function epStorageKey() {
-    return 'animei:lastEpisode:' + shikimoriId + ':s' + state.seasonIndex;
+    return 'animei:lastEpisode:' + shikimoriId + ':' + trackKeyPart() + ':s' + state.seasonIndex;
 }
 
 function seasonStorageKey() {
@@ -691,11 +701,16 @@ function seasonStorageKey() {
 // серия/таймкод текущего тайтла, animei:lastWatch — единый указатель для
 // карточки «Продолжить» на главной (последнее, что смотрели вообще).
 function watchPosKey() {
-    return 'animei:watchPos:' + shikimoriId;
+    return 'animei:watchPos:' + shikimoriId + ':' + trackKeyPart();
 }
 
 function loadWatchPos() {
-    return lsJson(watchPosKey());
+    const own = lsJson(watchPosKey());
+    if (own) return own;
+    // Разовый переезд со старого ключа (без дорожки): позицию не теряем, но
+    // дальше она уже пишется по своей дорожке. Промах на длину интро возможен
+    // ровно один раз — это меньшее зло, чем «продолжить» с нуля.
+    return lsJson('animei:watchPos:' + shikimoriId);
 }
 
 function writeWatchPos(epIndex, epNum, time, dur) {
@@ -751,6 +766,9 @@ video.addEventListener('ended', () => {
             writeWatchPos(epIndex + 1, next.number ?? epIndex + 2, 0, 0);
         } else {
             localStorage.removeItem(watchPosKey());
+            // И старый ключ без дорожки — иначе фолбэк в loadWatchPos поднимет
+            // позицию досмотренной серии обратно.
+            localStorage.removeItem('animei:watchPos:' + shikimoriId);
             const lw = lsJson('animei:lastWatch');
             if (lw && String(lw.id) === String(shikimoriId)) localStorage.removeItem('animei:lastWatch');
         }
