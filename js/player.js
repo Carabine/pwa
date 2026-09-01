@@ -1328,14 +1328,16 @@ async function loadSubtitles(episodeNumber = 1) {
 
         // Разовая миграция: сдвиги, сохранённые ПРЕЖНИМИ (ошибочными) версиями
         // автосинка, могут быть неверны — чистим все один раз, чтобы автосинк
-        // пересчитал их свежим, исправленным методом. Бамп «6» (21.08): до
-        // v0.0.275 ключ/язык считались от чужой дорожки, а «Part 2»-тайтлы
-        // получали чужие файлы субтитров — сохранённые сдвиги той эпохи мусорные.
-        if (localStorage.getItem('animei:subsOffsetReset') !== '6') {
+        // пересчитал их свежим, исправленным методом. Бамп «7» (01.09): серверный
+        // кэш сдвига не различал ИСТОЧНИК видео (ответ, посчитанный по нарезке
+        // Kodik, уезжал зрителю KickAssAnime), консенсус соседних серий перебивал
+        // верные серии (у «Наруто» первая серия получала −31с), а продолжения
+        // получали субтитры чужого сезона — все сдвиги той эпохи мусорные.
+        if (localStorage.getItem('animei:subsOffsetReset') !== '7') {
             Object.keys(localStorage)
                 .filter((k) => k.startsWith('animei:subsOffset:'))
                 .forEach((k) => localStorage.removeItem(k));
-            localStorage.setItem('animei:subsOffsetReset', '6');
+            localStorage.setItem('animei:subsOffsetReset', '7');
         }
         state.offset = parseFloat(localStorage.getItem(offsetStorageKey())) || 0;
         updateOffsetLabel();
