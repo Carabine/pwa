@@ -21,6 +21,28 @@ let sortMode = ['new', 'old', 'az'].includes(localStorage.getItem(SORT_KEY))
 let selectMode = false;
 const selected = new Set();
 
+// Чтение под словом — по ОБЩЕЙ настройке плеера (animei:readingMode), а не
+// всегда кана: страница слов её просто не смотрела, и у выбравших ромадзи здесь
+// всё равно показывалась хирагана. Логику повторяем ровно как в player.js,
+// включая старый ключ animei:romaji, чтобы выбор не разъезжался между экранами.
+function readingMode() {
+    const saved = localStorage.getItem('animei:readingMode');
+    if (saved === 'romaji' || saved === 'kana') return saved;
+    const legacy = localStorage.getItem('animei:romaji');
+    if (legacy === 'on') return 'romaji';
+    if (legacy === 'off') return 'kana';
+    return 'romaji';   // новый пользователь — по умолчанию ромадзи
+}
+
+// Готовый ромадзи берём из карточки, а если его нет — переводим кану сами
+// (romaji.js подключён на странице слов).
+function readingOf(wordData) {
+    const kana = wordData.kana || '';
+    if (readingMode() !== 'romaji') return kana;
+    if (wordData.romaji) return wordData.romaji;
+    return (typeof kanaToRomaji === 'function' && kana) ? kanaToRomaji(kana) : kana;
+}
+
 // Пока сервер дорезает клип, слово помечено «готовится». Несколько раз тихо
 // перечитываем список, чтобы значок ⏳ сам исчез, когда клип появится.
 let clipRefreshLeft = 3;
@@ -234,7 +256,7 @@ function buildCard(wordData) {
             <button class="word-card__menu" title="${esc(t('words.actions'))}" aria-label="${esc(t('words.actions'))}">⋯</button>
             <div class="word-card__head">
                 <span class="word-card__kanji">${esc(wordData.kanji)}</span>
-                ${wordData.kana ? `<span class="word-card__kana">${esc(wordData.kana)}</span>` : ''}
+                ${readingOf(wordData) ? `<span class="word-card__kana">${esc(readingOf(wordData))}</span>` : ''}
                 ${clipBadgeHtml(wordData)}
             </div>
             ${wordData.translation ? `<div class="word-card__meaning">${esc(wordData.translation)}</div>` : ''}
@@ -303,7 +325,7 @@ function buildRow(wordData) {
         ${selectMode ? `<span class="word-check${selected.has(wordData.id) ? ' is-on' : ''}">✓</span>` : ''}
         <div class="word-row__jp">
             <span class="word-row__kanji">${esc(wordData.kanji)}</span>
-            ${wordData.kana ? `<span class="word-row__kana">${esc(wordData.kana)}</span>` : ''}
+            ${readingOf(wordData) ? `<span class="word-row__kana">${esc(readingOf(wordData))}</span>` : ''}
         </div>
         <div class="word-row__tr" title="${esc(wordData.translation || '')}">${esc(firstMeaning(wordData.translation))}</div>
         <div class="word-row__badges">${badgesHtml}</div>
@@ -481,9 +503,15 @@ function renderBulkBar(visibleWords) {
     bar.innerHTML = `
         <span class="words-bulkbar__count">${n}</span>
         <button class="words-bulkbar__btn" id="bulk-all">${esc(t('words.selectAll'))}</button>
-        <button class="words-bulkbar__btn words-bulkbar__btn--primary" id="bulk-deck" ${n ? '' : 'disabled'}>${esc(t('words.toDeck'))}</button>
-        ${deckActive ? `<button class="words-bulkbar__btn" id="bulk-undeck" ${n ? '' : 'disabled'}>${esc(t('words.fromDeck'))}</button>` : ''}
-        <button class="words-bulkbar__btn words-bulkbar__danger" id="bulk-delete" ${n ? '' : 'disabled'}>${esc(t('words.bulkDelete'))}</button>
+        <button class="words-bulkbar__btn words-bulkbar__btn--primary" id="bulk-deck" ${n ? '' : 'disabled'}>
+            <span class="bb-wide">${esc(t('words.toDeck'))}</span><span class="bb-narrow">${esc(t('words.toDeckShort'))}</span>
+        </button>
+        ${deckActive ? `<button class="words-bulkbar__btn" id="bulk-undeck" ${n ? '' : 'disabled'}>
+            <span class="bb-wide">${esc(t('words.fromDeck'))}</span><span class="bb-narrow">${esc(t('words.fromDeckShort'))}</span>
+        </button>` : ''}
+        <button class="words-bulkbar__btn words-bulkbar__danger" id="bulk-delete" ${n ? '' : 'disabled'}>
+            <span class="bb-wide">${esc(t('words.bulkDelete'))}</span><span class="bb-narrow">${AnimeiWordEdit.menuIcons.del}</span>
+        </button>
         <button class="words-bulkbar__x" id="bulk-cancel" title="${esc(t('words.cancel'))}">×</button>
     `;
 
@@ -505,21 +533,55 @@ function renderBulkBar(visibleWords) {
         showSnackbar(t('words.removedFromDeckN').replace('{n}', removed), { duration: 2500 });
         exitSelect();
     });
-    bar.querySelector('#bulk-delete').addEventListener('click', async () => {
-        const count = selected.size;
-        if (!count) return;
-        if (!confirm(t('words.bulkDeleteConfirm').replace('{n}', count))) return;
-        const gone = [];
-        for (const id of [...selected]) {
-            try {
-                await deleteWord(id);
-                if (window.Decks) Decks.forgetWord(id);
-                gone.push(id);
-            } catch (err) { console.error('Не удалось удалить слово', id, err); }
-        }
-        const goneSet = new Set(gone);
-        allWords = allWords.filter((w) => !goneSet.has(w.id));
-        showSnackbar(t('words.bulkDeleted').replace('{n}', gone.length), { duration: 3000 });
+    bar.querySelector('#bulk-delete').addEventListener('click', async (e) => {
+        const ids = [...selected];
+        if (!ids.length) return;
+        if (!confirm(t('words.bulkDeleteConfirm').replace('{n}', ids.length))) return;
+
+        // Удаляем ПАЧКАМИ и сразу убираем удалённое с экрана. Раньше цикл шёл
+        // строго по одному и перерисовывал список только в самом конце: на
+        // полусотне слов это больше десяти секунд, в которые ничего не
+        // происходит — выглядело как «кнопка не работает», хотя слова уже
+        // удалялись (после перезагрузки их не было).
+        const btn = e.currentTarget;
+        btn.disabled = true;
+        let done = 0;
+        let failed = 0;
+        const tick = () => {
+            // Подписи две (широкая и узкая) — прогресс пишем в обе.
+            const label = t('words.bulkDeleting').replace('{i}', done).replace('{n}', ids.length);
+            btn.querySelectorAll('.bb-wide, .bb-narrow').forEach((el) => { el.textContent = label; });
+        };
+        tick();
+
+        const queue = [...ids];
+        const drop = (id) => {
+            allWords = allWords.filter((w) => w.id !== id);
+            selected.delete(id);
+        };
+        // Четыре параллельных удаления: сервер справляется, а ждать полминуты
+        // на большом наборе незачем. Больше не берём — это чужая база и диск.
+        const workers = Array.from({ length: 4 }, async () => {
+            for (let id = queue.shift(); id; id = queue.shift()) {
+                try {
+                    await deleteWord(id);
+                    if (window.Decks) Decks.forgetWord(id);
+                    drop(id);
+                    done++;
+                } catch (err) {
+                    console.error('Не удалось удалить слово', id, err);
+                    failed++;
+                }
+                tick();
+                // Перерисовываем не на каждое слово, а каждые четыре: список
+                // тает на глазах, но и не дёргается на каждый ответ сервера.
+                if ((done + failed) % 4 === 0) renderWords();
+            }
+        });
+        await Promise.all(workers);
+
+        showSnackbar(t('words.bulkDeleted').replace('{n}', done), { duration: 3000 });
+        if (failed) showSnackbar(t('words.bulkDeleteFailed').replace('{n}', failed), { duration: 4000, type: 'error' });
         exitSelect();
     });
 }

@@ -478,7 +478,11 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    flex-wrap: wrap;
+    /* Одна строка. С переносом панель разъезжалась на три ряда, как только к
+       «В колоду» добавлялась «Из колоды» (это происходит при активной колоде) —
+       и на телефоне, и на десктопе. Кнопки при нехватке места ужимаются сами
+       (см. min-width/ellipsis ниже), а не уезжают вниз. */
+    flex-wrap: nowrap;
     justify-content: center;
 }
 /* Счётчик выбранного — маленький бейдж вместо слова «Выбрано». */
@@ -508,6 +512,11 @@
     font-family: var(--font);
     cursor: pointer;
     white-space: nowrap;
+    /* Панель держится в одну строку, поэтому на узком экране кнопки ужимаются
+       (подпись подрезается многоточием), а не переносятся вниз. */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     transition: border-color var(--transition), background var(--transition);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -1256,4 +1265,17 @@
         box-shadow: none;
         border-color: var(--border);
     }
+}
+
+/* Панель массовых действий: на широком экране подписи словами, на узком —
+   короткие («+ колода») и корзина вместо «Удалить». Без этого пять кнопок в
+   одну строку влезали только многоточиями («В кол…», «Из коло…»). */
+.words-bulkbar__btn .bb-narrow { display: none; }
+.words-bulkbar__btn .bb-narrow svg { display: block; width: 16px; height: 16px; }
+
+@media (max-width: 480px) {
+    .words-bulkbar__btn .bb-wide { display: none; }
+    .words-bulkbar__btn .bb-narrow { display: inline-flex; align-items: center; }
+    .words-bulkbar__btn { padding: 0 10px; }
+    .words-bulkbar { gap: 4px; padding: 8px 6px; }
 }
