@@ -1576,7 +1576,10 @@ async function pollPreciseSync(jobId) {
                 params: { jobId }, timeout: 20000,
             });
             const s = data.data || {};
-            if (s.done) return s;
+            // done — результат готов. unknown/ok:false — джобы больше нет (бэкенд
+            // перезапустили) или подбор нельзя выполнить: тоже выходим, а не ждём
+            // впустую до конца пятиминутного таймаута.
+            if (s.done || s.unknown || s.ok === false) return s;
         } catch { /* временный обрыв — продолжаем опрос */ }
     }
     return { ok: false, reason: 'timeout' };
@@ -1609,18 +1612,23 @@ async function preciseSyncSubs() {
         let r = res.data || {};
         if (r.ok && r.pending && r.jobId) r = await pollPreciseSync(r.jobId);
         if (r.ok && Number.isFinite(r.offset)) {
+            // Сдвиг мог прийти двумя путями: распознали речь этой серии (точный) или
+            // взяли согласованный сдвиг соседних серий дорожки. Второй тоже верен, но
+            // говорим о нём честно — и не помечаем как whisper-verified.
+            const bySiblings = r.method === 'sibling-consensus';
             if (offsetStorageKey() === key) {   // серия не сменилась за время подбора
                 state.offset = r.offset;
                 updateOffsetLabel();
                 saveOffset();
-                localStorage.setItem(key + ':m', 'whisper-verified');   // точный — больше не трогаем
+                localStorage.setItem(key + ':m', bySiblings ? 'consensus' : 'whisper-verified');
                 renderTranscript();
                 updateNowCue(state.activeCueIndex);
                 refreshOffsetDisplay();
             }
             setPreciseLoading(false);
-            if (subsPreciseStatus) subsPreciseStatus.textContent = t('subs.precise.done');
-            showSnackbar(t('subs.precise.done'), { duration: 3500 });
+            const msg = t(bySiblings ? 'subs.precise.consensus' : 'subs.precise.done');
+            if (subsPreciseStatus) subsPreciseStatus.textContent = msg;
+            showSnackbar(msg, { duration: 3500 });
             setTimeout(closeSubsPicker, 900);
         } else {
             setPreciseLoading(false);
@@ -1628,8 +1636,12 @@ async function preciseSyncSubs() {
             // нашёлся», а скорее ФАЙЛ от другой серии: говорим об этом прямо и
             // предлагаем взять следующий кандидат из архива.
             const wrongFile = r.reason === 'no-match' && (r.votes || 0) <= 2 && !!state.subsFile;
+            // Подбор оборвался не по существу (перезапуск бэкенда, занятый верификатор) —
+            // это «повтори», а не «не получилось»: следующая попытка обычно проходит.
+            const lost = r.reason === 'lost' || r.reason === 'busy' || r.unknown;
             if (subsPreciseStatus) {
-                subsPreciseStatus.textContent = t(wrongFile ? 'subs.wrongFile' : 'subs.precise.fail');
+                subsPreciseStatus.textContent = t(
+                    wrongFile ? 'subs.wrongFile' : (lost ? 'subs.precise.retry' : 'subs.precise.fail'));
             }
             const altBtn = document.getElementById('subs-alt-file');
             if (altBtn && wrongFile) altBtn.hidden = false;

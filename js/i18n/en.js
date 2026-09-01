@@ -200,6 +200,8 @@ window.I18N_EN = {
         'subs.precise.hint': 'We’ll find the exact offset from the audio and save it forever for this episode.',
         'subs.precise.working': '🎧 Recognizing speech… this may take a couple of minutes. The offset we find is saved forever for this episode.',
         'subs.precise.done': '✓ Subtitles precisely synced.',
+        'subs.precise.consensus': '✓ Offset taken from neighboring episodes — subtitles are in sync.',
+        'subs.precise.retry': 'The match was interrupted. Tap again.',
         'subs.precise.fail': 'Couldn’t find a precise match. Shift the subtitles manually below.',
         'subs.wrongFile': 'These subtitles don’t seem to be from this episode — the content doesn’t match the speech.',
         'subs.tryOther': 'Try another subtitle file',
