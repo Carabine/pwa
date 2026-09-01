@@ -419,17 +419,21 @@
         return typeof isLoggedIn === 'function' && isLoggedIn() && typeof client !== 'undefined';
     }
 
-    // Отправки сериализуем в одну цепочку: без этого два POST'а по одному слову
-    // могли уйти параллельно и прийти на сервер в обратном порядке, затерев
-    // свежий прогресс старым (сервер пишет последним-выигравшим, без версии).
-    let srsQueue = Promise.resolve();
+    // Прогресс уходит через исходящий ящик (axiosClient.js): повторение сначала
+    // ложится в localStorage, потом отправляется. Так повторения, сделанные без
+    // сети, доезжают до сервера при её возвращении, а не остаются навсегда только
+    // на этом устройстве. Прежняя цепочка промисов больше не нужна: в ящике на
+    // слово хранится ПОСЛЕДНЕЕ состояние, поэтому порядок отправки не важен.
+    let flushTimer = null;
     function pushSrsToServer(wordId, entry) {
         if (!canSync() || String(wordId).startsWith('local-')) return;
-        srsQueue = srsQueue.then(() =>
-            client.post('words/srs', {
-                updates: [{ id: wordId, ...entry }],
-            }).catch(() => { /* нет сети — локальная копия расписания всё равно есть */ })
-        );
+        if (typeof queueSrsUpdate !== 'function') return;   // старый закешированный axiosClient
+        queueSrsUpdate(wordId, entry);
+        // Карточки выпускаются пачками — отправляем одним запросом, а не по одной.
+        clearTimeout(flushTimer);
+        flushTimer = setTimeout(() => {
+            if (typeof flushSrsOutbox === 'function') flushSrsOutbox();
+        }, 800);
     }
 
     // На новом устройстве локального расписания нет — берём его с сервера

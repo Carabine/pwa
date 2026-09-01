@@ -69,6 +69,8 @@ window.I18N_EN = {
         'nav.feedback': 'Feedback',
         'nav.site': '← Animei website',
         'nav.logout': 'Log out',
+        'offline.bar': 'No connection. Reviews and saved cards still work',
+        'offline.back': 'Back online',
         'nav.login': 'Log in',
 
         'ui.quality.title': 'Video quality',

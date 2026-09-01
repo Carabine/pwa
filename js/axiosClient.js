@@ -41,8 +41,16 @@ function createAxiosClient({ options, getCurrentAccessToken, getCurrentRefreshTo
     );
 
     client.interceptors.response.use(
-        (response) => response,
+        (response) => {
+            // Ответ из офлайн-кеша сервис-воркера помечен заголовком: формально
+            // запрос «успешен», но сети нет — иначе каталог офлайн выглядел живым.
+            signalNetwork(!response.headers?.['x-animei-cache']);
+            return response;
+        },
         async (error) => {
+            // Ответ пришёл (пусть и с ошибкой) — сеть жива; ответа нет вовсе
+            // (обрыв, таймаут) — считаем, что связи нет. См. signalNetwork.
+            signalNetwork(!!error.response);
             // Снекбар — для HTTP-ошибок кроме 401 (тот уходит в refresh-логику ниже).
             // Сетевые ошибки без ответа не показываем: офлайн-режим и фоновые
             // опросы иначе спамили бы. Повторы одного сообщения глушим на 5 с.
@@ -204,3 +212,100 @@ function checkAuth() {
 function isLoggedIn() {
     return !!getCurrentAccessToken();
 }
+
+// ========== Исходящий ящик повторений (SRS) ==========
+// Повторения, сделанные БЕЗ СЕТИ, до этого пропадали для сервера: отправка была
+// «выстрелил и забыл» (client.post(...).catch(() => {})), очереди не было —
+// сеть возвращалась, а прогресс так и оставался только на этом устройстве
+// (проверено: после возврата сети клиент не слал НИ ОДНОГО words/srs). На самом
+// устройстве расписание не терялось, но на втором устройстве его не было.
+// Теперь каждое повторение сперва ложится в ящик, а отправка — попытка его
+// разгрузить: получилось — вычистили, нет — полежит до следующего раза.
+//
+// Ключ ящика — id слова, значение — ПОСЛЕДНЕЕ состояние карточки. Поэтому
+// порядок отправки неважен (раньше ради него держали цепочку промисов):
+// свежая запись просто затирает предыдущую, а сервер пишет «последним-выигравшим».
+const SRS_OUTBOX_KEY = 'animei:srsOutbox';
+const SRS_OUTBOX_MAX = 500;
+
+// ЖИВА ЛИ СЕТЬ НА САМОМ ДЕЛЕ. По navigator.onLine судить нельзя: он говорит лишь
+// «сетевой интерфейс есть» — на вайфае без интернета и в headless-браузере он
+// остаётся true (проверено). Поэтому судим по нашим же запросам: пришёл ответ —
+// связь есть (даже если это 4xx), не пришло ничего — связи нет. Событие
+// animei:network слушает полоса «нет сети» (offlineBar в app.js).
+let networkAlive = true;
+function signalNetwork(alive) {
+    if (alive === networkAlive) return;
+    networkAlive = alive;
+    window.dispatchEvent(new CustomEvent('animei:network', { detail: { online: alive } }));
+    if (alive) flushSrsOutbox();   // связь вернулась — досылаем накопленное
+}
+window.ANIMEI_NET = { isOnline: () => networkAlive };
+
+function srsOutboxRead() {
+    try {
+        const box = JSON.parse(localStorage.getItem(SRS_OUTBOX_KEY) ?? '{}');
+        return (box && typeof box === 'object') ? box : {};
+    } catch {
+        return {};
+    }
+}
+
+function srsOutboxWrite(box) {
+    try { localStorage.setItem(SRS_OUTBOX_KEY, JSON.stringify(box)); } catch { /* места нет — не критично */ }
+}
+
+function queueSrsUpdate(id, entry) {
+    if (!id || !entry || String(id).startsWith('local-')) return;   // гостевые слова серверу не нужны
+    const box = srsOutboxRead();
+    const keys = Object.keys(box);
+    // Переполнение (месяцы офлайна): выкидываем самую старую запись, а не отказываемся писать.
+    if (keys.length >= SRS_OUTBOX_MAX && !(id in box)) delete box[keys[0]];
+    box[id] = { ...entry, at: Date.now() };
+    srsOutboxWrite(box);
+}
+
+// Удаляем только то, что реально отправили: пока запрос летел, слово могли
+// повторить ещё раз — у такой записи другой `at`, и её нужно оставить.
+function srsOutboxDrop(sentAt) {
+    const box = srsOutboxRead();
+    let changed = false;
+    for (const [id, at] of Object.entries(sentAt)) {
+        if (box[id] && box[id].at === at) { delete box[id]; changed = true; }
+    }
+    if (changed) srsOutboxWrite(box);
+}
+
+let srsFlushing = null;
+function flushSrsOutbox() {
+    if (srsFlushing) return srsFlushing;                       // уже разгружаем
+    if (!isLoggedIn() || navigator.onLine === false) return Promise.resolve(false);
+    const box = srsOutboxRead();
+    const ids = Object.keys(box);
+    if (!ids.length) return Promise.resolve(true);
+
+    const sentAt = {};
+    const updates = ids.map((id) => {
+        const { at, ...entry } = box[id];
+        sentAt[id] = at;
+        return { id, ...entry };
+    });
+
+    srsFlushing = client.post('words/srs', { updates }, { silentErrors: true })
+        .then(() => { srsOutboxDrop(sentAt); return true; })
+        .catch((err) => {
+            // Сервер ОТВЕТИЛ (пусть и 4xx — например, сессия кончилась): держать
+            // запись вечно незачем, повтор ничего не изменит. Нет ответа вовсе
+            // (офлайн) или 5xx — оставляем в ящике до следующей попытки.
+            const status = err?.response?.status;
+            if (status && status < 500) srsOutboxDrop(sentAt);
+            return false;
+        })
+        .finally(() => { srsFlushing = null; });
+    return srsFlushing;
+}
+
+// Сеть вернулась — разгружаем сразу; при обычной загрузке страницы ждём пару
+// секунд, чтобы не соперничать с запросами самой страницы.
+window.addEventListener('online', () => { flushSrsOutbox(); });
+setTimeout(() => { flushSrsOutbox(); }, 2500);

@@ -69,6 +69,8 @@ window.I18N_UK = {
         'nav.feedback': 'Зворотний зв’язок',
         'nav.site': '← На сайт Animei',
         'nav.logout': 'Вийти',
+        'offline.bar': 'Немає мережі. Повторення та збережені картки працюють',
+        'offline.back': 'Мережа повернулася',
         'nav.login': 'Увійти',
 
         'ui.quality.title': 'Якість відео',

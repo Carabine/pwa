@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.419';
+const APP_VERSION = 'v0.0.422';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -354,6 +354,71 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.log('SW registration failed:', err));
     });
 }
+
+// ========== Индикатор «нет сети» ==========
+
+// Без него офлайн выглядел как «сайт подглючивает»: на главной молча пропадают
+// «продолжить смотреть» и рекомендации, каталог показывает кэшированный список,
+// который не открывается, плеер бесконечно «переподключается». Приложение при
+// этом РАБОТАЕТ — повторение и сохранённые карточки доступны, — поэтому одна
+// честная полоса под шапкой объясняет и что случилось, и что осталось можно.
+(function offlineBar() {
+    let bar = null;
+
+    function ensureBar() {
+        if (bar && bar.isConnected) return bar;
+        bar = document.createElement('div');
+        bar.className = 'offline-bar';
+        bar.setAttribute('role', 'status');
+        // Шапка есть на всех страницах приложения; полоса встаёт сразу под ней и
+        // сдвигает содержимое вниз, а не накрывает его (перекрытие мешало бы
+        // кнопкам оценки в повторении).
+        const header = document.querySelector('.header');
+        if (header && header.parentNode) header.insertAdjacentElement('afterend', bar);
+        else document.body.prepend(bar);
+        return bar;
+    }
+
+    function render(offline) {
+        if (offline) {
+            const el = ensureBar();
+            el.textContent = (typeof t === 'function' ? t('offline.bar') : 'Нет сети. Повторение и сохранённые карточки работают');
+        } else if (bar) {
+            bar.remove();
+            bar = null;
+        }
+    }
+
+    let shown = false;
+    function setState(offline) {
+        if (offline === shown) return;
+        shown = offline;
+        render(offline);
+        if (!offline && typeof showSnackbar === 'function' && typeof t === 'function') {
+            // Тихо подтверждаем возврат: пользователь мог ждать именно этого,
+            // чтобы открыть аниме или каталог.
+            showSnackbar(t('offline.back'), { duration: 2500 });
+        }
+    }
+
+    // Главный сигнал — РЕАЛЬНЫЕ запросы приложения (animei:network из
+    // axiosClient.js): navigator.onLine говорит лишь про сетевой интерфейс и
+    // остаётся true на вайфае без интернета, поэтому одному ему верить нельзя.
+    window.addEventListener('animei:network', (e) => setState(!e.detail.online));
+    // Системные события — быстрая подсказка: «offline» показываем сразу,
+    // «online» же только снимаем полосу, если запросы уже проходят.
+    window.addEventListener('offline', () => setState(true));
+    window.addEventListener('online', () => {
+        if (!window.ANIMEI_NET || window.ANIMEI_NET.isOnline()) setState(false);
+    });
+
+    // Стартовое состояние (страницу могли открыть уже без сети).
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => { if (!navigator.onLine) setState(true); });
+    } else if (!navigator.onLine) {
+        setState(true);
+    }
+})();
 
 // ========== PWA Install ==========
 

@@ -242,3 +242,19 @@ a[href$="watch.html"] {
     gap: 10px;
     flex-wrap: wrap;
 }
+
+/* ========== ПОЛОСА «НЕТ СЕТИ» ========== */
+
+/* Встаёт под шапкой и сдвигает содержимое вниз (не накрывает его: кнопки
+   оценки в повторении должны оставаться на своих местах). Создаётся из JS —
+   см. offlineBar() в app.js, — поэтому в разметке страниц её нет. */
+.offline-bar {
+    flex-shrink: 0;
+    padding: 8px 20px;
+    background: color-mix(in srgb, var(--warning) 16%, var(--surface));
+    border-bottom: 1px solid color-mix(in srgb, var(--warning) 32%, var(--border));
+    color: var(--text);
+    font-size: 12.5px;
+    line-height: 1.35;
+    text-align: center;
+}

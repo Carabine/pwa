@@ -1,6 +1,6 @@
 // Пути относительные — SW живёт в /app/, поэтому './' указывает на /app/.
 // ВАЖНО: меняй номер версии при каждом деплое — иначе старый кеш не сбросится.
-const CACHE_NAME = 'animei-cache-v0.0.419';
+const CACHE_NAME = 'animei-cache-v0.0.422';
 // Полный список генерит deploy/build-pwa.mjs из содержимого dist (страницы,
 // css, js, libs; скрытая админка исключена) и подставляет сюда при сборке.
 // В исходнике — только app-shell: без сборки SW тоже работает, офлайн беднее.
@@ -23,8 +23,25 @@ self.addEventListener('install', (event) => {
 // только запасной вариант в офлайне. Так исправления доезжают сразу после
 // деплоя, без ручного сброса кеша у каждого пользователя.
 //
-// SW живёт в /app/, поэтому перехватывает только запросы к приложению;
-// вызовы к /api/... сюда не попадают. Кешируем лишь свои GET-запросы.
+// SW живёт в /app/ — это ограничивает, какие СТРАНИЦЫ он контролирует, но
+// перехватывает он ВСЕ их запросы, включая /api/... (раньше здесь было написано
+// обратное). Благодаря этому офлайн работают каталог и словарь: GET-ответы API
+// лежат в том же кеше. Ответ, отданный из кеша, помечаем заголовком — по нему
+// приложение понимает, что сети нет, и показывает полосу (без пометки офлайн
+// каталог выглядел как живой).
+// Копия ответа с пометкой «это из офлайн-кеша». Заголовки Response неизменяемы,
+// поэтому пересобираем ответ целиком; тело читаем через blob — так проходят и
+// страницы, и JSON API.
+async function markCached(res) {
+    try {
+        const headers = new Headers(res.headers);
+        headers.set('X-Animei-Cache', '1');
+        return new Response(await res.blob(), { status: res.status, statusText: res.statusText, headers });
+    } catch {
+        return res;   // не смогли пересобрать — лучше отдать как есть, чем ошибку
+    }
+}
+
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     if (request.method !== 'GET') return;
@@ -70,9 +87,10 @@ self.addEventListener('fetch', (event) => {
                 // (страницу ещё не открывали онлайн), для навигаций отдаём
                 // app-shell — index.html, — вместо сетевой ошибки.
                 const cached = await caches.match(request);
-                if (cached) return cached;
+                if (cached) return markCached(cached);
                 if (request.mode === 'navigate') {
-                    return (await caches.match('./index.html')) || (await caches.match('./'));
+                    const shell = (await caches.match('./index.html')) || (await caches.match('./'));
+                    return shell ? markCached(shell) : Response.error();
                 }
                 return Response.error();
             })

@@ -73,6 +73,8 @@ const I18N = {
         'nav.feedback': 'Обратная связь',
         'nav.site': '← На сайт Animei',
         'nav.logout': 'Выйти',
+        'offline.bar': 'Нет сети. Повторение и сохранённые карточки работают',
+        'offline.back': 'Сеть вернулась',
         'nav.login': 'Войти',
 
         'ui.quality.title': 'Качество видео',
