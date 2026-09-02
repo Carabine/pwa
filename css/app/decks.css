@@ -356,17 +356,26 @@
     transition: background var(--transition), color var(--transition);
 }
 
+/* Обе кнопки шапки прижаты вправо одной группой. */
+.deck-editor__head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
 .deck-editor__kebab { font-size: 17px; }
-.deck-editor__close { font-size: 18px; margin-left: auto; }
+.deck-editor__close { font-size: 18px; }
 
 @media (hover: hover) and (pointer: fine) {
     .deck-editor__hbtn:hover { background: var(--border); color: var(--text); }
 }
 
-/* Меню действий раскрывается ПОД кнопкой и влево-направо от неё: общий
-   .words-menu прижат к правому краю обёртки, а тут кнопка стоит слева. */
+/* Меню действий раскрывается под кнопкой; общий .words-menu уже прижат к
+   правому краю обёртки — кнопка стоит справа, значит меню уходит влево, внутрь
+   модалки. */
 .deck-editor__kebab-wrap { position: relative; display: flex; }
-.deck-editor__kebab-wrap .words-menu { right: auto; left: 0; }
 
 /* Строка состояния замороженной колоды. Появляется только когда есть что
    сказать, поэтому объясняет, а не занимает место постоянно. */

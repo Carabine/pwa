@@ -453,10 +453,14 @@
 
             let frozen = !!(deck && deck.frozen);
 
-            // Шапка: слева «⋯» с действиями над колодой, справа крестик. Сами
-            // действия (заморозить, удалить) — под точками, а не отдельными
-            // блоками в теле: тело редактора — это то, что правят и сохраняют.
+            // Шапка: слева название, справа «⋯» с действиями над колодой и
+            // крестик — ровно как в шапке карточки слова. Сами действия
+            // (заморозить, удалить) живут под точками, а не отдельными блоками
+            // в теле: тело редактора — это то, что правят и сохраняют.
             const head = h('div', 'deck-editor__head');
+            head.appendChild(h('span', 'deck-editor__head-title',
+                esc(editing ? t('decks.manage') : t('decks.newTitle'))));
+            const headActions = h('span', 'deck-editor__head-actions');
             let kebabWrap = null;
             if (editing) {
                 kebabWrap = h('span', 'deck-editor__kebab-wrap');
@@ -466,7 +470,7 @@
                 kebab.setAttribute('aria-label', t('words.actions'));
                 kebab.setAttribute('aria-haspopup', 'menu');
                 kebabWrap.appendChild(kebab);
-                head.appendChild(kebabWrap);
+                headActions.appendChild(kebabWrap);
                 kebab.addEventListener('click', () => this._toggleDeckMenu(kebabWrap, id, {
                     isFrozen: () => frozen,
                     onFreeze: () => {
@@ -488,13 +492,12 @@
                     },
                 }));
             }
-            head.appendChild(h('span', 'deck-editor__head-title',
-                esc(editing ? t('decks.manage') : t('decks.newTitle'))));
             const closeBtn = h('button', 'deck-editor__hbtn deck-editor__close', '×');
             closeBtn.type = 'button';
             closeBtn.setAttribute('aria-label', t('words.cancel'));
             closeBtn.addEventListener('click', () => finish(null));
-            head.appendChild(closeBtn);
+            headActions.appendChild(closeBtn);
+            head.appendChild(headActions);
             box.appendChild(head);
 
             // Строка состояния — только у замороженной колоды: постоянный
