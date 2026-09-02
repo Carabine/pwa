@@ -247,6 +247,11 @@
     align-items: center;
     gap: 9px;
     width: 100%;
+    /* Названия действий не переносим: меню в модалке слова лежит в узком
+       родителе (position:absolute), там ширина съезжала к min-width, и
+       «Добавить в колоду» разрывалось на две строки. С nowrap меню растёт под
+       самую длинную подпись — подписи тут короткие, места хватает. */
+    white-space: nowrap;
     padding: 10px 12px;
     background: none;
     border: none;

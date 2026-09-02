@@ -284,78 +284,37 @@
 }
 
 /* ========== ОБРАТНАЯ СВЯЗЬ ==========
-   Единственный блок настроек, который не настройка, а приглашение написать.
-   Поэтому у него своя рамка и мягкая подсветка акцентом: среди одинаковых
-   серых карточек он иначе терялся бы в самом низу длинного списка. */
-.feedback-card {
-    display: flex;
-    gap: 14px;
-    padding: 18px;
-    border-radius: var(--radius);
-    border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
-    /* Подсветка идёт из левого верхнего угла — от значка, а не заливает всю
-       карточку: так блок заметен, но не спорит с кнопками настроек. */
-    background:
-        radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--primary) 16%, transparent), transparent 60%),
-        var(--card);
-}
-
-.feedback-card__ico {
-    flex: 0 0 auto;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: color-mix(in srgb, var(--primary) 18%, transparent);
-    color: var(--primary);
-}
-
-.feedback-card__ico svg { width: 21px; height: 21px; }
-
-.feedback-card__body {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.feedback-card__title {
-    font-size: 15px;
-    font-weight: 700;
-}
-
-.feedback-card__text {
+   Живёт в обычной .settings-card — своя рамка с цветной подсветкой пробовалась
+   и выбивалась из страницы. От соседей блок отличает только явная кнопка:
+   ссылка внутри абзаца читалась как сноска, а не как приглашение написать. */
+.feedback-text {
     font-size: 13.5px;
     color: var(--text-muted);
     line-height: 1.5;
 }
 
-.feedback-card__btn {
+.feedback-btn {
     align-self: flex-start;
-    margin-top: 6px;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    /* Слева отступ меньше: у «самолётика» много воздуха внутри глифа. */
+    /* Слева отступ меньше: у «самолётика» много воздуха внутри самого глифа. */
     padding: 9px 16px 9px 13px;
     border-radius: 999px;
     background: var(--primary);
     color: #fff;
     font-size: 14px;
     font-weight: 600;
-    transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+    transition: background var(--transition), transform var(--transition);
 }
 
-.feedback-card__btn svg { width: 17px; height: 17px; }
+.feedback-btn svg { width: 17px; height: 17px; }
 
 @media (hover: hover) and (pointer: fine) {
-    .feedback-card__btn:hover {
+    .feedback-btn:hover {
         background: var(--primary-hover);
         color: #fff;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 40%, transparent);
     }
 }
 
