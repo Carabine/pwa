@@ -156,6 +156,13 @@
     .udeck__list li { margin: 1px 0; }
     .udeck__kana { opacity: 0.7; }
     .udeck__rep { color: var(--accent); }
+    .uwords { margin-top: 8px; padding-left: 2px; }
+    .uwords__q { width: 100%; max-width: 320px; margin-bottom: 6px; padding: 4px 8px; font: inherit;
+        font-size: 12px; color: var(--fg); background: none; border: 1px solid var(--line); border-radius: 8px; }
+    .uwords__ul { margin: 0 0 6px; padding-left: 18px; font-size: 12px; }
+    .uwords__ul li { margin: 4px 0; }
+    .uword__sent { color: var(--muted); }
+    .uword__meta { font-size: 11px; color: var(--muted); opacity: 0.8; }
 </style>
 </head>
 <body>
@@ -489,10 +496,12 @@
                     '<span>слов <b>' + fmt(u.words) + '</b></span>' +
                     '<span>повторял <b>' + fmt(u.reviewedWords) + '</b></span>' +
                     '<button class="udecks-btn" data-uid="' + esc(u.id) + '">колоды</button>' +
-                    '</div><div class="udecks" hidden></div></div>';
+                    '<button class="udecks-btn uwords-btn" data-uid="' + esc(u.id) + '">слова</button>' +
+                    '</div><div class="udecks" hidden></div><div class="uwords" hidden></div></div>';
             }).join('') + '</div>';
             el.querySelectorAll('.udecks-btn').forEach(function (btn) {
-                btn.addEventListener('click', function () { toggleDecks(btn); });
+                var open = btn.classList.contains('uwords-btn') ? toggleWords : toggleDecks;
+                btn.addEventListener('click', function () { open(btn); });
             });
         }).catch(function () {});
     }
@@ -527,6 +536,65 @@
                         '</div><ul class="udeck__list">' + words + '</ul></div>';
                 }).join('');
         }).catch(function () { box.innerHTML = '<div class="msg">Не удалось загрузить</div>'; });
+    }
+
+    // Все сохранённые слова пользователя — без привязки к колодам (слово может
+    // лежать вне колод и в списке колод его не видно). Только чтение.
+    // Грузим первую сотню, дальше — «показать ещё»; поиск уходит на сервер,
+    // чтобы не тянуть весь пул ради одной карточки.
+    function toggleWords(btn) {
+        var row = btn.closest('.urow');
+        var box = row.querySelector('.uwords');
+        if (!box.hidden) { box.hidden = true; btn.textContent = 'слова'; return; }
+        box.hidden = false;
+        btn.textContent = 'скрыть слова';
+        if (box.dataset.loaded) return;
+        box.dataset.loaded = '1';
+        box.innerHTML = '<input class="uwords__q" type="search" placeholder="поиск по слову, чтению, переводу">' +
+            '<div class="uwords__list"><div class="msg">Загрузка…</div></div>';
+        var input = box.querySelector('.uwords__q');
+        var timer = 0;
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () { loadWords(box, btn.dataset.uid, 0, input.value.trim()); }, 300);
+        });
+        loadWords(box, btn.dataset.uid, 0, '');
+    }
+
+    // offset = 0 — новая выборка, иначе дописываем страницу к уже показанному.
+    function loadWords(box, uid, offset, q) {
+        var list = box.querySelector('.uwords__list');
+        if (!offset) list.innerHTML = '<div class="msg">Загрузка…</div>';
+        api('/users/' + encodeURIComponent(uid) + '/words?limit=100&offset=' + offset +
+            (q ? '&q=' + encodeURIComponent(q) : '')).then(function (r) {
+            box._items = offset ? (box._items || []).concat(r.data.words) : r.data.words;
+            box._q = q;
+            renderWords(box, uid, r.data.total);
+        }).catch(function () { list.innerHTML = '<div class="msg">Не удалось загрузить</div>'; });
+    }
+
+    function renderWords(box, uid, total) {
+        var items = box._items || [];
+        var rows = items.map(function (w) {
+            var decks = w.decks.map(function (d) { return esc((d.emoji || '📦') + ' ' + d.name); }).join(', ') || 'вне колод';
+            var meta = decks + (w.srsReps ? ' · повторов ' + w.srsReps : '') +
+                (w.srsDue ? ' · след. ' + esc(w.srsDue) : '') + (w.hasClip ? ' · клип' : '') +
+                ' · ' + dt(w.createdAt);
+            return '<li><b>' + esc(w.kanji) + '</b> <span class="udeck__kana">' + esc(w.kana) + '</span> — ' +
+                esc(w.translation) +
+                (w.sentence ? '<div class="uword__sent">' + esc(w.sentence) + '</div>' : '') +
+                '<div class="uword__meta">' + meta + '</div></li>';
+        }).join('');
+        var head = '<div class="udecks__sum">' + (box._q ? 'найдено ' : 'слов всего ') + '<b>' + fmt(total) +
+            '</b> · показано ' + fmt(items.length) + '</div>';
+        var more = items.length < total ? '<button class="udecks-btn uwords__more">показать ещё</button>' : '';
+        box.querySelector('.uwords__list').innerHTML = head +
+            (rows ? '<ul class="uwords__ul">' + rows + '</ul>' : '<div class="msg">Ничего не найдено</div>') + more;
+        var moreBtn = box.querySelector('.uwords__more');
+        if (moreBtn) moreBtn.addEventListener('click', function () {
+            moreBtn.textContent = 'загружаю…';
+            loadWords(box, uid, items.length, box._q);
+        });
     }
 
     loadOverview();
