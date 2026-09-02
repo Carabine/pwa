@@ -58,7 +58,10 @@
         _availableCount(deckId) {
             const deck = Decks.get(deckId);
             if (!deck) return 0;
-            const ids = new Set((this._ctx.getWords() || []).map(w => w.id));
+            // Явно замороженные слова прогон колоды пропускает (deck-study.js) —
+            // не обещаем их в счётчике.
+            const ids = new Set((this._ctx.getWords() || [])
+                .filter(w => !(window.Freeze && Freeze.isWord(w))).map(w => w.id));
             return deck.wordIds.filter(id => ids.has(id)).length;
         },
 
@@ -101,7 +104,11 @@
             let emoji = STACK_ICON;
             let name = t('decks.pickAll');
             let count = decks.length;
-            if (active) { emoji = Decks.iconHtml(active); name = active.name; count = active.wordIds.length; }
+            if (active) {
+                emoji = Decks.iconHtml(active);
+                name = (active.frozen ? '❄ ' : '') + active.name;
+                count = active.wordIds.length;
+            }
             else if (this._activeId === '__none__') { emoji = '·'; name = t('decks.noDeck'); count = loose; }
 
             const pick = h('button', 'deck-pick' + (this._activeId ? ' deck-pick--on' : ''),
@@ -165,7 +172,9 @@
             };
 
             addRow(null, STACK_ICON, t('decks.allWords'), total);
-            for (const d of Decks.all()) addRow(d.id, Decks.iconHtml(d), d.name, d.wordIds.length);
+            for (const d of Decks.all()) {
+                addRow(d.id, Decks.iconHtml(d), (d.frozen ? '❄ ' : '') + d.name, d.wordIds.length);
+            }
             const loose = this._looseCount();
             if (loose > 0) addRow('__none__', '·', t('decks.noDeck'), loose);
 
@@ -431,6 +440,25 @@
             if (deck) input.value = deck.name;
             box.appendChild(input);
 
+            // Заморозка колоды — рядом с именем, а не в меню: это состояние
+            // колоды, и человек должен видеть его при каждом открытии.
+            let frozen = !!(deck && deck.frozen);
+            if (editing) {
+                // Подпись и пояснение — одной колонкой слева, тумблер справа:
+                // отдельным блоком под тумблером пояснение подлезало ему под бок.
+                const row = h('label', 'settings-toggle deck-editor__freeze',
+                    `<span class="deck-editor__freeze-text">` +
+                    `<span class="deck-editor__freeze-name">${esc(t('decks.frozen'))}</span>` +
+                    `<span class="deck-editor__freeze-hint">${esc(t('decks.frozenHint'))}</span>` +
+                    `</span>`);
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.checked = frozen;
+                cb.addEventListener('change', () => { frozen = cb.checked; });
+                row.appendChild(cb);
+                box.appendChild(row);
+            }
+
             const actions = h('div', 'deck-editor__actions');
             const save = h('button', 'btn btn--success', esc(editing ? t('decks.save') : t('decks.create')));
             save.addEventListener('click', () => {
@@ -440,6 +468,7 @@
                     Decks.rename(id, name);
                     Decks.setEmoji(id, chosen);
                     Decks.setIconEnabled(id, useIcon);
+                    Decks.setFrozen(id, frozen);
                     this.refresh();
                     this._ctx.onChange();
                     finish(Decks.get(id));

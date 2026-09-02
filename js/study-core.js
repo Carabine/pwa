@@ -369,6 +369,13 @@
 
     // ---- Schedule storage --------------------------------------------------
     // schedule = { [wordId]: { interval, reps, lapses, due } }  (due is a dayKey)
+    // Слова, которые сегодня участвуют в учёбе: без замороженных вручную и без
+    // тех, чьи колоды все заморожены. Без freeze.js (страница его не
+    // подключила) — список как был.
+    function studyPool(words) {
+        return window.Freeze ? Freeze.forStudy(words) : words;
+    }
+
     function loadSchedule() {
         const raw = lsJson(SCHEDULE_KEY, {});
         return (raw && typeof raw === 'object') ? raw : {};
@@ -468,7 +475,9 @@
     // ---- Сводка для главной страницы ----------------------------------------
     // Сколько сегодня ждёт повторений и новых слов + серия дней.
     function srsSummary() {
-        const words = lsJson('words', []).filter(w => w && w.id);
+        // Замороженные слова в сводке не участвуют: главная обещает работу,
+        // которую учёба реально даст (см. js/freeze.js).
+        const words = studyPool(lsJson('words', []).filter(w => w && w.id));
         const schedule = loadSchedule();
         const today = dayKey(todayStart());
 
@@ -544,7 +553,7 @@
                 return ordered ? items : shuffle(items);
             }
 
-            const words = lsJson('words', []).filter(w => w && w.id);
+            const words = studyPool(lsJson('words', []).filter(w => w && w.id));
 
             if (!scheduled) {
                 // Cram: every word, no schedule involved.
@@ -997,6 +1006,21 @@
                 }, {
                     // Меню «⋯» — те же действия, что в словаре.
                     onDecks: window.DecksUI ? () => DecksUI.openSheet(current.word) : null,
+                    // Момент, когда «не хочу это учить» и возникает — прямо на
+                    // карточке. Слово уходит из очереди со следующей сессии,
+                    // текущую не ломаем: выдёргивать карточку из-под ответа хуже.
+                    onFreeze: window.Freeze ? async () => {
+                        const w = current.word;
+                        const next = !w.frozen;
+                        try {
+                            await Freeze.setWord(w.id, next);
+                            w.frozen = next;
+                            showSnackbar(t(next ? 'words.frozenOne' : 'words.unfrozenOne'), { duration: 2500 });
+                        } catch (err) {
+                            console.error('Не удалось изменить заморозку слова', err);
+                            showSnackbar(t('words.freezeFailed'), { duration: 3500, type: 'error' });
+                        }
+                    } : null,
                     onDelete: async () => {
                         const w = current.word;
                         const name = w.kanji || w.kana || '';

@@ -367,6 +367,13 @@ async function runGuestSync() {
             const saved = res?.data ?? res;
             if (saved?.id) idMap[id] = saved.id;
 
+            // Заморозку переносим отдельным PATCH: POST /words её не принимает —
+            // это состояние карточки, а не её содержимое. Не вышло — слово всё
+            // равно в аккаунте, просто «оттаяло».
+            if (saved?.id && w.frozen) {
+                await client.patch('words/' + saved.id, { frozen: true }).catch(() => {});
+            }
+
             if (saved?.id && typeof getClip === 'function') {
                 const blob = await getClip(id);
                 if (blob) {

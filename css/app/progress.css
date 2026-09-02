@@ -107,6 +107,9 @@
 .prg-split__part--learned { background: var(--success); }
 .prg-split__part--learning { background: var(--primary); }
 .prg-split__part--fresh { background: var(--text-dim); opacity: .45; }
+/* Заморожено — своя доля, а не «ещё не начато»: это осознанная пауза,
+   а не заброшенная учёба. */
+.prg-split__part--frozen { background: var(--primary); opacity: .3; }
 
 .prg-legend {
     display: flex;
@@ -122,6 +125,7 @@
 .prg-legend__dot--learned { background: var(--success); }
 .prg-legend__dot--learning { background: var(--primary); }
 .prg-legend__dot--fresh { background: var(--text-dim); opacity: .45; }
+.prg-legend__dot--frozen { background: var(--primary); opacity: .3; }
 
 /* Календарь занятий: 7 строк (дни недели) × недели. Скроллится вбок на узком
    экране, а не сжимается в нечитаемую кашу. */

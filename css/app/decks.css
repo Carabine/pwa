@@ -472,3 +472,31 @@
     border-radius: 50%;
     background: var(--primary);
 }
+
+/* Заморозка колоды в её редакторе: обычный тумблер настроек, но живёт он в
+   модалке — поэтому свои отступы, а не те, что даёт .settings-card. */
+.deck-editor__freeze {
+    margin: 4px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+/* Текст занимает левую колонку строки, тумблер — правую: так длинное пояснение
+   переносится в своей ширине и не подлезает под переключатель. */
+.deck-editor__freeze-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.deck-editor__freeze-name {
+    font-size: 14px;
+    color: var(--text);
+}
+
+.deck-editor__freeze-hint {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.45;
+}

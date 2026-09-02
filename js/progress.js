@@ -103,11 +103,13 @@
             + `<div class="prg-split__part prg-split__part--learned" style="width:${pct(stats.learned)}"></div>`
             + `<div class="prg-split__part prg-split__part--learning" style="width:${pct(stats.learning)}"></div>`
             + `<div class="prg-split__part prg-split__part--fresh" style="width:${pct(stats.fresh)}"></div>`
+            + (stats.frozen ? `<div class="prg-split__part prg-split__part--frozen" style="width:${pct(stats.frozen)}"></div>` : '')
             + '</div>'
             + '<div class="prg-legend">'
             + legend('learned', tr('progress.tile.learned', 'Выучено'), stats.learned)
             + legend('learning', tr('progress.tile.learning', 'Изучается'), stats.learning)
             + legend('fresh', tr('progress.split.fresh', 'Ещё не начато'), stats.fresh)
+            + (stats.frozen ? legend('frozen', tr('progress.split.frozen', 'Заморожено'), stats.frozen) : '')
             + '</div>');
     }
 
@@ -239,9 +241,11 @@
     function aheadHtml(words, schedule) {
         const today = dayKey(todayStart());
         const weekEnd = dayKey(addDays(todayStart(), 7));
+        // Замороженные слова в учёбу не придут — и в прогнозе их быть не должно.
+        const live = window.Freeze ? Freeze.forStudy(words) : words;
         let due = 0;
         let week = 0;
-        for (const w of words) {
+        for (const w of live) {
             const s = schedule[w.id];
             if (!s) continue;
             if (s.due <= today) due++;
@@ -291,9 +295,14 @@
             return;
         }
 
+        // Замороженные считаем отдельной долей: иначе они молча копились бы в
+        // «ещё не начато» и полоса врала бы про заброшенную учёбу.
+        const deckFrozen = window.Freeze ? Freeze.frozenByDecks() : new Set();
         let learned = 0;
         let learning = 0;
+        let frozen = 0;
         for (const w of words) {
+            if (w.frozen || deckFrozen.has(w.id)) { frozen++; continue; }
             const s = schedule[w.id];
             if (!s) continue;
             if (s.interval >= MATURE_DAYS) learned++;
@@ -303,7 +312,8 @@
             total: words.length,
             learned,
             learning,
-            fresh: words.length - learned - learning,
+            frozen,
+            fresh: words.length - learned - learning - frozen,
             streak: streaks(days),
         };
 

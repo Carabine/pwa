@@ -10,12 +10,16 @@ function esc(s) {
 
 const VIEW_KEY = 'animei:wordsView';   // list | cards
 const SORT_KEY = 'animei:wordsSort';   // new | old | az
+const FREEZE_KEY = 'animei:wordsFreeze';   // all | active | frozen
 
 let allWords = [];       // все слова коллекции (кэш, чтобы фильтровать без перезагрузки)
 let wordsFilter = '';    // строка поиска (в нижнем регистре)
 let viewMode = localStorage.getItem(VIEW_KEY) === 'cards' ? 'cards' : 'list';
 let sortMode = ['new', 'old', 'az'].includes(localStorage.getItem(SORT_KEY))
     ? localStorage.getItem(SORT_KEY) : 'new';
+// Показ замороженных: по умолчанию видны наравне со всеми.
+let freezeMode = ['all', 'active', 'frozen'].includes(localStorage.getItem(FREEZE_KEY))
+    ? localStorage.getItem(FREEZE_KEY) : 'all';
 
 // Режим выбора: копим id отмеченных слов, внизу — панель массовых действий.
 let selectMode = false;
@@ -92,6 +96,14 @@ function updateCount(n) {
 }
 
 // Слово подходит под фильтр, если строка встречается в написании, чтении или переводе
+// Показ по заморозке: по умолчанию видно всё — замороженное слово прячут от
+// учёбы, а не от глаз («пусть будет»).
+function matchesFreeze(w) {
+    if (freezeMode === 'active') return !isFrozen(w);
+    if (freezeMode === 'frozen') return isFrozen(w);
+    return true;
+}
+
 function matchesFilter(w) {
     if (!wordsFilter) return true;
     return [w.kanji, w.kana, w.romaji, w.translation, w.sentence]
@@ -161,6 +173,7 @@ function openWord(wordData) {
     AnimeiWordEdit.open(wordData, renderWords, {
         onDelete: () => confirmRemove(wordData),
         onDecks: window.DecksUI ? () => DecksUI.openSheet(wordData) : null,
+        onFreeze: window.Freeze ? () => toggleFreeze(wordData) : null,
     });
 }
 
@@ -197,9 +210,11 @@ function openWordActions(anchor, wordData) {
     const menu = document.createElement('div');
     menu.className = 'words-menu word-actions';
     const ico = AnimeiWordEdit.menuIcons;
+    const frozen = !!wordData.frozen;
     menu.innerHTML = `
         <button data-act="edit">${ico.edit}${esc(t('words.edit'))}</button>
         <button data-act="decks">${ico.decks}${esc(t('decks.add'))}</button>
+        <button data-act="freeze">${ico.freeze}${esc(t(frozen ? 'words.unfreeze' : 'words.freeze'))}</button>
         <button data-act="copy">${ico.copy}${esc(t('words.copy'))}</button>
         <hr class="words-menu__hr">
         <button data-act="del" class="word-actions__danger">${ico.del}${esc(t('words.bulkDelete'))}</button>
@@ -222,6 +237,7 @@ function openWordActions(anchor, wordData) {
         closeWordActions();
         if (act === 'edit') openWord(wordData);
         else if (act === 'decks' && window.DecksUI) DecksUI.openSheet(wordData);
+        else if (act === 'freeze') toggleFreeze(wordData);
         else if (act === 'copy') AnimeiWordEdit.copyWord(wordData);
         else if (act === 'del') confirmRemove(wordData);
     });
@@ -246,17 +262,40 @@ function openWordActions(anchor, wordData) {
     wordActionsLayer = AnimeiBack.open(hideWordActions);
 }
 
+// Заморозить/вернуть слово. Список перерисовываем сразу (снежинка на строке),
+// не дожидаясь сервера: правка переживёт офлайн в ящике правок.
+async function toggleFreeze(wordData) {
+    if (!window.Freeze) return;
+    const next = !wordData.frozen;
+    wordData.frozen = next;
+    const inList = allWords.find((w) => w.id === wordData.id);
+    if (inList) inList.frozen = next;
+    renderWords();
+    if (window.animeiTrack) animeiTrack('word_freeze', next ? 'on' : 'off');
+    try {
+        await Freeze.setWord(wordData.id, next);
+        showSnackbar(t(next ? 'words.frozenOne' : 'words.unfrozenOne'), { duration: 2500 });
+    } catch (err) {
+        console.error('Не удалось изменить заморозку слова', err);
+        wordData.frozen = !next;
+        if (inList) inList.frozen = !next;
+        renderWords();
+        showSnackbar(t('words.freezeFailed'), { duration: 3500, type: 'error' });
+    }
+}
+
 // ---------- Отрисовка ----------
 
 // Карточка (подробный вид): тап — открыть слово, «⋯» в углу — меню действий.
 function buildCard(wordData) {
     const wordEl = document.createElement('div');
     wordEl.innerHTML = `
-        <div class="word-card word-read-content${selected.has(wordData.id) ? ' is-selected' : ''}">
+        <div class="word-card word-read-content${selected.has(wordData.id) ? ' is-selected' : ''}${isFrozen(wordData) ? ' is-frozen' : ''}">
             <button class="word-card__menu" title="${esc(t('words.actions'))}" aria-label="${esc(t('words.actions'))}">⋯</button>
             <div class="word-card__head">
                 <span class="word-card__kanji">${esc(wordData.kanji)}</span>
                 ${readingOf(wordData) ? `<span class="word-card__kana">${esc(readingOf(wordData))}</span>` : ''}
+                ${isFrozen(wordData) ? `<span class="word-row__frozen" title="${esc(t('words.frozenBadge'))}">❄</span>` : ''}
                 ${clipBadgeHtml(wordData)}
             </div>
             ${wordData.translation ? `<div class="word-card__meaning">${esc(wordData.translation)}</div>` : ''}
@@ -302,12 +341,14 @@ function firstMeaning(tr) {
 // на телефоне действия живут в карточке слова (тап) и режиме выбора (лонг-тап).
 function buildRow(wordData) {
     const row = document.createElement('div');
-    row.className = 'word-row' + (selected.has(wordData.id) ? ' is-selected' : '');
+    row.className = 'word-row' + (selected.has(wordData.id) ? ' is-selected' : '')
+        + (isFrozen(wordData) ? ' is-frozen' : '');
 
     // Значки: ⏳ готовящегося клипа + значки колод (аватарка тайтла или эмодзи).
     // Повторы одного значка (две колоды с одним эмодзи) сливаем в один,
     // подсказки объединяем.
     const badges = [];
+    if (isFrozen(wordData)) badges.push({ emoji: '❄', title: t('words.frozenBadge'), cls: 'word-row__frozen' });
     if (clipBadge(wordData) === 'pending') badges.push({ emoji: '⏳', title: t('words.videoPreparing'), cls: 'word-card__clip word-card__clip--pending' });
     if (window.Decks) {
         for (const d of Decks.decksOf(wordData.id)) {
@@ -402,8 +443,17 @@ function updateListFade() {
     el.classList.toggle('is-fade-top', el.scrollTop > 4);
 }
 
+// Слова, замороженные не сами по себе, а целиком колодой. Пересчитываем раз на
+// отрисовку: на каждую строку это был бы обход всех колод.
+let frozenByDecks = new Set();
+
+function isFrozen(w) {
+    return !!(w && (w.frozen || frozenByDecks.has(w.id)));
+}
+
 function renderWords() {
     closeWordActions();   // меню могло висеть у строки, которой больше нет
+    frozenByDecks = window.Freeze ? Freeze.frozenByDecks() : new Set();
     const wordsListEl = document.querySelector('.words-list');
     updateCount(allWords.length);
     updateKnownMenuLabel();
@@ -426,6 +476,7 @@ function renderWords() {
     const deckActive = window.DecksUI ? DecksUI.activeDeckId() : null;
     const words = sortWords(allWords
         .filter(matchesFilter)
+        .filter(matchesFreeze)
         .filter((w) => (window.DecksUI ? DecksUI.visible(w) : true)));
 
     // Первая отрисовка приходит на место скелетона — её проявляем; повторные
@@ -497,6 +548,13 @@ function renderBulkBar(visibleWords) {
     }
 
     const n = selected.size;
+    // Кнопка одна на оба действия: если ВСЁ выбранное уже заморожено — она
+    // размораживает, иначе замораживает. Смешанный выбор трактуем как «заморозить»
+    // (общее состояние понятнее, чем переключение каждого по отдельности).
+    const bulkUnfreeze = n > 0 && [...selected].every((id) => {
+        const w = allWords.find((x) => x.id === id);
+        return !!(w && w.frozen);
+    });
     // «Из колоды» имеет смысл только для настоящей колоды (не для «Без колоды»).
     const active = window.DecksUI ? DecksUI.activeDeckId() : null;
     const deckActive = (active && window.Decks && Decks.get(active)) ? active : null;
@@ -509,6 +567,9 @@ function renderBulkBar(visibleWords) {
         ${deckActive ? `<button class="words-bulkbar__btn" id="bulk-undeck" ${n ? '' : 'disabled'}>
             <span class="bb-wide">${esc(t('words.fromDeck'))}</span><span class="bb-narrow">${esc(t('words.fromDeckShort'))}</span>
         </button>` : ''}
+        <button class="words-bulkbar__btn" id="bulk-freeze" ${n ? '' : 'disabled'}>
+            <span class="bb-wide">${esc(t(bulkUnfreeze ? 'words.unfreeze' : 'words.freeze'))}</span><span class="bb-narrow">❄</span>
+        </button>
         <button class="words-bulkbar__btn words-bulkbar__danger" id="bulk-delete" ${n ? '' : 'disabled'}>
             <span class="bb-wide">${esc(t('words.bulkDelete'))}</span><span class="bb-narrow">${AnimeiWordEdit.menuIcons.del}</span>
         </button>
@@ -533,6 +594,23 @@ function renderBulkBar(visibleWords) {
         const removed = Decks.removeMany(deckActive, [...selected]);
         if (window.animeiTrack) animeiTrack('words_bulk', 'from_deck:' + removed);
         showSnackbar(t('words.removedFromDeckN').replace('{n}', removed), { duration: 2500 });
+        exitSelect();
+    });
+    bar.querySelector('#bulk-freeze').addEventListener('click', async (e) => {
+        const ids = [...selected];
+        if (!ids.length || !window.Freeze) return;
+        const btn = e.currentTarget;
+        btn.disabled = true;
+        const next = !bulkUnfreeze;
+        let done = 0;
+        for (const id of ids) {
+            const w = allWords.find((x) => x.id === id);
+            if (!w || !!w.frozen === next) continue;
+            try { await Freeze.setWord(id, next); w.frozen = next; done++; }
+            catch (err) { console.error('Не удалось изменить заморозку слова', id, err); }
+        }
+        if (window.animeiTrack) animeiTrack('words_bulk', (next ? 'freeze:' : 'unfreeze:') + done);
+        showSnackbar(t(next ? 'words.frozenN' : 'words.unfrozenN').replace('{n}', done), { duration: 2500 });
         exitSelect();
     });
     bar.querySelector('#bulk-delete').addEventListener('click', async (e) => {
@@ -608,14 +686,16 @@ function updateKnownMenuLabel() {
 
 const SORT_OPTS = [['new', 'words.sort.new'], ['old', 'words.sort.old'], ['az', 'words.sort.az']];
 const VIEW_OPTS = [['list', 'words.view.list'], ['cards', 'words.view.cards']];
+const FREEZE_OPTS = [['all', 'words.freeze.all'], ['active', 'words.freeze.active'], ['frozen', 'words.freeze.frozen']];
 
 // Отличается ли показ от умолчаний — по этому воронка получает точку.
 function filtersActive() {
-    return sortMode !== 'new' || viewMode !== 'list';
+    return sortMode !== 'new' || viewMode !== 'list' || freezeMode !== 'all';
 }
 
 function visibleCount() {
     return allWords.filter(matchesFilter)
+        .filter(matchesFreeze)
         .filter((w) => (window.DecksUI ? DecksUI.visible(w) : true)).length;
 }
 
@@ -642,6 +722,8 @@ function openFilters() {
                 <div class="wfilters__segs">${seg(SORT_OPTS, sortMode, 'sort')}</div>
                 <div class="wfilters__label">${esc(t('words.filters.view'))}</div>
                 <div class="wfilters__segs">${seg(VIEW_OPTS, viewMode, 'view')}</div>
+                <div class="wfilters__label">${esc(t('words.filters.freeze'))}</div>
+                <div class="wfilters__segs">${seg(FREEZE_OPTS, freezeMode, 'freeze')}</div>
             </div>
             <div class="wfilters__foot">
                 <button class="btn btn--ghost" data-act="reset"${filtersActive() ? '' : ' disabled'}>${esc(t('words.filters.reset'))}</button>
@@ -656,8 +738,10 @@ function openFilters() {
         if (btn.dataset.act === 'reset') {
             sortMode = 'new';
             viewMode = 'list';
+            freezeMode = 'all';
             localStorage.setItem(SORT_KEY, sortMode);
             localStorage.setItem(VIEW_KEY, viewMode);
+            localStorage.setItem(FREEZE_KEY, freezeMode);
             renderWords();
             draw();
             return;
@@ -668,6 +752,9 @@ function openFilters() {
         } else if (btn.dataset.group === 'view') {
             viewMode = btn.dataset.val;
             localStorage.setItem(VIEW_KEY, viewMode);
+        } else if (btn.dataset.group === 'freeze') {
+            freezeMode = btn.dataset.val;
+            localStorage.setItem(FREEZE_KEY, freezeMode);
         } else return;
         renderWords();
         draw();

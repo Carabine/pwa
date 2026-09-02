@@ -129,6 +129,8 @@
         edit: ICON('<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>'),
         decks: ICON('<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="M2 12.65l9.17 4.16a2 2 0 0 0 1.66 0l4.5-2.04"/><path d="M2 17.65l9.17 4.16a2 2 0 0 0 1.66 0l4.5-2.04"/><path d="M20.5 13.5v6"/><path d="M17.5 16.5h6"/>'),
         copy: ICON('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>'),
+        // Снежинка — «заморожено»: слово лежит в словаре, но в учёбу не идёт.
+        freeze: ICON('<path d="M12 2v20"/><path d="m20 7-16 10"/><path d="m4 7 16 10"/><path d="m9 4 3 3 3-3"/><path d="m9 20 3-3 3 3"/>'),
         del: ICON('<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>'),
     };
 
@@ -162,7 +164,8 @@
     // видео-фрагмента и звука монтируем внутрь: они сохраняются сами, отдельно.
     // Действия над словом (В колоды/Скопировать/Удалить) — в меню «⋯» рядом с
     // крестиком, как у строк списка: шапка остаётся чистой (заголовок + ⋯ + ×).
-    // opts.onDelete / opts.onDecks (необязательные) добавляют свои пункты.
+    // opts.onDelete / opts.onDecks / opts.onFreeze (необязательные) добавляют
+    // свои пункты.
     function open(wordData, onSaved, opts) {
         opts = opts || {};
         const overlay = document.createElement('div');
@@ -228,6 +231,7 @@
             menuEl.className = 'words-menu word-actions';
             menuEl.innerHTML = [
                 opts.onDecks ? `<button data-act="decks">${MENU_ICONS.decks}${esc(t('decks.add'))}</button>` : '',
+                opts.onFreeze ? `<button data-act="freeze">${MENU_ICONS.freeze}${esc(t(wordData.frozen ? 'words.unfreeze' : 'words.freeze'))}</button>` : '',
                 `<button data-act="copy">${MENU_ICONS.copy}${esc(t('words.copy'))}</button>`,
                 opts.onDelete ? `<hr class="words-menu__hr"><button data-act="delete" class="word-actions__danger">${MENU_ICONS.del}${esc(t('words.bulkDelete'))}</button>` : '',
             ].join('');
@@ -236,6 +240,7 @@
                 if (!act) return;
                 closeMenu();
                 if (act === 'decks') opts.onDecks();
+                else if (act === 'freeze') opts.onFreeze();
                 else if (act === 'copy') copyWord(wordData);
                 else if (act === 'delete') { close(); opts.onDelete(); }
             });

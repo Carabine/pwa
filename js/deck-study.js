@@ -23,7 +23,11 @@
     fetchWords()
         .then((all) => {
             const byId = new Map(all.map((w) => [w.id, w]));
-            const cards = deck.wordIds.map((wid) => byId.get(wid)).filter(Boolean);
+            // Колоду открыли руками — значит, её заморозку сейчас не учитываем
+            // (иначе замороженную колоду нельзя было бы прогнать вообще).
+            // Явно замороженные СЛОВА пропускаем: их прятали поштучно.
+            const cards = deck.wordIds.map((wid) => byId.get(wid))
+                .filter((w) => w && !(window.Freeze && Freeze.isWord(w)));
             startStudy({ scheduled: false, deck: cards, ordered: true });
         })
         .catch(() => startStudy({ scheduled: false, deck: [] }));

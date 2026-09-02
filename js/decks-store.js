@@ -46,6 +46,7 @@
                 name: normalizeName(d.name) || (typeof t === 'function' ? t('decks.untitled') : 'Deck'),
                 emoji: EMOJIS.includes(d.emoji) ? d.emoji : EMOJIS[0],
                 icon: sanitizeIcon(d.icon),
+                frozen: d.frozen === true,           // «пока не учу» — см. freeze.js
                 wordIds: [...new Set(ids)],          // без дублей
                 createdAt: Number(d.createdAt) || Date.now(),
                 updatedAt: Number(d.updatedAt) || Number(d.createdAt) || Date.now(),
@@ -130,7 +131,8 @@
             if (!d) { dirty.delete(id); saveIdSet(DIRTY_KEY, dirty); continue; }
             try {
                 await client.put('decks/' + encodeURIComponent(id), {
-                    name: d.name, emoji: d.emoji, icon: d.icon || '', wordIds: d.wordIds, createdAt: d.createdAt,
+                    name: d.name, emoji: d.emoji, icon: d.icon || '', frozen: !!d.frozen,
+                    wordIds: d.wordIds, createdAt: d.createdAt,
                 });
                 dirty.delete(id); saveIdSet(DIRTY_KEY, dirty);
                 const synced = idSet(SYNCED_KEY); synced.add(id); saveIdSet(SYNCED_KEY, synced);
@@ -166,6 +168,7 @@
                 name: normalizeName(sd.name) || 'Deck',
                 emoji: EMOJIS.includes(sd.emoji) ? sd.emoji : EMOJIS[0],
                 icon: sanitizeIcon(sd.icon),
+                frozen: sd.frozen === true,
                 wordIds: [...new Set((sd.wordIds || []).filter((x) => typeof x === 'string'))],
                 createdAt: Number(sd.createdAt) || Date.now(),
                 updatedAt: Number(sd.updatedAt) || Date.now(),
@@ -211,6 +214,7 @@
                 name: normalizeName(name) || (typeof t === 'function' ? t('decks.untitled') : 'Deck'),
                 emoji: EMOJIS.includes(emoji) ? emoji : EMOJIS[0],
                 icon: sanitizeIcon(icon),
+                frozen: false,
                 wordIds: [],
                 createdAt: now,
                 updatedAt: now,
@@ -260,6 +264,20 @@
             }
             return d.emoji;
         },
+
+        // Заморозить/разморозить колоду: её слова перестают попадать в
+        // ежедневную учёбу (правило — во freeze.js). Состав колоды и
+        // расписание повторений не трогаем.
+        setFrozen(id, on) {
+            const d = find(id);
+            if (!d || d.frozen === !!on) return;
+            d.frozen = !!on;
+            d.updatedAt = Date.now();
+            save();
+            markDirty(id);
+        },
+
+        isFrozen(id) { const d = find(id); return !!(d && d.frozen); },
 
         rename(id, name) {
             const d = find(id);
