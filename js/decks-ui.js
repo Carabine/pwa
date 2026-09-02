@@ -31,6 +31,15 @@
     // Размеры задаёт CSS (.deck-pick__emoji svg / .deck-sheet__emoji svg).
     const STACK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>';
 
+    // Карандаш на кнопке «⋯» рядом с «Учить»: раньше там были три точки, но
+    // открывалась ими не менюшка, а редактор колоды — значок обещал не то.
+    // Три точки переехали внутрь редактора, к действиям (заморозить, удалить).
+    const PENCIL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>';
+    // Значки пунктов меню — те же, что в меню слова (js/word-edit.js).
+    const MENU_ICON = (inner) => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + inner + '</svg>';
+    const FREEZE_ICON = MENU_ICON('<path d="M12 2v20"/><path d="m20 7-16 10"/><path d="m4 7 16 10"/><path d="m9 4 3 3 3-3"/><path d="m9 20 3-3 3 3"/>');
+    const TRASH_ICON = MENU_ICON('<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>');
+
     // Кнопка-фильтр справа от пилюли: воронка, открывает шторку выбора колоды.
     const FILTER_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>';
 
@@ -210,7 +219,7 @@
                 location.href = 'deck-study.html?deck=' + encodeURIComponent(deck.id);
             });
 
-            const more = h('button', 'btn btn--ghost deck-study__more', '⋯');
+            const more = h('button', 'btn btn--ghost deck-study__more', PENCIL_ICON);
             more.title = t('decks.manage');
             more.setAttribute('aria-label', t('decks.manage'));
             more.addEventListener('click', () => this._openEditor({ mode: 'manage', id: deck.id }));
@@ -382,6 +391,39 @@
             modal.open();
         },
 
+        // ---- Меню «⋯» в шапке редактора: действия над колодой ----------------
+        // Живёт рядом с кнопкой (position: absolute внутри обёртки), как меню
+        // слова. Пункты применяются сразу — это действия, а не поля формы.
+        _toggleDeckMenu(wrap, id, opts) {
+            const open = wrap.querySelector('.words-menu');
+            if (open) { open.remove(); return; }
+
+            const menu = h('div', 'words-menu word-actions', [
+                `<button data-act="freeze">${FREEZE_ICON}${esc(t(opts.isFrozen() ? 'decks.unfreeze' : 'decks.freeze'))}</button>`,
+                '<hr class="words-menu__hr">',
+                `<button data-act="delete" class="word-actions__danger">${TRASH_ICON}${esc(t('decks.delete'))}</button>`,
+            ].join(''));
+
+            const close = () => {
+                menu.remove();
+                document.removeEventListener('click', onDoc, true);
+            };
+            const onDoc = (e) => {
+                if (!e.target.closest('.words-menu') && !e.target.closest('.deck-editor__kebab')) close();
+            };
+
+            menu.addEventListener('click', (e) => {
+                const act = e.target.closest('[data-act]');
+                if (!act) return;
+                close();
+                if (act.dataset.act === 'freeze') opts.onFreeze();
+                else if (act.dataset.act === 'delete') opts.onDelete();
+            });
+
+            wrap.appendChild(menu);
+            document.addEventListener('click', onDoc, true);
+        },
+
         // ---- Редактор колоды: создание и управление (имя, значок, удаление) ---
         _openEditor({ mode, id, then }) {
             const editing = mode === 'manage';
@@ -409,7 +451,60 @@
                 modal.close();
             };
 
-            box.appendChild(h('div', 'deck-editor__title', esc(editing ? t('decks.manage') : t('decks.newTitle'))));
+            let frozen = !!(deck && deck.frozen);
+
+            // Шапка: слева «⋯» с действиями над колодой, справа крестик. Сами
+            // действия (заморозить, удалить) — под точками, а не отдельными
+            // блоками в теле: тело редактора — это то, что правят и сохраняют.
+            const head = h('div', 'deck-editor__head');
+            let kebabWrap = null;
+            if (editing) {
+                kebabWrap = h('span', 'deck-editor__kebab-wrap');
+                const kebab = h('button', 'deck-editor__hbtn deck-editor__kebab', '⋯');
+                kebab.type = 'button';
+                kebab.title = t('words.actions');
+                kebab.setAttribute('aria-label', t('words.actions'));
+                kebab.setAttribute('aria-haspopup', 'menu');
+                kebabWrap.appendChild(kebab);
+                head.appendChild(kebabWrap);
+                kebab.addEventListener('click', () => this._toggleDeckMenu(kebabWrap, id, {
+                    isFrozen: () => frozen,
+                    onFreeze: () => {
+                        frozen = !frozen;
+                        Decks.setFrozen(id, frozen);
+                        note.hidden = !frozen;
+                        this.refresh();
+                        this._ctx.onChange();
+                        snack(t(frozen ? 'decks.frozenOn' : 'decks.frozenOff'));
+                    },
+                    onDelete: () => {
+                        if (!confirm(t('decks.deleteConfirm'))) return;
+                        Decks.remove(id);
+                        if (this._activeId === id) this._activeId = null;
+                        snack(t('decks.deleted'));
+                        this.refresh();
+                        this._ctx.onChange();
+                        finish(null);
+                    },
+                }));
+            }
+            head.appendChild(h('span', 'deck-editor__head-title',
+                esc(editing ? t('decks.manage') : t('decks.newTitle'))));
+            const closeBtn = h('button', 'deck-editor__hbtn deck-editor__close', '×');
+            closeBtn.type = 'button';
+            closeBtn.setAttribute('aria-label', t('words.cancel'));
+            closeBtn.addEventListener('click', () => finish(null));
+            head.appendChild(closeBtn);
+            box.appendChild(head);
+
+            // Строка состояния — только у замороженной колоды: постоянный
+            // тумблер с пояснением занимал полредактора ради настройки, к
+            // которой возвращаются раз в жизни.
+            const note = h('div', 'deck-editor__note',
+                '<span class="deck-editor__note-ico">\u2744</span>'
+                + `<span>${esc(t('decks.frozenNote'))}</span>`);
+            note.hidden = !frozen;
+            box.appendChild(note);
 
             const palette = h('div', 'deck-editor__emojis');
             const select = (b) => {
@@ -440,25 +535,6 @@
             if (deck) input.value = deck.name;
             box.appendChild(input);
 
-            // Заморозка колоды — рядом с именем, а не в меню: это состояние
-            // колоды, и человек должен видеть его при каждом открытии.
-            let frozen = !!(deck && deck.frozen);
-            if (editing) {
-                // Подпись и пояснение — одной колонкой слева, тумблер справа:
-                // отдельным блоком под тумблером пояснение подлезало ему под бок.
-                const row = h('label', 'settings-toggle deck-editor__freeze',
-                    `<span class="deck-editor__freeze-text">` +
-                    `<span class="deck-editor__freeze-name">${esc(t('decks.frozen'))}</span>` +
-                    `<span class="deck-editor__freeze-hint">${esc(t('decks.frozenHint'))}</span>` +
-                    `</span>`);
-                const cb = document.createElement('input');
-                cb.type = 'checkbox';
-                cb.checked = frozen;
-                cb.addEventListener('change', () => { frozen = cb.checked; });
-                row.appendChild(cb);
-                box.appendChild(row);
-            }
-
             const actions = h('div', 'deck-editor__actions');
             const save = h('button', 'btn btn--success', esc(editing ? t('decks.save') : t('decks.create')));
             save.addEventListener('click', () => {
@@ -468,7 +544,6 @@
                     Decks.rename(id, name);
                     Decks.setEmoji(id, chosen);
                     Decks.setIconEnabled(id, useIcon);
-                    Decks.setFrozen(id, frozen);
                     this.refresh();
                     this._ctx.onChange();
                     finish(Decks.get(id));
@@ -488,20 +563,6 @@
             actions.appendChild(cancel);
             actions.appendChild(save);
             box.appendChild(actions);
-
-            if (editing) {
-                const del = h('button', 'deck-editor__delete', esc(t('decks.delete')));
-                del.addEventListener('click', () => {
-                    if (!confirm(t('decks.deleteConfirm'))) return;
-                    Decks.remove(id);
-                    if (this._activeId === id) this._activeId = null;
-                    snack(t('decks.deleted'));
-                    this.refresh();
-                    this._ctx.onChange();
-                    finish(null);
-                });
-                box.appendChild(del);
-            }
 
             overlay.appendChild(box);
             modal.open();

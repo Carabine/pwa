@@ -169,7 +169,9 @@
     align-items: stretch;
 }
 .deck-study__go { flex: 1 1 auto; }
-.deck-study__more { flex: 0 0 auto; width: 46px; padding: 0; font-size: 18px; line-height: 1; }
+.deck-study__more { flex: 0 0 auto; width: 46px; padding: 0; line-height: 1; }
+/* Карандаш рисуется по viewBox — без явного размера он занимал всю кнопку. */
+.deck-study__more svg { width: 18px; height: 18px; display: block; }
 
 /* Мини-чипы колод на карточке словаря (какие колоды содержат слово).
    margin-top: auto прижимает их к низу — карточки в сетке ровные. */
@@ -325,6 +327,65 @@
 
 .deck-editor__title { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
 
+/* Шапка редактора колоды: слева «⋯» с действиями, справа крестик. Кружки те
+   же, что в шапке карточки слова (.word-modal__hbtn) — один язык у модалок. */
+.deck-editor__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.deck-editor__head-title {
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 0;
+}
+
+.deck-editor__hbtn {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text-dim);
+    line-height: 1;
+    transition: background var(--transition), color var(--transition);
+}
+
+.deck-editor__kebab { font-size: 17px; }
+.deck-editor__close { font-size: 18px; margin-left: auto; }
+
+@media (hover: hover) and (pointer: fine) {
+    .deck-editor__hbtn:hover { background: var(--border); color: var(--text); }
+}
+
+/* Меню действий раскрывается ПОД кнопкой и влево-направо от неё: общий
+   .words-menu прижат к правому краю обёртки, а тут кнопка стоит слева. */
+.deck-editor__kebab-wrap { position: relative; display: flex; }
+.deck-editor__kebab-wrap .words-menu { right: auto; left: 0; }
+
+/* Строка состояния замороженной колоды. Появляется только когда есть что
+   сказать, поэтому объясняет, а не занимает место постоянно. */
+.deck-editor__note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding: 9px 11px;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.deck-editor__note[hidden] { display: none; }
+.deck-editor__note-ico { color: var(--primary); font-size: 14px; }
+
 .deck-editor__emojis {
     display: grid;
     /* 13 значков: 7+6 ровнее, чем 6+6+1 */
@@ -378,23 +439,6 @@
    «С видео» — а это отказ, а не действие. */
 .deck-editor__actions--single { justify-content: center; }
 .deck-editor__actions--single .btn { flex: 0 0 auto; padding: 10px 30px; }
-
-.deck-editor__delete {
-    display: block;
-    width: 100%;
-    margin-top: 14px;
-    padding: 10px;
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--danger);
-    font-size: 13px;
-    cursor: pointer;
-    transition: border-color var(--transition);
-}
-@media (hover: hover) and (pointer: fine) {
-    .deck-editor__delete:hover { border-color: var(--danger); }
-}
 
 /* На широком экране показываем sheet/редактор по центру, а не прижатым к низу. */
 @media (min-width: 640px) {
@@ -473,30 +517,3 @@
     background: var(--primary);
 }
 
-/* Заморозка колоды в её редакторе: обычный тумблер настроек, но живёт он в
-   модалке — поэтому свои отступы, а не те, что даёт .settings-card. */
-.deck-editor__freeze {
-    margin: 4px 0 0;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-}
-
-/* Текст занимает левую колонку строки, тумблер — правую: так длинное пояснение
-   переносится в своей ширине и не подлезает под переключатель. */
-.deck-editor__freeze-text {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-}
-
-.deck-editor__freeze-name {
-    font-size: 14px;
-    color: var(--text);
-}
-
-.deck-editor__freeze-hint {
-    font-size: 12.5px;
-    color: var(--text-dim);
-    line-height: 1.45;
-}
