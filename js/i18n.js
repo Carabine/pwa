@@ -513,6 +513,8 @@ const I18N = {
         'settings.title': 'Настройки',
         'settings.general': 'Общие',
         'settings.account': 'Аккаунт',
+        'settings.tab.app': 'Приложение',
+        'settings.tab.account': 'Аккаунт',
         'settings.appearance': 'Оформление',
         'settings.theme': 'Тема',
         'settings.theme.dark': 'Тёмная',

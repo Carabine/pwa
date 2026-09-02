@@ -509,6 +509,8 @@ window.I18N_EN = {
         'settings.title': 'Settings',
         'settings.general': 'General',
         'settings.account': 'Account',
+        'settings.tab.app': 'App',
+        'settings.tab.account': 'Account',
         'settings.appearance': 'Appearance',
         'settings.theme': 'Theme',
         'settings.theme.dark': 'Dark',

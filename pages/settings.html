@@ -81,102 +81,130 @@
     <main class="main settings-page">
       <div class="settings-inner">
         <h1 class="settings-title" data-i18n="settings.title">Настройки</h1>
-        <!-- ОФОРМЛЕНИЕ -->
-        <section class="settings-card">
-            <div class="settings-card__title" data-i18n="settings.appearance">Оформление</div>
-            <div class="settings-row">
-                <label data-i18n="settings.theme">Тема</label>
-                <div class="seg" id="set-theme">
-                    <button type="button" data-val="dark" data-i18n="settings.theme.dark">Тёмная</button>
-                    <button type="button" data-val="light" data-i18n="settings.theme.light">Светлая</button>
-                    <button type="button" data-val="system" data-i18n="settings.theme.system">Как в системе</button>
-                </div>
-            </div>
-            <div class="settings-row">
-                <label data-i18n="settings.language">Язык</label>
-                <select class="settings-select" id="set-language">
-                    <option value="ru">Русский</option>
-                    <option value="uk">Українська</option>
-                    <option value="en">English</option>
-                </select>
-            </div>
-        </section>
+        <!-- Настройки разъехались на две вкладки: слева всё про приложение (сюда
+             ходят настраивать просмотр и учёбу), справа — про аккаунт (вход,
+             пароль; заходят разово). Ссылка вида settings.html#account
+             открывает сразу вторую — см. js/settings-page.js. -->
+        <div class="settings-tabs" role="tablist">
+            <button type="button" class="settings-tab is-active" role="tab" id="tab-app"
+                    aria-controls="panel-app" aria-selected="true" data-tab="app"
+                    data-i18n="settings.tab.app">Приложение</button>
+            <button type="button" class="settings-tab" role="tab" id="tab-account"
+                    aria-controls="panel-account" aria-selected="false" data-tab="account"
+                    data-i18n="settings.tab.account">Аккаунт</button>
+        </div>
 
-        <!-- СУБТИТРЫ -->
-        <section class="settings-card">
-            <div class="settings-card__title" data-i18n="settings.subs">Субтитры</div>
-            <div class="settings-row">
-                <label data-i18n="settings.subSize">Размер субтитров</label>
-                <div class="seg" id="set-subSize">
-                    <button type="button" data-val="sm" data-i18n="settings.size.sm">Мелкий</button>
-                    <button type="button" data-val="md" data-i18n="settings.size.md">Средний</button>
-                    <button type="button" data-val="lg" data-i18n="settings.size.lg">Крупный</button>
+        <div class="settings-panel" id="panel-app" role="tabpanel" aria-labelledby="tab-app">
+            <!-- ОФОРМЛЕНИЕ -->
+            <section class="settings-card">
+                <div class="settings-card__title" data-i18n="settings.appearance">Оформление</div>
+                <div class="settings-row">
+                    <label data-i18n="settings.theme">Тема</label>
+                    <div class="seg" id="set-theme">
+                        <button type="button" data-val="dark" data-i18n="settings.theme.dark">Тёмная</button>
+                        <button type="button" data-val="light" data-i18n="settings.theme.light">Светлая</button>
+                        <button type="button" data-val="system" data-i18n="settings.theme.system">Как в системе</button>
+                    </div>
                 </div>
-            </div>
-            <label class="settings-toggle">
-                <span data-i18n="settings.playerRomaji">Ромадзи в плеере по умолчанию</span>
-                <input type="checkbox" id="set-playerRomaji">
-            </label>
-            <label class="settings-toggle">
-                <span data-i18n="settings.playerTranslation">Показывать перевод субтитров</span>
-                <input type="checkbox" id="set-playerTranslation">
-            </label>
-            <label class="settings-toggle">
-                <span data-i18n="settings.autoSync">Автосинхронизация субтитров</span>
-                <input type="checkbox" id="set-autoSyncSubs">
-            </label>
-        </section>
-
-        <!-- ВОСПРОИЗВЕДЕНИЕ -->
-        <section class="settings-card">
-            <div class="settings-card__title" data-i18n="settings.playback">Воспроизведение и звук</div>
-            <div class="settings-row">
-                <label data-i18n="settings.volume">Громкость по умолчанию</label>
-                <input type="range" class="settings-range" id="set-volume" min="0" max="1" step="0.05">
-            </div>
-            <label class="settings-toggle">
-                <span data-i18n="settings.autopause">Авто-пауза после реплики</span>
-                <input type="checkbox" id="set-autopause">
-            </label>
-            <label class="settings-toggle">
-                <span data-i18n="settings.loopClips">Зацикливать клипы слов</span>
-                <input type="checkbox" id="set-loopClips">
-            </label>
-        </section>
-
-        <!-- ОБУЧЕНИЕ -->
-        <section class="settings-card">
-            <div class="settings-card__title" data-i18n="settings.study">Обучение</div>
-            <div class="settings-row">
-                <label data-i18n="study.transcription">Транскрипция слова</label>
-                <div class="seg" id="set-studyTranscription">
-                    <button type="button" data-val="romaji" data-i18n="study.transcription.romaji">Ромадзи</button>
-                    <button type="button" data-val="kana" data-i18n="study.transcription.kana">Хирагана</button>
+                <div class="settings-row">
+                    <label data-i18n="settings.language">Язык</label>
+                    <select class="settings-select" id="set-language">
+                        <option value="ru">Русский</option>
+                        <option value="uk">Українська</option>
+                        <option value="en">English</option>
+                    </select>
                 </div>
-            </div>
-            <div class="settings-row">
-                <label data-i18n="settings.newPerDay">Новых карточек в день</label>
-                <div class="seg" id="set-newPerDay">
-                    <button type="button" data-val="5">5</button>
-                    <button type="button" data-val="10">10</button>
-                    <button type="button" data-val="20">20</button>
-                    <button type="button" data-val="40">40</button>
-                </div>
-            </div>
-            <p class="settings-hint" data-i18n="settings.newPerDay.hint">Слова сверх лимита не пропадают — ждут в очереди и вводятся в следующие дни.</p>
-        </section>
+            </section>
 
-        <!-- АККАУНТ -->
-        <section class="settings-card" id="account-card">
-            <div class="settings-card__title" data-i18n="settings.account">Аккаунт</div>
-            <div id="account-state"></div>
-            <div id="password-block" hidden>
-                <h3 data-i18n="settings.changePassword">Смена пароля</h3>
-                <input type="password" id="cur-pass" autocomplete="current-password" data-i18n-placeholder="settings.currentPassword" placeholder="Текущий пароль">
-                <input type="password" id="new-pass" autocomplete="new-password" data-i18n-placeholder="settings.newPassword" placeholder="Новый пароль">
-                <button type="button" class="btn btn--primary" id="save-pass" data-i18n="settings.savePassword">Обновить пароль</button>
-            </div>
-        </section>
+            <!-- СУБТИТРЫ -->
+            <section class="settings-card">
+                <div class="settings-card__title" data-i18n="settings.subs">Субтитры</div>
+                <div class="settings-row">
+                    <label data-i18n="settings.subSize">Размер субтитров</label>
+                    <div class="seg" id="set-subSize">
+                        <button type="button" data-val="sm" data-i18n="settings.size.sm">Мелкий</button>
+                        <button type="button" data-val="md" data-i18n="settings.size.md">Средний</button>
+                        <button type="button" data-val="lg" data-i18n="settings.size.lg">Крупный</button>
+                    </div>
+                </div>
+                <label class="settings-toggle">
+                    <span data-i18n="settings.playerRomaji">Ромадзи в плеере по умолчанию</span>
+                    <input type="checkbox" id="set-playerRomaji">
+                </label>
+                <label class="settings-toggle">
+                    <span data-i18n="settings.playerTranslation">Показывать перевод субтитров</span>
+                    <input type="checkbox" id="set-playerTranslation">
+                </label>
+                <label class="settings-toggle">
+                    <span data-i18n="settings.autoSync">Автосинхронизация субтитров</span>
+                    <input type="checkbox" id="set-autoSyncSubs">
+                </label>
+            </section>
+
+            <!-- ВОСПРОИЗВЕДЕНИЕ -->
+            <section class="settings-card">
+                <div class="settings-card__title" data-i18n="settings.playback">Воспроизведение и звук</div>
+                <div class="settings-row">
+                    <label data-i18n="settings.volume">Громкость по умолчанию</label>
+                    <input type="range" class="settings-range" id="set-volume" min="0" max="1" step="0.05">
+                </div>
+                <label class="settings-toggle">
+                    <span data-i18n="settings.autopause">Авто-пауза после реплики</span>
+                    <input type="checkbox" id="set-autopause">
+                </label>
+                <label class="settings-toggle">
+                    <span data-i18n="settings.loopClips">Зацикливать клипы слов</span>
+                    <input type="checkbox" id="set-loopClips">
+                </label>
+            </section>
+
+            <!-- ОБУЧЕНИЕ -->
+            <section class="settings-card">
+                <div class="settings-card__title" data-i18n="settings.study">Обучение</div>
+                <div class="settings-row">
+                    <label data-i18n="study.transcription">Транскрипция слова</label>
+                    <div class="seg" id="set-studyTranscription">
+                        <button type="button" data-val="romaji" data-i18n="study.transcription.romaji">Ромадзи</button>
+                        <button type="button" data-val="kana" data-i18n="study.transcription.kana">Хирагана</button>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <label data-i18n="settings.newPerDay">Новых карточек в день</label>
+                    <div class="seg" id="set-newPerDay">
+                        <button type="button" data-val="5">5</button>
+                        <button type="button" data-val="10">10</button>
+                        <button type="button" data-val="20">20</button>
+                        <button type="button" data-val="40">40</button>
+                    </div>
+                </div>
+                <p class="settings-hint" data-i18n="settings.newPerDay.hint">Слова сверх лимита не пропадают — ждут в очереди и вводятся в следующие дни.</p>
+            </section>
+
+            <!-- ОБРАТНАЯ СВЯЗЬ -->
+            <!-- Раньше это была отдельная страница-пункт сайдбара, хотя весь её
+                 смысл — одна ссылка в Telegram. Переехала сюда, вниз настроек:
+                 сайдбар остался списком мест, куда ходят каждый день. -->
+            <section class="settings-card">
+                <div class="settings-card__title" data-i18n="feedback.title">Обратная связь</div>
+                <p class="settings-text" data-i18n="feedback.text">Помоги сделать изучение японского ещё лучше — поделись мыслями, идеями или проблемами.</p>
+                <p class="settings-text"><span data-i18n="feedback.telegram">Напиши нам в Telegram:</span>
+                    <a href="https://t.me/animei_jp" target="_blank" rel="noopener">t.me/animei_jp</a></p>
+            </section>
+        </div>
+
+        <div class="settings-panel" id="panel-account" role="tabpanel" aria-labelledby="tab-account" hidden>
+            <!-- АККАУНТ -->
+            <section class="settings-card" id="account-card">
+                <div class="settings-card__title" data-i18n="settings.account">Аккаунт</div>
+                <div id="account-state"></div>
+                <div id="password-block" hidden>
+                    <h3 data-i18n="settings.changePassword">Смена пароля</h3>
+                    <input type="password" id="cur-pass" autocomplete="current-password" data-i18n-placeholder="settings.currentPassword" placeholder="Текущий пароль">
+                    <input type="password" id="new-pass" autocomplete="new-password" data-i18n-placeholder="settings.newPassword" placeholder="Новый пароль">
+                    <button type="button" class="btn btn--primary" id="save-pass" data-i18n="settings.savePassword">Обновить пароль</button>
+                </div>
+            </section>
+        </div>
 
         <div class="settings-about" id="settings-about"></div>
       </div>
@@ -189,7 +217,6 @@
         <a href="./watch.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="10 9 16 12 10 15 10 9" fill="currentColor" stroke="none"/></svg><span class="nav-label" data-i18n="nav.watch">Своё видео</span></a>
         <a href="./words.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="nav-label" data-i18n="nav.dictionary">Мои слова</span></a>
         <a href="/news/"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13v14a2 2 0 0 0 2 2H5a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1z"/><line x1="7" y1="9" x2="14" y2="9"/><line x1="7" y1="13" x2="14" y2="13"/><line x1="7" y1="17" x2="11" y2="17"/></svg><span class="nav-label" data-i18n="nav.news">JP News</span><span class="nav-new">NEW</span></a>
-        <a href="./feedback.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"/></svg><span class="nav-label" data-i18n="nav.feedback">Обратная связь</span></a>
     </nav>
     <div class="overlay" id="overlay"></div>
 </div>

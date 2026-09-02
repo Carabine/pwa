@@ -509,6 +509,8 @@ window.I18N_UK = {
         'settings.title': 'Налаштування',
         'settings.general': 'Загальні',
         'settings.account': 'Акаунт',
+        'settings.tab.app': 'Застосунок',
+        'settings.tab.account': 'Акаунт',
         'settings.appearance': 'Оформлення',
         'settings.theme': 'Тема',
         'settings.theme.dark': 'Темна',

@@ -30,6 +30,51 @@
     margin-bottom: 2px;
 }
 
+/* Вкладки: подчёркивание активной, а не капсула — вкладок всего две и они
+   переключают целые разделы страницы, а .seg внутри карточек означает выбор
+   значения настройки. Разные роли — разный вид. */
+.settings-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+.settings-tab {
+    background: transparent;
+    color: var(--text-muted);
+    padding: 9px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    border-bottom: 2px solid transparent;
+    /* Съедаем разделительную линию .settings-tabs, чтобы подчёркивание активной
+       вкладки легло ровно на неё, а не под ней. */
+    margin-bottom: -1px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .settings-tab:hover { color: var(--text); }
+}
+
+.settings-tab.is-active {
+    color: var(--text);
+    border-bottom-color: var(--primary);
+}
+
+/* Панель повторяет вертикальный поток .settings-inner: карточки внутри неё
+   должны стоять с тем же зазором, что и раньше без вкладок. */
+.settings-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* display:flex перебивает атрибут hidden — прячем скрытую панель явно. */
+.settings-panel[hidden] {
+    display: none;
+}
+
 .settings-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -220,8 +265,22 @@
     border-top: 1px solid var(--border);
 }
 
+/* display:flex перебивает атрибут hidden — гостю форма смены пароля видна не
+   должна быть (settings-page.js снимает hidden только после входа). */
+#password-block[hidden] {
+    display: none;
+}
+
 #password-block .btn {
     align-self: flex-start;
+}
+
+/* Обычный абзац внутри карточки настроек (пояснения, контакты) — в отличие от
+   .settings-hint это основной текст, а не мелкая приписка. */
+.settings-text {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.5;
 }
 
 .settings-about {

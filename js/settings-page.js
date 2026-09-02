@@ -6,6 +6,45 @@
     const S = window.AnimeiSettings;
     if (!S) return;
 
+    // ---- Вкладки: «Приложение» / «Аккаунт» ----
+    // Активная вкладка живёт в хэше (#account), а не в состоянии страницы:
+    // так на неё можно дать ссылку — этим и пользуется пункт «Настройки
+    // аккаунта» в меню профиля (см. renderAuthState в app.js).
+    const tabs = Array.from(document.querySelectorAll('.settings-tab'));
+    if (tabs.length) {
+        const panel = (name) => document.getElementById('panel-' + name);
+
+        function showTab(name, push) {
+            if (!panel(name)) name = 'app';
+            tabs.forEach((btn) => {
+                const on = btn.dataset.tab === name;
+                btn.classList.toggle('is-active', on);
+                btn.setAttribute('aria-selected', on ? 'true' : 'false');
+                const p = panel(btn.dataset.tab);
+                if (p) p.hidden = !on;
+            });
+            if (push) {
+                // replaceState, а не хэш напрямую: смена вкладки не должна
+                // копить записи в истории — «назад» уводит со страницы.
+                const url = location.pathname + location.search + (name === 'app' ? '' : '#' + name);
+                history.replaceState(history.state, '', url);
+            }
+        }
+
+        // Вкладка из ссылки: и #account, и ?tab=account — на случай, если
+        // хэш съест внешний переход.
+        const fromUrl = () => {
+            const h = (location.hash || '').replace('#', '');
+            if (h) return h;
+            const m = /[?&]tab=([a-z]+)/.exec(location.search);
+            return m ? m[1] : 'app';
+        };
+
+        showTab(fromUrl(), false);
+        tabs.forEach((btn) => btn.addEventListener('click', () => showTab(btn.dataset.tab, true)));
+        window.addEventListener('hashchange', () => showTab(fromUrl(), false));
+    }
+
     // ---- Сегментированные переключатели (тема, размер субтитров) ----
     // norm — нормализация сохранённого значения перед подсветкой (легаси).
     function initSeg(id, key, onChange, norm) {

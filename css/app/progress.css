@@ -3,10 +3,22 @@
    прошёл». Считается целиком на клиенте из того, что и так лежит локально
    (слова, расписание повторений, дни занятий) — отдельного запроса нет. */
 
+/* .progress — это сам <main>, то есть flex-элемент внутри .app (flex-колонка с
+   height:100% и body{overflow:hidden}). Без flex/min-height/overflow страница
+   просто обрезалась по высоте экрана и не скроллилась вовсе. Скролл-контейнер
+   держим во всю ширину, а колонку в 720px задаём детям — иначе полоса прокрутки
+   висела бы посреди экрана, по краю колонки. */
 .progress {
-    max-width: 720px;
-    margin: 0 auto;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     padding: 20px 16px 40px;
+}
+
+.progress > * {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .progress__title {
