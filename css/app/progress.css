@@ -1,0 +1,232 @@
+/* ========== PROGRESS PAGE ========== */
+/* «Мой прогресс»: единственный экран, который отвечает на вопрос «сколько я уже
+   прошёл». Считается целиком на клиенте из того, что и так лежит локально
+   (слова, расписание повторений, дни занятий) — отдельного запроса нет. */
+
+.progress {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+}
+
+.progress__title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.progress__subtitle {
+    color: var(--text-muted);
+    font-size: var(--fs-caption);
+    margin-bottom: 22px;
+}
+
+/* Сводка: четыре числа, ради которых сюда и заходят. */
+.prg-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.prg-tile {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 12px;
+    text-align: center;
+}
+
+.prg-tile__value {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.prg-tile__label {
+    margin-top: 4px;
+    font-size: var(--fs-eyebrow);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.prg-tile--accent .prg-tile__value { color: var(--primary); }
+.prg-tile--streak .prg-tile__value { color: var(--warning); }
+
+.prg-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+}
+
+.prg-section__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.prg-section__title {
+    font-size: var(--fs-body);
+    font-weight: 600;
+}
+
+.prg-section__note {
+    font-size: var(--fs-caption);
+    color: var(--text-muted);
+}
+
+/* Состав словаря — одна полоса из трёх долей. Три отдельных прогресс-бара
+   врали бы: доли одного целого, а не три независимых показателя. */
+.prg-split {
+    display: flex;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--border);
+}
+
+.prg-split__part { height: 100%; }
+.prg-split__part--learned { background: var(--success); }
+.prg-split__part--learning { background: var(--primary); }
+.prg-split__part--fresh { background: var(--text-dim); opacity: .45; }
+
+.prg-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: 10px;
+    font-size: var(--fs-caption);
+    color: var(--text-muted);
+}
+
+.prg-legend__item { display: flex; align-items: center; gap: 6px; }
+.prg-legend__dot { width: 8px; height: 8px; border-radius: 50%; }
+.prg-legend__dot--learned { background: var(--success); }
+.prg-legend__dot--learning { background: var(--primary); }
+.prg-legend__dot--fresh { background: var(--text-dim); opacity: .45; }
+
+/* Календарь занятий: 7 строк (дни недели) × недели. Скроллится вбок на узком
+   экране, а не сжимается в нечитаемую кашу. */
+.prg-cal {
+    display: flex;
+    gap: 3px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.prg-cal__week {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 0 0 auto;
+}
+
+.prg-cal__day {
+    width: 13px;
+    height: 13px;
+    border-radius: 3px;
+    background: var(--border);
+}
+
+.prg-cal__day--on { background: var(--primary); }
+.prg-cal__day--today { box-shadow: 0 0 0 1.5px var(--text-muted); }
+.prg-cal__day--future { opacity: .35; }
+
+/* Пополнение словаря по неделям. Высоту столбика ставит JS (inline height). */
+.prg-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 90px;
+}
+
+.prg-bar {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    min-width: 0;
+}
+
+.prg-bar__fill {
+    width: 100%;
+    background: var(--primary);
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+}
+
+.prg-bar__fill--empty { background: var(--border); }
+
+.prg-bar__label {
+    font-size: 10px;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.prg-bar__value {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Покрытие JLPT — привычная всем шкала «сколько из списка уровня я знаю». */
+.prg-jlpt + .prg-jlpt { margin-top: 14px; }
+
+.prg-jlpt__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 6px;
+    font-size: var(--fs-caption);
+}
+
+.prg-jlpt__name { font-weight: 600; }
+.prg-jlpt__count { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+.prg-jlpt__track {
+    display: flex;
+    height: 10px;
+    border-radius: 5px;
+    background: var(--border);
+    overflow: hidden;
+}
+
+/* Две доли в одной шкале: сплошная — «знаю», бледная — «карточка есть, но ещё
+   учится». Скругление живёт на дорожке, иначе доли выглядят как две таблетки. */
+.prg-jlpt__fill {
+    height: 100%;
+    background: var(--primary);
+}
+
+.prg-jlpt__fill--soft {
+    background: var(--primary);
+    opacity: .35;
+}
+
+/* Пустое состояние: у человека ещё нет ни одного слова — показывать графики
+   не из чего, поэтому вместо них путь дальше. */
+.prg-empty {
+    text-align: center;
+    padding: 34px 16px;
+}
+
+.prg-empty__text {
+    color: var(--text-muted);
+    font-size: var(--fs-body);
+    margin-bottom: 16px;
+}
+
+@media (max-width: 560px) {
+    .prg-tiles { grid-template-columns: repeat(2, 1fr); }
+    .progress { padding: 16px 12px 32px; }
+}

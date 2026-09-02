@@ -67,6 +67,28 @@
     tr:last-child td { border-bottom: none; }
 
     .msg { color: var(--muted); padding: 40px 0; text-align: center; }
+    /* Источники: строка на источник, точка состояния слева. Смотреть надо
+       глазами и быстро — «что сегодня отвалилось», поэтому цвет несёт смысл,
+       а подпись рядом объясняет, чем это грозит. */
+    .src { display: flex; align-items: baseline; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+    .src:last-child { border-bottom: 0; }
+    .srcgrp { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; }
+    .srcgrp__head { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .src__dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; align-self: center; }
+    .src__dot--ok { background: var(--ok); }
+    .src__dot--bad { background: var(--bad); }
+    .src__dot--off { background: var(--muted); }
+    .src__name { font-size: 13.5px; font-weight: 600; flex: 0 0 auto; }
+    .src__note { font-size: 12.5px; color: var(--muted); flex: 1 1 auto; }
+    .src__note--bad { color: var(--bad); }
+    .src__hint { display: block; font-size: 11.5px; color: var(--muted); opacity: .75; }
+    .src__ms { font-size: 11.5px; color: var(--muted); flex: 0 0 auto; }
+    .srcsum { margin: 0 0 10px; font-size: 13px; }
+    #srcRefresh { margin-left: 10px; vertical-align: middle; font-weight: 400; }
+    @media (max-width: 560px) {
+        .src { flex-wrap: wrap; gap: 6px 10px; }
+        .src__note { flex-basis: 100%; }
+    }
 
     /* Списки пользователей/регистраций — карточки-строки вместо таблиц:
        читаются на любой ширине без горизонтального скролла. */
@@ -181,6 +203,11 @@
         <div class="cards" id="ovCards"></div>
         <h2 class="section-title">Здоровье сервиса</h2>
         <div id="ovHealth" class="msg">Загрузка…</div>
+        <h2 class="section-title">Источники
+            <button class="btn btn--small" id="srcRefresh" type="button">Проверить заново</button>
+        </h2>
+        <div id="ovSources" class="msg">Загрузка…</div>
+
         <h2 class="section-title">Последние регистрации</h2>
         <div id="ovRecent" class="msg">Загрузка…</div>
     </div>
@@ -345,6 +372,58 @@
                 }).join('') + '</div>';
         }).catch(function () {});
     }
+    // ---------- Источники ----------
+    var SRC_GROUPS = [
+        ['video', 'Видео'],
+        ['subs', 'Субтитры'],
+        ['catalog', 'Каталог'],
+        ['tools', 'Инструменты'],
+    ];
+
+    function srcHtml(it) {
+        // ok === null — источник выключен намеренно (нет ключа), это не поломка.
+        var cls = it.ok === null ? 'off' : (it.ok ? 'ok' : 'bad');
+        return '<div class="src">' +
+            '<span class="src__dot src__dot--' + cls + '"></span>' +
+            '<span class="src__name">' + esc(it.title) + '</span>' +
+            '<span class="src__note' + (it.ok === false ? ' src__note--bad' : '') + '">' + esc(it.note) +
+                (it.hint ? '<span class="src__hint">' + esc(it.hint) + '</span>' : '') + '</span>' +
+            '<span class="src__ms">' + fmt(it.ms) + ' мс</span>' +
+        '</div>';
+    }
+
+    function renderSources(d) {
+        var items = d.items || [];
+        var broken = items.filter(function (i) { return i.ok === false; });
+        var sum = broken.length
+            ? '<b style="color:var(--bad)">Сломано: ' + broken.length + '</b> — ' +
+              esc(broken.map(function (i) { return i.title; }).join(', '))
+            : '<b style="color:var(--ok)">Все источники живы</b>';
+
+        var groups = SRC_GROUPS.map(function (g) {
+            var rows = items.filter(function (i) { return i.kind === g[0]; });
+            if (!rows.length) return '';
+            return '<div class="srcgrp"><div class="srcgrp__head">' + g[1] + '</div>' +
+                rows.map(srcHtml).join('') + '</div>';
+        }).join('');
+
+        document.getElementById('ovSources').className = '';
+        document.getElementById('ovSources').innerHTML =
+            '<p class="srcsum">' + sum + ' <span style="color:var(--muted)">· проверено ' + dt(d.checkedAt) +
+            (d.cached ? ' (из кэша)' : '') + '</span></p>' + groups;
+    }
+
+    function loadSources(force) {
+        var el = document.getElementById('ovSources');
+        el.className = 'msg';
+        el.textContent = 'Проверяем источники…';
+        api('/sources' + (force ? '?force=1' : '')).then(renderSources).catch(function () {
+            el.textContent = 'Не удалось проверить источники';
+        });
+    }
+
+    document.getElementById('srcRefresh').addEventListener('click', function () { loadSources(true); });
+
     function cardHtml(label, value) {
         return '<div class="card"><div class="label">' + label + '</div><div class="value">' + value + '</div></div>';
     }
@@ -598,6 +677,7 @@
     }
 
     loadOverview();
+    loadSources(false);
 </script>
 </body>
 </html>

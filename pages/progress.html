@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Animei - Progress</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../img/icons/180x180.png">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="icon" type="image/png" href="../img/favicon.png">
+    <meta name="theme-color" content="#0a0a0f">
+    <script>
+        // Тему ставим ДО первой отрисовки (зеркалит effectiveTheme() из settings.js).
+        (function () {
+            var th = 'dark';
+            try {
+                var s = JSON.parse(localStorage.getItem('animei:settings') || '{}');
+                if (s && s.theme) th = s.theme;
+            } catch (e) { /* приватный режим */ }
+            if (th === 'system') {
+                th = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'light' : 'dark';
+            }
+            th = th === 'light' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', th);
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute('content', th === 'light' ? '#f4f5fa' : '#0a0a0f');
+        })();
+    </script>
+    <link href="../css/app.css" rel="stylesheet">
+    <script>
+        // Пакет переводов uk/en грузим лениво (зеркалит detectLang() из i18n.js).
+        (function () {
+            var langs = { ru: 1, uk: 1, en: 1 };
+            var lang = null;
+            try { lang = localStorage.getItem('animei:lang'); } catch (e) { /* приватный режим */ }
+            if (!langs[lang]) {
+                lang = 'ru';
+                var prefs = [navigator.language].concat(navigator.languages || []);
+                for (var i = 0; i < prefs.length; i++) {
+                    var c = String(prefs[i] || '').toLowerCase().split('-')[0];
+                    if (langs[c]) { lang = c; break; }
+                }
+            }
+            if (lang !== 'ru') document.write('<scr' + 'ipt src="../js/i18n/' + lang + '.js" defer></scr' + 'ipt>');
+        })();
+    </script>
+</head>
+<body>
+<div class="app">
+    <header class="header header--flush-left">
+        <div class="header__left">
+            <button class="icon-btn menu-btn" aria-label="Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="header__logo">
+            <img src="../favicon.svg" alt="" class="header__logo-mark">
+            <span class="header__logo-text">Animei</span>
+        </div>
+        <form class="header__search" role="search"><button type="button" class="icon-btn header__search-toggle" aria-label="Search" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><input class="header__search-input" name="q" type="search" autocomplete="off" data-i18n-placeholder="header.search" placeholder="Поиск аниме"></form>
+        <div class="header__right">
+            <div class="profile-wrap">
+                <button class="icon-btn profile-btn" aria-label="Profile">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </button>
+                <div class="profile-menu" id="profile-menu">
+                    <a href="#" id="logout-btn">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="progress">
+        <h1 class="progress__title" data-i18n="progress.title">Мой прогресс</h1>
+        <p class="progress__subtitle" id="prg-subtitle" data-i18n="progress.subtitle">Всё, что вы собрали и выучили</p>
+        <div id="prg-body"></div>
+    </main>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar__brand">Animei</div>
+        <a href="../index.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/></svg><span class="nav-label" data-i18n="nav.home">Главная</span></a>
+        <a href="./catalog.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="nav-label" data-i18n="nav.catalog">Поиск аниме</span></a>
+        <a href="./watch.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="10 9 16 12 10 15 10 9" fill="currentColor" stroke="none"/></svg><span class="nav-label" data-i18n="nav.watch">Своё видео</span></a>
+        <a href="./words.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="nav-label" data-i18n="nav.dictionary">Мои слова</span></a>
+        <a href="/news/"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13v14a2 2 0 0 0 2 2H5a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1z"/><line x1="7" y1="9" x2="14" y2="9"/><line x1="7" y1="13" x2="14" y2="13"/><line x1="7" y1="17" x2="11" y2="17"/></svg><span class="nav-label" data-i18n="nav.news">JP News</span><span class="nav-new">NEW</span></a>
+        <a href="./feedback.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"/></svg><span class="nav-label" data-i18n="nav.feedback">Обратная связь</span></a>
+    </nav>
+    <div class="overlay" id="overlay"></div>
+</div>
+
+<script src="../libs/axios/axios.min.js" defer></script>
+<script src="../libs/snackbar/snackbar.js" defer></script>
+<script src="../js/settings.js" defer></script>
+<script src="../js/i18n.js" defer></script>
+<script src="../js/axiosClient.js" defer></script>
+<script src="../js/video-store.js" defer></script>
+<script src="../js/words-store.js" defer></script>
+<script src="../js/known-store.js" defer></script>
+<script src="../js/study-core.js" defer></script>
+<script src="../js/app.js" defer></script>
+<script src="../js/progress.js" defer></script>
+<script src="../js/stats.js" defer></script>
+</body>
+</html>

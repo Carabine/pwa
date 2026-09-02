@@ -105,6 +105,9 @@ async function saveWord(payload) {
     })();
     const word = {
         id: makeLocalId(),
+        // Дата сохранения нужна «Моему прогрессу» (график пополнения словаря):
+        // у вошедшего её проставляет сервер, у гостя проставить некому.
+        createdAt: new Date().toISOString(),
         ...data,
         ...(sharedUrl ? { video: sharedUrl } : {}),
         trimStart: Number.isFinite(data.trimStart) ? data.trimStart : (wordDur > 0 ? lead : null),

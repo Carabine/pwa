@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Animei - Password</title>
+    <meta name="robots" content="noindex">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../img/icons/180x180.png">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="icon" type="image/png" href="../img/favicon.png">
+    <meta name="theme-color" content="#0a0a0f">
+    <script>
+        // Тему ставим ДО первой отрисовки (зеркалит effectiveTheme() из settings.js).
+        (function () {
+            var th = 'dark';
+            try {
+                var s = JSON.parse(localStorage.getItem('animei:settings') || '{}');
+                if (s && s.theme) th = s.theme;
+            } catch (e) { /* приватный режим */ }
+            if (th === 'system') {
+                th = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'light' : 'dark';
+            }
+            th = th === 'light' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', th);
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute('content', th === 'light' ? '#f4f5fa' : '#0a0a0f');
+        })();
+    </script>
+    <link href="../css/app.css" rel="stylesheet">
+    <script>
+        // Пакет переводов uk/en грузим лениво (зеркалит detectLang() из i18n.js).
+        (function () {
+            var langs = { ru: 1, uk: 1, en: 1 };
+            var lang = null;
+            try { lang = localStorage.getItem('animei:lang'); } catch (e) { /* приватный режим */ }
+            if (!langs[lang]) {
+                lang = 'ru';
+                var prefs = [navigator.language].concat(navigator.languages || []);
+                for (var i = 0; i < prefs.length; i++) {
+                    var c = String(prefs[i] || '').toLowerCase().split('-')[0];
+                    if (langs[c]) { lang = c; break; }
+                }
+            }
+            if (lang !== 'ru') document.write('<scr' + 'ipt src="../js/i18n/' + lang + '.js" defer></scr' + 'ipt>');
+        })();
+    </script>
+</head>
+<body>
+<div class="app">
+    <header class="header header--flush-left">
+        <div class="header__left"></div>
+        <div class="header__logo">
+            <img src="../favicon.svg" alt="" class="header__logo-mark">
+            <span class="header__logo-text">Animei</span>
+        </div>
+        <div class="header__right"></div>
+    </header>
+
+    <main class="main">
+        <div class="login-form">
+            <h2 class="login-form__title" id="reset-title">Восстановление пароля</h2>
+            <p class="login-form__subtitle" id="reset-subtitle">Проверяем ссылку…</p>
+
+            <!-- Шаг 1: запрос письма. Показывается, когда в адресе нет токена. -->
+            <form id="ask-form" hidden>
+                <div class="form-group">
+                    <label for="reset-email" data-i18n="auth.email">Почта</label>
+                    <input type="email" id="reset-email" placeholder="your@email.com" autocomplete="email">
+                </div>
+                <button type="submit" id="ask-btn" class="btn btn--primary btn--block" style="margin-top: 8px;"
+                        data-i18n="reset.send">Отправить ссылку</button>
+            </form>
+
+            <!-- Шаг 2: новый пароль. Показывается по живой ссылке из письма. -->
+            <form id="new-form" hidden>
+                <div class="form-group">
+                    <label for="reset-password" data-i18n="reset.newPassword">Новый пароль</label>
+                    <div class="pw-field">
+                        <input type="password" id="reset-password" placeholder="••••••••" autocomplete="new-password">
+                        <button type="button" class="pw-field__eye" id="pw-toggle" aria-label="Показать пароль" tabindex="-1">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" id="new-btn" class="btn btn--primary btn--block" style="margin-top: 8px;"
+                        data-i18n="reset.save">Сохранить пароль</button>
+            </form>
+
+            <!-- Ссылка «запросить новую» — когда токен протух или уже сработал. -->
+            <button type="button" id="again-btn" class="login-form__toggle" hidden
+                    data-i18n="reset.again">Запросить новую ссылку</button>
+
+            <a href="./login.html" class="login-form__back" id="to-login" data-i18n="reset.toLogin">← Ко входу</a>
+        </div>
+    </main>
+</div>
+
+<script src="../libs/axios/axios.min.js" defer></script>
+<script src="../libs/snackbar/snackbar.js" defer></script>
+<script src="../js/settings.js" defer></script>
+<script src="../js/i18n.js" defer></script>
+<script src="../js/axiosClient.js" defer></script>
+<script src="../js/reset.js" defer></script>
+<script src="../js/stats.js" defer></script>
+</body>
+</html>

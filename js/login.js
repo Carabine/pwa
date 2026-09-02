@@ -14,6 +14,9 @@ function applyAuthMode() {
     setText('#toggle-mode', t(isLogin ? 'auth.toRegister' : 'auth.toLogin'));
     const pw = document.getElementById('password');
     if (pw) pw.autocomplete = isLogin ? 'current-password' : 'new-password';
+    // «Забыли пароль?» — только в режиме входа: при регистрации забывать нечего.
+    const forgot = document.getElementById('forgot-link');
+    if (forgot) forgot.hidden = !isLogin;
 }
 
 let authSubmitting = false;
