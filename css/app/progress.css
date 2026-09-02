@@ -242,7 +242,14 @@
     margin-bottom: 16px;
 }
 
+/* Вторая строка-заглушка в «Что впереди»: на узком экране прогноз переносится
+   на две строки, на широком помещается в одну. Без этого скелетон резервировал
+   на десктопе лишние 20px и низ страницы подтягивался вверх при отрисовке. */
+.prg-skel-line2 { display: none; }
+
 @media (max-width: 560px) {
+    .prg-skel-line2 { display: inline-block; }
+
     .prg-tiles { grid-template-columns: repeat(2, 1fr); }
     .progress { padding: 16px 12px 32px; }
 }

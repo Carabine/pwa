@@ -265,6 +265,23 @@
             + '</div>' + body + '</div>';
     }
 
+    // Заглушка на время, пока снимок слов ещё обновляется с сервера. Разметку
+    // не собираем здесь, а забираем ту, что уже лежит в pages/progress.html:
+    // так у скелетона один источник и он не разъедется с разметкой страницы.
+    let skeleton = '';
+
+    // Место под «Покрытие JLPT», пока едет список уровней. Шапка и строки — те
+    // же классы, что у настоящего блока, поэтому подмена проходит без сдвига.
+    function jlptSkeletonHtml() {
+        const row = (name) => '<div class="prg-jlpt">'
+            + '<div class="prg-jlpt__head">'
+            + `<span class="prg-jlpt__name">${name}</span>`
+            + '<span class="prg-jlpt__count"><span class="skel skel-bar" style="width:8ch"></span></span>'
+            + '</div><div class="prg-jlpt__track"></div></div>';
+        return section(tr('progress.jlpt.title', 'Покрытие JLPT'),
+            tr('progress.jlpt.note', 'знаю + в работе'), ['N5', 'N4', 'N3'].map(row).join(''));
+    }
+
     function emptyHtml() {
         return '<div class="prg-section prg-empty">'
             + `<p class="prg-empty__text">${esc(tr('progress.empty', 'Пока нечего показывать — соберите первые слова из аниме, и здесь появится прогресс.'))}</p>`
@@ -284,14 +301,36 @@
         }
     }
 
-    async function render() {
+    // undefined — список ещё едет (на его месте скелетон), null — не доехал.
+    // Раньше отрисовка ЖДАЛА этот файл целиком: на медленной сети страница
+    // больше полусекунды стояла пустой, а потом всё вываливалось разом.
+    let levels;
+    let levelsPromise = null;
+    function ensureLevels() {
+        if (!levelsPromise) levelsPromise = loadLevels().then((v) => { levels = v; });
+        return levelsPromise;
+    }
+
+    // Снимок слов ещё обновляется с сервера. Пока это так, пустая коллекция —
+    // не повод показывать «нечего показывать»: у вошедшего слова могли
+    // появиться на другом устройстве, и «пусто» на секунду читалось как потеря
+    // коллекции. До ответа сервера показываем заглушку.
+    let pending = true;
+    let lastHtml = '';
+    let tracked = false;
+
+    function render() {
         const words = readWords();
         const schedule = readSchedule();
         const days = readDays();
         const known = (window.KnownWords && KnownWords.all) ? KnownWords.all() : [];
 
+        if (pending && !words.length) {
+            paint(skeleton);
+            return;
+        }
         if (!words.length && !known.length && !days.size) {
-            el('prg-body').innerHTML = emptyHtml();
+            paint(emptyHtml());
             return;
         }
 
@@ -317,15 +356,13 @@
             streak: streaks(days),
         };
 
-        const levels = await loadLevels();
-
-        el('prg-body').innerHTML =
+        paint(
             tilesHtml(stats)
             + (stats.total ? splitHtml(stats) : '')
             + calendarHtml(days)
             + growthHtml(words)
-            + jlptHtml(levels, words, schedule, known)
-            + (stats.total ? aheadHtml(words, schedule) : '');
+            + (levels === undefined ? jlptSkeletonHtml() : jlptHtml(levels, words, schedule, known))
+            + (stats.total ? aheadHtml(words, schedule) : ''));
 
         if (stats.streak.best > stats.streak.current) {
             // Число дней склоняет tStreak — «2 дней подряд» в подзаголовке
@@ -335,21 +372,45 @@
                 : stats.streak.best + ' дн.';
             el('prg-subtitle').textContent = tr('progress.record', 'Рекорд серии: {n}').replace('{n}', n);
         }
-        if (window.animeiTrack) animeiTrack('progress', 'view:' + stats.total);
+        // Просмотр засчитываем один раз за загрузку и только по окончательным
+        // данным: render зовётся ещё и после ответа сервера, и раньше каждый
+        // заход считался в статистике дважды.
+        if (!pending && !tracked) {
+            tracked = true;
+            if (window.animeiTrack) animeiTrack('progress', 'view:' + stats.total);
+        }
     }
 
-    document.addEventListener('DOMContentLoaded', async () => {
+    // Пишем в DOM только когда разметка реально изменилась: render зовётся
+    // несколько раз (список JLPT, ответ сервера), и без этой проверки страница
+    // моргала перерисовкой даже там, где ничего не поменялось.
+    function paint(html) {
+        if (html === lastHtml) return;
+        lastHtml = html;
+        el('prg-body').innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
         if (typeof applyI18n === 'function') applyI18n();
-        // Рисуем сразу по локальному снимку — страница не должна ждать сеть.
+        // Скелетон уже отрисован разметкой — запоминаем его и считаем текущим
+        // содержимым, чтобы первая же отрисовка не переписала DOM тем же самым.
+        skeleton = el('prg-body').innerHTML;
+        lastHtml = skeleton;
+        // Рисуем сразу по локальному снимку — страница не ждёт ни сети, ни
+        // списка JLPT: он приезжает в свой блок отдельно, на уже занятое место.
         render();
+        ensureLevels().then(render);
+
         // Потом обновляем снимок слов (у вошедшего он мог устареть на другом
         // устройстве) и перерисовываем.
+        const settle = () => { pending = false; render(); };
         if (typeof fetchDataFromServer === 'function') {
-            try {
-                await fetchDataFromServer();
-                if (typeof mergeServerSchedule === 'function') mergeServerSchedule();
-                render();
-            } catch { /* нет сети — остаёмся на локальном снимке */ }
+            Promise.resolve(fetchDataFromServer())
+                .then(() => { if (typeof mergeServerSchedule === 'function') mergeServerSchedule(); })
+                .catch(() => { /* нет сети — остаёмся на локальном снимке */ })
+                .then(settle);
+        } else {
+            settle();
         }
     });
 })();
