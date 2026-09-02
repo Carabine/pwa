@@ -498,6 +498,7 @@ const I18N = {
         'feedback.title': 'Обратная связь',
         'feedback.text': 'Помоги сделать изучение японского ещё лучше — поделись мыслями, идеями или проблемами.',
         'feedback.telegram': 'Напиши нам в Telegram:',
+        'feedback.write': 'Написать в Telegram',
         'feedback.thanks': 'Спасибо, что помогаешь!',
 
         'nav.settings': 'Настройки',

@@ -494,6 +494,7 @@ window.I18N_UK = {
         'feedback.title': 'Зворотний зв’язок',
         'feedback.text': 'Допоможи зробити вивчення японської ще кращим — поділись думками, ідеями чи проблемами.',
         'feedback.telegram': 'Напиши нам у Telegram:',
+        'feedback.write': 'Написати в Telegram',
         'feedback.thanks': 'Дякуємо, що допомагаєш!',
 
         'nav.settings': 'Налаштування',
