@@ -174,6 +174,7 @@ const ACCOUNT_SCOPED_KEYS = [
     'animei:decksDeleted',
     'animei:decksSynced',
     'animei:lastSession',      // «продолжить сессию» на главной
+    'animei:mirrorSig',        // подпись гостевого снимка (см. guest-mirror.js)
 ];
 
 function clearAccountScopedState() {
