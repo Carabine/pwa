@@ -85,7 +85,12 @@ async function saveWord(payload) {
     if (isSignedIn()) {
         // Клип режет и хранит сервер (см. POST /words) — videoUrl уходит туда.
         const { data: res } = await client.post('words', data);
-        return res?.data ?? res;
+        const saved = res?.data ?? res;
+        // Офлайн-копии пополняем сразу, не задерживая ответ: слово — в кэш
+        // списка, клип — в IndexedDB, как только сервер его дорежет.
+        rememberWordInCache(saved);
+        warmSavedWordOffline(saved);
+        return saved;
     }
     // Клип режем с запасом ±CLIP_MARGIN, а окно воспроизведения (trimStart/End)
     // указывает на само слово внутри клипа — его границы можно двигать ±1с.
@@ -139,6 +144,78 @@ async function saveWord(payload) {
 // У вошедшего последний успешный список кешируется: без сети (метро/самолёт)
 // учёба и словарь работают по нему, а клипы — из IndexedDB (см. study-core).
 const WORDS_CACHE_KEY = 'animei:wordsCache';
+
+// ---------- Офлайн-копии только что сохранённого слова ----------
+// У вошедшего клип режется на сервере ФОНОМ, а в браузер попадает только когда
+// карточку показали (докеширование в study-core). Поэтому «сохранил слово в
+// плеере → выключил сеть → сел учить» давало карточку без видео, а самого слова
+// не было и в списке: WORDS_CACHE_KEY обновляется только в fetchWords. Здесь
+// дописываем слово в кэш и, дождавшись нарезки, тянем клип в IndexedDB.
+
+// Паузы между опросами готовности клипа (мс). Нарезка занимает секунды, но на
+// длинном эпизоде и медленном источнике доходит до полуминуты — дальше ждать
+// незачем: клип придёт обычным путём, при показе карточки.
+const CLIP_WAIT_DELAYS = [2000, 3000, 5000, 8000, 12000, 20000];
+
+function serverClipUrl(word) {
+    return (word && (word.Video ? word.Video.url : word.video)) || '';
+}
+
+// Заменить (или добавить) слово в офлайн-копии списка. Копии ещё нет — не
+// создаём её из одного слова: соберёт fetchWords, когда список загрузится.
+function rememberWordInCache(word) {
+    if (!word || !word.id) return;
+    const cached = lsJson(WORDS_CACHE_KEY);
+    if (!Array.isArray(cached)) return;
+    const idx = cached.findIndex((w) => w && w.id === word.id);
+    if (idx >= 0) cached[idx] = { ...cached[idx], ...word };
+    else cached.push(word);
+    try { localStorage.setItem(WORDS_CACHE_KEY, JSON.stringify(cached)); }
+    catch { /* тесно в localStorage — не страшно */ }
+}
+
+// Прогревы идут по одному и в порядке сохранения: колода серии создаёт слова
+// пачкой, и десяток параллельных опросов с качками отобрал бы канал у того, что
+// человек делает прямо сейчас. Длину очереди ограничиваем — при массовом
+// импорте остальные клипы приедут обычным путём, префетчем в учёбе.
+const CLIP_WARM_QUEUE_LIMIT = 30;
+let clipWarmQueue = Promise.resolve();
+let clipWarmPending = 0;
+
+function warmSavedWordOffline(word) {
+    if (clipWarmPending >= CLIP_WARM_QUEUE_LIMIT) return;
+    clipWarmPending++;
+    clipWarmQueue = clipWarmQueue
+        .then(() => warmClipToStore(word))
+        .catch(() => {})
+        .finally(() => { clipWarmPending--; });
+}
+
+// Дождаться серверной нарезки и утащить клип в браузер. Ничего не пробрасывает
+// и никого не ждёт: слово уже сохранено, это фоновая подстраховка на офлайн.
+async function warmClipToStore(word) {
+    if (!word || !word.id || typeof cacheMediaFromUrl !== 'function') return;
+    // «Экономия трафика» — вперёд не забегаем, ровно как префетч в study-core.
+    const conn = navigator.connection;
+    if (conn && conn.saveData) return;
+
+    let url = serverClipUrl(word);          // общий клип колоды — готов сразу
+    if (!url && Number(word.videoEnd) > Number(word.videoStart)) {
+        for (const delay of CLIP_WAIT_DELAYS) {
+            await sleep(delay);
+            try {
+                const { data: res } = await client.get(`words/${word.id}/clip`);
+                url = (res && res.data && res.data.url) || '';
+            } catch { return; }             // нет сети или слово удалили — ждать нечего
+            if (url) break;
+        }
+    }
+    if (!url) return;
+    // В кэше списка слово лежит без клипа (ответ POST /words его ещё не знал) —
+    // иначе офлайн-карточка не поняла бы, что видео у неё есть.
+    rememberWordInCache({ id: word.id, Video: { url } });
+    await cacheMediaFromUrl('clip', word.id, url);
+}
 
 async function fetchWords() {
     if (isSignedIn()) {
