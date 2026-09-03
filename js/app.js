@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.448';
+const APP_VERSION = 'v0.0.449';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -365,26 +365,39 @@ if ('serviceWorker' in navigator) {
 // шапкой стоит короткая подпись: что случилось и что осталось можно.
 //
 // Это статус, а не тревога: раньше здесь была полоса во всю ширину в
-// предупреждающем цвете, в две строки на телефоне. Теперь — маленькая серая
-// пилюля по центру; кричать не о чем, приложение продолжает работать.
+// предупреждающем цвете, в две строки на телефоне. Теперь — значок в самой
+// шапке, рядом с языком, как индикатор в статус-баре телефона: он ничего не
+// сдвигает, ничего не накрывает и не выглядит отдельным блоком поверх страницы.
+// Полная фраза не потерялась: она в подсказке значка, по тапу — снекбаром,
+// и таким же снекбаром один раз при пропаже сети.
 (function offlineBar() {
     let bar = null;
 
     const OFFLINE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M8.5 16.4a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.7"/><path d="M18.7 12.7A10 10 0 0 0 13.6 10"/><path d="M1.4 9.2a15 15 0 0 1 5.5-3.6"/><path d="M22.6 9.2A15 15 0 0 0 12 5"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
 
+    function fullText() {
+        return typeof t === 'function' ? t('offline.bar')
+            : 'Нет сети. Повторение и сохранённые карточки работают';
+    }
+
     function ensureBar() {
         if (bar && bar.isConnected) return bar;
-        bar = document.createElement('div');
-        bar.className = 'offline-bar';
-        bar.setAttribute('role', 'status');
-        bar.innerHTML = '<span class="offline-bar__pill">'
-            + '<span class="offline-bar__ico">' + OFFLINE_ICON + '</span>'
-            + '<span class="offline-bar__text"></span></span>';
-        // Шапка есть на всех страницах приложения; пилюля встаёт сразу под ней и
-        // сдвигает содержимое вниз, а не накрывает его (перекрытие мешало бы
-        // кнопкам оценки в повторении).
-        const header = document.querySelector('.header');
-        if (header && header.parentNode) header.insertAdjacentElement('afterend', bar);
+        bar = document.createElement('button');
+        bar.type = 'button';
+        bar.className = 'offline-chip';
+        bar.innerHTML = '<span class="offline-chip__ico">' + OFFLINE_ICON + '</span>'
+            + '<span class="offline-chip__text"></span>';
+        // Полную фразу показываем по тапу: на телефоне у значка нет подписи, и
+        // это единственный способ узнать, что именно осталось работать.
+        bar.addEventListener('click', () => {
+            if (typeof showSnackbar === 'function') showSnackbar(fullText(), { duration: 3500 });
+        });
+        // Встаём в правую группу шапки, перед профилем: рядом с языком, как
+        // индикатор в статус-баре. Шапки нет (редкая страница) — прячемся сверху.
+        const right = document.querySelector('.header__right');
+        const profile = right && right.querySelector('.profile-wrap');
+        if (right && profile) right.insertBefore(bar, profile);
+        else if (right) right.appendChild(bar);
         else document.body.prepend(bar);
         return bar;
     }
@@ -392,11 +405,10 @@ if ('serviceWorker' in navigator) {
     function render(offline) {
         if (offline) {
             const el = ensureBar();
-            // Полная фраза остаётся подсказкой: в пилюлю влезает короткая.
-            const full = typeof t === 'function' ? t('offline.bar') : 'Нет сети. Повторение и сохранённые карточки работают';
-            el.querySelector('.offline-bar__text').textContent =
-                typeof t === 'function' ? t('offline.short') : 'Нет сети — повторение работает';
-            el.querySelector('.offline-bar__pill').title = full;
+            el.querySelector('.offline-chip__text').textContent =
+                typeof t === 'function' ? t('offline.chip') : 'Нет сети';
+            el.title = fullText();
+            el.setAttribute('aria-label', fullText());
         } else if (bar) {
             bar.remove();
             bar = null;
@@ -409,7 +421,12 @@ if ('serviceWorker' in navigator) {
         shown = offline;
         if (window.animeiTrack) animeiTrack('offline', offline ? 'on' : 'off');
         render(offline);
-        if (!offline && typeof showSnackbar === 'function' && typeof t === 'function') {
+        if (typeof showSnackbar !== 'function' || typeof t !== 'function') return;
+        if (offline) {
+            // Один раз объясняем, что случилось и что осталось можно: значок в
+            // шапке дальше держит статус, но сам по себе он этого не расскажет.
+            showSnackbar(fullText(), { duration: 3500 });
+        } else {
             // Тихо подтверждаем возврат: пользователь мог ждать именно этого,
             // чтобы открыть аниме или каталог.
             showSnackbar(t('offline.back'), { duration: 2500 });

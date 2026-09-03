@@ -74,7 +74,7 @@ const I18N = {
         'nav.site': '← На сайт Animei',
         'nav.logout': 'Выйти',
         'offline.bar': 'Нет сети. Повторение и сохранённые карточки работают',
-        'offline.short': 'Нет сети — повторение работает',
+        'offline.chip': 'Нет сети',
         'offline.back': 'Сеть вернулась',
         'nav.login': 'Войти',
 

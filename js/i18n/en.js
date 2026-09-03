@@ -70,7 +70,7 @@ window.I18N_EN = {
         'nav.site': '← Animei website',
         'nav.logout': 'Log out',
         'offline.bar': 'No connection. Reviews and saved cards still work',
-        'offline.short': 'Offline — reviews still work',
+        'offline.chip': 'Offline',
         'offline.back': 'Back online',
         'nav.login': 'Log in',
 

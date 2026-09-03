@@ -243,47 +243,49 @@ a[href$="watch.html"] {
     flex-wrap: wrap;
 }
 
-/* ========== ПОЛОСА «НЕТ СЕТИ» ========== */
+/* ========== ИНДИКАТОР «НЕТ СЕТИ» ========== */
 
-/* Встаёт под шапкой и сдвигает содержимое вниз (не накрывает его: кнопки
-   оценки в повторении должны оставаться на своих местах). Создаётся из JS —
-   см. offlineBar() в app.js, — поэтому в разметке страниц её нет.
+/* Живёт в правой группе шапки, рядом с языком, — как индикатор в статус-баре
+   телефона. Создаётся из JS (см. offlineBar() в app.js), поэтому в разметке
+   страниц его нет.
 
-   Это статус, а не тревога: полоса во всю ширину в предупреждающем цвете
-   (на телефоне — в две строки) кричала о том, с чем приложение прекрасно
-   живёт. Осталась маленькая серая пилюля по центру. */
-.offline-bar {
-    flex-shrink: 0;
-    display: flex;
-    justify-content: center;
-    padding: 6px 16px;
-}
-
-.offline-bar__pill {
+   Раньше это была полоса во всю ширину в предупреждающем цвете: она сдвигала
+   всю страницу вниз и читалась отдельным блоком-объявлением — при том, что
+   приложение офлайн прекрасно работает. Значок в шапке ничего не сдвигает и
+   ничего не накрывает. */
+.offline-chip {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    max-width: 100%;
-    padding: 4px 12px 4px 10px;
+    gap: 6px;
+    flex-shrink: 0;
+    height: 30px;
+    padding: 0 10px 0 8px;
     border-radius: 999px;
-    background: var(--surface);
+    background: var(--card);
     border: 1px solid var(--border);
     color: var(--text-muted);
     font-size: 12px;
-    line-height: 1.3;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+    white-space: nowrap;
 }
 
-.offline-bar__ico {
+.offline-chip__ico {
     display: flex;
-    flex-shrink: 0;
     color: var(--text-dim);
 }
 
-.offline-bar__ico svg { width: 13px; height: 13px; }
+.offline-chip__ico svg { width: 14px; height: 14px; }
 
-/* Длинный перевод не должен разрывать пилюлю на две строки. */
-.offline-bar__text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+@media (hover: hover) and (pointer: fine) {
+    .offline-chip:hover { border-color: var(--text-dim); color: var(--text); }
 }
+
+/* На узком экране в шапке места нет — остаётся один значок (полная фраза
+   приходит снекбаром при пропаже сети и по тапу). */
+@media (max-width: 560px) {
+    .offline-chip { padding: 0 7px; }
+    .offline-chip__text { display: none; }
+}
+

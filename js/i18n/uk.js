@@ -70,7 +70,7 @@ window.I18N_UK = {
         'nav.site': '← На сайт Animei',
         'nav.logout': 'Вийти',
         'offline.bar': 'Немає мережі. Повторення та збережені картки працюють',
-        'offline.short': 'Немає мережі — повторення працює',
+        'offline.chip': 'Немає мережі',
         'offline.back': 'Мережа повернулася',
         'nav.login': 'Увійти',
 
