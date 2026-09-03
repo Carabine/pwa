@@ -503,8 +503,8 @@ window.I18N_UK = {
 
         'nav.settings': 'Налаштування',
         'nav.account': 'Налаштування акаунта',
-        'nav.progress': 'Мій поступ',
-        'progress.title': 'Мій поступ',
+        'nav.progress': 'Мій прогрес',
+        'progress.title': 'Мій прогрес',
         'progress.subtitle': 'Усе, що ви зібрали й вивчили',
         'progress.record': 'Рекорд серії: {n}',
         'progress.tile.words': 'Слів',
@@ -523,7 +523,7 @@ window.I18N_UK = {
         'progress.jlpt.note': 'знаю + у роботі',
         'progress.ahead.title': 'Що попереду',
         'progress.ahead.text': 'Сьогодні до повторення: {due}. За найближчий тиждень підійде ще {week}.',
-        'progress.empty': 'Поки нічого показувати — зберіть перші слова з аніме, і тут з’явиться поступ.',
+        'progress.empty': 'Поки нічого показувати — зберіть перші слова з аніме, і тут з’явиться прогрес.',
         'progress.emptyCta': 'Обрати аніме',
 
         'settings.title': 'Налаштування',
