@@ -247,14 +247,43 @@ a[href$="watch.html"] {
 
 /* Встаёт под шапкой и сдвигает содержимое вниз (не накрывает его: кнопки
    оценки в повторении должны оставаться на своих местах). Создаётся из JS —
-   см. offlineBar() в app.js, — поэтому в разметке страниц её нет. */
+   см. offlineBar() в app.js, — поэтому в разметке страниц её нет.
+
+   Это статус, а не тревога: полоса во всю ширину в предупреждающем цвете
+   (на телефоне — в две строки) кричала о том, с чем приложение прекрасно
+   живёт. Осталась маленькая серая пилюля по центру. */
 .offline-bar {
     flex-shrink: 0;
-    padding: 8px 20px;
-    background: color-mix(in srgb, var(--warning) 16%, var(--surface));
-    border-bottom: 1px solid color-mix(in srgb, var(--warning) 32%, var(--border));
-    color: var(--text);
-    font-size: 12.5px;
-    line-height: 1.35;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    padding: 6px 16px;
+}
+
+.offline-bar__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    max-width: 100%;
+    padding: 4px 12px 4px 10px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.offline-bar__ico {
+    display: flex;
+    flex-shrink: 0;
+    color: var(--text-dim);
+}
+
+.offline-bar__ico svg { width: 13px; height: 13px; }
+
+/* Длинный перевод не должен разрывать пилюлю на две строки. */
+.offline-bar__text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.447';
+const APP_VERSION = 'v0.0.448';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -361,17 +361,26 @@ if ('serviceWorker' in navigator) {
 // Без него офлайн выглядел как «сайт подглючивает»: на главной молча пропадают
 // «продолжить смотреть» и рекомендации, каталог показывает кэшированный список,
 // который не открывается, плеер бесконечно «переподключается». Приложение при
-// этом РАБОТАЕТ — повторение и сохранённые карточки доступны, — поэтому одна
-// честная полоса под шапкой объясняет и что случилось, и что осталось можно.
+// этом РАБОТАЕТ — повторение и сохранённые карточки доступны, — поэтому под
+// шапкой стоит короткая подпись: что случилось и что осталось можно.
+//
+// Это статус, а не тревога: раньше здесь была полоса во всю ширину в
+// предупреждающем цвете, в две строки на телефоне. Теперь — маленькая серая
+// пилюля по центру; кричать не о чем, приложение продолжает работать.
 (function offlineBar() {
     let bar = null;
+
+    const OFFLINE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M8.5 16.4a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.7"/><path d="M18.7 12.7A10 10 0 0 0 13.6 10"/><path d="M1.4 9.2a15 15 0 0 1 5.5-3.6"/><path d="M22.6 9.2A15 15 0 0 0 12 5"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
 
     function ensureBar() {
         if (bar && bar.isConnected) return bar;
         bar = document.createElement('div');
         bar.className = 'offline-bar';
         bar.setAttribute('role', 'status');
-        // Шапка есть на всех страницах приложения; полоса встаёт сразу под ней и
+        bar.innerHTML = '<span class="offline-bar__pill">'
+            + '<span class="offline-bar__ico">' + OFFLINE_ICON + '</span>'
+            + '<span class="offline-bar__text"></span></span>';
+        // Шапка есть на всех страницах приложения; пилюля встаёт сразу под ней и
         // сдвигает содержимое вниз, а не накрывает его (перекрытие мешало бы
         // кнопкам оценки в повторении).
         const header = document.querySelector('.header');
@@ -383,7 +392,11 @@ if ('serviceWorker' in navigator) {
     function render(offline) {
         if (offline) {
             const el = ensureBar();
-            el.textContent = (typeof t === 'function' ? t('offline.bar') : 'Нет сети. Повторение и сохранённые карточки работают');
+            // Полная фраза остаётся подсказкой: в пилюлю влезает короткая.
+            const full = typeof t === 'function' ? t('offline.bar') : 'Нет сети. Повторение и сохранённые карточки работают';
+            el.querySelector('.offline-bar__text').textContent =
+                typeof t === 'function' ? t('offline.short') : 'Нет сети — повторение работает';
+            el.querySelector('.offline-bar__pill').title = full;
         } else if (bar) {
             bar.remove();
             bar = null;
