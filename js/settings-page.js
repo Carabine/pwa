@@ -64,6 +64,8 @@
     initSeg('set-theme', 'theme');
     initSeg('set-subSize', 'subSize');
     initSeg('set-newPerDay', 'newPerDay');
+    // Транскрипция — одна на всё приложение (субтитры, слова, карточки), поэтому
+    // живёт в карточке «Субтитры», где раньше стоял отдельный тогл ромадзи.
     // Легаси-значения («Обе»/«Скрыть» из старых версий) = дефолт-ромадзи,
     // как в transcriptionMode() (study-core.js).
     initSeg('set-studyTranscription', 'studyTranscription', null,
@@ -87,7 +89,6 @@
         el.checked = !!S.get(key);
         el.addEventListener('change', () => S.set(key, el.checked));
     }
-    initToggle('set-playerRomaji', 'playerRomaji');
     initToggle('set-playerTranslation', 'playerTranslation');
     initToggle('set-autoSyncSubs', 'autoSyncSubs');
     initToggle('set-autopause', 'autopause');

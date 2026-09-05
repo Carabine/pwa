@@ -150,16 +150,16 @@ const state = {
     autoPauseAt: null,
     showRu: window.AnimeiSettings ? window.AnimeiSettings.get('playerTranslation') !== false : true,
     // Чтение над словами — ОДИН режим: 'kana' ЛИБО 'romaji' (или/или, без «выкл»:
-    // чтение всегда сверху). Мигрируем со старых раздельных ключей furigana/romaji.
+    // чтение всегда сверху). Настройка ОБЩАЯ на всё приложение (см. settings.js,
+    // studyTranscription): тогл «あ | A» здесь и «Транскрипция» в настройках —
+    // одно и то же, поэтому и читаем, и пишем через AnimeiSettings.
     readingMode: (function () {
+        const S = window.AnimeiSettings;
+        if (S) return S.get('studyTranscription') === 'kana' ? 'kana' : 'romaji';
+        // Настройки почему-то не загрузились — идём по зеркальным ключам.
         const saved = localStorage.getItem('animei:readingMode');
-        if (saved === 'romaji') return 'romaji';
-        if (saved === 'kana') return 'kana';
-        // Легаси-ключ плеера: уважаем явный выбор старых пользователей.
-        const legacy = localStorage.getItem('animei:romaji');
-        if (legacy === 'on') return 'romaji';
-        if (legacy === 'off') return 'kana';
-        return 'romaji'; // новый пользователь — по умолчанию ромадзи
+        if (saved === 'romaji' || saved === 'kana') return saved;
+        return localStorage.getItem('animei:romaji') === 'off' ? 'kana' : 'romaji';
     })(),
     aiAvailable: false,
     knownWords: new Set(),
@@ -2303,7 +2303,8 @@ document.querySelectorAll('#reading-toggle .reading-seg__btn').forEach((btn) => 
     btn.addEventListener('click', () => {
         if (btn.dataset.reading === state.readingMode) return;
         state.readingMode = btn.dataset.reading;
-        localStorage.setItem('animei:readingMode', state.readingMode);
+        if (window.AnimeiSettings) window.AnimeiSettings.set('studyTranscription', state.readingMode);
+        else localStorage.setItem('animei:readingMode', state.readingMode);
         applyReadingPref();
         // Попап слова открыт — его чтение перерисовываем тем же режимом,
         // иначе внутри попапа остаётся прошлый.

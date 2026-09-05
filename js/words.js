@@ -25,17 +25,15 @@ let freezeMode = ['all', 'active', 'frozen'].includes(localStorage.getItem(FREEZ
 let selectMode = false;
 const selected = new Set();
 
-// Чтение под словом — по ОБЩЕЙ настройке плеера (animei:readingMode), а не
-// всегда кана: страница слов её просто не смотрела, и у выбравших ромадзи здесь
-// всё равно показывалась хирагана. Логику повторяем ровно как в player.js,
-// включая старый ключ animei:romaji, чтобы выбор не разъезжался между экранами.
 function readingMode() {
+    // Общая настройка транскрипции (js/settings.js) — та же, что тогл «あ | A»
+    // в плеере и «Транскрипция» в настройках. Зеркальные ключи — на случай,
+    // если settings.js почему-то не загрузился.
+    const S = window.AnimeiSettings;
+    if (S) return S.get('studyTranscription') === 'kana' ? 'kana' : 'romaji';
     const saved = localStorage.getItem('animei:readingMode');
     if (saved === 'romaji' || saved === 'kana') return saved;
-    const legacy = localStorage.getItem('animei:romaji');
-    if (legacy === 'on') return 'romaji';
-    if (legacy === 'off') return 'kana';
-    return 'romaji';   // новый пользователь — по умолчанию ромадзи
+    return localStorage.getItem('animei:romaji') === 'off' ? 'kana' : 'romaji';
 }
 
 // Готовый ромадзи берём из карточки, а если его нет — переводим кану сами

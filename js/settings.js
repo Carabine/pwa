@@ -21,12 +21,12 @@ function lsJson(key, fallback = null) {
 
 (function () {
     const KEY = 'animei:settings';
+    const UNIFIED_KEY = 'animei:readingUnified';   // отметка о слиянии настроек чтения
 
     const DEFAULTS = {
         theme: 'dark',                 // dark | light | system
         // Плеер / субтитры
         subSize: 'md',                 // sm | md | lg — размер текста субтитров
-        playerRomaji: true,            // показывать ромадзи в плеере по умолчанию
         playerTranslation: true,       // показывать перевод в списке субтитров
         autoSyncSubs: true,            // автоматически подгонять сдвиг субтитров
         // Воспроизведение / звук
@@ -35,7 +35,10 @@ function lsJson(key, fallback = null) {
         loopClips: false,              // зацикливать клипы слов в карточках
         // Режим обучения
         newPerDay: 20,                 // сколько новых карточек вводить в день (очередь сверх лимита ждёт)
-        studyTranscription: 'romaji',  // kana | romaji — транскрипция слова (легаси both/none = romaji)
+        // Одна транскрипция на всё приложение: чтение над субтитрами, в «Моих
+        // словах», в «Своём видео» и на карточках. Раньше их было две
+        // (studyTranscription + playerRomaji), и они расходились.
+        studyTranscription: 'romaji',  // kana | romaji (легаси both/none = romaji)
         studySentenceRomaji: true,     // ромадзи над каждым словом предложения (при ромадзи-транскрипции)
         studyAutoplayClip: true,       // автозапуск клипа на обороте карточки
     };
@@ -46,14 +49,31 @@ function lsJson(key, fallback = null) {
     // чтобы настройки отражали текущее состояние.
     const legacyVol = parseFloat(localStorage.getItem('animei:volume'));
     if (!Number.isNaN(legacyVol)) state.volume = Math.min(1, Math.max(0, legacyVol));
-    // Тогл «あ | A» в самом плеере пишет animei:readingMode и его же читает
-    // ПЕРВЫМ (js/player.js), поэтому настройка обязана смотреть туда же: иначе
-    // в настройках стоит одно, в плеере другое, а переключатель в настройках
-    // молча ничего не меняет. animei:romaji — совсем старый ключ, запасной.
-    const legacyMode = localStorage.getItem('animei:readingMode');
-    const legacyRomaji = localStorage.getItem('animei:romaji');
-    if (legacyMode === 'romaji' || legacyMode === 'kana') state.playerRomaji = legacyMode === 'romaji';
-    else if (legacyRomaji != null) state.playerRomaji = legacyRomaji === 'on';
+    // Слияние двух старых настроек чтения в одну. Плеер хранил свой выбор в
+    // animei:readingMode (совсем старый ключ — animei:romaji), карточки — в
+    // studyTranscription. Ромадзи стоял дефолтом у обеих, поэтому явным
+    // выбором считаем только кану: выбрал её где-нибудь — получаешь кану везде.
+    if (localStorage.getItem(UNIFIED_KEY) !== '1') {
+        const legacyMode = localStorage.getItem('animei:readingMode');
+        const legacyRomaji = localStorage.getItem('animei:romaji');
+        const kana = state.studyTranscription === 'kana'
+            || legacyMode === 'kana' || legacyRomaji === 'off';
+        state.studyTranscription = kana ? 'kana' : 'romaji';
+        try { localStorage.setItem(UNIFIED_KEY, '1'); } catch { /* quota */ }
+        persist();
+    }
+    // Плеер, «Мои слова» и «Своё видео» читают ключ напрямую — держим его в паре.
+    mirrorReading();
+
+    // Зеркало транскрипции в ключи плеера: их читают модули, которые про
+    // AnimeiSettings могут не знать (и старые вкладки, открытые до обновления).
+    function mirrorReading() {
+        const mode = state.studyTranscription === 'kana' ? 'kana' : 'romaji';
+        try {
+            localStorage.setItem('animei:readingMode', mode);
+            localStorage.setItem('animei:romaji', mode === 'romaji' ? 'on' : 'off');
+        } catch { /* quota */ }
+    }
 
     function persist() {
         try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* quota */ }
@@ -69,11 +89,7 @@ function lsJson(key, fallback = null) {
 
         // Зеркалим ключи, которые читают другие модули напрямую.
         if (k === 'volume') localStorage.setItem('animei:volume', String(v));
-        if (k === 'playerRomaji') {
-            localStorage.setItem('animei:romaji', v ? 'on' : 'off');
-            // Ключ, который реально читают плеер, «Мои слова» и «Своё видео».
-            localStorage.setItem('animei:readingMode', v ? 'romaji' : 'kana');
-        }
+        if (k === 'studyTranscription') mirrorReading();
         if (k === 'theme') applyTheme();
 
         if (typeof window.animeiTrack === 'function') {

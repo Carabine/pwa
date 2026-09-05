@@ -127,10 +127,14 @@
                         <button type="button" data-val="lg" data-i18n="settings.size.lg">Крупный</button>
                     </div>
                 </div>
-                <label class="settings-toggle">
-                    <span data-i18n="settings.playerRomaji">Ромадзи в плеере по умолчанию</span>
-                    <input type="checkbox" id="set-playerRomaji">
-                </label>
+                <div class="settings-row">
+                    <label data-i18n="settings.transcription">Транскрипция</label>
+                    <div class="seg" id="set-studyTranscription">
+                        <button type="button" data-val="romaji" data-i18n="study.transcription.romaji">Ромадзи</button>
+                        <button type="button" data-val="kana" data-i18n="study.transcription.kana">Хирагана</button>
+                    </div>
+                </div>
+                <p class="settings-hint" data-i18n="settings.transcription.hint">Одна на всё приложение: чтение над субтитрами, в «Моих словах» и на карточках.</p>
                 <label class="settings-toggle">
                     <span data-i18n="settings.playerTranslation">Показывать перевод субтитров</span>
                     <input type="checkbox" id="set-playerTranslation">
@@ -161,13 +165,6 @@
             <!-- ОБУЧЕНИЕ -->
             <section class="settings-card">
                 <div class="settings-card__title" data-i18n="settings.study">Обучение</div>
-                <div class="settings-row">
-                    <label data-i18n="study.transcription">Транскрипция слова</label>
-                    <div class="seg" id="set-studyTranscription">
-                        <button type="button" data-val="romaji" data-i18n="study.transcription.romaji">Ромадзи</button>
-                        <button type="button" data-val="kana" data-i18n="study.transcription.kana">Хирагана</button>
-                    </div>
-                </div>
                 <div class="settings-row">
                     <label data-i18n="settings.newPerDay">Новых карточек в день</label>
                     <div class="seg" id="set-newPerDay">

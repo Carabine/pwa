@@ -4,17 +4,17 @@ const API_BASE = window.ANIMEI_API
 
 let segments = [];
 
-// Чтение над словом — в том же режиме, что в плеере (тогл «あ | A», ключ
-// animei:readingMode). Раньше здесь всегда была кана: страница просто не
-// смотрела настройку, и выбравший ромадзи упирался в хирагану. Логику
-// повторяем ровно как в player.js/words.js, включая старый ключ animei:romaji.
+// Чтение над словом — в том же режиме, что в плеере. Раньше здесь всегда была
+// кана: страница просто не смотрела настройку.
 function readingMode() {
+  // Общая настройка транскрипции (js/settings.js) — та же, что тогл «あ | A»
+  // в плеере и «Транскрипция» в настройках. Зеркальные ключи — на случай,
+  // если settings.js почему-то не загрузился.
+  const S = window.AnimeiSettings;
+  if (S) return S.get("studyTranscription") === "kana" ? "kana" : "romaji";
   const saved = localStorage.getItem("animei:readingMode");
   if (saved === "romaji" || saved === "kana") return saved;
-  const legacy = localStorage.getItem("animei:romaji");
-  if (legacy === "on") return "romaji";
-  if (legacy === "off") return "kana";
-  return "romaji";   // новый пользователь — по умолчанию ромадзи
+  return localStorage.getItem("animei:romaji") === "off" ? "kana" : "romaji";
 }
 
 // В ромадзи-режиме латиницу пишем и над чисто-канным словом (как в плеере),
