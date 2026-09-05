@@ -86,7 +86,7 @@
                 const romajiMode = transcriptionMode() === 'romaji'
                     && typeof window.kanaToRomaji === 'function';
                 if (romajiMode) {
-                    const rom = window.kanaToRomaji(b.reading || b.part);
+                    const rom = window.kanaToRomaji(b.reading || b.part, { surface: b.part });
                     readingText = rom && rom !== b.part ? rom : '';
                 } else {
                     readingText = b.reading && b.reading !== b.part ? b.reading : '';
@@ -262,7 +262,7 @@
             const { data: res } = await client.post('analyze', { text: [sentence], merge: true }, { timeout: 20000 });
             const tokens = res?.data?.[0] || [];
             const romaji = tokens
-                .map((tk) => window.kanaToRomaji(READING_OVERRIDES[tk.surface] || tk.reading || tk.kana || tk.surface || ''))
+                .map((tk) => window.kanaToRomaji(READING_OVERRIDES[tk.surface] || tk.reading || tk.kana || tk.surface || '', tk))
                 .filter(Boolean)
                 .join(' ')
                 .replace(/\s+([,.])/g, '$1')
@@ -313,7 +313,7 @@
                 const cell = document.createElement('span');
                 cell.className = 'read-cell';
                 const romaji = (kana && typeof window.kanaToRomaji === 'function')
-                    ? window.kanaToRomaji(kana)
+                    ? window.kanaToRomaji(kana, { surface, pos: tk.pos || (tk.feature && tk.feature.pos) || '' })
                     : '';
                 // Знаки препинания / чисто-канные без чтения — строку сверху не рисуем.
                 if (romaji && romaji !== surface) {

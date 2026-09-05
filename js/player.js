@@ -283,6 +283,14 @@ function isJpTrack(tr) {
     return /субтитр|саб|subtitle|\bsub\b|\bjp\b|\bjpn\b|ориг|original|япон|japanese|日本語|オリジナル/i.test(tr.title || '');
 }
 
+// Дубляж: японской дорожки у тайтла нет вовсе, и в фолбэке (см. loadInfo) мы
+// показываем то, что есть, — русскую озвучку Kodik. Такую дорожку НЕЛЬЗЯ
+// подписывать «Оригинал»: у NANA все четыре дорожки — озвучки, а селект обещал
+// оригинал, хотя из динамика шла русская речь.
+function isDubTrack(tr) {
+    return !!tr && !isJpTrack(tr) && !PROVIDERS[tr.provider];
+}
+
 // Язык ЗВУКА выбранной дорожки — для Whisper (автосинк-верификатор и точный подбор).
 // MegaPlay и Kodik-дорожки с оригинальной японской озвучкой (сабы/ориг) = японская
 // РЕЧЬ, даже если субтитры русские. Раньше здесь всегда брался subsLang() (язык
@@ -377,6 +385,10 @@ function renderTranslations() {
             // пользователя это всё равно «русские», поэтому и называем так,
             // уточняя, что текст в самом видео.
             name = window.t('subs.langRuBurned');
+        } else if (isDubTrack(o.track)) {
+            // Не оригинал вовсе — озвучка. Называем студию, чтобы было видно,
+            // что именно играет, и не обещаем японскую речь.
+            name = window.t('subs.dubbed') + ' · ' + (o.track.title || '');
         } else {
             // «Оригинал» = мы ничего не накладываем. Но в самом видео субтитры
             // могут быть ВШИТЫ (AnimeJoy/Sibnet — русские), и тогда обещание
@@ -1744,7 +1756,8 @@ function buildWordCells(cue) {
 
         // Над словом — ОДНО чтение по выбранному режиму: кана ЛИБО ромадзи, не оба.
         let reading = '';
-        if (state.readingMode === 'romaji') reading = kanaToRomaji(tok.reading || tok.surface);
+        // Токен целиком — из него ромадзи узнаёт частицы: 僕は → boku wa.
+        if (state.readingMode === 'romaji') reading = kanaToRomaji(tok.reading || tok.surface, tok);
         else if (state.readingMode === 'kana') reading = readingKana(tok);
         if (reading && reading !== tok.surface) {
             const rm = document.createElement('span');
@@ -2712,7 +2725,7 @@ function renderExplain(data) {
             // фуригана к словам с кандзи (когда чтение отличается от написания).
             let readingText;
             if (state.readingMode === 'romaji') {
-                const rom = kanaToRomaji(b.reading || b.part);
+                const rom = kanaToRomaji(b.reading || b.part, { surface: b.part });
                 readingText = rom && rom !== b.part ? rom : '';
             } else {
                 readingText = b.reading && b.reading !== b.part ? b.reading : '';

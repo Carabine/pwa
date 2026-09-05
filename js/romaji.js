@@ -1,6 +1,12 @@
 // Транслитерация каны (хирагана/катакана) в ромадзи (упрощённый Хепбёрн).
 // Единственная таблица на всё приложение: плеер, режимы обучения, колоды.
-// Наружу: window.kanaToRomaji(str).
+// Наружу: window.kanaToRomaji(kana, tok).
+//
+// Второй аргумент — токен, к чтению которого относится кана: { pos, surface }.
+// Он нужен только для частиц は и へ, которые звучат не так, как пишутся
+// (私は → watashi WA, 学校へ → gakkou E). По самой кане это не определить: в 話
+// «ha» остаётся «ha», а 歯 — вообще целое слово «ha». Решает часть речи от MeCab
+// (助詞), поэтому вызывающий передаёт токен. Без токена ничего не меняем.
 
 (function () {
     const DIGRAPHS = {
@@ -33,10 +39,31 @@
         'ぁ': 'a', 'ぃ': 'i', 'ぅ': 'u', 'ぇ': 'e', 'ぉ': 'o', 'ゃ': 'ya', 'ゅ': 'yu', 'ょ': 'yo', 'ー': '',
     };
 
-    function convert(input) {
+    // Как частица звучит эта кана.
+    const PARTICLE_SOUND = { 'は': 'わ', 'へ': 'え' };
+
+    // Разбор от ИИ отдаёт кусок фразы без части речи — там опираемся на сам кусок.
+    // Список закрытый: только то, что частицей быть обязано (одиночная は никаким
+    // другим словом в разборе не окажется — слово «зуб» пишется 歯).
+    const PARTICLE_CHUNKS = new Set(['は', 'へ', 'では', 'には', 'とは', 'のは', 'からは', 'までは']);
+
+    // Застывшие приветствия: は на конце — та же частица, просто вросшая в слово.
+    const WORD_SOUND = { 'こんにちは': 'こんにちわ', 'こんばんは': 'こんばんわ' };
+
+    // Заменяем написанную кану на звучащую там, где は/へ работают частицей.
+    function sounded(kana, tok) {
+        if (WORD_SOUND[kana]) return WORD_SOUND[kana];
+        if (!tok) return kana;
+        const surface = tok.surface ? String(tok.surface) : '';
+        if (WORD_SOUND[surface]) return WORD_SOUND[surface];
+        const particle = tok.pos ? tok.pos === '助詞' : PARTICLE_CHUNKS.has(surface);
+        return particle ? kana.replace(/[はへ]/g, (ch) => PARTICLE_SOUND[ch]) : kana;
+    }
+
+    function convert(input, tok) {
         if (!input) return '';
         // Катакану приводим к хирагане — таблица одна на обе слоговые азбуки
-        const s = String(input).replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+        const s = sounded(String(input).replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60)), tok);
         let out = '';
         for (let i = 0; i < s.length; i++) {
             const two = s.slice(i, i + 2);

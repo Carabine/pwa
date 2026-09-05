@@ -22,6 +22,7 @@ window.I18N_EN = {
         'subs.langRuBurned': 'Russian (baked into video)',
         'subs.langOriginal': 'Original',
         'subs.originalClean': 'Original (no subtitles)',
+        'subs.dubbed': 'Dubbed',
         'subs.originalBurnedRu': 'Original (RU subs baked in)',
         'subs.originalBurnedEn': 'Original (EN subs baked in)',
         'player.subLangRu': 'RU subs',

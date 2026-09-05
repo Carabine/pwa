@@ -24,6 +24,7 @@ const I18N = {
         'subs.langRuBurned': 'Русские (вшиты в видео)',
         'subs.langOriginal': 'Оригинал',
         'subs.originalClean': 'Оригинал (без субтитров)',
+        'subs.dubbed': 'Озвучка',
         'subs.originalBurnedRu': 'Оригинал (рус. сабы вшиты)',
         'subs.originalBurnedEn': 'Оригинал (англ. сабы вшиты)',
         'player.subLangRu': 'рус. сабы',

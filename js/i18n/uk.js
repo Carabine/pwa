@@ -22,6 +22,7 @@ window.I18N_UK = {
         'subs.langRuBurned': 'Російські (вшиті у відео)',
         'subs.langOriginal': 'Оригінал',
         'subs.originalClean': 'Оригінал (без субтитрів)',
+        'subs.dubbed': 'Озвучення',
         'subs.originalBurnedRu': 'Оригінал (рос. саби вшиті)',
         'subs.originalBurnedEn': 'Оригінал (англ. саби вшиті)',
         'player.subLangRu': 'рос. саби',
