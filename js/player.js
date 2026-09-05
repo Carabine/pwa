@@ -847,7 +847,9 @@ function showSessionPanel(endedEpIndex) {
         row.innerHTML = '<input type="checkbox"><span class="session-word__kanji"></span><span class="session-word__tr"></span>';
         row.querySelector('input').checked = i < 5;
         row.querySelector('input').dataset.id = w.id;
-        row.querySelector('.session-word__kanji').textContent = w.kanji + (w.kana ? ' · ' + w.kana : '');
+        const wReading = w.kana ? (w.romaji && state.readingMode === 'romaji' ? w.romaji
+            : readingForDisplay(w.kana, { surface: w.kanji })) : '';
+        row.querySelector('.session-word__kanji').textContent = w.kanji + (wReading ? ' · ' + wReading : '');
         row.querySelector('.session-word__tr').textContent = w.translation || '';
         list.appendChild(row);
     });
@@ -1797,6 +1799,15 @@ function readingKana(tok) {
     return tok.reading;
 }
 
+// Чтение слова для карточек попапа и итогов серии — в том же режиме, что и над
+// субтитрами (тогл «あ | A»). Раньше здесь всегда стояла кана: выбравший ромадзи
+// упирался в хирагану, которую как раз ещё и не читает.
+function readingForDisplay(kana, tok) {
+    if (!kana) return '';
+    if (state.readingMode !== 'romaji' || typeof kanaToRomaji !== 'function') return kana;
+    return kanaToRomaji(kana, tok) || kana;
+}
+
 // Иконка «искры ИИ» — та же, что в кнопке разбора словарной карточки.
 const AI_ICON_SVG = '<svg class="ai-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 2 9.15 6.15 5 8l4.15 1.85L11 14l1.85-4.15L17 8l-4.15-1.85L11 2Zm7.5 9-1.1 2.4-2.4 1.1 2.4 1.1 1.1 2.4 1.1-2.4 2.4-1.1-2.4-1.1L18.5 11Z"/></svg>';
 
@@ -2294,6 +2305,14 @@ document.querySelectorAll('#reading-toggle .reading-seg__btn').forEach((btn) => 
         state.readingMode = btn.dataset.reading;
         localStorage.setItem('animei:readingMode', state.readingMode);
         applyReadingPref();
+        // Попап слова открыт — его чтение перерисовываем тем же режимом,
+        // иначе внутри попапа остаётся прошлый.
+        const ctx = state.popupContext;
+        if (ctx && !popup.hidden) {
+            popupReading.textContent = readingForDisplay(
+                (ctx.dict && ctx.dict.reading) || ctx.tok.baseReading || ctx.tok.reading || '',
+                { surface: ctx.tok.base, pos: ctx.tok.pos });
+        }
     });
 });
 
@@ -2554,7 +2573,8 @@ async function openWordPopup(tok, cue, event) {
     // Показываем слово (tok.base) и чтение согласованно — от базовой формы:
     // baseReading (かえる), а не поверхностное tok.reading (かえっ). Ниже, если
     // найдётся словарная статья, чтение уточнится из неё.
-    popupReading.textContent = tok.baseReading || tok.reading || '';
+    popupReading.textContent = readingForDisplay(tok.baseReading || tok.reading || '',
+        { surface: tok.base, pos: tok.pos });
     popupSentence.textContent = cue.text;
     popupBody.innerHTML = '<div class="dict-loading"></div>';
     popupBody.firstChild.textContent = t('popup.searching');
@@ -2591,7 +2611,10 @@ async function openWordPopup(tok, cue, event) {
             return;
         }
 
-        if (entries[0].reading) popupReading.textContent = entries[0].reading;
+        if (entries[0].reading) {
+            popupReading.textContent = readingForDisplay(entries[0].reading,
+                { surface: tok.base, pos: tok.pos });
+        }
 
         popupBody.innerHTML = '';
         // Часть речи — по-человечески и без повторов: одинаковый заголовок у

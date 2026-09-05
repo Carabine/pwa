@@ -4,6 +4,31 @@ const API_BASE = window.ANIMEI_API
 
 let segments = [];
 
+// Чтение над словом — в том же режиме, что в плеере (тогл «あ | A», ключ
+// animei:readingMode). Раньше здесь всегда была кана: страница просто не
+// смотрела настройку, и выбравший ромадзи упирался в хирагану. Логику
+// повторяем ровно как в player.js/words.js, включая старый ключ animei:romaji.
+function readingMode() {
+  const saved = localStorage.getItem("animei:readingMode");
+  if (saved === "romaji" || saved === "kana") return saved;
+  const legacy = localStorage.getItem("animei:romaji");
+  if (legacy === "on") return "romaji";
+  if (legacy === "off") return "kana";
+  return "romaji";   // новый пользователь — по умолчанию ромадзи
+}
+
+// В ромадзи-режиме латиницу пишем и над чисто-канным словом (как в плеере),
+// в кана-режиме — только фуригану к словам с кандзи.
+function readingOf(token) {
+  const kana = token.kana || "";
+  if (readingMode() === "romaji" && typeof kanaToRomaji === "function") {
+    const rom = kanaToRomaji(kana || token.surface,
+      { surface: token.surface, pos: token.isParticle ? "助詞" : "" });
+    return rom && rom !== token.surface ? rom : "";
+  }
+  return kana && kana !== token.surface ? kana : "";
+}
+
 // ========== DOM ==========
 
 const uploadArea = document.getElementById("upload-area");
@@ -582,12 +607,12 @@ function renderSubtitles() {
       span.className = "sub-word" + (token.isParticle ? " sub-word--particle" : "");
       span.textContent = token.surface;
 
-      const hasKanji = token.kana && token.kana !== token.surface;
-      if (hasKanji) {
-        const reading = document.createElement("span");
-        reading.className = "sub-word__reading";
-        reading.textContent = token.kana;
-        span.appendChild(reading);
+      const reading = readingOf(token);
+      if (reading) {
+        const rd = document.createElement("span");
+        rd.className = "sub-word__reading";
+        rd.textContent = reading;
+        span.appendChild(rd);
       }
 
       span.addEventListener("click", (e) => {

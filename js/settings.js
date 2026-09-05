@@ -46,8 +46,14 @@ function lsJson(key, fallback = null) {
     // чтобы настройки отражали текущее состояние.
     const legacyVol = parseFloat(localStorage.getItem('animei:volume'));
     if (!Number.isNaN(legacyVol)) state.volume = Math.min(1, Math.max(0, legacyVol));
+    // Тогл «あ | A» в самом плеере пишет animei:readingMode и его же читает
+    // ПЕРВЫМ (js/player.js), поэтому настройка обязана смотреть туда же: иначе
+    // в настройках стоит одно, в плеере другое, а переключатель в настройках
+    // молча ничего не меняет. animei:romaji — совсем старый ключ, запасной.
+    const legacyMode = localStorage.getItem('animei:readingMode');
     const legacyRomaji = localStorage.getItem('animei:romaji');
-    if (legacyRomaji != null) state.playerRomaji = legacyRomaji === 'on';
+    if (legacyMode === 'romaji' || legacyMode === 'kana') state.playerRomaji = legacyMode === 'romaji';
+    else if (legacyRomaji != null) state.playerRomaji = legacyRomaji === 'on';
 
     function persist() {
         try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* quota */ }
@@ -63,7 +69,11 @@ function lsJson(key, fallback = null) {
 
         // Зеркалим ключи, которые читают другие модули напрямую.
         if (k === 'volume') localStorage.setItem('animei:volume', String(v));
-        if (k === 'playerRomaji') localStorage.setItem('animei:romaji', v ? 'on' : 'off');
+        if (k === 'playerRomaji') {
+            localStorage.setItem('animei:romaji', v ? 'on' : 'off');
+            // Ключ, который реально читают плеер, «Мои слова» и «Своё видео».
+            localStorage.setItem('animei:readingMode', v ? 'romaji' : 'kana');
+        }
         if (k === 'theme') applyTheme();
 
         if (typeof window.animeiTrack === 'function') {
