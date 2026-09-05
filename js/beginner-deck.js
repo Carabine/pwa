@@ -421,11 +421,30 @@ window.BeginnerDeck = (function () {
         all.indeterminate = n > 0 && n < candidates.length;
     }
 
+    // Транскрипция слова — по настройке обучения (studyTranscription в
+    // js/settings.js): ромадзи по умолчанию, кана — только явным выбором.
+    // Раньше список всегда показывал кану, хотя карточки этой же колоды потом
+    // рисовали ромадзи, — расхождение с настройками.
+    function readingOf(entry) {
+        const kana = (entry.dict && entry.dict.reading) || entry.tok.baseReading || entry.tok.reading || '';
+        const mode = (window.AnimeiSettings && window.AnimeiSettings.get('studyTranscription')) === 'kana'
+            ? 'kana' : 'romaji';
+        // В ромадзи-режиме показываем латиницу и для чисто-канных слов
+        // (ひとつ → hitotsu). В кана-режиме дублировать титул незачем.
+        if (mode === 'romaji' && typeof kanaToRomaji === 'function') {
+            const rom = kanaToRomaji(kana || entry.base);
+            return rom && rom !== entry.base ? rom : '';
+        }
+        if (!kana || kana === entry.base) return '';
+        return kana;
+    }
+
     function updateRow(entry) {
         if (!panel) return;
         const row = panel.querySelector(`.bdeck-row[data-base="${(window.CSS && CSS.escape) ? CSS.escape(entry.base) : entry.base}"]`);
         if (!row) return;
         // textContent затирает заглушку-полоску, поставленную при отрисовке.
+        row.querySelector('.bdeck-row__read').textContent = readingOf(entry);
         row.querySelector('.bdeck-row__tr').textContent = entry.translation || '—';
     }
 
@@ -488,7 +507,7 @@ window.BeginnerDeck = (function () {
             word.textContent = e.base;
             const read = document.createElement('span');
             read.className = 'bdeck-row__read';
-            read.textContent = e.tok.baseReading || e.tok.reading || '';
+            read.textContent = readingOf(e);
             const badge = document.createElement('span');
             badge.className = 'bdeck-row__badge bdeck-row__badge--n' + e.level;
             badge.textContent = 'N' + e.level;
