@@ -27,6 +27,7 @@ const I18N = {
         'subs.dubbed': 'Озвучка',
         'subs.originalBurnedRu': 'Оригинал (рус. сабы вшиты)',
         'subs.originalBurnedEn': 'Оригинал (англ. сабы вшиты)',
+        'subs.overBurned': ' — поверх вшитых',
         'player.subLangRu': 'рус. сабы',
         'player.subLangEn': 'англ. сабы',
         'nav.admin': 'Админка',

@@ -25,6 +25,7 @@ window.I18N_EN = {
         'subs.dubbed': 'Dubbed',
         'subs.originalBurnedRu': 'Original (RU subs baked in)',
         'subs.originalBurnedEn': 'Original (EN subs baked in)',
+        'subs.overBurned': ' — on top of baked-in',
         'player.subLangRu': 'RU subs',
         'player.subLangEn': 'EN subs',
         'nav.admin': 'Admin',

@@ -138,6 +138,7 @@ const state = {
     burnedCues: [],        // субтитры источника, рисуемые поверх видео как «вжатые»
     burnedIndex: -1,
     subOptions: [],        // варианты селекта: { lang: 'en'|'ru'|null, track }
+    humanLangs: [],        // языки человеческих сабов (anime365) для этой серии
     subLang: null,         // выбранный язык субтитров; null = «оригинал», без наложения
     provider: 'kodik',     // источник текущей дорожки: 'kodik' | 'megaplay'
     megaMal: null,         // MAL id для MegaPlay-дорожки (оригинальное аудио)
@@ -256,6 +257,11 @@ async function init() {
             return;
         }
 
+        // Какие человеческие субтитры есть у тайтла (anime365). Спрашиваем ДО
+        // отрисовки селекта, но не блокируем плеер надолго: не ответили за пару
+        // секунд — покажем варианты без них, селект перерисуется позже.
+        await withHumanLangs(1);
+
         renderTranslations();
         // По умолчанию — субтитры на языке интерфейса, если они есть у тайтла;
         // иначе первый доступный вариант (обычно английский, реже «оригинал»).
@@ -270,6 +276,40 @@ async function init() {
     } catch (err) {
         console.error(err);
         videoLoading.classList.add('is-error'); videoLoading.textContent = t('player.notFound');
+    }
+}
+
+// Языки человеческих субтитров для серии (бэкенд /subtitles/human без lang).
+// Промах — не ошибка: просто в селекте будет меньше вариантов.
+async function withHumanLangs(episodeNumber) {
+    try {
+        const { data: res } = await client.get('subtitles/human', {
+            params: { shikimoriId, title: titleRomaji, episode: episodeNumber },
+            timeout: 12000,
+            silentErrors: true,
+        });
+        state.humanLangs = Array.isArray(res.data?.langs) ? res.data.langs : [];
+    } catch {
+        state.humanLangs = [];
+    }
+}
+
+// Человеческие субтитры слоем поверх видео. Тем же механизмом, что и «вжатые»
+// сабы источника (state.burnedCues), — рисуются в кадре и уходят из транскрипта.
+async function loadHumanSubs(lang, episodeNumber) {
+    clearBurnedSubs();
+    if (!lang) return;
+    try {
+        const { data: res } = await client.get('subtitles/human', {
+            params: { shikimoriId, title: titleRomaji, episode: episodeNumber, lang },
+            timeout: 30000,
+            silentErrors: true,
+        });
+        const cues = res.data?.cues || [];
+        state.burnedCues = cues.map((c) => ({ start: c.s, end: c.e, text: c.text }));
+        if (state.burnedCues.length) videoWrap?.classList.add('has-burned-sub');
+    } catch (err) {
+        console.log('[human-sub]', err.message);
     }
 }
 
@@ -361,6 +401,21 @@ function buildSubOptions() {
         if (ru) opts.push({ lang: null, track: ru, burned: 'ru' });
     }
 
+    // Человеческие субтитры от anime365 (см. бэкенд /subtitles/human) — слоем
+    // поверх ЛЮБОГО источника. Нужны там, где своих мягких сабов у источника
+    // нет: у «Семьи шпиона» единственная японская дорожка — AnimeJoy с вшитым
+    // русским, и английские субтитры взять было больше неоткуда. Картинка при
+    // этом может быть уже с текстом — так и подписываем, чтобы человек знал,
+    // что строк будет две, и сам решал.
+    const best = kaa || state.translations[0];
+    for (const lang of state.humanLangs) {
+        // Язык уже представлен — своей дорожкой KAA или вшитым в картинку
+        // текстом. Второй строкой того же языка поверх первой смысла нет.
+        if (opts.some((o) => o.lang === lang || o.burned === lang)) continue;
+        if (!best) break;
+        opts.push({ lang, track: best, human: true, overBurned: pictureSubLang(best) });
+    }
+
     // «Оригинал» — без наложения. Чистая картинка приятнее, но сойдёт любая.
     const orig = kaa || state.translations[0];
     if (orig && !opts.some((o) => o.track === orig && !o.lang)) {
@@ -378,8 +433,11 @@ function renderTranslations() {
         opt.value = i;
         const q = o.track.maxHeight ? ' · ' + o.track.maxHeight + 'p' : '';
         let name;
-        if (o.lang === 'en') name = window.t('subs.langEn');
-        else if (o.lang === 'ru') name = window.t('subs.langRu');
+        // Наш слой поверх картинки, в которой субтитры уже вшиты: строк на
+        // экране будет две. Обещать чистый кадр здесь нельзя.
+        const over = o.human && o.overBurned ? window.t('subs.overBurned') : '';
+        if (o.lang === 'en') name = window.t('subs.langEn') + over;
+        else if (o.lang === 'ru') name = window.t('subs.langRu') + over;
         else if (o.burned === 'ru') {
             // Русские субтитры, но вшитые в картинку — не наш слой. Для
             // пользователя это всё равно «русские», поэтому и называем так,
@@ -964,7 +1022,8 @@ async function selectEpisode(index) {
             updateQualityUI();
             // Выбранный язык — мягким слоем поверх чистой картинки (KAA);
             // «Оригинал» — ничего не накладываем, показываем как отдал источник.
-            if (prov.overlaySubs && state.subLang) loadBurnedSubs(res.data.subtitle);
+            if (currentSubOption()?.human) loadHumanSubs(state.subLang, ep.number);
+            else if (prov.overlaySubs && state.subLang) loadBurnedSubs(res.data.subtitle);
             state.syncPromise = maybeAutoSync();
         } catch (err) {
             console.error(err);
@@ -991,6 +1050,9 @@ async function selectEpisode(index) {
         state.currentVideoUrl = hlsUrl;
         attachVideo(hlsUrl);
         updateQualityUI();
+        // Тот же слой человеческих субтитров, что и у «оригинальных» источников:
+        // дорожки Kodik своих мягких сабов не отдают вовсе.
+        if (currentSubOption()?.human) loadHumanSubs(state.subLang, ep.number);
         state.syncPromise = maybeAutoSync();   // видео готово — пробуем автосинк (ждёт ещё и субтитры)
     } catch (err) {
         console.error(err);
@@ -1440,9 +1502,15 @@ async function loadSubtitles(episodeNumber = 1) {
 // у автосинка и точного подбора ломались язык аудио для Whisper (дубляж вместо
 // японской озвучки → «не удалось» всегда), ключ сдвига и консенсус серий.
 function selectedTrack() {
+    return currentSubOption()?.track || state.translations[parseInt(translationSelect.value, 10)] || {};
+}
+
+// Выбранный вариант субтитров целиком (не только его дорожка): по нему видно,
+// наш ли это слой поверх видео (human) или мягкие сабы самого источника.
+function currentSubOption() {
     const i = parseInt(translationSelect.value, 10);
-    if (state.subOptions.length) return (state.subOptions[i] || state.subOptions[0]).track || {};
-    return state.translations[i] || {};   // фолбэк: старый рендер по источникам
+    if (!state.subOptions.length) return null;
+    return state.subOptions[i] || state.subOptions[0];
 }
 
 function offsetStorageKey() {
