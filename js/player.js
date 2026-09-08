@@ -1360,6 +1360,9 @@ async function loadSubtitles(episodeNumber = 1) {
         const { data: res } = await client.get('subtitles/episode', {
             params: {
                 title: titleRomaji, episode: episodeNumber, translate: subsLang(),
+                // Наш id тайтла = MAL id: по нему сервер точно находит серию у
+                // anime365 и подмешивает человеческий перевод вместо машинного.
+                shikimoriId,
                 // Уже не подошедшие файлы — сервер подберёт следующий кандидат.
                 ...(state.subsExcluded && state.subsExcluded.length
                     ? { exclude: JSON.stringify(state.subsExcluded) } : {}),
