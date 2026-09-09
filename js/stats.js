@@ -51,13 +51,29 @@
     var file = (location.pathname.split('/').pop() || 'index.html').replace('.html', '');
     send('page', 'app/' + (file || 'index'));
 
-    // Откуда пришёл посетитель: utm_source из адреса, иначе домен реферера.
+    // Короткие метки вместо utm_source: ?r=lj в ссылке не выглядит рекламным
+    // хвостом, а в панели разворачивается в понятное имя площадки. Неизвестный
+    // код проходит как есть; ?r=tg-name — это канал tg_name.
+    var REF_CODES = {
+        lj: 'reddit_learnjapanese', sp: 'reddit_sideproject', hn: 'hn', ph: 'ph',
+        ih: 'ih', hb: 'habr', vc: 'vc', at: 'alternativeto', un: 'uneed'
+    };
+    function refCode(v) {
+        v = v.toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, 40);
+        if (!v) return null;
+        if (REF_CODES[v]) return REF_CODES[v];
+        if (v.indexOf('tg-') === 0) return 'tg_' + v.slice(3);
+        return v;
+    }
+
+    // Откуда пришёл посетитель: метка из адреса, иначе домен реферера.
     // Переход внутри своего же сайта (лендинг -> приложение) источником не
     // считается — это 'direct', как и заход по закладке или из установленной PWA.
     function refSource() {
         try {
-            var utm = new URLSearchParams(location.search).get('utm_source');
-            if (utm) return utm.toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, 40) || null;
+            var q = new URLSearchParams(location.search);
+            var utm = q.get('r') || q.get('utm_source');
+            if (utm) return refCode(utm);
             if (!document.referrer) return 'direct';
             var host = new URL(document.referrer).hostname.replace(/^www\./, '').toLowerCase();
             var own = location.hostname.replace(/^www\./, '').toLowerCase();
