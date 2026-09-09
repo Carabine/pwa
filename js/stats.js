@@ -51,6 +51,30 @@
     var file = (location.pathname.split('/').pop() || 'index.html').replace('.html', '');
     send('page', 'app/' + (file || 'index'));
 
+    // Откуда пришёл посетитель: utm_source из адреса, иначе домен реферера.
+    // Переход внутри своего же сайта (лендинг -> приложение) источником не
+    // считается — это 'direct', как и заход по закладке или из установленной PWA.
+    function refSource() {
+        try {
+            var utm = new URLSearchParams(location.search).get('utm_source');
+            if (utm) return utm.toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, 40) || null;
+            if (!document.referrer) return 'direct';
+            var host = new URL(document.referrer).hostname.replace(/^www\./, '').toLowerCase();
+            var own = location.hostname.replace(/^www\./, '').toLowerCase();
+            return (!host || host === own) ? 'direct' : host.slice(0, 40);
+        } catch (e) { return null; }
+    }
+
+    // Один раз на вкладку-сессию: иначе каждая открытая страница накручивала бы
+    // источнику лишний заход.
+    try {
+        if (!sessionStorage.getItem('animei:refTracked')) {
+            sessionStorage.setItem('animei:refTracked', '1');
+            var src = refSource();
+            if (src) send('ref', src);
+        }
+    } catch (e) { /* sessionStorage может быть недоступен */ }
+
     // Разовое событие входа в аккаунт — чтобы видеть переходы гость → аккаунт.
     try {
         if (currentUserId() && !sessionStorage.getItem('animei:sessionTracked')) {

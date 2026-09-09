@@ -144,7 +144,8 @@
         deck: 'колода', words_bulk: 'массово в словаре', anki_export: 'экспорт Anki',
         known_import: 'импорт известных', tts: 'озвучка карточки', clip_recut: 'пересобрал клип',
         subs_precise: 'точный подбор сабов', subs_missing: 'НЕТ СУБТИТРОВ',
-        video_error: 'ВИДЕО НЕ ПОШЛО', offline: 'офлайн', auth: 'аккаунт'
+        video_error: 'ВИДЕО НЕ ПОШЛО', offline: 'офлайн', auth: 'аккаунт',
+        ref: 'пришёл'
     };
     var PAGE_LABELS = {
         'app/index': 'главная', 'app/catalog': 'каталог', 'app/player': 'плеер',
