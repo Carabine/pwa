@@ -487,14 +487,16 @@ html, body {
 /* Всплывающие меню выбора качества и скорости (открываются над кнопкой).
    Одинаковый стиль, чтобы дропдауны плеера выглядели заедино. */
 .player-ui__quality-wrap,
-.player-ui__speed-wrap {
+.player-ui__speed-wrap,
+.player-ui__dump-wrap {
     position: relative;
     flex-shrink: 0;
     display: inline-flex;
 }
 
 .player-ui__quality-menu,
-.player-ui__speed-menu {
+.player-ui__speed-menu,
+.player-ui__dump-menu {
     position: absolute;
     bottom: calc(100% + 8px);
     right: 0;
@@ -512,12 +514,14 @@ html, body {
 }
 
 .player-ui__quality-wrap.is-open .player-ui__quality-menu,
-.player-ui__speed-wrap.is-open .player-ui__speed-menu {
+.player-ui__speed-wrap.is-open .player-ui__speed-menu,
+.player-ui__dump-wrap.is-open .player-ui__dump-menu {
     display: block;
 }
 
 .player-ui__quality-opt,
-.player-ui__speed-opt {
+.player-ui__speed-opt,
+.player-ui__dump-opt {
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -535,7 +539,8 @@ html, body {
 
 @media (hover: hover) and (pointer: fine) {
     .player-ui__quality-opt:hover,
-.player-ui__speed-opt:hover {
+.player-ui__speed-opt:hover,
+.player-ui__dump-opt:hover {
         background: rgba(255, 255, 255, 0.12);
     }
 }
