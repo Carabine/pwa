@@ -519,6 +519,16 @@ html, body {
     display: block;
 }
 
+/* Подписи диапазонов выгрузки длиннее, чем «720p», под который считан общий
+   min-width — иначе каждая ломается на две строки. */
+.player-ui__dump-menu {
+    min-width: 160px;
+}
+
+.player-ui__dump-opt {
+    white-space: nowrap;
+}
+
 .player-ui__quality-opt,
 .player-ui__speed-opt,
 .player-ui__dump-opt {

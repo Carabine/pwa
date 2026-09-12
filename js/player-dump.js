@@ -92,9 +92,14 @@
     const wrap = document.createElement('div');
     wrap.className = 'player-ui__dump-wrap';
     // Скрыта по умолчанию: показываем только владельцу (в самом низу файла).
-    // Прячем ОБЁРТКУ, а не кнопку: hidden на кнопке снялся бы вместе с её
-    // показом, а меню осталось бы в потоке.
-    wrap.hidden = true;
+    // Прячем ОБЁРТКУ, а не кнопку: у кнопки hidden снимается вместе с показом,
+    // а меню осталось бы в потоке.
+    //
+    // ВАЖНО: именно style.display, а НЕ атрибут hidden. У обёртки в css есть
+    // display: inline-flex (общий с качеством/скоростью), и он перебивает
+    // [hidden] — кнопка оставалась видна всем. Те же грабли, что с hidden-vs-flex
+    // в v0.0.180. Так же (inline display) прячет себя обёртка качества.
+    wrap.style.display = 'none';
     btn.parentNode.insertBefore(wrap, btn);
     wrap.appendChild(btn);
     btn.hidden = false;   // видимостью управляет обёртка
@@ -148,6 +153,6 @@
     // не нужен, а ошибиться кэш может только в сторону «показали лишнюю кнопку»,
     // которая без ключа/сессии всё равно вернёт 403.
     try {
-        if (localStorage.getItem('animei:isAdmin') === 'yes') wrap.hidden = false;
+        if (localStorage.getItem('animei:isAdmin') === 'yes') wrap.style.display = '';
     } catch { /* приватный режим — кнопки не будет, это нормально */ }
 })();
