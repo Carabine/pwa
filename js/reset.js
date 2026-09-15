@@ -65,7 +65,9 @@
         sending = true;
         $('ask-btn').disabled = true;
         try {
-            await client.post('auth/forgot-password', { email }, { authorization: false });
+            // lang — чтобы письмо пришло на языке интерфейса, а не всегда по-русски
+            const lang = typeof getLang === 'function' ? getLang() : 'ru';
+            await client.post('auth/forgot-password', { email, lang }, { authorization: false });
             if (window.animeiTrack) animeiTrack('auth', 'forgot_request');
             showSent(email);
         } catch (err) {
