@@ -186,7 +186,9 @@ async function transcribe() {
     liveSubsEl.classList.remove("hidden");
     setTimeout(() => hideLoading(), 800);
   } catch (err) {
-    loadingStatus.textContent = window.t("watch.errorPrefix") + err.message;
+    // err.message у ответа сервера — русский; берём фразу по коду из словаря.
+    loadingStatus.textContent = window.t("watch.errorPrefix")
+      + (err?.response ? window.errorText(err) : err.message);
     loadingProgressFill.style.background = "#ef4444";
     loadingOverlay.querySelector(".loading-spinner").style.display = "none";
     const retryBtn = document.createElement("button");

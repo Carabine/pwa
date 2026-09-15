@@ -24,6 +24,21 @@ function processQueue(error) {
     failedQueue = [];
 }
 
+// Текст ошибки на языке интерфейса. Сервер присылает стабильный code — по нему
+// берём фразу из словаря; message с сервера всегда русский и в интерфейс не
+// идёт, он остаётся для логов и совместимости со старыми клиентами.
+function errorText(error) {
+    const code = error?.response?.data?.code;
+    if (code && typeof t === 'function') {
+        const text = t('err.' + code);
+        // t() на неизвестном ключе возвращает сам ключ — значит, код новее
+        // словаря: лучше общая фраза, чем «err.somethingNew» на экране.
+        if (text !== 'err.' + code) return text;
+    }
+    return typeof t === 'function' ? t('err.unknown') : 'Something went wrong';
+}
+window.errorText = errorText;
+
 function createAxiosClient({ options, getCurrentAccessToken, getCurrentRefreshToken, refreshTokenUrl, endSession, setRefreshedTokens }) {
     const client = axios.create(options);
 
@@ -59,7 +74,7 @@ function createAxiosClient({ options, getCurrentAccessToken, getCurrentRefreshTo
             // со своим UI ошибки (словарный попап с кнопкой «Повторить»).
             const status = error.response?.status;
             if (status && status !== 401 && !error.config?.silentErrors) {
-                const msg = error?.response?.data?.message ?? 'An unexpected error occurred';
+                const msg = errorText(error);
                 const now = Date.now();
                 if (msg !== lastSnackbar.msg || now - lastSnackbar.at > 5000) {
                     lastSnackbar = { msg, at: now };

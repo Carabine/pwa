@@ -612,4 +612,22 @@ window.I18N_UK = {
 
         'subs.autoSynced': 'Субтитри синхронізовано автоматично',
         'settings.autoSync': 'Автосинхронізація субтитрів',
+
+        'err.rateLimited': 'Забагато спроб. Спробуйте за кілька хвилин.',
+        'err.subsNotFound': 'Субтитрів до цієї серії не знайшлося',
+        'err.subsFailed': 'Не вдалося отримати субтитри',
+        'err.dictDown': 'Словник не відповідає',
+        'err.translateDown': 'Перекладач не відповідає',
+        'err.catalogDown': 'Каталог не відповідає',
+        'err.animeNotFound': 'Тайтл не знайдено',
+        'err.videoUnavailable': 'Відео недоступне',
+        'err.wordsFailed': 'Не вдалося синхронізувати відомі слова',
+        'err.tooMuch': 'Забагато за один раз',
+        'err.badRequest': 'Щось пішло не так — спробуйте ще раз',
+        'err.badCredentials': 'Невірна пошта або пароль',
+        'err.needCredentials': 'Введіть пошту і пароль',
+        'err.emailTaken': 'Така пошта вже зайнята',
+        'err.socialFailed': 'Не вдалося підтвердити вхід',
+        'err.noVerifiedEmail': 'У цього акаунта немає підтвердженої пошти',
+        'err.unknown': 'Щось пішло не так',
     };

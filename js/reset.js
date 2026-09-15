@@ -69,8 +69,8 @@
             if (window.animeiTrack) animeiTrack('auth', 'forgot_request');
             showSent(email);
         } catch (err) {
-            const msg = err?.response?.data?.message
-                || tr('reset.failed', 'Не получилось. Попробуйте ещё раз чуть позже.');
+            const msg = err?.response?.data?.code ? errorText(err)
+                : tr('reset.failed', 'Не получилось. Попробуйте ещё раз чуть позже.');
             showSnackbar(msg, { duration: 4000, type: 'error' });
             sending = false;
             $('ask-btn').disabled = false;
@@ -97,8 +97,8 @@
             showSnackbar(tr('reset.doneTitle', 'Пароль обновлён'), { duration: 2500, type: 'success' });
             setTimeout(() => { window.location.href = './login.html'; }, 1600);
         } catch (err) {
-            const msg = err?.response?.data?.message
-                || tr('reset.failed', 'Не получилось. Попробуйте ещё раз чуть позже.');
+            const msg = err?.response?.data?.code ? errorText(err)
+                : tr('reset.failed', 'Не получилось. Попробуйте ещё раз чуть позже.');
             showSnackbar(msg, { duration: 4500, type: 'error' });
             sending = false;
             $('new-btn').disabled = false;

@@ -612,4 +612,22 @@ window.I18N_EN = {
 
         'subs.autoSynced': 'Subtitles synced automatically',
         'settings.autoSync': 'Auto-sync subtitles',
+
+        'err.rateLimited': 'Too many attempts. Try again in a few minutes.',
+        'err.subsNotFound': 'No subtitles found for this episode',
+        'err.subsFailed': 'Could not load the subtitles',
+        'err.dictDown': 'The dictionary is not responding',
+        'err.translateDown': 'The translator is not responding',
+        'err.catalogDown': 'The catalog is not responding',
+        'err.animeNotFound': 'Title not found',
+        'err.videoUnavailable': 'Video is unavailable',
+        'err.wordsFailed': 'Could not sync the words you already know',
+        'err.tooMuch': 'Too much at once',
+        'err.badRequest': 'Something went wrong — please try again',
+        'err.badCredentials': 'Wrong email or password',
+        'err.needCredentials': 'Enter your email and password',
+        'err.emailTaken': 'That email is already taken',
+        'err.socialFailed': 'Could not verify the sign-in',
+        'err.noVerifiedEmail': 'This account has no verified email',
+        'err.unknown': 'Something went wrong',
     };

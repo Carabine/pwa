@@ -53,7 +53,9 @@ async function submitAuth() {
         showSnackbar(t('auth.success'), { duration: 2000, type: 'success' });
         window.location.href = '../index.html';
     } catch (err) {
-        const msg = err?.response?.data?.message || t('auth.error');
+        // Код с сервера точнее общего «проверь почту и пароль» (занятая почта,
+        // лимит попыток), но текст берём из словаря, а не с сервера.
+        const msg = err?.response?.data?.code ? errorText(err) : t('auth.error');
         showSnackbar(msg, { duration: 4000, type: 'error' });
         // Ошибка — разблокируем форму для повторной попытки. При успехе оставляем
         // заблокированной: идёт навигация на главную.
