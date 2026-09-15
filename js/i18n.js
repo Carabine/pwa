@@ -636,6 +636,15 @@ const I18N = {
         'err.socialFailed': 'Не удалось подтвердить вход',
         'err.noVerifiedEmail': 'У этого аккаунта нет подтверждённой почты',
         'err.unknown': 'Что-то пошло не так',
+
+        // Подписи для скринридера (data-i18n-aria).
+        'aria.play': 'Играть',
+        'aria.volume': 'Громкость',
+        'aria.close': 'Закрыть',
+        'aria.hide': 'Скрыть',
+        'aria.subsOffset': 'Сдвиг субтитров в секундах',
+        'aria.showPassword': 'Показать пароль',
+        'aria.hidePassword': 'Скрыть пароль',
     },
 
     // uk/en живут в js/i18n/{uk,en}.js и грузятся лениво только для
@@ -736,6 +745,11 @@ function applyI18n() {
     });
     document.querySelectorAll('[data-i18n-title]').forEach((el) => {
         el.title = t(el.dataset.i18nTitle);
+    });
+    // aria-label глазами не видно, но скринридер читает именно его — без этого
+    // на английском интерфейсе кнопки плеера озвучивались по-русски.
+    document.querySelectorAll('[data-i18n-aria]').forEach((el) => {
+        el.setAttribute('aria-label', t(el.dataset.i18nAria));
     });
 }
 

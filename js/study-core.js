@@ -161,7 +161,7 @@
             '<div class="explain-modal__dialog" role="dialog" aria-modal="true">' +
                 '<div class="explain-modal__head">' +
                     '<span class="explain-modal__title"></span>' +
-                    '<button class="explain-modal__close" type="button" aria-label="Закрыть">✕</button>' +
+                    '<button class="explain-modal__close" type="button" data-i18n-aria="aria.close" aria-label="' + t('aria.close') + '">✕</button>' +
                 '</div>' +
                 '<div class="explain-modal__body"></div>' +
             '</div>';

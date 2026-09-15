@@ -630,4 +630,12 @@ window.I18N_EN = {
         'err.socialFailed': 'Could not verify the sign-in',
         'err.noVerifiedEmail': 'This account has no verified email',
         'err.unknown': 'Something went wrong',
+
+        'aria.play': 'Play',
+        'aria.volume': 'Volume',
+        'aria.close': 'Close',
+        'aria.hide': 'Hide',
+        'aria.subsOffset': 'Subtitle offset in seconds',
+        'aria.showPassword': 'Show password',
+        'aria.hidePassword': 'Hide password',
     };

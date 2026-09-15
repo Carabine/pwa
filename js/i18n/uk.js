@@ -630,4 +630,12 @@ window.I18N_UK = {
         'err.socialFailed': 'Не вдалося підтвердити вхід',
         'err.noVerifiedEmail': 'У цього акаунта немає підтвердженої пошти',
         'err.unknown': 'Щось пішло не так',
+
+        'aria.play': 'Відтворити',
+        'aria.volume': 'Гучність',
+        'aria.close': 'Закрити',
+        'aria.hide': 'Сховати',
+        'aria.subsOffset': 'Зсув субтитрів у секундах',
+        'aria.showPassword': 'Показати пароль',
+        'aria.hidePassword': 'Сховати пароль',
     };

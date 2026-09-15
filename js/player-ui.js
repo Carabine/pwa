@@ -166,7 +166,7 @@
         seekBy(side * DBLTAP_SEEK);
         const el = side < 0 ? flashLeft : flashRight;
         (side < 0 ? flashRight : flashLeft).classList.remove('is-on');
-        el.textContent = (side < 0 ? '−' : '+') + streakTotal + ' сек';
+        el.textContent = (side < 0 ? '−' : '+') + streakTotal + ' ' + t('clip.sec');
         el.classList.add('is-on');
         clearTimeout(flashTimer);
         flashTimer = setTimeout(() => el.classList.remove('is-on'), 700);

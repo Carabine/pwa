@@ -94,7 +94,7 @@
 
                 <!-- Своё управление видео вместо стандартного браузерного -->
                 <div class="player-ui" id="player-ui">
-                    <button class="player-ui__bigplay" id="big-play" aria-label="Играть">
+                    <button class="player-ui__bigplay" id="big-play" data-i18n-aria="aria.play" aria-label="Играть">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72c0 .8.87 1.3 1.55.88l10.8-6.86a1.04 1.04 0 0 0 0-1.76L9.55 4.26A1.04 1.04 0 0 0 8 5.14z"/></svg>
                     </button>
                     <div class="player-ui__bottom">
@@ -107,7 +107,7 @@
                             <div class="player-ui__vol">
                                 <button class="player-ui__btn" id="ctrl-mute" data-i18n-title="ui.mute.title" title="Звук (M)"></button>
                                 <div class="player-ui__vol-popup">
-                                    <input type="range" id="ctrl-volume" min="0" max="1" step="0.01" value="1" aria-label="Громкость">
+                                    <input type="range" id="ctrl-volume" min="0" max="1" step="0.01" value="1" data-i18n-aria="aria.volume" aria-label="Громкость">
                                 </div>
                             </div>
                             <span class="player-ui__time" id="ctrl-time">0:00 / 0:00</span>
@@ -257,7 +257,7 @@
             <div class="subs-picker" id="subs-picker" hidden>
                 <div class="subs-picker__head">
                     <span data-i18n="subs.sync.title">Синхронизация субтитров</span>
-                    <button class="subs-picker__close" id="subs-picker-close" aria-label="Закрыть">✕</button>
+                    <button class="subs-picker__close" id="subs-picker-close" data-i18n-aria="aria.close" aria-label="Закрыть">✕</button>
                 </div>
                 <div class="subs-picker__sync">
                     <button class="subs-precise-btn" id="subs-precise" type="button"
@@ -285,7 +285,7 @@
                     <!-- Крупное «табло» текущего сдвига (редактируемое) + ряд кнопок шага под ним. -->
                     <label class="subs-manual__display">
                         <input id="subs-offset-input" type="number" step="0.1" inputmode="decimal"
-                               value="0" aria-label="Сдвиг субтитров в секундах">
+                               value="0" data-i18n-aria="aria.subsOffset" aria-label="Сдвиг субтитров в секундах">
                         <span class="subs-manual__unit" data-i18n="subs.manual.sec">с</span>
                     </label>
                     <div class="subs-manual__row">
@@ -311,7 +311,7 @@
                     <div class="edeck__title" data-i18n="edeck.title">Авто-колода</div>
                     <div class="edeck__sub" id="edeck-sub"></div>
                 </div>
-                <button class="edeck__close" id="edeck-close" aria-label="Закрыть">✕</button>
+                <button class="edeck__close" id="edeck-close" data-i18n-aria="aria.close" aria-label="Закрыть">✕</button>
             </div>
             <!-- Охват (эта серия / всё аниме) и уровень слов. «Всё аниме»
                  сканирует субтитры первых серий тайтла; уровень по умолчанию:
@@ -351,7 +351,7 @@
                     <div class="edeck__title" id="kwords-title" data-i18n="kwords.title">Уже известные слова</div>
                     <div class="edeck__sub" data-i18n="kwords.sub">Отметь знакомые слова этой серии: они не попадут в авто-колоду и зачтутся в покрытие.</div>
                 </div>
-                <button class="edeck__close" id="kwords-close" aria-label="Закрыть">✕</button>
+                <button class="edeck__close" id="kwords-close" data-i18n-aria="aria.close" aria-label="Закрыть">✕</button>
             </div>
             <!-- Одна строка: вкладки-фильтры со счётчиками слева, массовая
                  отметка справа. Счётчик отмеченных отдельной подписи не требует —
@@ -383,7 +383,7 @@
                 <button class="word-popup__known" id="popup-known" type="button"
                         data-i18n-title="popup.known.title" title="Не предлагать это слово как новое"><span class="word-popup__known-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span class="word-popup__known-label">Уже знаю</span></button>
             </div>
-            <button class="word-popup__close" id="popup-close" aria-label="Закрыть">✕</button>
+            <button class="word-popup__close" id="popup-close" data-i18n-aria="aria.close" aria-label="Закрыть">✕</button>
         </div>
         <div class="word-popup__body" id="popup-body"></div>
         <div class="word-popup__sentence" id="popup-sentence"></div>
