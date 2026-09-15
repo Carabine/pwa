@@ -2870,10 +2870,11 @@ function renderExplain(data) {
 // word — слово, ради которого открыли разбор: от него зависит блок «как
 // запомнить» (у иконки реплики слова нет, разбираем всю реплику).
 async function fetchExplain(cue, word) {
-    const key = (word || '') + '|' + cue.text;
+    const lang = typeof getLang === 'function' ? getLang() : 'ru';
+    const key = lang + '|' + (word || '') + '|' + cue.text;
     const cached = explainCache.get(key);
     if (cached) return cached;
-    const params = { sentence: cue.text, context: cueContext(cue) };
+    const params = { sentence: cue.text, context: cueContext(cue), lang };
     if (word) params.word = word;
     const { data: res } = await client.get('explain', { params, timeout: 60000 });
     const data = res.data.explanation;

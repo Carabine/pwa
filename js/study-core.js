@@ -204,7 +204,8 @@
     // на чистой кане его нет — и мнемоники тоже не будет).
     async function studyRunExplain(sentence, indicator, word) {
         const modal = getExplainModal();
-        const key = (word || '') + '|' + sentence;
+        const lang = typeof getLang === 'function' ? getLang() : 'ru';
+        const key = lang + '|' + (word || '') + '|' + sentence;
         const cached = studyExplainCache.get(key);
         if (cached) { studyRenderExplain(modal.body, cached); modal.open(); return; }
         if (indicator && indicator._busy) return;
@@ -213,7 +214,7 @@
         let savedLabel;
         if (labelEl) { savedLabel = labelEl.textContent; labelEl.textContent = t('words.explaining'); }
         try {
-            const params = { sentence };
+            const params = { sentence, lang };
             if (word) params.word = word;
             const { data: res } = await client.get('explain', { params, timeout: 60000 });
             const data = res.data.explanation;

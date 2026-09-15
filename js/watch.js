@@ -152,7 +152,7 @@ async function transcribe() {
   transcribeBtn.disabled = true;
   statusBar.classList.add("hidden");
 
-  showLoading("Подготовка...");
+  showLoading(window.t("watch.prep"));
   setLoadingStep("download");
   setLoadingProgress(5);
 
@@ -584,6 +584,73 @@ function setStatus(text) { statusText.textContent = text; }
 
 // ========== RENDER SUBTITLES ==========
 
+// Запрос к ChatGPT по кнопке «AI» у реплики. Язык промпта = язык интерфейса:
+// просить разбор по-русски у человека с английским интерфейсом бессмысленно.
+const CHATGPT_PROMPT = {
+    ru: (jp, en) => `Разбери японское предложение по грамматике для изучающего японский.
+
+「${jp}」${en ? `\n(${en})` : ''}
+
+Формат ответа:
+
+Сначала дай краткий перевод предложения на русский.
+
+Потом разбери каждую грамматическую конструкцию по отдельности (как пронумерованный список). Для каждой:
+- Напиши саму конструкцию и её чтение в скобках
+- Покажи из каких частей она состоит и как образована (цепочкой со стрелками →)
+- Объясни грамматический паттерн (～てみる, ～たい, ～ている и т.д.) — что он значит
+- Дай итоговое значение этой части фразы
+- Используй 📌 для структуры и 👉 для итога
+
+В конце дай полный смысл всего предложения.
+
+Отвечай на русском. Пиши живым языком, не сухо.`,
+
+    en: (jp, en) => `Break down the grammar of this Japanese sentence for a Japanese learner.
+
+「${jp}」${en ? `\n(${en})` : ''}
+
+Answer format:
+
+First give a short English translation of the sentence.
+
+Then go through each grammar pattern separately (as a numbered list). For each one:
+- Write the pattern itself with its reading in parentheses
+- Show which parts it is made of and how it is formed (as a chain with arrows →)
+- Explain the grammar pattern (～てみる, ～たい, ～ている and so on) — what it means
+- Give the resulting meaning of that part of the phrase
+- Use 📌 for the structure and 👉 for the result
+
+At the end give the full meaning of the whole sentence.
+
+Answer in English. Write in a lively way, not dryly.`,
+
+    uk: (jp, en) => `Розбери японське речення за граматикою для того, хто вивчає японську.
+
+「${jp}」${en ? `\n(${en})` : ''}
+
+Формат відповіді:
+
+Спершу дай короткий переклад речення українською.
+
+Потім розбери кожну граматичну конструкцію окремо (як пронумерований список). Для кожної:
+- Напиши саму конструкцію та її читання в дужках
+- Покажи, з яких частин вона складається і як утворена (ланцюжком зі стрілками →)
+- Поясни граматичний патерн (～てみる, ～たい, ～ている тощо) — що він означає
+- Дай підсумкове значення цієї частини фрази
+- Використовуй 📌 для структури і 👉 для підсумку
+
+Наприкінці дай повний зміст усього речення.
+
+Відповідай українською. Пиши живою мовою, не сухо.`,
+};
+
+function chatGptPrompt(seg) {
+    const lang = typeof getLang === 'function' ? getLang() : 'ru';
+    const build = CHATGPT_PROMPT[lang] || CHATGPT_PROMPT.ru;
+    return build(seg.text, seg.english);
+}
+
 function renderSubtitles() {
   subsPanel.innerHTML = "";
   subsCount.textContent = segments.length + " segments";
@@ -651,24 +718,7 @@ function renderSubtitles() {
     aiBtn.title = "Break down with ChatGPT";
     aiBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const prompt = `Разбери японское предложение по грамматике для изучающего японский.
-
-「${seg.text}」${seg.english ? `\n(${seg.english})` : ''}
-
-Формат ответа:
-
-Сначала дай краткий перевод предложения на русский.
-
-Потом разбери каждую грамматическую конструкцию по отдельности (как пронумерованный список). Для каждой:
-- Напиши саму конструкцию и её чтение в скобках
-- Покажи из каких частей она состоит и как образована (цепочкой со стрелками →)
-- Объясни грамматический паттерн (～てみる, ～たい, ～ている и т.д.) — что он значит
-- Дай итоговое значение этой части фразы
-- Используй 📌 для структуры и 👉 для итога
-
-В конце дай полный смысл всего предложения.
-
-Отвечай на русском. Пиши живым языком, не сухо.`;
+      const prompt = chatGptPrompt(seg);
       window.open("https://chat.openai.com/?q=" + encodeURIComponent(prompt), "_blank");
     });
     bottomRow.appendChild(aiBtn);
