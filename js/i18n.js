@@ -734,6 +734,9 @@ function subsLang() {
     return ['uk', 'en'].includes(lang) ? lang : 'ru';
 }
 
+// Чаты в Telegram: у русского и украинского свои, остальные — в общем.
+const TG_CHATS = { ru: 'animei_ru', uk: 'animei_ua', en: 'animei_jp' };
+
 function applyI18n() {
     document.documentElement.lang = getLang();
 
@@ -750,6 +753,15 @@ function applyI18n() {
     // на английском интерфейсе кнопки плеера озвучивались по-русски.
     document.querySelectorAll('[data-i18n-aria]').forEach((el) => {
         el.setAttribute('aria-label', t(el.dataset.i18nAria));
+    });
+    // Ссылки на чат ведут в тот, где говорят на языке интерфейса
+    // (data-tg-chat — на элементе, которому надо подменить href).
+    document.querySelectorAll('[data-tg-chat]').forEach((el) => {
+        const handle = TG_CHATS[getLang()] || TG_CHATS.en;
+        el.href = `https://t.me/${handle}`;
+        el.title = `t.me/${handle}`;
+        // data-tg-chat="text" — ссылка, у которой адрес и есть подпись
+        if (el.dataset.tgChat === 'text') el.textContent = `t.me/${handle}`;
     });
 }
 
