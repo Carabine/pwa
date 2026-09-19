@@ -734,8 +734,14 @@ function subsLang() {
     return ['uk', 'en'].includes(lang) ? lang : 'ru';
 }
 
-// Чаты в Telegram: у русского и украинского свои, остальные — в общем.
-const TG_CHATS = { ru: 'animei_ru', uk: 'animei_ua', en: 'animei_jp' };
+// Куда ведёт «наше сообщество»: у русского и украинского — Telegram,
+// у остальных Discord (на западе языковые сообщества живут там, телеграм
+// им ничего не говорит). kind выбирает значок у ссылки.
+const CHATS = {
+    ru: { url: 'https://t.me/animei_ru', label: 't.me/animei_ru', kind: 'tg' },
+    uk: { url: 'https://t.me/animei_ua', label: 't.me/animei_ua', kind: 'tg' },
+    en: { url: 'https://discord.gg/k9fMFHVqj', label: 'discord.gg/k9fMFHVqj', kind: 'dc' },
+};
 
 function applyI18n() {
     document.documentElement.lang = getLang();
@@ -754,14 +760,17 @@ function applyI18n() {
     document.querySelectorAll('[data-i18n-aria]').forEach((el) => {
         el.setAttribute('aria-label', t(el.dataset.i18nAria));
     });
-    // Ссылки на чат ведут в тот, где говорят на языке интерфейса
-    // (data-tg-chat — на элементе, которому надо подменить href).
-    document.querySelectorAll('[data-tg-chat]').forEach((el) => {
-        const handle = TG_CHATS[getLang()] || TG_CHATS.en;
-        el.href = `https://t.me/${handle}`;
-        el.title = `t.me/${handle}`;
-        // data-tg-chat="text" — ссылка, у которой адрес и есть подпись
-        if (el.dataset.tgChat === 'text') el.textContent = `t.me/${handle}`;
+    // Ссылки на сообщество ведут туда, где говорят на языке интерфейса
+    // (data-chat-link — на ссылке, data-chat-ico — на значках рядом).
+    const chat = CHATS[getLang()] || CHATS.en;
+    document.querySelectorAll('[data-chat-link]').forEach((el) => {
+        el.href = chat.url;
+        el.title = chat.label;
+        // data-chat-link="text" — ссылка, у которой адрес и есть подпись
+        if (el.dataset.chatLink === 'text') el.textContent = chat.label;
+    });
+    document.querySelectorAll('[data-chat-ico]').forEach((el) => {
+        el.hidden = el.dataset.chatIco !== chat.kind;
     });
 }
 

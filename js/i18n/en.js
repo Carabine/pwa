@@ -508,8 +508,9 @@ window.I18N_EN = {
 
         'feedback.title': 'Feedback',
         'feedback.text': 'Help us make learning Japanese even better — share your thoughts, ideas or problems.',
-        'feedback.telegram': 'Message us on Telegram:',
-        'feedback.write': 'Message us on Telegram',
+        // Английский интерфейс ведёт в Discord, а не в телеграм — см. CHATS в i18n.js
+        'feedback.telegram': 'Join our Discord:',
+        'feedback.write': 'Join us on Discord',
         'feedback.thanks': 'Thank you for helping!',
 
         'nav.settings': 'Settings',
