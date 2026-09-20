@@ -1399,6 +1399,18 @@
 
             wrap.appendChild(volGroup);
 
+            // Подпись поверх нижней полосы кадра. У клипов стартовой колоды в
+            // картинку вшиты русские субтитры — для остальных языков кладём
+            // сверху свой перевод реплики, он их и закрывает (.clip-player__cap).
+            const capText = (w && w.clipCaption)
+                || (typeof starterClipCaption === 'function' ? starterClipCaption(w) : '');
+            if (capText) {
+                const cap = document.createElement('div');
+                cap.className = 'clip-player__cap';
+                cap.textContent = capText;
+                wrap.appendChild(cap);
+            }
+
             // Стартовая громкость — из общего ключа (как в плеере), по умолчанию полная.
             const VOLUME_KEY = 'animei:volume';
             const savedVol = parseFloat(localStorage.getItem(VOLUME_KEY));

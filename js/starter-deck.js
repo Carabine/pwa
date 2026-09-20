@@ -23,6 +23,11 @@
 // ядра (см. refreshStarterCore), значение подстраивается под число seed-карточек.
 let STARTER_CORE_COUNT = 15;
 
+// Индекс «написание|реплика → карточка» для подписей поверх клипа
+// (см. starterClipCaption). Объявлен здесь, а не рядом с функцией: ядро
+// применяется ещё до неё, и сброс индекса не должен падать на TDZ.
+let starterCaptionIndex = null;
+
 const STARTER_DECK = [
     // ---- Ядро: 15 карточек с видеоклипами реальных сцен ----
     { k: '戦う', r: 'たたかう', ro: 'tatakau', a: 'Attack on Titan', s: '戦え、戦え',
@@ -345,6 +350,7 @@ function applyStarterCore(list) {
     if (!cards.length) return;
     starterCore = cards;
     STARTER_CORE_COUNT = cards.length;
+    starterCaptionIndex = null;   // ядро поменялось — искать подписи заново
 }
 
 try {
@@ -397,6 +403,43 @@ function starterClipUrl(card) {
     return new URL(appUrl('media/starter/' + card.clip), window.location.href).href;
 }
 
+// Язык субтитров, ВШИТЫХ в клипы колоды: все сцены нарезаны из русских
+// фансаб-рипов, русский текст лежит прямо в кадре и стереть его нельзя.
+// Поэтому на других языках рисуем поверх нижней полосы свою строку перевода
+// (см. .clip-player__cap) — она закрывает вшитую.
+const CLIP_BURNED_SUB_LANG = 'ru';
+
+// Строка-подпись для клипа карточки: перевод реплики на языке интерфейса.
+// Пусто, если язык совпадает с вшитыми субтитрами или перевода нет.
+function starterClipCaptionText(card) {
+    const lang = typeof getLang === 'function' ? getLang() : 'ru';
+    if (lang === CLIP_BURNED_SUB_LANG) return '';
+    const tr = card && card.t && card.t[lang];
+    return (tr && tr[1]) || '';
+}
+
+// Тот же перевод, но для слова, УЖЕ сохранённого в коллекцию: у такого слова
+// свой клип, нарезанный из того же файла колоды, значит вшитые субтитры никуда
+// не делись. Узнаём карточку по написанию + реплике. Зовёт study-core.
+function starterClipCaption(word) {
+    if (!word) return '';
+    const lang = typeof getLang === 'function' ? getLang() : 'ru';
+    if (lang === CLIP_BURNED_SUB_LANG) return '';
+    const k = word.kanji || word.word || '';
+    const s = String(word.sentence || '').trim();
+    if (!k || !s) return '';
+    if (!starterCaptionIndex) {
+        starterCaptionIndex = new Map();
+        for (const card of starterMergedDeck()) {
+            if (!card.clip) continue;
+            starterCaptionIndex.set(card.k + '|' + String(card.s || '').trim(), card);
+        }
+    }
+    const card = starterCaptionIndex.get(k + '|' + s);
+    return card ? starterClipCaptionText(card) : '';
+}
+if (typeof window !== 'undefined') window.starterClipCaption = starterClipCaption;
+
 // Переводы карточки на текущем языке интерфейса (запасной — русский).
 function starterTr(card) {
     const lang = typeof getLang === 'function' ? getLang() : 'ru';
@@ -444,6 +487,7 @@ function starterDeckWords() {
             video,
             trimStart: card.ts,
             trimEnd: card.te,
+            clipCaption: video ? starterClipCaptionText(card) : '',
             noClip: !video,   // нет клипа → на обороте показываем плашку «Видео пока нет»
             _card: card,
         };
