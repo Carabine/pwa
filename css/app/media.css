@@ -144,43 +144,38 @@ audio {
     display: flex;
 }
 
-/* Своя строка перевода поверх нижней полосы кадра. Клипы стартовой колоды
-   нарезаны из русских фансаб-рипов — русский текст ВШИТ в картинку, стереть его
-   нельзя. Для остальных языков кладём поверх непрозрачную полосу со своим
-   переводом реплики: чужие субтитры она закрывает, свои — читаются.
-   Высота полосы с запасом (двухстрочные вшитые субтитры залезают выше), правый
-   отступ — место под кнопку звука, которая лежит выше по z-index. */
+/* Строка перевода реплики поверх клипа. Рисуем ровно как субтитры в плеере
+   (.burned-sub в css/player.css): белый текст с чёрной обводкой по нижнему
+   центру, без плашки — плашка закрывала бы кадр. Обводка тенями в 8
+   направлений: text-stroke съедает внутренние контуры и текст «худеет».
+   Размер — от ширины окна с потолком: контейнерные единицы (как cqw у плеера)
+   здесь не годятся, у клипа в карточке ширина fit-content и inline-size
+   containment схлопнул бы бокс в ноль.
+   Показываем её ТОЛЬКО у клипов с чистой картинкой: там, где в кадр уже вшиты
+   чужие субтитры, своя строка легла бы поверх них (см. starter-deck.js). */
 .clip-player__cap {
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: 2.5%;
+    right: 2.5%;
+    /* Выше кнопки звука (34px + 8px отступа), но не ниже 6% на крупном кадре. */
+    bottom: max(6%, 46px);
     z-index: 1;
-    min-height: 28%;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding: 0 46px 7px 12px;
+    margin: 0;
+    padding: 0;
     text-align: center;
-    font-size: clamp(11px, 3.2vw, 14px);
+    white-space: pre-wrap;
     font-weight: 600;
-    line-height: 1.3;
+    font-size: clamp(11px, 3.4vw, 16px);
+    line-height: 1.28;
+    letter-spacing: 0.01em;
     color: #fff;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
-    background: linear-gradient(to top,
-        rgba(6, 6, 9, 0.98) 0%,
-        rgba(6, 6, 9, 0.98) 88%,
-        rgba(6, 6, 9, 0.72) 96%,
-        rgba(6, 6, 9, 0) 100%);
-    pointer-events: none;   /* клик по кадру = play/pause, полоса не мешает */
-}
-
-/* Размытие добивает то, что могло просвечивать сквозь верхний край градиента. */
-@supports (backdrop-filter: blur(6px)) or (-webkit-backdrop-filter: blur(6px)) {
-    .clip-player__cap {
-        -webkit-backdrop-filter: blur(7px);
-        backdrop-filter: blur(7px);
-    }
+    text-shadow:
+        -2px -2px 0 #000, 0 -2px 0 #000, 2px -2px 0 #000,
+        -2px  0   0 #000,               2px  0   0 #000,
+        -2px  2px 0 #000, 0  2px 0 #000, 2px  2px 0 #000,
+         0    2px 6px rgba(0, 0, 0, 0.55);
+    pointer-events: none;   /* клик по кадру = play/pause, строка не мешает */
+    user-select: none;
 }
 
 /* Регулятор звука клипа: кнопка (вкл/выкл) + ползунок громкости. Правый нижний

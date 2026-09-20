@@ -403,35 +403,36 @@ function starterClipUrl(card) {
     return new URL(appUrl('media/starter/' + card.clip), window.location.href).href;
 }
 
-// Язык субтитров, ВШИТЫХ в клипы колоды: все сцены нарезаны из русских
-// фансаб-рипов, русский текст лежит прямо в кадре и стереть его нельзя.
-// Поэтому на других языках рисуем поверх нижней полосы свою строку перевода
-// (см. .clip-player__cap) — она закрывает вшитую.
-const CLIP_BURNED_SUB_LANG = 'ru';
+// Свои субтитры поверх клипа (.clip-player__cap в media.css) рисуем ТОЛЬКО
+// там, где картинка чистая. Сейчас все клипы колоды нарезаны из русских
+// фансаб-рипов: русский текст вшит в кадр, и своя строка легла бы поверх
+// чужой. Закрывать её плашкой = закрывать кадр, так что до появления клипов
+// с чистой картинкой подписи у колоды выключены. Когда у карточки появится
+// такой клип — поставить ей `clean: true`, и подпись включится сама.
+function starterClipClean(card) {
+    return !!(card && card.clean);
+}
 
 // Строка-подпись для клипа карточки: перевод реплики на языке интерфейса.
-// Пусто, если язык совпадает с вшитыми субтитрами или перевода нет.
 function starterClipCaptionText(card) {
+    if (!starterClipClean(card)) return '';
     const lang = typeof getLang === 'function' ? getLang() : 'ru';
-    if (lang === CLIP_BURNED_SUB_LANG) return '';
-    const tr = card && card.t && card.t[lang];
+    const tr = (card.t && card.t[lang]) || (card.t && card.t.ru);
     return (tr && tr[1]) || '';
 }
 
-// Тот же перевод, но для слова, УЖЕ сохранённого в коллекцию: у такого слова
-// свой клип, нарезанный из того же файла колоды, значит вшитые субтитры никуда
-// не делись. Узнаём карточку по написанию + реплике. Зовёт study-core.
+// Тот же перевод, но для слова, УЖЕ сохранённого в коллекцию: его личный клип
+// нарезан из того же файла колоды, значит и картинка та же. Узнаём карточку по
+// написанию + реплике. Зовёт study-core (см. makeClipVideo).
 function starterClipCaption(word) {
     if (!word) return '';
-    const lang = typeof getLang === 'function' ? getLang() : 'ru';
-    if (lang === CLIP_BURNED_SUB_LANG) return '';
     const k = word.kanji || word.word || '';
     const s = String(word.sentence || '').trim();
     if (!k || !s) return '';
     if (!starterCaptionIndex) {
         starterCaptionIndex = new Map();
         for (const card of starterMergedDeck()) {
-            if (!card.clip) continue;
+            if (!card.clip || !starterClipClean(card)) continue;
             starterCaptionIndex.set(card.k + '|' + String(card.s || '').trim(), card);
         }
     }
