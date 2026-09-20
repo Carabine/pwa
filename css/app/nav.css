@@ -584,6 +584,11 @@
     }
 }
 
+/* Выбор стрелками с клавиатуры — та же подсветка, что у наведения. */
+.header__search-ac-item--active {
+    background: var(--surface);
+}
+
 .header__search-ac-item img,
 .header__search-ac-noimg {
     width: 34px;

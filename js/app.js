@@ -742,7 +742,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: animeTitle(anime),
                 name: anime.name,
             });
-            return (inPages ? './' : './pages/') + 'player.html?' + params.toString();
+            // Путь строим через appUrl: он сам знает, лежим мы в /app/ или в
+            // /app/pages/. (Раньше здесь читалась несуществующая переменная
+            // inPages — ReferenceError падал внутрь catch в runAc, и список
+            // подсказок не показывался вообще никогда.)
+            return appUrl('pages/player.html') + '?' + params.toString();
         };
         const hideAc = () => { acList.hidden = true; };
         const renderAc = (items) => {
@@ -777,11 +781,34 @@ document.addEventListener('DOMContentLoaded', () => {
         let acLastQ = '';
         const runAc = async (q) => {
             if (typeof client === 'undefined') return;   // нет axios на странице — только сабмит
+            let items;
             try {
                 const { data: res } = await client.get('catalog/search', { params: { q } });
-                if (q !== acLastQ) return;                 // пришёл устаревший ответ
-                renderAc(res.data || []);
-            } catch { hideAc(); }
+                items = res.data || [];
+            } catch {
+                hideAc();                                  // сеть молчит — просто без подсказок
+                return;
+            }
+            if (q !== acLastQ) return;                     // пришёл устаревший ответ
+            // Отрисовка — вне try: ошибку разметки глотать нельзя, иначе она
+            // тихо оставляет список пустым (так и жил сломанный автокомплит).
+            renderAc(items);
+        };
+
+        // Выбор стрелками: ↓/↑ ходят по подсказкам, Enter открывает выбранную
+        // (без выбора Enter отправляет форму — «показать все в каталоге»).
+        const acItems = () => [...acList.querySelectorAll('.header__search-ac-item')];
+        const acActive = () => acList.querySelector('.header__search-ac-item--active');
+        const acMove = (step) => {
+            const items = acItems();
+            if (!items.length) return;
+            const cur = items.indexOf(acActive());
+            const next = cur < 0
+                ? (step > 0 ? 0 : items.length - 1)
+                : (cur + step + items.length) % items.length;
+            items.forEach((el) => el.classList.remove('header__search-ac-item--active'));
+            items[next].classList.add('header__search-ac-item--active');
+            items[next].scrollIntoView({ block: 'nearest' });
         };
 
         if (searchInput) {
@@ -794,6 +821,19 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             searchInput.addEventListener('focus', () => {
                 if (acList.children.length && searchInput.value.trim().length >= 2) acList.hidden = false;
+            });
+            searchInput.addEventListener('keydown', (e) => {
+                if (acList.hidden) return;
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    acMove(e.key === 'ArrowDown' ? 1 : -1);
+                } else if (e.key === 'Enter') {
+                    const active = acActive();
+                    // click() — чтобы отработал обработчик строки (кэш постера),
+                    // переход делаем сами: программный клик по ссылке не везде
+                    // уводит со страницы.
+                    if (active) { e.preventDefault(); active.click(); location.href = active.href; }
+                }
             });
         }
 
