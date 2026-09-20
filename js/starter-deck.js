@@ -13,15 +13,19 @@
 //   len  — (только у ядра) длительность клипа в секундах
 //   ts/te — окно воспроизведения внутри клипа, как в seed-аккаунте
 //
-// Первые 15 карточек (STARTER_CORE_COUNT) — ядро колоды: реальные сцены из
-// аниме с видеоклипами (курируются в seed-аккаунте, клипы лежат в /storage).
+// Первые 17 карточек (STARTER_CORE_COUNT) — ядро колоды: реальные сцены из
+// аниме с видеоклипами (курируются в seed-аккаунте). Клипы перерезаны из
+// KickAssAnime конвейером _pp/kaa-recut.mjs — картинка без вшитых субтитров,
+// поэтому поверх неё рисуются свои (см. starterClipClean). Исключение —
+// 仕事: у KickAssAnime нет серверов у «Семьи шпиона», там остался старый клип
+// из /storage с вшитым русским фансабом.
 // Их показываем первыми и предлагаем добавить при пустой коллекции.
 // Остальные 35 тоже с видео: клипы им подставляет STARTER_CLIPS (см. ниже),
 // файлы лежат в pwa/media/starter/.
 
 // Размер ядра. По умолчанию — 15 статичных карточек; если с сервера приехал фид
 // ядра (см. refreshStarterCore), значение подстраивается под число seed-карточек.
-let STARTER_CORE_COUNT = 15;
+let STARTER_CORE_COUNT = 17;
 
 // Индекс «написание|реплика → карточка» для подписей поверх клипа
 // (см. starterClipCaption). Объявлен здесь, а не рядом с функцией: ядро
@@ -29,52 +33,59 @@ let STARTER_CORE_COUNT = 15;
 let starterCaptionIndex = null;
 
 const STARTER_DECK = [
-    // ---- Ядро: 15 карточек с видеоклипами реальных сцен ----
+    // ---- Ядро: 17 карточек с видеоклипами реальных сцен ----
     { k: '戦う', r: 'たたかう', ro: 'tatakau', a: 'Attack on Titan', s: '戦え、戦え',
-      clip: 'https://animei.space/storage/11e076bb-1818-449e-8b22-7d274d737f37.mp4', len: 15, ts: 8, te: 12,
+      clip: 'kaa-tatakau.mp4', len: 10.2, ts: 0, te: 10.2,
       t: { ru: ['сражаться, воевать', 'Не сражаясь, не победить… Сражайся, сражайся!'], uk: ['битися, воювати', 'Не б’ючись, не перемогти… Бийся, бийся!'], en: ['to fight', "If you don't fight, you can't win… Fight, fight!"] } },
     { k: '僕', r: 'ぼく', ro: 'boku', a: 'Tokyo Ghoul', s: '僕は喰種だ',
-      clip: 'https://animei.space/storage/e843e894-085b-4149-87a8-fe039f9273bf.mp4?v=jp', len: 11, ts: 2.5, te: 6.5,
+      clip: 'kaa-boku.mp4', len: 6.2, ts: 0, te: 3.4,
       t: { ru: ['я (мужское)', 'Я — гуль'], uk: ['я (чоловіче «боку»)', 'Я — гуль'], en: ['I, me (male "boku")', 'I am… a ghoul'] } },
     { k: '勝つ', r: 'かつ', ro: 'katsu', a: 'Attack on Titan', s: 'エレンが勝ったんだ',
-      clip: 'https://animei.space/storage/e99231c7-a8e1-40c8-a98f-6a11f2f92038.mp4', len: 9, ts: 6, te: 7,
+      clip: 'kaa-katsu.mp4', len: 5.2, ts: 0, te: 5.2,
       t: { ru: ['побеждать, выигрывать', 'Эрен победил!'], uk: ['перемагати, вигравати', 'Ерен переміг!'], en: ['to win', 'Eren won!'] } },
     { k: '計画', r: 'けいかく', ro: 'keikaku', a: 'Death Note', s: 'まさに計画どおりに事は進んでいる',
-      clip: 'https://animei.space/storage/ab8a5d0a-7a84-4cc8-90ce-afd6b0db0034.mp4?v=jp', len: 11, ts: 3.5, te: 7,
+      clip: 'kaa-keikaku.mp4', len: 3.7, ts: 0, te: 3.5,
       t: { ru: ['план', 'Всё идёт точно по плану'], uk: ['план', 'Усе йде точно за планом'], en: ['plan', 'Everything is going just as planned'] } },
     { k: '悪魔', r: 'あくま', ro: 'akuma', a: 'Chainsaw Man', s: '悪魔だ…',
-      clip: 'https://animei.space/storage/ab4f158d-dd1b-47c5-b2f5-9f0c1b52f04e.mp4', len: 9, ts: 3, te: 8,
+      clip: 'kaa-akuma.mp4', len: 5.9, ts: 0, te: 2.4,
       t: { ru: ['дьявол, демон', 'Это дьявол…'], uk: ['диявол, демон', 'Це диявол…'], en: ['devil, demon', "It's a devil…"] } },
     { k: '最強', r: 'さいきょう', ro: 'saikyou', a: 'Jujutsu Kaisen', s: '大丈夫 僕 最強だから',
-      clip: 'https://animei.space/storage/d0aa00a3-4b44-41ca-8a1c-eedfc2d33798.mp4', len: 9, ts: 4, te: 8,
+      clip: 'kaa-saikyou.mp4', len: 4.1, ts: 0, te: 4.1,
       t: { ru: ['сильнейший', 'Всё в порядке — ведь я сильнейший'], uk: ['найсильніший', 'Усе гаразд — адже я найсильніший'], en: ['the strongest', "It's fine — because I'm the strongest"] } },
     { k: '心臓', r: 'しんぞう', ro: 'shinzou', a: 'Chainsaw Man', s: 'これは契約だ 私の心臓をやる',
-      clip: 'https://animei.space/storage/0617ecef-5ee9-44e7-bac7-e081db1df99f.mp4', len: 9, ts: 6, te: 10,
+      clip: 'kaa-shinzou.mp4', len: 8.4, ts: 0, te: 8.2,
       t: { ru: ['сердце', 'Это контракт — отдаю тебе своё сердце'], uk: ['серце', 'Це контракт — віддаю тобі своє серце'], en: ['heart', "This is a contract — I'll give you my heart"] } },
     { k: '来る', r: 'くる', ro: 'kuru', a: 'My Hero Academia', s: '私が来た！',
-      clip: 'https://animei.space/storage/998397d8-f2c0-4748-a1b2-2599b8ef6f95.mp4', len: 9, ts: 2, te: 11,
+      clip: 'kaa-kuru.mp4', len: 4.7, ts: 0, te: 2.4,
       t: { ru: ['приходить', 'Я пришёл!'], uk: ['приходити', 'Я прийшов!'], en: ['to come', 'I am here!'] } },
     { k: '大丈夫', r: 'だいじょうぶ', ro: 'daijoubu', a: 'My Hero Academia', s: 'もう大丈夫だ 少年',
-      clip: 'https://animei.space/storage/8210c932-9e63-4ee4-99e7-b18020b8d592.mp4', len: 9, ts: 2, te: 11,
+      clip: 'kaa-daijoubu.mp4', len: 6.5, ts: 0, te: 6.3,
       t: { ru: ['всё в порядке', 'Теперь всё хорошо, юноша'], uk: ['усе гаразд', 'Тепер усе добре, юначе'], en: ['okay; all right', "It's all right now, young man"] } },
     { k: '妹', r: 'いもうと', ro: 'imouto', a: 'Demon Slayer', s: '妹だ… 俺の妹なんだ！',
-      clip: 'https://animei.space/storage/d3c7fd2b-699d-412f-a133-9bab943aea49.mp4', len: 9, ts: 2, te: 11,
+      clip: 'kaa-imouto.mp4', len: 2.5, ts: 0, te: 2.4,
       t: { ru: ['младшая сестра', 'Это сестра… моя младшая сестра!'], uk: ['молодша сестра', 'Це сестра… моя молодша сестра!'], en: ['younger sister', "She's my sister… my little sister!"] } },
     { k: '助ける', r: 'たすける', ro: 'tasukeru', a: 'Jujutsu Kaisen', s: 'お前は強いから人を助けろ',
-      clip: 'https://animei.space/storage/aaac9758-f82e-4259-a670-9a6b8fffe367.mp4', len: 9, ts: 4, te: 8,
+      clip: 'kaa-tasukeru.mp4', len: 3.6, ts: 0, te: 3.2,
       t: { ru: ['спасать, помогать', 'Ты сильный — так спасай людей'], uk: ['рятувати, допомагати', 'Ти сильний — тож рятуй людей'], en: ['to save, to help', "You're strong, so save people"] } },
     { k: '仲間', r: 'なかま', ro: 'nakama', a: 'Attack on Titan', s: '仲間の死を嘆く時間はまだないんだよ',
-      clip: 'https://animei.space/storage/85224c52-0861-4035-accd-151a27b04a72.mp4', len: 9, ts: 5, te: 10,
+      clip: 'kaa-nakama.mp4', len: 3.8, ts: 0, te: 3.8,
       t: { ru: ['товарищ; свои', 'Ещё не время оплакивать павших товарищей.'], uk: ['товариш; свої', 'Ще не час оплакувати полеглих товаришів.'], en: ['comrade; ally', "There's no time to mourn fallen comrades yet."] } },
     { k: '仕事', r: 'しごと', ro: 'shigoto', a: 'Spy x Family', s: 'まあ ただの仕事だよ',
       clip: 'https://animei.space/storage/4143aca7-f738-446a-af44-e0c5bf83ea1e.mp4', len: 8, ts: 0, te: 2.4,
       t: { ru: ['работа; дело', 'Да так, обычная работа.'], uk: ['робота; справа', 'Та так, звичайна робота.'], en: ['work; job', "It's just an ordinary job."] } },
     { k: '趣味', r: 'しゅみ', ro: 'shumi', a: 'One-Punch Man', s: '趣味でヒーローをやっている者だ',
-      clip: 'https://animei.space/storage/040287f3-bd69-4d1c-8858-3a6ed8253e72.mp4', len: 9, ts: 4, te: 9,
+      clip: 'kaa-shumi.mp4', len: 5.8, ts: 0, te: 5.3,
       t: { ru: ['хобби, увлечение', 'Я герой по хобби'], uk: ['хобі, захоплення', 'Я герой за хобі'], en: ['hobby', "I'm a hero as a hobby"] } },
     { k: '人間', r: 'にんげん', ro: 'ningen', a: 'Frieren', s: '私は もっと人間を知ろうと思う',
-      clip: 'https://animei.space/storage/b68afb61-da79-4785-a01c-1f5ea048600c.mp4', len: 9, ts: 2.6, te: 6,
+      clip: 'kaa-ningen.mp4', len: 5.1, ts: 0, te: 5.1,
       t: { ru: ['человек; люди', 'Хочу больше узнать о людях.'], uk: ['людина; люди', 'Хочу більше дізнатися про людей.'], en: ['human; people', 'I want to understand people more.'] } },
+
+    { k: '今', r: 'いま', ro: 'ima', a: 'Frieren', s: '今では 幸せそうに笑ってるんだよ',
+      clip: 'kaa-ima.mp4', len: 6.5, ts: 0, te: 6.5,
+      t: { ru: ['сейчас; теперь', 'А теперь они счастливо улыбаются.'], uk: ['зараз; тепер', 'А тепер вони щасливо усміхаються.'], en: ['now; nowadays', 'And now they’re smiling happily.'] } },
+    { k: '私', r: 'わたし', ro: 'watashi', a: 'Frieren', s: 'フリーレン なぜ 私のところへ？',
+      clip: 'kaa-watashi.mp4', len: 9.3, ts: 0, te: 9.3,
+      t: { ru: ['я', 'Фрирен, почему ты пришла ко мне?'], uk: ['я', 'Фрірен, чому ти прийшла до мене?'], en: ['I, me', 'Frieren, why did you come to me?'] } },
 
     // ---- Дополнение: 35 карточек (клипы подставляет STARTER_CLIPS ниже) ----
     { k: '友達', r: 'ともだち', ro: 'tomodachi', a: 'Naruto', s: '友達を守る！',
@@ -404,13 +415,14 @@ function starterClipUrl(card) {
 }
 
 // Свои субтитры поверх клипа (.clip-player__cap в media.css) рисуем ТОЛЬКО
-// там, где картинка чистая. Сейчас все клипы колоды нарезаны из русских
-// фансаб-рипов: русский текст вшит в кадр, и своя строка легла бы поверх
-// чужой. Закрывать её плашкой = закрывать кадр, так что до появления клипов
-// с чистой картинкой подписи у колоды выключены. Когда у карточки появится
-// такой клип — поставить ей `clean: true`, и подпись включится сама.
+// там, где картинка чистая. У клипов из русских фансаб-рипов русский текст
+// вшит в кадр — своя строка легла бы поверх чужой. Чистые клипы перерезаны из
+// KickAssAnime конвейером _pp/kaa-recut.mjs, у них имя файла `kaa-*.mp4`
+// (правило работает и для ссылки из фида ядра, где путь абсолютный).
 function starterClipClean(card) {
-    return !!(card && card.clean);
+    if (!card) return false;
+    if (card.clean) return true;
+    return /(^|\/)kaa-[\w-]+\.mp4(\?|$)/.test(String(card.clip || ''));
 }
 
 // Строка-подпись для клипа карточки: перевод реплики на языке интерфейса.
