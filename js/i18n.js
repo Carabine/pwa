@@ -585,6 +585,7 @@ const I18N = {
 
         'study.settings.title': 'Настройки обучения',
         'study.settings.open': 'Настройки обучения',
+        'study.settings.card': 'Карточка',
         'study.editCard': 'Редактировать карточку',
         'study.deleteFailed': 'Не удалось удалить слово',
         'study.transcription': 'Транскрипция слова',

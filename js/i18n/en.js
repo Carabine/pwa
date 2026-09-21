@@ -582,6 +582,7 @@ window.I18N_EN = {
 
         'study.settings.title': 'Study settings',
         'study.settings.open': 'Study settings',
+        'study.settings.card': 'Card',
         'study.editCard': 'Edit card',
         'study.deleteFailed': 'Could not delete the word',
         'study.transcription': 'Word transcription',

@@ -114,7 +114,7 @@
 
 /* ---- The card ---- */
 .card-area {
-    position: relative;   /* контекст для угловой кнопки правки (.card-edit-btn) */
+    position: relative;   /* контекст для подсказок свайпа и прочих накладок */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -170,40 +170,6 @@
     }
     /* max-height видео для этого брейкпоинта задан ниже по файлу (после базового
        правила .clip-player video — иначе базовое победило бы в каскаде). */
-}
-
-/* Ненавязчивая правка карточки: полупрозрачный карандаш в верхнем правом углу
-   карточки, наливается цветом при наведении. Не мешает контенту (по центру). */
-.card-edit-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    /* Заметный, но не кричащий: лёгкий фон-кружок и рамка — читается как кнопка
-       (раньше opacity 0.4 без фона был почти невидим — «карандаш не вижу»). */
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    opacity: 0.9;
-    cursor: pointer;
-    transition: opacity var(--transition), background var(--transition), color var(--transition);
-    z-index: 5;
-}
-
-/* display:flex перебивает атрибут hidden — прячем явно, когда карточки нет. */
-.card-edit-btn[hidden] { display: none; }
-
-@media (hover: hover) and (pointer: fine) {
-    .card-edit-btn:hover {
-        opacity: 1;
-        background: var(--surface);
-        color: var(--text);
-    }
 }
 
 /* Счётчики, прогресс и кнопки оценки не сжимаем — ужимается только карточка. */
@@ -711,13 +677,6 @@
     min-width: 0;
     overflow-wrap: anywhere;
     animation: word-in 0.22s ease-out;
-}
-
-/* Пока в углу лежит карандаш правки, титул получает симметричные боковые
-   отступы: длинное слово не заезжает под кнопку, а оптический центр слова
-   не смещается (односторонний padding сдвинул бы его влево). */
-.card-area:has(> .card-edit-btn:not([hidden])) .front-side {
-    padding-inline: 44px;
 }
 
 @keyframes word-in {
@@ -1323,6 +1282,41 @@
 .study-set-toggle {
     cursor: pointer;
 }
+
+/* Второй раздел панели (действия над карточкой): свой подзаголовок + кнопка.
+   Отбит линией — иначе читается как ещё одна настройка обучения. */
+.study-set-section {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding-top: 9px;
+    border-top: 1px solid var(--border);
+}
+
+.study-set-section[hidden] { display: none; }
+
+.study-set-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .study-set-action:hover {
+        background: var(--border);
+    }
+}
+
 
 /* Тумблер (как в общих настройках) вместо дефолтного чекбокса */
 .study-set-toggle input[type="checkbox"] {

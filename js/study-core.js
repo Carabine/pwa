@@ -980,73 +980,62 @@
             else renderFront();
         }
 
-        // Ненавязчивая правка карточки прямо в обучении: маленький карандаш в углу
-        // карточки открывает ту же модалку, что и в словаре (общий модуль
-        // AnimeiWordEdit). После сохранения пересобираем производные поля (их читает
-        // карточка) и перерисовываем текущую сторону, чтобы правка была видна сразу.
-        let cardEditBtn = null;
-        function mountCardEdit() {
-            const cardArea = document.querySelector('.card-area');
-            if (!cardArea || !window.AnimeiWordEdit || cardArea.querySelector('.card-edit-btn')) return;
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'card-edit-btn';
-            btn.hidden = true;
-            btn.setAttribute('aria-label', t('study.editCard'));
-            btn.title = t('study.editCard');
-            btn.innerHTML = PENCIL_ICON;
-            btn.addEventListener('click', () => {
-                if (!current || !current.word || !current.word.id) return;
-                window.AnimeiWordEdit.open(current.word, () => {
+        // Правка карточки прямо в обучении: открывает ту же модалку, что и в
+        // словаре (общий модуль AnimeiWordEdit). После сохранения пересобираем
+        // производные поля (их читает карточка) и перерисовываем текущую сторону,
+        // чтобы правка была видна сразу.
+        // Правка живёт в панели шестерёнки (mountStudySettings): карандаш в углу
+        // карточки спорил с титулом слова и попадался под палец при свайпе оценки.
+        let cardEditSection = null;
+        function openCardEdit() {
+            if (!window.AnimeiWordEdit || !current || !current.word || !current.word.id) return;
+            window.AnimeiWordEdit.open(current.word, () => {
+                const w = current.word;
+                // Карточка читает производные поля — держим их в синхроне с правкой.
+                w.word = w.kanji;
+                w.meaning = w.translation;
+                w.translatedSentence = w.sentenceTranslation;
+                reapplyCard();
+            }, {
+                // Меню «⋯» — те же действия, что в словаре.
+                onDecks: window.DecksUI ? () => DecksUI.openSheet(current.word) : null,
+                // Момент, когда «не хочу это учить» и возникает — прямо на
+                // карточке. Слово уходит из очереди со следующей сессии,
+                // текущую не ломаем: выдёргивать карточку из-под ответа хуже.
+                onFreeze: window.Freeze ? async () => {
                     const w = current.word;
-                    // Карточка читает производные поля — держим их в синхроне с правкой.
-                    w.word = w.kanji;
-                    w.meaning = w.translation;
-                    w.translatedSentence = w.sentenceTranslation;
-                    reapplyCard();
-                }, {
-                    // Меню «⋯» — те же действия, что в словаре.
-                    onDecks: window.DecksUI ? () => DecksUI.openSheet(current.word) : null,
-                    // Момент, когда «не хочу это учить» и возникает — прямо на
-                    // карточке. Слово уходит из очереди со следующей сессии,
-                    // текущую не ломаем: выдёргивать карточку из-под ответа хуже.
-                    onFreeze: window.Freeze ? async () => {
-                        const w = current.word;
-                        const next = !w.frozen;
-                        try {
-                            await Freeze.setWord(w.id, next);
-                            w.frozen = next;
-                            showSnackbar(t(next ? 'words.frozenOne' : 'words.unfrozenOne'), { duration: 2500 });
-                        } catch (err) {
-                            console.error('Не удалось изменить заморозку слова', err);
-                            showSnackbar(t('words.freezeFailed'), { duration: 3500, type: 'error' });
-                        }
-                    } : null,
-                    onDelete: async () => {
-                        const w = current.word;
-                        const name = w.kanji || w.kana || '';
-                        if (!confirm(t('words.deleteConfirmOne').replace('{w}', name))) return;
-                        try {
-                            await deleteWord(w.id);
-                        } catch {
-                            showSnackbar(t('study.deleteFailed'), { duration: 3500, type: 'error' });
-                            return;
-                        }
-                        if (window.Decks) Decks.forgetWord(w.id);
-                        // Выкидываем все вхождения слова из очереди и идём дальше.
-                        queue = queue.filter((it) => !(it.word && it.word.id === w.id));
-                        total = Math.max(1, total - 1);
-                        advance();
-                    },
-                });
+                    const next = !w.frozen;
+                    try {
+                        await Freeze.setWord(w.id, next);
+                        w.frozen = next;
+                        showSnackbar(t(next ? 'words.frozenOne' : 'words.unfrozenOne'), { duration: 2500 });
+                    } catch (err) {
+                        console.error('Не удалось изменить заморозку слова', err);
+                        showSnackbar(t('words.freezeFailed'), { duration: 3500, type: 'error' });
+                    }
+                } : null,
+                onDelete: async () => {
+                    const w = current.word;
+                    const name = w.kanji || w.kana || '';
+                    if (!confirm(t('words.deleteConfirmOne').replace('{w}', name))) return;
+                    try {
+                        await deleteWord(w.id);
+                    } catch {
+                        showSnackbar(t('study.deleteFailed'), { duration: 3500, type: 'error' });
+                        return;
+                    }
+                    if (window.Decks) Decks.forgetWord(w.id);
+                    // Выкидываем все вхождения слова из очереди и идём дальше.
+                    queue = queue.filter((it) => !(it.word && it.word.id === w.id));
+                    total = Math.max(1, total - 1);
+                    advance();
+                },
             });
-            cardArea.appendChild(btn);
-            cardEditBtn = btn;
         }
-        // Карандаш виден только на реальной (сохранённой) карточке — не на экранах
-        // «всё пройдено» / пустой колоды.
+        // Раздел правки виден только на реальной (сохранённой) карточке — не на
+        // экранах «всё пройдено» / пустой колоды.
         function refreshEditBtn() {
-            if (cardEditBtn) cardEditBtn.hidden = !(current && current.word && current.word.id);
+            if (cardEditSection) cardEditSection.hidden = !(current && current.word && current.word.id);
         }
 
         function mountStudySettings() {
@@ -1130,6 +1119,31 @@
             document.addEventListener('click', (e) => {
                 if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) closePanel();
             });
+
+            // Второй раздел панели: действия над САМОЙ карточкой (раньше — карандаш
+            // в углу). Отделён своим подзаголовком, потому что это не настройка
+            // обучения: строки выше меняют показ всех карточек, эта — одну.
+            if (window.AnimeiWordEdit) {
+                const editWrap = document.createElement('div');
+                editWrap.className = 'study-set-section';
+                editWrap.hidden = true;
+                const editTitle = document.createElement('div');
+                editTitle.className = 'study-set-title';
+                editTitle.textContent = t('study.settings.card');
+                const editBtn = document.createElement('button');
+                editBtn.type = 'button';
+                editBtn.className = 'study-set-action';
+                editBtn.innerHTML = PENCIL_ICON + '<span></span>';
+                editBtn.querySelector('span').textContent = t('study.editCard');
+                editBtn.addEventListener('click', () => {
+                    closePanel();
+                    openCardEdit();
+                });
+                editWrap.append(editTitle, editBtn);
+                panel.appendChild(editWrap);
+                cardEditSection = editWrap;
+                refreshEditBtn();
+            }
 
             main.appendChild(btn);
             main.appendChild(panel);
@@ -2467,7 +2481,6 @@
         wireModal();
         wireSwipe();
         mountStudySettings();
-        mountCardEdit();
         document.addEventListener('keydown', onKey);
 
         async function bootstrap() {

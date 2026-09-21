@@ -581,6 +581,7 @@ window.I18N_UK = {
 
         'study.settings.title': 'Налаштування навчання',
         'study.settings.open': 'Налаштування навчання',
+        'study.settings.card': 'Картка',
         'study.editCard': 'Редагувати картку',
         'study.deleteFailed': 'Не вдалося видалити слово',
         'study.transcription': 'Транскрипція слова',
