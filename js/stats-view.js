@@ -21,6 +21,10 @@
                     '\n.statsview .story__body b { font-weight: 600; }' +
                     '\n.statsview .story__dur { color: var(--accent); font-style: normal; font-size: 11.5px; }' +
                     '\n.statsview .story__sub { display: block; color: var(--muted); font-size: 11.5px; line-height: 1.5; word-break: break-word; }' +
+                    '\n.statsview .story__row--sub { padding-left: 26px; }' +
+                    '\n.statsview .story__row--sub .story__time { opacity: .55; }' +
+                    '\n.statsview .story__row--dim { opacity: .62; }' +
+                    '\n.statsview .story__warn { color: #ffb4b4; font-weight: 600; }' +
                     '\n.statsview .session__src { color: var(--accent2); font-size: 11.5px; }' +
                     '\n.statsview .session__steps { margin: 0; }' +
                     '\n.statsview .session__steps > summary { list-style: none; cursor: pointer; padding: 8px 12px; color: var(--muted); font-size: 12px; user-select: none; }' +
@@ -461,25 +465,21 @@
         return out;
     }
 
-    // ---------- Пересказ сессии: из лога событий делаем действия ----------
-    // Лог сырой: одно открытие страницы даёт три записи (ref + session + page),
-    // к каждому включению видео липнут voiceover/subs_missing/resume, и понять
-    // по такому списку, ЧТО человек делал, невозможно. Собираем смысловые блоки:
-    // просмотр серии с пометками, пачка сохранённых слов, повторение, поиск —
-    // по строке на действие. Сырой лог остаётся ниже, под отдельным спойлером.
-    var STORY_SKIP = {
-        ref: 1, session: 1, page: 1,          // техника открытия страницы
+    // ---------- Путь по приложению: шаг за шагом ----------
+    // Сырой лог читать нельзя: одно открытие страницы даёт три записи
+    // (ref + session + page), «увидел кнопку продолжить» стоит наравне с
+    // сохранением слова, а смена серии внутри плеера каждый раз повторяет
+    // «открыл плеер». Здесь оставляем КАЖДОЕ осмысленное действие отдельным
+    // шагом (это и есть путь), но пишем его человеческой фразой, выбрасываем
+    // техническую шелуху и схлопываем подряд идущие одинаковые шаги.
+    var STEP_SKIP = {
+        ref: 1, session: 1,                   // техника открытия страницы
         install: 1, chibi_hidden: 1, daily_plan: 1, streak_milestone: 1, onboarding: 1
     };
-    // Эти события уточняют текущий просмотр, а не являются отдельным действием.
-    var WATCH_MARKS = {
+    // Шаги, которые относятся к текущему просмотру — рисуем с отступом.
+    var UNDER_WATCH = {
         voiceover: 1, subs_missing: 1, subs_precise: 1, autosync: 1,
-        video_error: 1, resume: 1, episode_end: 1, offline: 1
-    };
-    var ACT_ICONS = {
-        search: '🔎', auth: '🔑', deck: '🗂', beginner_deck: '🌱', episode_deck: '🗂',
-        anki_export: '📤', known_import: '📥', words_bulk: '✏️', tts: '🔊',
-        explain: '💡', clip_recut: '✂️', setting: '⚙️', catalog: '📚', session_card: '🧾'
+        video_error: 1, resume: 1, episode_end: 1, explain: 1, tts: 1, clip_recut: 1
     };
 
     function mmss(sec) {
@@ -488,7 +488,7 @@
         return m + ':' + (r < 10 ? '0' : '') + r;
     }
 
-    // Длительность действия — показываем, только если она осмысленная (от минуты).
+    // Длительность шага — только осмысленная (от минуты).
     function durText(from, to) {
         var ms = new Date(to) - new Date(from);
         if (!isFinite(ms) || ms < 60000) return '';
@@ -497,124 +497,112 @@
         return (min / 60).toFixed(1).replace('.0', '') + ' ч';
     }
 
-    function markText(ev, p) {
-        if (ev === 'voiceover') return 'дорожка: ' + p;
-        if (ev === 'subs_missing') return '⚠ субтитров нет';
-        if (ev === 'video_error') return '⚠ видео не поднялось (' + p + ')';
-        if (ev === 'episode_end') return '🏁 досмотрел серию';
-        if (ev === 'offline') return p === 'on' ? '⚠ потерял сеть' : 'сеть вернулась';
-        if (ev === 'resume') return p.indexOf('seek:') === 0 ? 'перемотка на ' + mmss(p.slice(5)) : '';
-        return detailText({ event: ev, page: p });
-    }
-
-    function buildStory(events, endAt) {
-        var items = [];
-        var watch = null;   // текущий просмотр: к нему липнут пометки
-        var pendingVoice = null;  // выбор дорожки прилетает ЗА секунду до play
-        var bag = null;     // текущая пачка слов (сохранённые / «уже знаю»)
-        var review = null;  // текущее повторение
-
-        function push(it) { items.push(it); return it; }
-
-        (events || []).forEach(function (e) {
-            var ev = e.event;
-            var p = String(e.page == null ? '' : e.page);
-            if (STORY_SKIP[ev]) return;
-            // «увидел кнопку продолжить» и «закрыл её» — показ интерфейса, а не
-            // действие человека. Оставляем только нажатие и перемотку.
-            if (ev === 'resume' && p !== 'click' && p.indexOf('seek:') !== 0) return;
-
-            if (ev === 'play') {
-                var title = p.split(' · эп ')[0];
-                var ep = p.split(' · эп ')[1] || '';
-                // Тот же эпизод (перезапуск, смена качества) — не плодим строки.
-                if (watch && watch.title === title && watch.ep === ep) { watch.to = e.at; return; }
-                bag = null; review = null;
-                watch = push({ kind: 'watch', icon: '▶', at: e.at, to: e.at, title: title, ep: ep, subs: [] });
-                if (pendingVoice && new Date(e.at) - new Date(pendingVoice.at) < 20000) {
-                    watch.subs.push(pendingVoice.text);
-                }
-                pendingVoice = null;
-                return;
-            }
-            if (ev === 'voiceover' && !watch) { pendingVoice = { at: e.at, text: markText(ev, p) }; return; }
-            if (WATCH_MARKS[ev] && watch) {
-                var txt = markText(ev, p);
-                if (txt && watch.subs.indexOf(txt) < 0) watch.subs.push(txt);
-                watch.to = e.at;
-                return;
-            }
-            if (ev === 'save_word' || ev === 'known_word') {
-                var kind = ev === 'save_word' ? 'saved' : 'known';
-                if (!bag || bag.sub !== kind) {
-                    bag = push({ kind: 'words', sub: kind, icon: ev === 'save_word' ? '💾' : '✅',
-                        at: e.at, to: e.at, words: [] });
-                }
-                if (bag.words.indexOf(p) < 0) bag.words.push(p);
-                bag.to = e.at;
-                return;
-            }
-            bag = null;
-            if (ev === 'study') {
-                review = push({ kind: 'review', icon: '📚', at: e.at, to: e.at,
-                    mode: STUDY_LABELS[p] || p, cards: 0, done: false });
-                return;
-            }
-            if (ev === 'srs_review') {
-                if (!review) {
-                    review = push({ kind: 'review', icon: '📚', at: e.at, to: e.at,
-                        mode: 'повторение', cards: 0, done: false });
-                }
-                if (p === 'graduated') review.done = true; else review.cards++;
-                review.to = e.at;
-                return;
-            }
-            if (ev === 'session_card' && review) { review.to = e.at; return; }
-            // Всё прочее — обычная строка действия с человеческой подписью.
-            push({ kind: 'act', icon: ACT_ICONS[ev] || '•', at: e.at, to: e.at,
-                verb: EVENT_LABELS[ev] || ev, text: detailText({ event: ev, page: p }) });
-        });
-
-        // Подряд идущие одинаковые действия («открыл колоду» ×4) схлопываем:
-        // иначе человек, потыкавший одну кнопку, выглядит как бурная деятельность.
-        var packed = [];
-        items.forEach(function (it) {
-            var last = packed[packed.length - 1];
-            if (last && storyKey(last) === storyKey(it)) {
-                last.n = (last.n || 1) + 1;
-                last.to = it.to;
-                return;
-            }
-            packed.push(it);
-        });
-
-        // Докуда тянулось действие: до следующего или до конца сессии.
-        packed.forEach(function (it, i) {
-            it.until = packed[i + 1] ? packed[i + 1].at : (endAt || it.to);
-        });
-        return packed;
-    }
-
-    // Подпись действия для схлопывания повторов. Просмотр не трогаем: у него
-    // своя склейка по тайтлу, а пачки слов копятся внутри одного элемента.
-    function storyKey(it) {
-        if (it.kind === 'watch' || it.kind === 'words') return it.kind + ':' + it.at;
-        if (it.kind === 'review') return it.cards || it.done ? 'review:' + it.at : 'review:' + it.mode;
-        return 'act:' + it.verb + '|' + it.text;
-    }
-
-    // В деталях событий встречаются HTML-сущности: клиент шлёт название дорожки
-    // как оно стоит в разметке («Anku &amp; mutagenb»). Разворачиваем перед показом
-    // — esc() ниже всё равно экранирует заново.
+    // В деталях событий встречаются HTML-сущности: название дорожки клиент шлёт
+    // как оно стоит в разметке («Anku &amp; mutagenb»). Разворачиваем перед показом.
     function deent(x) {
         return String(x).replace(/&amp;/g, '&').replace(/&lt;/g, '<')
             .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
     }
 
-    function storyHtml(items, pageSeq) {
-        if (!items.length) {
-            // Ни одного действия: человек открыл страницу и ушёл. Пустое место
-            // выглядит как потеря данных, поэтому говорим прямо.
+    // Одно событие → один человеческий шаг: { icon, text, under }.
+    // null — шаг не показываем (мусор или показ интерфейса, а не действие).
+    function stepOf(ev, p) {
+        switch (ev) {
+            case 'page': return { icon: '📄', text: 'перешёл: ' + (PAGE_LABELS[p] || p), page: p, dim: true };
+            case 'play': {
+                var t = p.split(' · эп ')[0], ep = p.split(' · эп ')[1] || '';
+                return { icon: '▶', text: 'включил ' + deent(t) + (ep ? ' · эп ' + ep : ''), watch: true };
+            }
+            case 'voiceover': return { icon: '🎧', text: 'дорожка: ' + deent(p) };
+            case 'subs_missing': return { icon: '⚠', text: 'субтитров к серии не нашлось', warn: true };
+            case 'video_error': return { icon: '⚠', text: 'видео не поднялось (' + p + ')', warn: true };
+            case 'episode_end': return { icon: '🏁', text: 'досмотрел серию' };
+            case 'resume':
+                if (p.indexOf('seek:') === 0) return { icon: '⏩', text: 'перемотал на ' + mmss(p.slice(5)) };
+                if (p === 'click') return { icon: '⏩', text: 'нажал «продолжить»' };
+                return null;                       // «увидел кнопку» — не действие
+            case 'autosync': return { icon: '🎚', text: 'подгонял субтитры: ' + detailText({ event: ev, page: p }) };
+            case 'subs_precise': return { icon: '🎚', text: detailText({ event: ev, page: p }) };
+            case 'save_word': return { icon: '💾', text: 'сохранил слово ' + p, key: 'save' };
+            case 'known_word': return { icon: '✅', text: 'отметил «уже знаю»: ' + p, key: 'known' };
+            case 'explain': return { icon: '💡', text: 'открыл разбор' + (p && p !== '-' ? ': ' + p : '') };
+            case 'tts': return { icon: '🔊', text: 'озвучил карточку' };
+            case 'clip_recut': return { icon: '✂️', text: 'пересобрал клип' };
+            case 'search': return { icon: '🔎', text: 'искал ' + detailText({ event: ev, page: p }) };
+            case 'catalog': return { icon: '📚', text: 'каталог: ' + p };
+            case 'study': return { icon: '📚', text: 'открыл ' + (STUDY_LABELS[p] || p) };
+            case 'srs_review':
+                return p === 'graduated'
+                    ? { icon: '🎓', text: 'закончил повторение' }
+                    : { icon: '🔁', text: 'прошёл карточку' + (p && p !== '-' ? ' ' + p : '') };
+            case 'session_card': return { icon: '🧾', text: detailText({ event: ev, page: p }), dim: true };
+            case 'beginner_deck': return { icon: '🌱', text: 'колода новичка: ' + detailText({ event: ev, page: p }) };
+            case 'episode_deck': return { icon: '🗂', text: 'колода из серии: ' + p };
+            case 'deck': return { icon: '🗂', text: detailText({ event: ev, page: p }) };
+            case 'words_bulk': return { icon: '✏️', text: detailText({ event: ev, page: p }) };
+            case 'anki_export': return { icon: '📤', text: detailText({ event: ev, page: p }) };
+            case 'known_import': return { icon: '📥', text: detailText({ event: ev, page: p }) };
+            case 'auth': return { icon: '🔑', text: detailText({ event: ev, page: p }) };
+            case 'setting': return { icon: '⚙️', text: 'настройка: ' + p };
+            case 'password_change': return { icon: '🔑', text: 'сменил пароль' };
+            case 'offline': return { icon: '📴', text: p === 'on' ? 'потерял сеть' : 'сеть вернулась', warn: p === 'on' };
+            default: {
+                // Незнакомое событие показываем как есть — лучше непонятная
+                // строка, чем потерянный шаг (и сразу видно, что нужна подпись).
+                var lbl = EVENT_LABELS[ev] || ev;
+                var det = detailText({ event: ev, page: p });
+                if (/^(app|landing)\//.test(det)) det = '';
+                return { icon: '•', text: lbl + (det && det !== lbl ? ': ' + det : '') };
+            }
+        }
+    }
+
+    function buildSteps(events, endAt) {
+        var out = [];
+        var lastPage = null, lastPageAt = 0, inWatch = false;
+
+        (events || []).forEach(function (e) {
+            var ev = e.event;
+            var p = String(e.page == null ? '' : e.page);
+            if (STEP_SKIP[ev]) return;
+
+            var st = stepOf(ev, p);
+            if (!st) return;
+
+            if (ev === 'page') {
+                // Плеер пишет «открыл плеер» на каждую смену серии. Повтор той
+                // же страницы подряд показываем, только если человек реально
+                // отсутствовал (больше двух минут) — иначе это внутренняя
+                // перерисовка, а не шаг пути.
+                var t = new Date(e.at).getTime();
+                if (p === lastPage && t - lastPageAt < 120000) { lastPageAt = t; return; }
+                lastPage = p; lastPageAt = t;
+                inWatch = false;
+            }
+            if (st.watch) inWatch = true;
+            st.at = e.at;
+            st.under = inWatch && !!UNDER_WATCH[ev];
+
+            // Подряд идущие одинаковые шаги — одной строкой с ×N.
+            var last = out[out.length - 1];
+            if (last && last.icon === st.icon && last.text === st.text) {
+                last.n = (last.n || 1) + 1;
+                last.lastAt = e.at;
+                return;
+            }
+            // Однотипные шаги без текста-различия («прошёл карточку») тоже
+            // считаем повтором, если различается только слово в конце.
+            out.push(st);
+        });
+
+        out.forEach(function (st, i) {
+            st.until = out[i + 1] ? out[i + 1].at : (endAt || st.at);
+        });
+        return out;
+    }
+
+    function stepsHtml(steps, pageSeq) {
+        if (!steps.length) {
             var where = (pageSeq && pageSeq.length) ? pageSeq.join(' → ') : '';
             return '<ul class="story"><li class="story__row">' +
                 '<span class="story__time"></span><span class="story__icon">👀</span>' +
@@ -622,38 +610,21 @@
                 (where ? '<span class="story__sub">' + esc(where) + '</span>' : '') +
                 '</span></li></ul>';
         }
-        var rows = items.map(function (it) {
-            var main, sub = '';
-            if (it.kind === 'watch') {
-                main = '<b>' + esc(deent(it.title)) + '</b>' + (it.ep ? ' · эп ' + esc(it.ep) : '');
-                var d = durText(it.at, it.until);
-                if (d) main += ' <i class="story__dur">' + d + '</i>';
-                if (it.subs.length) sub = it.subs.join(' · ');
-            } else if (it.kind === 'words') {
-                var n = it.words.length;
-                main = '<b>' + (it.sub === 'saved' ? 'сохранил' : 'отметил «уже знаю»') + ' ' +
-                    n + ' ' + plural(n, 'слово', 'слова', 'слов') + '</b>';
-                sub = it.words.slice(0, 12).join(', ') + (n > 12 ? ' и ещё ' + (n - 12) : '');
-            } else if (it.kind === 'review') {
-                main = '<b>' + esc(it.mode) + '</b>' +
-                    (it.cards ? ' · ' + it.cards + ' ' + plural(it.cards, 'карточка', 'карточки', 'карточек') : '') +
-                    (it.done ? ' · <i class="story__dur">закончил</i>' : '');
-                if (!it.cards && !it.done) sub = 'открыл, ни одной карточки не прошёл';
-            } else {
-                main = '<b>' + esc(it.verb) + '</b>';
-                var txt = it.text;
-                // Детали вида 'landing/index' ничего не добавляют к «кнопка на
-                // первом экране» — либо переводим в человеческое имя, либо убираем.
-                if (/^(app|landing)\//.test(txt)) txt = PAGE_LABELS[txt] || '';
-                if (txt && txt !== it.verb) sub = txt;
+        var rows = steps.map(function (st) {
+            var cls = 'story__row' + (st.under ? ' story__row--sub' : '') + (st.dim ? ' story__row--dim' : '');
+            var txt = esc(st.text);
+            if (st.warn) txt = '<b class="story__warn">' + txt + '</b>';
+            else if (st.watch) txt = '<b>' + txt + '</b>';
+            if (st.n > 1) txt += ' <i class="story__dur">×' + st.n + '</i>';
+            // Длительность имеет смысл только у просмотра: остальные шаги мгновенные.
+            if (st.watch) {
+                var d = durText(st.at, st.until);
+                if (d) txt += ' <i class="story__dur">' + d + '</i>';
             }
-            if (it.n > 1) main += ' <i class="story__dur">×' + it.n + '</i>';
-            return '<li class="story__row">' +
-                '<span class="story__time">' + fmtHM(it.at) + '</span>' +
-                '<span class="story__icon">' + it.icon + '</span>' +
-                '<span class="story__body">' + main +
-                (sub ? '<span class="story__sub">' + esc(deent(sub)) + '</span>' : '') +
-                '</span></li>';
+            return '<li class="' + cls + '">' +
+                '<span class="story__time">' + fmtHM(st.at) + '</span>' +
+                '<span class="story__icon">' + st.icon + '</span>' +
+                '<span class="story__body">' + txt + '</span></li>';
         }).join('');
         return '<ul class="story">' + rows + '</ul>';
     }
@@ -699,8 +670,8 @@
         var dev = s.ua ? uaShort(s.ua) : String(s.visitorId || '—').slice(0, 8);
         // Пересказ действий — главное в сессии: по строке на дело, техника
         // свёрнута в пометки. Сырой лог остаётся ниже под спойлером.
-        var story = buildStory(s.events || [], s.end);
-        var storyBlock = storyHtml(story, pageSeq);
+        var steps2 = buildSteps(s.events || [], s.end);
+        var storyBlock = stepsHtml(steps2, pageSeq);
 
         // Откуда пришёл: событие ref шлётся один раз за визит.
         var ref = (s.events || []).filter(function (e) { return e.event === 'ref'; })[0];
@@ -711,8 +682,8 @@
                 '<span class="session__n">Сессия #' + (idx + 1) + '</span>' +
                 '<span class="session__dev" title="' + esc(s.ua || s.visitorId || '') + '">' + esc(dev) + '</span>' +
                 '<span class="session__time">' + range + '</span>' + src +
-                '<span class="session__count">' + story.length + ' ' +
-                    plural(story.length, 'действие', 'действия', 'действий') + '</span>' +
+                '<span class="session__count">' + steps2.length + ' ' +
+                    plural(steps2.length, 'шаг', 'шага', 'шагов') + '</span>' +
             '</div>' + sumHtml + path + storyBlock +
             (steps ? '<details class="session__steps"><summary>▸ сырой лог (' + collapsed.length + ')</summary><ul class="tl">' + steps + '</ul></details>' : '') +
             '</div>';
