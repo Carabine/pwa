@@ -459,7 +459,6 @@ window.I18N_UK = {
         'words.view.cards': 'Картки',
         'words.filters': 'Фільтри',
         'words.filters.sort': 'Сортування',
-        'words.filters.view': 'Вигляд',
         'words.filters.freeze': 'Заморозка',
         'words.freeze.all': 'Всі',
         'words.freeze.active': 'Лише активні',

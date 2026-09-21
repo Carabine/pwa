@@ -459,7 +459,6 @@ window.I18N_EN = {
         'words.view.cards': 'Cards',
         'words.filters': 'Filters',
         'words.filters.sort': 'Sorting',
-        'words.filters.view': 'View',
         'words.filters.freeze': 'Frozen',
         'words.freeze.all': 'All',
         'words.freeze.active': 'Active only',
