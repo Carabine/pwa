@@ -684,6 +684,16 @@ function updateKnownMenuLabel() {
 
 const SORT_OPTS = [['new', 'words.sort.new'], ['old', 'words.sort.old'], ['az', 'words.sort.az']];
 const VIEW_OPTS = [['list', 'words.view.list'], ['cards', 'words.view.cards']];
+// Значки пунктов «⋯» — в манере меню слова (js/word-edit.js): 16px, обводка.
+const MENU_SVG = (inner) => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"'
+    + ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + inner + '</svg>';
+const VIEW_ICONS = {
+    list: MENU_SVG('<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>'
+        + '<line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>'
+        + '<line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>'),
+    cards: MENU_SVG('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>'
+        + '<rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'),
+};
 const FREEZE_OPTS = [['all', 'words.freeze.all'], ['active', 'words.freeze.active'], ['frozen', 'words.freeze.frozen']];
 
 // Отличается ли показ от умолчаний — по этому воронка получает точку. Вид
@@ -706,7 +716,9 @@ function openFilters() {
     const modal = modalLayer(overlay);
 
     // Перерисовываем содержимое на месте: выбор применяется сразу к списку под
-    // модалкой, поэтому «ОК» не нужен — внизу только сброс и закрытие.
+    // модалкой, поэтому «ОК» не нужен — внизу только закрытие со счётчиком
+    // результата. «Сбросить» появляется, только когда есть что сбрасывать:
+    // серая мёртвая кнопка при каждом открытии выглядела поломкой.
     const draw = () => {
         const seg = (opts, cur, group) => opts.map(([v, k]) =>
             `<button class="wfilters__seg${v === cur ? ' is-on' : ''}" data-group="${group}" data-val="${v}">${esc(t(k))}</button>`).join('');
@@ -723,7 +735,7 @@ function openFilters() {
                 <div class="wfilters__segs">${seg(FREEZE_OPTS, freezeMode, 'freeze')}</div>
             </div>
             <div class="wfilters__foot">
-                <button class="btn btn--ghost" data-act="reset"${filtersActive() ? '' : ' disabled'}>${esc(t('words.filters.reset'))}</button>
+                ${filtersActive() ? `<button class="btn btn--ghost" data-act="reset">${esc(t('words.filters.reset'))}</button>` : ''}
                 <button class="btn btn--primary" data-act="close">${esc(t('words.filters.done').replace('{n}', visibleCount()))}</button>
             </div>`;
     };
@@ -786,13 +798,13 @@ function initMenu() {
         for (const [val, key] of VIEW_OPTS) {
             const item = document.createElement('button');
             item.type = 'button';
+            // Активный вид — подсвеченный пункт, а не галочка: галочка читается
+            // как «включено», а тут выбор одного из двух.
             item.className = 'words-menu__item' + (viewMode === val ? ' is-on' : '');
-            const tick = document.createElement('span');
-            tick.className = 'words-menu__tick';
-            tick.textContent = viewMode === val ? '✓' : '';
             const label = document.createElement('span');
             label.textContent = t(key);
-            item.append(tick, label);
+            item.innerHTML = VIEW_ICONS[val];
+            item.append(label);
             item.addEventListener('click', () => {
                 if (viewMode === val) return;
                 viewMode = val;

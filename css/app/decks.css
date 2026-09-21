@@ -512,7 +512,6 @@
 }
 
 .wfilters__foot .btn { flex: 1 1 auto; }
-.wfilters__foot .btn:disabled { opacity: 0.45; }
 
 /* Точка у воронки: фильтры отличаются от умолчаний. */
 .deck-chip--filter-on { position: relative; border-color: var(--primary); color: var(--text); }

@@ -281,15 +281,17 @@
     color: var(--primary-hover);
 }
 
-/* Группы-переключатели в меню (сортировка, вид): пункт с галочкой слева. */
+/* Переключатель вида в меню «⋯»: выбранный пункт подсвечен как активный —
+   галочка читалась бы как «включено», а здесь выбирают один из двух. */
 .words-menu__group { display: flex; flex-direction: column; }
-.words-menu__item.is-on { color: var(--primary-hover); }
-.words-menu__tick {
-    display: inline-block;
-    width: 16px;
-    flex: 0 0 16px;
-    font-size: 12px;
+
+.words-menu__item.is-on {
     color: var(--primary-hover);
+    background: rgba(99, 102, 241, 0.14);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .words-menu__item.is-on:hover { background: rgba(99, 102, 241, 0.2); }
 }
 
 .words-list {

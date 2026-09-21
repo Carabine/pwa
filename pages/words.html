@@ -107,12 +107,14 @@
                      js/words.js) и действия. То, что ОТБИРАЕТ слова —
                      сортировка и заморозка, — в модалке «Фильтры» под воронкой,
                      колода — на пилюле слева. -->
+                <!-- Подпись — во вложенном span: data-i18n пишет textContent и
+                     стёр бы значок, лежи он в той же кнопке. -->
                 <div class="words-menu" id="words-menu" hidden>
-                    <button id="export-anki-btn" data-i18n="words.exportAnki" data-i18n-title="words.exportAnki.title" title="Готовая колода с аудио или видео из ваших клипов">Экспорт в Anki</button>
-                    <button id="export-btn" data-i18n="words.export" data-i18n-title="words.export.title" title="Простой текстовый файл — резервная копия">Экспорт (текст)</button>
+                    <button id="export-anki-btn" data-i18n-title="words.exportAnki.title" title="Готовая колода с аудио или видео из ваших клипов"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span data-i18n="words.exportAnki">Экспорт в Anki</span></button>
+                    <button id="export-btn" data-i18n-title="words.export.title" title="Простой текстовый файл — резервная копия"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span data-i18n="words.export">Экспорт (текст)</span></button>
                     <hr class="words-menu__hr">
-                    <button id="import-known-btn" data-i18n="known.import">Импорт известных слов</button>
-                    <button id="known-btn"><span data-i18n="known.title">Известные слова</span> <span class="words-menu__count" id="known-count" hidden></span></button>
+                    <button id="import-known-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span data-i18n="known.import">Импорт известных слов</span></button>
+                    <button id="known-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span data-i18n="known.title">Известные слова</span> <span class="words-menu__count" id="known-count" hidden></span></button>
                 </div>
             </div>
         </div>
