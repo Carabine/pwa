@@ -12,6 +12,16 @@
             if (!document.getElementById('statsview-css')) {
                 var st = document.createElement('style');
                 st.id = 'statsview-css'; st.textContent = CSS +
+                    '\n.statsview .story { list-style: none; margin: 4px 0 0; padding: 4px 12px 10px; }' +
+                    '\n.statsview .story__row { display: flex; gap: 10px; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }' +
+                    '\n.statsview .story__row:last-child { border-bottom: none; }' +
+                    '\n.statsview .story__time { color: var(--muted); font-size: 11.5px; min-width: 42px; }' +
+                    '\n.statsview .story__icon { width: 18px; text-align: center; flex-shrink: 0; }' +
+                    '\n.statsview .story__body { flex: 1; min-width: 0; }' +
+                    '\n.statsview .story__body b { font-weight: 600; }' +
+                    '\n.statsview .story__dur { color: var(--accent); font-style: normal; font-size: 11.5px; }' +
+                    '\n.statsview .story__sub { display: block; color: var(--muted); font-size: 11.5px; line-height: 1.5; word-break: break-word; }' +
+                    '\n.statsview .session__src { color: var(--accent2); font-size: 11.5px; }' +
                     '\n.statsview .session__steps { margin: 0; }' +
                     '\n.statsview .session__steps > summary { list-style: none; cursor: pointer; padding: 8px 12px; color: var(--muted); font-size: 12px; user-select: none; }' +
                     '\n.statsview .session__steps > summary::-webkit-details-marker { display: none; }' +
@@ -159,7 +169,16 @@
         known_import: 'импорт известных', tts: 'озвучка карточки', clip_recut: 'пересобрал клип',
         subs_precise: 'точный подбор сабов', subs_missing: 'НЕТ СУБТИТРОВ',
         video_error: 'ВИДЕО НЕ ПОШЛО', offline: 'офлайн', auth: 'аккаунт',
-        ref: 'пришёл'
+        ref: 'пришёл',
+        // Лендинг: клики по кнопкам и демо-плеер (data-stat в landing/*.html)
+        cta_header: 'кнопка в шапке', cta_hero: 'кнопка на первом экране',
+        cta_hero_deck: 'кнопка «колода» на первом экране', cta_final: 'кнопка внизу',
+        cta_install: 'кнопка «установить»', cta_webapp_header: 'кнопка в шапке (webapp)',
+        cta_webapp_hero: 'кнопка на первом экране (webapp)', cta_webapp_final: 'кнопка внизу (webapp)',
+        cta_companion_header: 'кнопка «расширение»', cta_support_header: 'кнопка «поддержка»',
+        cta_privacy_header: 'кнопка «политика»', demo_to_study: 'из демо в приложение',
+        demo_play: 'включил демо', demo_word_click: 'клик по слову в демо',
+        demo_word_saved: 'сохранил слово из демо'
     };
     var PAGE_LABELS = {
         'app/index': 'главная', 'app/catalog': 'каталог', 'app/player': 'плеер',
@@ -204,6 +223,14 @@
             }
             case 'known_import': return 'добавил ' + p + ' известных слов';
             case 'deck': return p === 'create' ? 'создал колоду' : p;
+            case 'beginner_deck': {
+                if (p === 'core') return '15 сцен с видео';
+                if (p === 'full') return 'все 50 слов';
+                if (p === 'anime_search') return 'искал своё аниме';
+                var mbd = p.match(/^anime_(created|scan):(.+)$/);
+                if (mbd) return mbd[1] === 'created' ? ('собрал колоду: ' + mbd[2] + ' сл.') : ('сканировал серии (' + mbd[2] + ')');
+                return p;
+            }
             case 'tts': return 'озвучил карточку';
             case 'clip_recut': return 'пересобрал клип';
             case 'subs_precise':
@@ -434,6 +461,203 @@
         return out;
     }
 
+    // ---------- Пересказ сессии: из лога событий делаем действия ----------
+    // Лог сырой: одно открытие страницы даёт три записи (ref + session + page),
+    // к каждому включению видео липнут voiceover/subs_missing/resume, и понять
+    // по такому списку, ЧТО человек делал, невозможно. Собираем смысловые блоки:
+    // просмотр серии с пометками, пачка сохранённых слов, повторение, поиск —
+    // по строке на действие. Сырой лог остаётся ниже, под отдельным спойлером.
+    var STORY_SKIP = {
+        ref: 1, session: 1, page: 1,          // техника открытия страницы
+        install: 1, chibi_hidden: 1, daily_plan: 1, streak_milestone: 1, onboarding: 1
+    };
+    // Эти события уточняют текущий просмотр, а не являются отдельным действием.
+    var WATCH_MARKS = {
+        voiceover: 1, subs_missing: 1, subs_precise: 1, autosync: 1,
+        video_error: 1, resume: 1, episode_end: 1, offline: 1
+    };
+    var ACT_ICONS = {
+        search: '🔎', auth: '🔑', deck: '🗂', beginner_deck: '🌱', episode_deck: '🗂',
+        anki_export: '📤', known_import: '📥', words_bulk: '✏️', tts: '🔊',
+        explain: '💡', clip_recut: '✂️', setting: '⚙️', catalog: '📚', session_card: '🧾'
+    };
+
+    function mmss(sec) {
+        var n = Math.max(0, Math.round(Number(sec) || 0));
+        var m = Math.floor(n / 60), r = n % 60;
+        return m + ':' + (r < 10 ? '0' : '') + r;
+    }
+
+    // Длительность действия — показываем, только если она осмысленная (от минуты).
+    function durText(from, to) {
+        var ms = new Date(to) - new Date(from);
+        if (!isFinite(ms) || ms < 60000) return '';
+        var min = Math.round(ms / 60000);
+        if (min < 60) return min + ' мин';
+        return (min / 60).toFixed(1).replace('.0', '') + ' ч';
+    }
+
+    function markText(ev, p) {
+        if (ev === 'voiceover') return 'дорожка: ' + p;
+        if (ev === 'subs_missing') return '⚠ субтитров нет';
+        if (ev === 'video_error') return '⚠ видео не поднялось (' + p + ')';
+        if (ev === 'episode_end') return '🏁 досмотрел серию';
+        if (ev === 'offline') return p === 'on' ? '⚠ потерял сеть' : 'сеть вернулась';
+        if (ev === 'resume') return p.indexOf('seek:') === 0 ? 'перемотка на ' + mmss(p.slice(5)) : '';
+        return detailText({ event: ev, page: p });
+    }
+
+    function buildStory(events, endAt) {
+        var items = [];
+        var watch = null;   // текущий просмотр: к нему липнут пометки
+        var pendingVoice = null;  // выбор дорожки прилетает ЗА секунду до play
+        var bag = null;     // текущая пачка слов (сохранённые / «уже знаю»)
+        var review = null;  // текущее повторение
+
+        function push(it) { items.push(it); return it; }
+
+        (events || []).forEach(function (e) {
+            var ev = e.event;
+            var p = String(e.page == null ? '' : e.page);
+            if (STORY_SKIP[ev]) return;
+            // «увидел кнопку продолжить» и «закрыл её» — показ интерфейса, а не
+            // действие человека. Оставляем только нажатие и перемотку.
+            if (ev === 'resume' && p !== 'click' && p.indexOf('seek:') !== 0) return;
+
+            if (ev === 'play') {
+                var title = p.split(' · эп ')[0];
+                var ep = p.split(' · эп ')[1] || '';
+                // Тот же эпизод (перезапуск, смена качества) — не плодим строки.
+                if (watch && watch.title === title && watch.ep === ep) { watch.to = e.at; return; }
+                bag = null; review = null;
+                watch = push({ kind: 'watch', icon: '▶', at: e.at, to: e.at, title: title, ep: ep, subs: [] });
+                if (pendingVoice && new Date(e.at) - new Date(pendingVoice.at) < 20000) {
+                    watch.subs.push(pendingVoice.text);
+                }
+                pendingVoice = null;
+                return;
+            }
+            if (ev === 'voiceover' && !watch) { pendingVoice = { at: e.at, text: markText(ev, p) }; return; }
+            if (WATCH_MARKS[ev] && watch) {
+                var txt = markText(ev, p);
+                if (txt && watch.subs.indexOf(txt) < 0) watch.subs.push(txt);
+                watch.to = e.at;
+                return;
+            }
+            if (ev === 'save_word' || ev === 'known_word') {
+                var kind = ev === 'save_word' ? 'saved' : 'known';
+                if (!bag || bag.sub !== kind) {
+                    bag = push({ kind: 'words', sub: kind, icon: ev === 'save_word' ? '💾' : '✅',
+                        at: e.at, to: e.at, words: [] });
+                }
+                if (bag.words.indexOf(p) < 0) bag.words.push(p);
+                bag.to = e.at;
+                return;
+            }
+            bag = null;
+            if (ev === 'study') {
+                review = push({ kind: 'review', icon: '📚', at: e.at, to: e.at,
+                    mode: STUDY_LABELS[p] || p, cards: 0, done: false });
+                return;
+            }
+            if (ev === 'srs_review') {
+                if (!review) {
+                    review = push({ kind: 'review', icon: '📚', at: e.at, to: e.at,
+                        mode: 'повторение', cards: 0, done: false });
+                }
+                if (p === 'graduated') review.done = true; else review.cards++;
+                review.to = e.at;
+                return;
+            }
+            if (ev === 'session_card' && review) { review.to = e.at; return; }
+            // Всё прочее — обычная строка действия с человеческой подписью.
+            push({ kind: 'act', icon: ACT_ICONS[ev] || '•', at: e.at, to: e.at,
+                verb: EVENT_LABELS[ev] || ev, text: detailText({ event: ev, page: p }) });
+        });
+
+        // Подряд идущие одинаковые действия («открыл колоду» ×4) схлопываем:
+        // иначе человек, потыкавший одну кнопку, выглядит как бурная деятельность.
+        var packed = [];
+        items.forEach(function (it) {
+            var last = packed[packed.length - 1];
+            if (last && storyKey(last) === storyKey(it)) {
+                last.n = (last.n || 1) + 1;
+                last.to = it.to;
+                return;
+            }
+            packed.push(it);
+        });
+
+        // Докуда тянулось действие: до следующего или до конца сессии.
+        packed.forEach(function (it, i) {
+            it.until = packed[i + 1] ? packed[i + 1].at : (endAt || it.to);
+        });
+        return packed;
+    }
+
+    // Подпись действия для схлопывания повторов. Просмотр не трогаем: у него
+    // своя склейка по тайтлу, а пачки слов копятся внутри одного элемента.
+    function storyKey(it) {
+        if (it.kind === 'watch' || it.kind === 'words') return it.kind + ':' + it.at;
+        if (it.kind === 'review') return it.cards || it.done ? 'review:' + it.at : 'review:' + it.mode;
+        return 'act:' + it.verb + '|' + it.text;
+    }
+
+    // В деталях событий встречаются HTML-сущности: клиент шлёт название дорожки
+    // как оно стоит в разметке («Anku &amp; mutagenb»). Разворачиваем перед показом
+    // — esc() ниже всё равно экранирует заново.
+    function deent(x) {
+        return String(x).replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+    }
+
+    function storyHtml(items, pageSeq) {
+        if (!items.length) {
+            // Ни одного действия: человек открыл страницу и ушёл. Пустое место
+            // выглядит как потеря данных, поэтому говорим прямо.
+            var where = (pageSeq && pageSeq.length) ? pageSeq.join(' → ') : '';
+            return '<ul class="story"><li class="story__row">' +
+                '<span class="story__time"></span><span class="story__icon">👀</span>' +
+                '<span class="story__body"><b>только зашёл</b>' +
+                (where ? '<span class="story__sub">' + esc(where) + '</span>' : '') +
+                '</span></li></ul>';
+        }
+        var rows = items.map(function (it) {
+            var main, sub = '';
+            if (it.kind === 'watch') {
+                main = '<b>' + esc(deent(it.title)) + '</b>' + (it.ep ? ' · эп ' + esc(it.ep) : '');
+                var d = durText(it.at, it.until);
+                if (d) main += ' <i class="story__dur">' + d + '</i>';
+                if (it.subs.length) sub = it.subs.join(' · ');
+            } else if (it.kind === 'words') {
+                var n = it.words.length;
+                main = '<b>' + (it.sub === 'saved' ? 'сохранил' : 'отметил «уже знаю»') + ' ' +
+                    n + ' ' + plural(n, 'слово', 'слова', 'слов') + '</b>';
+                sub = it.words.slice(0, 12).join(', ') + (n > 12 ? ' и ещё ' + (n - 12) : '');
+            } else if (it.kind === 'review') {
+                main = '<b>' + esc(it.mode) + '</b>' +
+                    (it.cards ? ' · ' + it.cards + ' ' + plural(it.cards, 'карточка', 'карточки', 'карточек') : '') +
+                    (it.done ? ' · <i class="story__dur">закончил</i>' : '');
+                if (!it.cards && !it.done) sub = 'открыл, ни одной карточки не прошёл';
+            } else {
+                main = '<b>' + esc(it.verb) + '</b>';
+                var txt = it.text;
+                // Детали вида 'landing/index' ничего не добавляют к «кнопка на
+                // первом экране» — либо переводим в человеческое имя, либо убираем.
+                if (/^(app|landing)\//.test(txt)) txt = PAGE_LABELS[txt] || '';
+                if (txt && txt !== it.verb) sub = txt;
+            }
+            if (it.n > 1) main += ' <i class="story__dur">×' + it.n + '</i>';
+            return '<li class="story__row">' +
+                '<span class="story__time">' + fmtHM(it.at) + '</span>' +
+                '<span class="story__icon">' + it.icon + '</span>' +
+                '<span class="story__body">' + main +
+                (sub ? '<span class="story__sub">' + esc(deent(sub)) + '</span>' : '') +
+                '</span></li>';
+        }).join('');
+        return '<ul class="story">' + rows + '</ul>';
+    }
+
     // Одна сессия = один визит: итог одной строкой, краткий путь по страницам,
     // ниже — хронология действий (повторы схлопнуты, открытия страниц приглушены).
     function renderSession(s, idx) {
@@ -473,16 +697,24 @@
             (sameDay ? '' : fmtDate(s.end) + ' ') + fmtHM(s.end);
 
         var dev = s.ua ? uaShort(s.ua) : String(s.visitorId || '—').slice(0, 8);
+        // Пересказ действий — главное в сессии: по строке на дело, техника
+        // свёрнута в пометки. Сырой лог остаётся ниже под спойлером.
+        var story = buildStory(s.events || [], s.end);
+        var storyBlock = storyHtml(story, pageSeq);
+
+        // Откуда пришёл: событие ref шлётся один раз за визит.
+        var ref = (s.events || []).filter(function (e) { return e.event === 'ref'; })[0];
+        var src = ref ? '<span class="session__src">↘ ' + esc(ref.page) + '</span>' : '';
+
         return '<div class="session">' +
             '<div class="session__head">' +
                 '<span class="session__n">Сессия #' + (idx + 1) + '</span>' +
                 '<span class="session__dev" title="' + esc(s.ua || s.visitorId || '') + '">' + esc(dev) + '</span>' +
-                '<span class="session__time">' + range + '</span>' +
-                '<span class="session__count">' + (s.count || 0) + ' шаг.</span>' +
-            '</div>' + sumHtml + path +
-            // Подробную хронологию прячем под спойлер — на виду остаётся итог и путь,
-            // чтобы «что делал» читалось сразу, а не тонуло в стене шагов.
-            (steps ? '<details class="session__steps"><summary>▸ по шагам (' + collapsed.length + ')</summary><ul class="tl">' + steps + '</ul></details>' : '') +
+                '<span class="session__time">' + range + '</span>' + src +
+                '<span class="session__count">' + story.length + ' ' +
+                    plural(story.length, 'действие', 'действия', 'действий') + '</span>' +
+            '</div>' + sumHtml + path + storyBlock +
+            (steps ? '<details class="session__steps"><summary>▸ сырой лог (' + collapsed.length + ')</summary><ul class="tl">' + steps + '</ul></details>' : '') +
             '</div>';
     }
 
