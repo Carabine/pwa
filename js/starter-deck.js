@@ -16,9 +16,9 @@
 // Первые 17 карточек (STARTER_CORE_COUNT) — ядро колоды: реальные сцены из
 // аниме с видеоклипами (курируются в seed-аккаунте). Клипы перерезаны из
 // KickAssAnime конвейером _pp/kaa-recut.mjs — картинка без вшитых субтитров,
-// поэтому поверх неё рисуются свои (см. starterClipClean). Исключение —
-// 仕事: у KickAssAnime нет серверов у «Семьи шпиона», там остался старый клип
-// из /storage с вшитым русским фансабом.
+// поэтому поверх неё рисуются свои (см. starterClipClean). У 仕事 серверов
+// KickAssAnime нет («Семья шпиона»), клип перерезан из другого источника с той
+// же чистой картинкой — такие файлы носят префикс clean-.
 // Их показываем первыми и предлагаем добавить при пустой коллекции.
 // Остальные 35 тоже с видео: клипы им подставляет STARTER_CLIPS (см. ниже),
 // файлы лежат в pwa/media/starter/.
@@ -71,7 +71,7 @@ const STARTER_DECK = [
       clip: 'kaa-nakama.mp4', len: 7.23, ts: 3.9, te: 7.2,
       t: { ru: ['товарищ; свои', 'Ещё не время оплакивать павших товарищей.'], uk: ['товариш; свої', 'Ще не час оплакувати полеглих товаришів.'], en: ['comrade; ally', "There's no time to mourn fallen comrades yet."] } },
     { k: '仕事', r: 'しごと', ro: 'shigoto', a: 'Spy x Family', s: 'まあ ただの仕事だよ',
-      clip: 'https://animei.space/storage/4143aca7-f738-446a-af44-e0c5bf83ea1e.mp4', len: 8, ts: 0, te: 2.4,
+      clip: 'clean-shigoto.mp4', len: 6.88, ts: 4.7, te: 6.6,
       t: { ru: ['работа; дело', 'Да так, обычная работа.'], uk: ['робота; справа', 'Та так, звичайна робота.'], en: ['work; job', "It's just an ordinary job."] } },
     { k: '趣味', r: 'しゅみ', ro: 'shumi', a: 'One-Punch Man', s: '趣味でヒーローをやっている者だ',
       clip: 'kaa-shumi.mp4', len: 5.55, ts: 2, te: 5.3,
@@ -422,7 +422,7 @@ function starterClipUrl(card) {
 function starterClipClean(card) {
     if (!card) return false;
     if (card.clean) return true;
-    return /(^|\/)kaa-[\w-]+\.mp4(\?|$)/.test(String(card.clip || ''));
+    return /(^|\/)(kaa|clean)-[\w-]+\.mp4(\?|$)/.test(String(card.clip || ''));
 }
 
 // Строка-подпись для клипа карточки: перевод реплики на языке интерфейса.
