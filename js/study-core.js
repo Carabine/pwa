@@ -1271,6 +1271,13 @@
             // кадр до отведённого места (ширина следует за аспектом, h уже ограничен
             // ширинным пределом выше — за слот не вылезет).
             slot.classList.add('back-media--reserved');
+            // Ширина кадра — наружу, в переменную: плашка с фразой равняется по
+            // ней (.sentence в study.css), иначе на ПК она уже клипа и блок
+            // выглядит ступенькой. Бокс клипа всегда 16:9 (aspect-ratio), значит
+            // ширину знаем из высоты — без лишнего чтения раскладки.
+            const slotW = slot.clientWidth || back.clientWidth || 0;
+            const clipW = slotW ? Math.min(slotW, Math.round(h * 16 / 9)) : Math.round(h * 16 / 9);
+            back.style.setProperty('--clip-w', clipW + 'px');
             if (wasReserved && renderedH > 0) {
                 // Возврат к отрисованной высоте + принудительный reflow: следующая
                 // установка поедет плавным transition от неё, а не скачком.
