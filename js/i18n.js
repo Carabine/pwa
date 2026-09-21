@@ -463,7 +463,6 @@ const I18N = {
         'words.view.cards': 'Карточки',
         'words.filters': 'Фильтры',
         'words.filters.sort': 'Сортировка',
-        'words.filters.view': 'Вид',
         'words.filters.freeze': 'Заморозка',
         'words.freeze.all': 'Все',
         'words.freeze.active': 'Только активные',

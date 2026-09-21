@@ -98,14 +98,15 @@
                     })();
                 </script>
             </label>
-            <!-- Инструменты: режим выбора и меню «⋯» (сортировка, вид, экспорт,
-                 известные слова — всё низкочастотное убрано с глаз). Логика — words.js. -->
+            <!-- Инструменты: режим выбора и меню «⋯» (вид, экспорт, известные
+                 слова — всё низкочастотное убрано с глаз). Логика — words.js. -->
             <div class="words-toolbar__controls">
                 <button class="btn btn--ghost" id="select-btn" data-i18n="words.select">Выбрать</button>
                 <button class="btn btn--ghost words-tool" id="words-menu-btn" aria-label="More">⋯</button>
-                <!-- Меню «⋯» — только действия. Всё, что меняет вид списка
-                     (колода, сортировка, вид), живёт в модалке «Фильтры»
-                     (воронка рядом с пилюлей колоды, js/words.js). -->
+                <!-- Меню «⋯»: вид списка (список/карточки, дорисовывает
+                     js/words.js) и действия. То, что ОТБИРАЕТ слова —
+                     сортировка и заморозка, — в модалке «Фильтры» под воронкой,
+                     колода — на пилюле слева. -->
                 <div class="words-menu" id="words-menu" hidden>
                     <button id="export-anki-btn" data-i18n="words.exportAnki" data-i18n-title="words.exportAnki.title" title="Готовая колода с аудио или видео из ваших клипов">Экспорт в Anki</button>
                     <button id="export-btn" data-i18n="words.export" data-i18n-title="words.export.title" title="Простой текстовый файл — резервная копия">Экспорт (текст)</button>

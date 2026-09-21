@@ -676,9 +676,9 @@ function updateKnownMenuLabel() {
 }
 
 // ---------- Модалка «Фильтры» ----------
-// Раньше сортировка и вид лежали в меню «⋯» вперемешку с экспортом и
-// известными словами — там их никто не искал. Теперь всё, что меняет вид
-// списка, собрано в модалке под воронкой. Колода — отдельно, на пилюле слева:
+// Здесь собрано всё, что ОТБИРАЕТ слова: сортировка и заморозка. Вид
+// (список/карточки) живёт в меню «⋯» — он ничего не отбирает. Колода —
+// отдельно, на пилюле слева:
 // это не «настройка показа», а навигация по коллекции, и её выбор виден прямо
 // в тулбаре без открытия чего-либо.
 
@@ -686,9 +686,10 @@ const SORT_OPTS = [['new', 'words.sort.new'], ['old', 'words.sort.old'], ['az', 
 const VIEW_OPTS = [['list', 'words.view.list'], ['cards', 'words.view.cards']];
 const FREEZE_OPTS = [['all', 'words.freeze.all'], ['active', 'words.freeze.active'], ['frozen', 'words.freeze.frozen']];
 
-// Отличается ли показ от умолчаний — по этому воронка получает точку.
+// Отличается ли показ от умолчаний — по этому воронка получает точку. Вид
+// (список/карточки) сюда не входит: он переехал в меню «⋯» и слова не отбирает.
 function filtersActive() {
-    return sortMode !== 'new' || viewMode !== 'list' || freezeMode !== 'all';
+    return sortMode !== 'new' || freezeMode !== 'all';
 }
 
 function visibleCount() {
@@ -718,8 +719,6 @@ function openFilters() {
             <div class="deck-sheet__list wfilters__list">
                 <div class="wfilters__label">${esc(t('words.filters.sort'))}</div>
                 <div class="wfilters__segs">${seg(SORT_OPTS, sortMode, 'sort')}</div>
-                <div class="wfilters__label">${esc(t('words.filters.view'))}</div>
-                <div class="wfilters__segs">${seg(VIEW_OPTS, viewMode, 'view')}</div>
                 <div class="wfilters__label">${esc(t('words.filters.freeze'))}</div>
                 <div class="wfilters__segs">${seg(FREEZE_OPTS, freezeMode, 'freeze')}</div>
             </div>
@@ -735,10 +734,8 @@ function openFilters() {
         if (btn.dataset.act === 'close') { modal.close(); return; }
         if (btn.dataset.act === 'reset') {
             sortMode = 'new';
-            viewMode = 'list';
             freezeMode = 'all';
             localStorage.setItem(SORT_KEY, sortMode);
-            localStorage.setItem(VIEW_KEY, viewMode);
             localStorage.setItem(FREEZE_KEY, freezeMode);
             renderWords();
             draw();
@@ -747,9 +744,6 @@ function openFilters() {
         if (btn.dataset.group === 'sort') {
             sortMode = btn.dataset.val;
             localStorage.setItem(SORT_KEY, sortMode);
-        } else if (btn.dataset.group === 'view') {
-            viewMode = btn.dataset.val;
-            localStorage.setItem(VIEW_KEY, viewMode);
         } else if (btn.dataset.group === 'freeze') {
             freezeMode = btn.dataset.val;
             localStorage.setItem(FREEZE_KEY, freezeMode);
@@ -781,6 +775,39 @@ function initMenu() {
         if (layer) AnimeiBack.close(layer);
         else menu.hidden = true;
     };
+    // Вид списка (список/карточки) живёт здесь, а не в «Фильтрах»: он не
+    // отбирает слова, а решает, как их показать, — и в модалке фильтров его
+    // искали в последнюю очередь. Пункт с галочкой — та же манера, что была у
+    // групп меню раньше (.words-menu__group в pages.css).
+    const viewGroup = document.createElement('div');
+    viewGroup.className = 'words-menu__group';
+    const drawView = () => {
+        viewGroup.innerHTML = '';
+        for (const [val, key] of VIEW_OPTS) {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'words-menu__item' + (viewMode === val ? ' is-on' : '');
+            const tick = document.createElement('span');
+            tick.className = 'words-menu__tick';
+            tick.textContent = viewMode === val ? '✓' : '';
+            const label = document.createElement('span');
+            label.textContent = t(key);
+            item.append(tick, label);
+            item.addEventListener('click', () => {
+                if (viewMode === val) return;
+                viewMode = val;
+                localStorage.setItem(VIEW_KEY, viewMode);
+                renderWords();
+                drawView();
+            });
+            viewGroup.appendChild(item);
+        }
+    };
+    drawView();
+    const viewHr = document.createElement('hr');
+    viewHr.className = 'words-menu__hr';
+    menu.prepend(viewGroup, viewHr);
+
     btn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (!menu.hidden) { closeMenu(); return; }

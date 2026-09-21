@@ -149,7 +149,9 @@
 }
 .deck-chip--add { color: var(--text-muted); border-style: dashed; }
 /* Кнопка-фильтр (воронка) справа от пилюли колод. */
-.deck-chip--filter { padding: 6px 11px; color: var(--text-muted); }
+/* Воронка — вровень с пилюлей колоды рядом: своя высота по контенту делала её
+   заметно ниже соседа, и ряд выглядел разъехавшимся. */
+.deck-chip--filter { align-self: stretch; padding: 6px 12px; color: var(--text-muted); }
 .deck-chip--filter svg { width: 16px; height: 16px; display: block; }
 /* Активная колода в шторке слова: отметку снять нельзя. */
 .deck-sheet__row.is-locked { opacity: 0.6; cursor: default; }
