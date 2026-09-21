@@ -40,6 +40,7 @@ const STARTER_DECK = [
       t: { ru: ['сражаться, воевать', 'Не сражаясь, не победить… Сражайся, сражайся!'], uk: ['битися, воювати', 'Не б’ючись, не перемогти… Бийся, бийся!'], en: ['to fight', "If you don't fight, you can't win… Fight, fight!"] } },
     { k: '僕', r: 'ぼく', ro: 'boku', a: 'Tokyo Ghoul', s: '僕は喰種だ',
       clip: 'kaa-boku.mp4', len: 5.85, ts: 2, te: 5.2,
+      ruClip: 'ru-boku.mp4', ruLen: 6.92, ruTs: 2.2, ruTe: 6.6,
       t: { ru: ['я (мужское)', 'Я — гуль'], uk: ['я (чоловіче «боку»)', 'Я — гуль'], en: ['I, me (male "boku")', 'I am… a ghoul'] } },
     { k: '勝つ', r: 'かつ', ro: 'katsu', a: 'Attack on Titan', s: 'エレンが勝ったんだ',
       clip: 'kaa-katsu.mp4', len: 4.31, ts: 2.1, te: 4.3,
