@@ -549,10 +549,16 @@
             default: {
                 // Незнакомое событие показываем как есть — лучше непонятная
                 // строка, чем потерянный шаг (и сразу видно, что нужна подпись).
+                var ico = ev.indexOf('cta_') === 0 ? '👆'
+                    : ev === 'demo_play' ? '▶'
+                        : ev === 'demo_word_click' ? '👆'
+                            : ev === 'demo_word_saved' ? '💾'
+                                : ev === 'demo_to_study' ? '➡'
+                                    : ev === 'feedback' ? '✉️' : '•';
                 var lbl = EVENT_LABELS[ev] || ev;
                 var det = detailText({ event: ev, page: p });
                 if (/^(app|landing)\//.test(det)) det = '';
-                return { icon: '•', text: lbl + (det && det !== lbl ? ': ' + det : '') };
+                return { icon: ico, text: lbl + (det && det !== lbl ? ': ' + det : '') };
             }
         }
     }
