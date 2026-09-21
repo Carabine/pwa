@@ -450,14 +450,19 @@ function starterClipCaptionText(card) {
     return (tr && tr[1]) || '';
 }
 
-// Тот же перевод, но для слова, УЖЕ сохранённого в коллекцию: его личный клип
-// нарезан из того же файла колоды, значит и картинка та же. Узнаём карточку по
-// написанию + реплике. Зовёт study-core (см. makeClipVideo).
+// Тот же перевод, но для слова, УЖЕ сохранённого в коллекцию. Узнаём карточку
+// по написанию + реплике. Зовёт study-core (см. makeClipVideo).
 function starterClipCaption(word) {
     if (!word) return '';
     const k = word.kanji || word.word || '';
     const s = String(word.sentence || '').trim();
     if (!k || !s) return '';
+    // У слова СВОЙ файл — тот, что стоял в колоде в момент сохранения. Слово,
+    // добавленное при русском интерфейсе, несёт клип с вшитым русским текстом;
+    // карточка колоды при этом сейчас может быть чистой. Смотрим на клип слова,
+    // иначе своя строка ляжет поверх чужой.
+    const own = (word.Video && word.Video.url) || word.video || '';
+    if (own && !starterClipClean({ clip: own })) return '';
     if (!starterCaptionIndex) {
         starterCaptionIndex = new Map();
         for (const card of starterMergedDeck()) {
