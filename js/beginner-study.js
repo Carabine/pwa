@@ -67,12 +67,17 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
         '<span class="deck-choice__txt"><b></b><small></small></span>' +
         '</button>';
     box.querySelector('.deck-choice__title').textContent = t('beginner.choose');
+    // Числа берём из самой колоды: в разметке стояли вшитые 15 и 50, а ядро
+    // давно 17 карточек — человек считал добавленные слова и видел расхождение.
+    const fullCount = starterDeckWords().length;
     const core = box.querySelector('.deck-choice__opt--core');
+    core.querySelector('.deck-choice__num').textContent = STARTER_CORE_COUNT;
     core.querySelector('b').textContent = t('beginner.core');
     core.querySelector('small').textContent = t('beginner.core.sub');
     const full = box.querySelector('.deck-choice__opt--full');
+    full.querySelector('.deck-choice__num').textContent = fullCount;
     full.querySelector('b').textContent = t('beginner.full');
-    full.querySelector('small').textContent = t('beginner.full.sub');
+    full.querySelector('small').textContent = t('beginner.full.sub').replace(/\d+/, fullCount);
     const anime = box.querySelector('.deck-choice__opt--anime');
     anime.querySelector('b').textContent = t('beginner.anime');
     anime.querySelector('small').textContent = t('beginner.anime.sub');

@@ -517,12 +517,14 @@ async function starterLoadSavedSet() {
     }
 }
 
-// Добавить в коллекцию до limit слов из колоды (уже добавленные пропускаем).
+// Добавить в коллекцию до limit слов (уже добавленные пропускаем). По умолчанию
+// берём всю базовую колоду, но можно передать конкретные карточки — тогда
+// добавится ровно то, что человек проходил, а не всё подряд.
 // Возвращает, сколько реально добавили.
-async function addStarterWords(limit) {
+async function addStarterWords(limit, cards) {
     const have = await starterLoadSavedSet();
     let added = 0;
-    for (const card of starterMergedDeck()) {
+    for (const card of (cards && cards.length ? cards : starterMergedDeck())) {
         if (added >= limit) break;
         if (have.has(card.k)) continue;
         await saveWord(starterWordPayload(card));

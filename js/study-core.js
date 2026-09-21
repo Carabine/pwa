@@ -2041,7 +2041,9 @@
                 </div>`;
             els.back.classList.add('back-side--visible');
 
-            const addBtn = makeButton(t('starter.add'), 'btn btn--primary', async () => {
+            // «Добавить N слов» — N из колоды, а не вшитая в перевод цифра
+            const addLabel = t('starter.add').replace(/\d+/, STARTER_CORE_COUNT);
+            const addBtn = makeButton(addLabel, 'btn btn--primary', async () => {
                 addBtn.disabled = true;
                 addBtn.textContent = t('popup.saving');
                 try {
@@ -2051,7 +2053,7 @@
                 } catch (err) {
                     console.error(err);
                     addBtn.disabled = false;
-                    addBtn.textContent = t('starter.add');
+                    addBtn.textContent = addLabel;
                 }
             });
             els.buttons.appendChild(addBtn);
@@ -2111,13 +2113,16 @@
 
             els.buttons.appendChild(makeButton(t('study.restart'), 'show-btn', restart));
 
-            // Готовая колода: можно забрать все слова разом
+            // Готовая колода: можно забрать все слова разом. Берём карточки
+            // ИМЕННО этой колоды — иначе из набора на 15 карточек в коллекцию
+            // уезжали все 50 базовых слов.
             if (deck && collectable && typeof addStarterWords === 'function') {
+                const deckCards = deck.map((w) => w && w._card).filter(Boolean);
                 const allBtn = makeButton(t('starter.addAll'), 'btn btn--primary', async () => {
                     allBtn.disabled = true;
                     allBtn.textContent = t('popup.saving');
                     try {
-                        const n = await addStarterWords(Infinity);
+                        const n = await addStarterWords(Infinity, deckCards);
                         showSnackbar(t('starter.added') + ' ' + n, { duration: 3000 });
                         allBtn.textContent = t('starter.addedOne');
                     } catch (err) {
