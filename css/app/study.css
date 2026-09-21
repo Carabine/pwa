@@ -158,17 +158,6 @@
    резервирует высоту ответа, поэтому при «Показать ответ» не прыгают ни сама
    карточка, ни кнопки оценки. Избыток высоты у вопроса занимает центрирование
    слова, а клип на ответе получает ровно отведённый ему остаток. */
-/* Плашка с фразой и переводом — ровно по ширине кадра. Её потолок (520) уже
-   клипа, который на ПК получает всю ширину карточки, и блок выглядел ступенькой.
-   --clip-w задаёт fitBackMedia (study-core.js) из высоты клипа: бокс всегда 16:9.
-   На телефоне не трогаем — там кадр и так во всю ширину карточки. */
-@media (min-width: 481px) {
-    .back-side--visible:has(.clip-player) .sentence,
-    .back-side--visible:has(.clip-skel) .sentence {
-        max-width: min(100%, var(--clip-w, 520px));
-    }
-}
-
 @media (min-width: 481px) and (min-height: 720px) {
     .card-area {
         /* Высота учитывает HUD и зону кнопок: на 1366×768 не появляется
@@ -2326,3 +2315,24 @@
 .bdeck__create:disabled { opacity: 0.55; cursor: default; }
 
 .bdeck--busy .bdeck-row { opacity: 0.6; pointer-events: none; }
+
+/* Плашка с фразой и переводом — ровно по ширине кадра. Её потолок (520) уже
+   клипа, который на ПК получает всю ширину карточки, и блок выглядел ступенькой.
+   --clip-w задаёт fitBackMedia (study-core.js) из высоты клипа: бокс всегда 16:9.
+   На телефоне не трогаем — там кадр и так во всю ширину карточки. */
+@media (min-width: 481px) {
+    .back-side--visible:has(.clip-player) .sentence,
+    .back-side--visible:has(.clip-skel) .sentence {
+        max-width: min(100%, var(--clip-w, 520px));
+    }
+
+    /* Ряд оценок — по той же ширине: пилюли по 220px под широким кадром
+       выглядели мелкими и не держали общую вертикаль кадр → плашка → кнопки. */
+    .main.study .buttons {
+        max-width: min(100%, var(--clip-w, 540px));
+    }
+
+    .main.study .buttons > button {
+        max-width: none;
+    }
+}

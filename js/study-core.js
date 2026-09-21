@@ -1182,9 +1182,11 @@
             const clipEl = slot.querySelector('.clip-player, .clip-pending, .clip-skel');
             if (!clipEl) {
                 // Клипа нет и не будет (только аудио или пусто) — слот живёт
-                // своим естественным размером.
+                // своим естественным размером, а ширина кадра от ПРОШЛОЙ карточки
+                // не должна растягивать ряд кнопок: снимаем её.
                 slot.classList.remove('back-media--reserved');
                 slot.style.height = '';
+                document.documentElement.style.removeProperty('--clip-w');
                 return;
             }
             // Скелетон меряем и растим как видео — тогда подмена не двигает блок.
@@ -1271,13 +1273,15 @@
             // кадр до отведённого места (ширина следует за аспектом, h уже ограничен
             // ширинным пределом выше — за слот не вылезет).
             slot.classList.add('back-media--reserved');
-            // Ширина кадра — наружу, в переменную: плашка с фразой равняется по
-            // ней (.sentence в study.css), иначе на ПК она уже клипа и блок
+            // Ширина кадра — наружу, в переменную: по ней равняются плашка с
+            // фразой и ряд кнопок (study.css), иначе на ПК они уже клипа и блок
             // выглядит ступенькой. Бокс клипа всегда 16:9 (aspect-ratio), значит
-            // ширину знаем из высоты — без лишнего чтения раскладки.
+            // ширину знаем из высоты — без лишнего чтения раскладки. Кладём на
+            // корень документа: кнопки лежат ВНЕ карточки, из .back-side их не
+            // достать.
             const slotW = slot.clientWidth || back.clientWidth || 0;
             const clipW = slotW ? Math.min(slotW, Math.round(h * 16 / 9)) : Math.round(h * 16 / 9);
-            back.style.setProperty('--clip-w', clipW + 'px');
+            document.documentElement.style.setProperty('--clip-w', clipW + 'px');
             if (wasReserved && renderedH > 0) {
                 // Возврат к отрисованной высоте + принудительный reflow: следующая
                 // установка поедет плавным transition от неё, а не скачком.
