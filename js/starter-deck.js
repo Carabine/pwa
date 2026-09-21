@@ -36,48 +36,61 @@ const STARTER_DECK = [
     // ---- Ядро: 17 карточек с видеоклипами реальных сцен ----
     { k: '戦う', r: 'たたかう', ro: 'tatakau', a: 'Attack on Titan', s: '戦え、戦え',
       clip: 'kaa-tatakau.mp4', len: 8.83, ts: 0.9, te: 8.1,
+      ruClip: 'https://animei.space/storage/11e076bb-1818-449e-8b22-7d274d737f37.mp4', ruLen: 15, ruTs: 8, ruTe: 12,
       t: { ru: ['сражаться, воевать', 'Не сражаясь, не победить… Сражайся, сражайся!'], uk: ['битися, воювати', 'Не б’ючись, не перемогти… Бийся, бийся!'], en: ['to fight', "If you don't fight, you can't win… Fight, fight!"] } },
     { k: '僕', r: 'ぼく', ro: 'boku', a: 'Tokyo Ghoul', s: '僕は喰種だ',
       clip: 'kaa-boku.mp4', len: 5.85, ts: 2, te: 5.2,
       t: { ru: ['я (мужское)', 'Я — гуль'], uk: ['я (чоловіче «боку»)', 'Я — гуль'], en: ['I, me (male "boku")', 'I am… a ghoul'] } },
     { k: '勝つ', r: 'かつ', ro: 'katsu', a: 'Attack on Titan', s: 'エレンが勝ったんだ',
       clip: 'kaa-katsu.mp4', len: 4.31, ts: 2.1, te: 4.3,
+      ruClip: 'https://animei.space/storage/e99231c7-a8e1-40c8-a98f-6a11f2f92038.mp4', ruLen: 9, ruTs: 6, ruTe: 9,
       t: { ru: ['побеждать, выигрывать', 'Эрен победил!'], uk: ['перемагати, вигравати', 'Ерен переміг!'], en: ['to win', 'Eren won!'] } },
     { k: '計画', r: 'けいかく', ro: 'keikaku', a: 'Death Note', s: 'まさに計画どおりに事は進んでいる',
       clip: 'kaa-keikaku.mp4', len: 5.44, ts: 2.2, te: 5.4,
       t: { ru: ['план', 'Всё идёт точно по плану'], uk: ['план', 'Усе йде точно за планом'], en: ['plan', 'Everything is going just as planned'] } },
     { k: '悪魔', r: 'あくま', ro: 'akuma', a: 'Chainsaw Man', s: '悪魔だ…',
       clip: 'kaa-akuma.mp4', len: 6.2, ts: 2, te: 5.5,
+      ruClip: 'https://animei.space/storage/ab4f158d-dd1b-47c5-b2f5-9f0c1b52f04e.mp4', ruLen: 9, ruTs: 3, ruTe: 8,
       t: { ru: ['дьявол, демон', 'Это дьявол…'], uk: ['диявол, демон', 'Це диявол…'], en: ['devil, demon', "It's a devil…"] } },
     { k: '最強', r: 'さいきょう', ro: 'saikyou', a: 'Jujutsu Kaisen', s: '大丈夫 僕 最強だから',
       clip: 'kaa-saikyou.mp4', len: 5.51, ts: 2, te: 5.5,
+      ruClip: 'https://animei.space/storage/d0aa00a3-4b44-41ca-8a1c-eedfc2d33798.mp4', ruLen: 9, ruTs: 4, ruTe: 8,
       t: { ru: ['сильнейший', 'Всё в порядке — ведь я сильнейший'], uk: ['найсильніший', 'Усе гаразд — адже я найсильніший'], en: ['the strongest', "It's fine — because I'm the strongest"] } },
     { k: '心臓', r: 'しんぞう', ro: 'shinzou', a: 'Chainsaw Man', s: 'これは契約だ 私の心臓をやる',
       clip: 'kaa-shinzou.mp4', len: 6.41, ts: 2, te: 6.4,
+      ruClip: 'https://animei.space/storage/0617ecef-5ee9-44e7-bac7-e081db1df99f.mp4', ruLen: 9, ruTs: 6, ruTe: 9,
       t: { ru: ['сердце', 'Это контракт — отдаю тебе своё сердце'], uk: ['серце', 'Це контракт — віддаю тобі своє серце'], en: ['heart', "This is a contract — I'll give you my heart"] } },
     { k: '来る', r: 'くる', ro: 'kuru', a: 'My Hero Academia', s: '私が来た！',
       clip: 'kaa-kuru.mp4', len: 4.44, ts: 2, te: 3.7,
+      ruClip: 'https://animei.space/storage/998397d8-f2c0-4748-a1b2-2599b8ef6f95.mp4', ruLen: 9, ruTs: 2, ruTe: 9,
       t: { ru: ['приходить', 'Я пришёл!'], uk: ['приходити', 'Я прийшов!'], en: ['to come', 'I am here!'] } },
     { k: '大丈夫', r: 'だいじょうぶ', ro: 'daijoubu', a: 'My Hero Academia', s: 'もう大丈夫だ 少年',
       clip: 'kaa-daijoubu.mp4', len: 7.28, ts: 2, te: 6.6,
+      ruClip: 'https://animei.space/storage/8210c932-9e63-4ee4-99e7-b18020b8d592.mp4', ruLen: 9, ruTs: 2, ruTe: 9,
       t: { ru: ['всё в порядке', 'Теперь всё хорошо, юноша'], uk: ['усе гаразд', 'Тепер усе добре, юначе'], en: ['okay; all right', "It's all right now, young man"] } },
     { k: '妹', r: 'いもうと', ro: 'imouto', a: 'Demon Slayer', s: '妹だ… 俺の妹なんだ！',
       clip: 'kaa-imouto.mp4', len: 6.32, ts: 2.2, te: 5.6,
+      ruClip: 'https://animei.space/storage/d3c7fd2b-699d-412f-a133-9bab943aea49.mp4', ruLen: 9, ruTs: 2, ruTe: 9,
       t: { ru: ['младшая сестра', 'Это сестра… моя младшая сестра!'], uk: ['молодша сестра', 'Це сестра… моя молодша сестра!'], en: ['younger sister', "She's my sister… my little sister!"] } },
     { k: '助ける', r: 'たすける', ro: 'tasukeru', a: 'Jujutsu Kaisen', s: 'お前は強いから人を助けろ',
       clip: 'kaa-tasukeru.mp4', len: 5.1, ts: 1.9, te: 5,
+      ruClip: 'https://animei.space/storage/aaac9758-f82e-4259-a670-9a6b8fffe367.mp4', ruLen: 9, ruTs: 4, ruTe: 8,
       t: { ru: ['спасать, помогать', 'Ты сильный — так спасай людей'], uk: ['рятувати, допомагати', 'Ти сильний — тож рятуй людей'], en: ['to save, to help', "You're strong, so save people"] } },
     { k: '仲間', r: 'なかま', ro: 'nakama', a: 'Attack on Titan', s: '仲間の死を嘆く時間はまだないんだよ',
       clip: 'kaa-nakama.mp4', len: 7.23, ts: 3.9, te: 7.2,
+      ruClip: 'https://animei.space/storage/85224c52-0861-4035-accd-151a27b04a72.mp4', ruLen: 9, ruTs: 5, ruTe: 9,
       t: { ru: ['товарищ; свои', 'Ещё не время оплакивать павших товарищей.'], uk: ['товариш; свої', 'Ще не час оплакувати полеглих товаришів.'], en: ['comrade; ally', "There's no time to mourn fallen comrades yet."] } },
     { k: '仕事', r: 'しごと', ro: 'shigoto', a: 'Spy x Family', s: 'まあ ただの仕事だよ',
       clip: 'clean-shigoto.mp4', len: 6.88, ts: 4.7, te: 6.6,
+      ruClip: 'https://animei.space/storage/4143aca7-f738-446a-af44-e0c5bf83ea1e.mp4', ruLen: 8, ruTs: 0, ruTe: 2.4,
       t: { ru: ['работа; дело', 'Да так, обычная работа.'], uk: ['робота; справа', 'Та так, звичайна робота.'], en: ['work; job', "It's just an ordinary job."] } },
     { k: '趣味', r: 'しゅみ', ro: 'shumi', a: 'One-Punch Man', s: '趣味でヒーローをやっている者だ',
       clip: 'kaa-shumi.mp4', len: 5.55, ts: 2, te: 5.3,
+      ruClip: 'https://animei.space/storage/040287f3-bd69-4d1c-8858-3a6ed8253e72.mp4', ruLen: 9, ruTs: 4, ruTe: 9,
       t: { ru: ['хобби, увлечение', 'Я герой по хобби'], uk: ['хобі, захоплення', 'Я герой за хобі'], en: ['hobby', "I'm a hero as a hobby"] } },
     { k: '人間', r: 'にんげん', ro: 'ningen', a: 'Frieren', s: '私は もっと人間を知ろうと思う',
       clip: 'kaa-ningen.mp4', len: 7.21, ts: 3.2, te: 6.5,
+      ruClip: 'https://animei.space/storage/b68afb61-da79-4785-a01c-1f5ea048600c.mp4', ruLen: 9, ruTs: 2.6, ruTe: 6,
       t: { ru: ['человек; люди', 'Хочу больше узнать о людях.'], uk: ['людина; люди', 'Хочу більше дізнатися про людей.'], en: ['human; people', 'I want to understand people more.'] } },
 
 
@@ -339,6 +352,12 @@ function starterCoreCard(it, staticCard) {
         len: staticCard ? staticCard.len : Math.ceil(Number(it.videoEnd) || 0),
         ts: Number.isFinite(it.trimStart) ? it.trimStart : (staticCard ? staticCard.ts : 0),
         te: Number.isFinite(it.trimEnd) ? it.trimEnd : (staticCard ? staticCard.te : 0),
+        // Вариант клипа с вшитыми РУССКИМИ субтитрами (см. ruBurnedCard) живёт
+        // только в статике: в фиде ядра один клип — чистый.
+        ruClip: staticCard ? staticCard.ruClip : null,
+        ruLen: staticCard ? staticCard.ruLen : null,
+        ruTs: staticCard ? staticCard.ruTs : null,
+        ruTe: staticCard ? staticCard.ruTe : null,
         t,
     };
 }
@@ -397,7 +416,7 @@ function orderedStarterDeck() {
 }
 
 function starterMergedDeck() {
-    return orderedStarterDeck().map(starterCard);
+    return orderedStarterDeck().map(starterCard).map(ruBurnedCard);
 }
 
 // Адрес клипа. Абсолютный URL (клипы ядра из /storage) — как есть; иначе файл
@@ -423,6 +442,9 @@ function starterClipClean(card) {
 function starterClipCaptionText(card) {
     if (!starterClipClean(card)) return '';
     const lang = typeof getLang === 'function' ? getLang() : 'ru';
+    // На русском перевод уже вшит в картинку (см. ruBurnedCard) — своя строка
+    // поверх не нужна ни у одной карточки колоды.
+    if (lang === 'ru') return '';
     const tr = (card.t && card.t[lang]) || (card.t && card.t.ru);
     return (tr && tr[1]) || '';
 }
@@ -472,6 +494,24 @@ function starterWordPayload(card) {
         trimStart: card.ts,
         trimEnd: card.te,
     };
+}
+
+// Русскому интерфейсу показываем клипы с ВШИТЫМИ русскими субтитрами: перевод
+// уже в картинке, как при обычном просмотре аниме, и своя строка поверх не
+// нужна (так попросил владелец). Украинскому и английскому остаются чистые
+// клипы из KickAssAnime со своей подписью. Подмена делается здесь, на выходе
+// колоды, поэтому и проигрывание, и сохранение слова берут один и тот же файл.
+function ruBurnedCard(card) {
+    if (!card || !card.ruClip) return card;
+    const lang = typeof getLang === 'function' ? getLang() : 'ru';
+    if (lang !== 'ru') return card;
+    return Object.assign({}, card, {
+        clip: card.ruClip,
+        len: card.ruLen || card.len,
+        ts: card.ruTs != null ? card.ruTs : card.ts,
+        te: card.ruTe != null ? card.ruTe : card.te,
+        clean: false,          // картинка с чужим текстом — свою строку не рисуем
+    });
 }
 
 // Вся колода в форме слов для движка обучения (режим для новичков).
