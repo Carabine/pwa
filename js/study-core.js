@@ -719,7 +719,7 @@
                 `<small>${escStat(label)}</small></span>`;
             els.stats.innerHTML = scheduled
                 ? chip('new', t('study.new')) + chip('learn', t('study.learning')) + chip('due', t('study.review'))
-                : chip('learn', t('study.remaining')) + chip('new', t('study.doneCount'));
+                : chip('learn', t('study.remaining')) + chip('done', t('study.doneCount'));
         }
 
         // Подписи приходят из i18n (не от пользователя), но в innerHTML идут —
@@ -741,7 +741,7 @@
                 const remaining = c.fresh + c.learning + c.review;
                 els.stats.innerHTML = `
                     <span class="stat stat--learn"><b>${remaining}</b><small>${t('study.remaining')}</small></span>
-                    <span class="stat stat--new"><b>${graduated}</b><small>${t('study.doneCount')}</small></span>`;
+                    <span class="stat stat--done"><b>${graduated}</b><small>${t('study.doneCount')}</small></span>`;
             }
             if (els.progress) {
                 const pct = total ? Math.round((graduated / total) * 100) : 0;

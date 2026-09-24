@@ -92,6 +92,7 @@
 .stat--new b   { color: var(--primary-hover); }
 .stat--learn b { color: var(--warning); }
 .stat--due b   { color: var(--success); }
+.stat--done b  { color: var(--success); }   /* «пройдено» — зелёным, как и полоска */
 
 /* ---- Progress bar ---- */
 .study-progress {
@@ -107,7 +108,8 @@
 .study-progress__bar {
     width: 0;
     height: 100%;
-    background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+    /* Зелёная: полоска — это «пройдено», в цвет счётчика. */
+    background: linear-gradient(90deg, var(--success), var(--success-hover));
     border-radius: 999px;
     transition: width 0.35s ease;
 }
