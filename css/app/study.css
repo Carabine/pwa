@@ -284,9 +284,11 @@
     right: 0;
     top: 0;
     z-index: 1;
-    padding: 14px 64px 54px 18px;
+    /* Плашка длиннее по высоте (тень тянется дальше вниз), плотность — как
+       изначально: пробовали темнее, откатили по просьбе. */
+    padding: 14px 64px 96px 18px;
     background: linear-gradient(180deg,
-        rgba(0, 0, 0, 0.97), rgba(0, 0, 0, 0.84) 42%, rgba(0, 0, 0, 0.42) 76%, transparent);
+        rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.7) 32%, rgba(0, 0, 0, 0.28) 68%, transparent);
     color: #fff;
     text-align: left;
     line-height: 1.2;
