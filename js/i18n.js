@@ -785,22 +785,65 @@ function mountLangSwitcher() {
     const right = document.querySelector('.header__right');
     if (!right) return;
 
-    const select = document.createElement('select');
-    select.className = 'lang-select';
-    for (const [code, label] of [['ru', 'RU'], ['uk', 'UA'], ['en', 'EN']]) {
-        const opt = document.createElement('option');
-        opt.value = code;
-        opt.textContent = label;
-        select.appendChild(opt);
+    // Свой выпадающий список вместо <select>: закрытая пилюля стилизовалась,
+    // а раскрытый список был браузерным и выбивался из интерфейса. Рисуем меню
+    // как у профиля (.profile-menu): пилюля-кнопка + список пунктов под ней.
+    const LANGS = [['ru', 'RU', 'Русский'], ['uk', 'UA', 'Українська'], ['en', 'EN', 'English']];
+    const cur = getLang();
+    const wrap = document.createElement('div');
+    wrap.className = 'lang-wrap';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'lang-select';
+    btn.setAttribute('aria-haspopup', 'listbox');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.textContent = (LANGS.find((l) => l[0] === cur) || LANGS[0])[1];
+
+    const menu = document.createElement('div');
+    menu.className = 'lang-menu';
+    menu.setAttribute('role', 'listbox');
+    for (const [code, label, name] of LANGS) {
+        const opt = document.createElement('button');
+        opt.type = 'button';
+        opt.className = 'lang-menu__opt' + (code === cur ? ' is-active' : '');
+        opt.setAttribute('role', 'option');
+        opt.setAttribute('aria-selected', code === cur ? 'true' : 'false');
+        const code_ = document.createElement('span');
+        code_.className = 'lang-menu__code';
+        code_.textContent = label;
+        const name_ = document.createElement('span');
+        name_.className = 'lang-menu__name';
+        name_.textContent = name;
+        opt.appendChild(code_);
+        opt.appendChild(name_);
+        opt.addEventListener('click', () => {
+            if (code === cur) { close(); return; }
+            localStorage.setItem(LANG_KEY, code);
+            // Проще перезагрузить: динамические тексты тоже подтянутся на новом языке
+            window.location.reload();
+        });
+        menu.appendChild(opt);
     }
-    select.value = getLang();
-    select.addEventListener('change', () => {
-        localStorage.setItem(LANG_KEY, select.value);
-        // Проще перезагрузить: динамические тексты тоже подтянутся на новом языке
-        window.location.reload();
+
+    const close = () => {
+        wrap.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+    };
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = !wrap.classList.contains('open');
+        wrap.classList.toggle('open', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) close(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && wrap.classList.contains('open')) { close(); btn.focus(); }
     });
 
-    right.insertBefore(select, right.firstChild);
+    wrap.appendChild(btn);
+    wrap.appendChild(menu);
+    right.insertBefore(wrap, right.firstChild);
 }
 
 // Ссылка «На сайт» — со страниц приложения обратно на лендинг (в меню-сайдбар)
