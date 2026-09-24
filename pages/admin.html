@@ -208,6 +208,9 @@
         </h2>
         <div id="ovSources" class="msg">Загрузка…</div>
 
+        <h2 class="section-title">Синхронизация субтитров</h2>
+        <div id="ovSync" class="msg">Загрузка…</div>
+
         <h2 class="section-title">Последние регистрации</h2>
         <div id="ovRecent" class="msg">Загрузка…</div>
     </div>
@@ -364,6 +367,8 @@
                 document.getElementById('ovHealth').textContent = 'health-status.json ещё не создан (cron не отработал)';
             }
 
+            renderSync(d.sync);
+
             document.getElementById('ovRecent').outerHTML =
                 '<div class="ulist">' + d.recentUsers.map(function (u) {
                     return '<div class="urow"><div class="urow__mail">' + esc(u.email) + '</div>' +
@@ -372,6 +377,42 @@
                 }).join('') + '</div>';
         }).catch(function () {});
     }
+    // ---------- Синхронизация субтитров (ночной прогон scripts/sync-health.mjs) ----------
+    var SYNC_LABEL = { ok: 'ОК', suspicious: 'подозрительно', desync: 'РАССИНХРОН', fail: 'сбой', 'no-data': 'нет данных' };
+    var SYNC_CLS = { ok: 'ok', suspicious: 'off', desync: 'bad', fail: 'bad', 'no-data': 'off' };
+    function renderSync(sy) {
+        var el = document.getElementById('ovSync');
+        if (!sy) { el.textContent = 'sync-health.json ещё не создан (ночной прогон не отработал)'; return; }
+        var s = sy.summary || {};
+        var col = sy.overall === 'ok' ? 'ok' : (sy.overall === 'warn' ? 'muted' : 'bad');
+        var head = '<p class="srcsum"><b style="color:var(--' + col + ')">' +
+            (sy.overall === 'ok' ? 'Всё синхронно' : sy.overall === 'warn' ? 'Есть подозрительные' : 'Есть рассинхрон') +
+            '</b> — ок ' + fmt(s.ok) + ' из ' + fmt(s.total) +
+            (s.suspicious ? ', подозрительно ' + s.suspicious : '') +
+            (s.desync ? ', рассинхрон ' + s.desync : '') +
+            (s.fail ? ', сбой ' + s.fail : '') +
+            ' <span style="color:var(--muted)">· проверено ' + dt(sy.at) + ', ' + fmt(sy.durationSec) + ' с</span></p>';
+        var rows = (sy.results || []).map(function (r) {
+            var v = r.verdict || 'no-data';
+            var note = r.fail ? r.fail
+                : ('sim ' + (r.bestSim == null ? '—' : r.bestSim) + ' · сдвиг ' + (r.align ? r.align.offset : '—') +
+                   (r.align && r.align.method ? ' (' + r.align.method + ', c=' + r.align.confidence + ')' : '') +
+                   ' → применён ' + r.applied + ' · ' + (r.track || ''));
+            return '<div class="src"><span class="src__dot src__dot--' + (SYNC_CLS[v] || 'off') + '"></span>' +
+                '<span class="src__name">' + esc(r.name + ' ep' + r.ep + ' · ' + r.uiLang) + '</span>' +
+                '<span class="src__note' + (v === 'desync' || v === 'fail' ? ' src__note--bad' : '') + '">' + esc(SYNC_LABEL[v] || v) +
+                '<span class="src__hint">' + esc(note) + (r.file ? ' · ' + esc(r.file) : '') + '</span></span>' +
+                '<span class="src__ms">' + fmt(r.sec) + ' с</span></div>';
+        }).join('');
+        var hist = (sy.history || []).map(function (h) {
+            var c = h.overall === 'ok' ? 'ok' : (h.overall === 'warn' ? 'off' : 'bad');
+            return '<span class="src__dot src__dot--' + c + '" title="' + esc(dt(h.at) + ': ок ' + h.ok + '/' + h.total) + '" style="display:inline-block;margin-right:4px"></span>';
+        }).join('');
+        el.className = '';
+        el.innerHTML = head + '<div class="srcgrp"><div class="srcgrp__head">Последний прогон</div>' + rows + '</div>' +
+            (hist ? '<p class="srcsum" style="color:var(--muted)">История прогонов (новые слева): ' + hist + '</p>' : '');
+    }
+
     // ---------- Источники ----------
     var SRC_GROUPS = [
         ['video', 'Видео'],

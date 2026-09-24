@@ -1114,7 +1114,6 @@
     /* Размер — как у пары кнопок оценки, что встанут на её место: та же высота
        (49px) и ширина одной из них, чтобы «Показать ответ» не выглядела мелкой
        пилюлей под широким кадром. */
-    position: relative;   /* угол для подсказки клавиши (data-key, как у оценок) */
     flex: 1 1 auto;
     max-width: none;
     min-height: 49px;
@@ -1257,19 +1256,6 @@
         font-size: 9.5px;
         font-weight: 700;
         opacity: 0.4;
-    }
-    /* Пробел — знаком ␣, но нарисованным CSS (скобка-«корытце»): у шрифтов
-       интерфейса глифа U+2423 нет, и текстом он выпадал в пустоту. */
-    .main.study .buttons .show-btn[data-key]::before {
-        content: '';
-        top: 9px;
-        left: 12px;
-        width: 20px;
-        height: 7px;
-        border: 1.5px solid currentColor;
-        border-top: 0;
-        border-radius: 0 0 3px 3px;
-        opacity: 0.45;
     }
 }
 
