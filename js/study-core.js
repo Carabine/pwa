@@ -844,7 +844,13 @@
             }
 
             els.buttons.innerHTML = '';
-            els.buttons.appendChild(makeButton(t('study.showAnswer'), 'show-btn', renderBack));
+            {
+                const showBtn = makeButton(t('study.showAnswer'), 'show-btn', renderBack);
+                // Подсказка клавиши в углу (как «1»/«2» у оценок): ответ открывает
+                // пробел (см. onKey). CSS показывает её только на ПК.
+                showBtn.dataset.key = t('study.key.space');
+                els.buttons.appendChild(showBtn);
+            }
             // Кнопка «Уже знаю это слово» убрана по просьбе.
 
             // Пока человек смотрит на вопрос — тихо готовим всё, что понадобится

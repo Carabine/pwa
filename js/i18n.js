@@ -313,6 +313,7 @@ const I18N = {
         'study.hint.days': 'через {n} дн',
         'study.hint.again': 'повторить ещё раз',
         'study.hint.next': 'перейти дальше',
+        'study.key.space': 'пробел',
         'study.new': 'Новые',
         'study.learning': 'Учу',
         'study.review': 'Повторить',

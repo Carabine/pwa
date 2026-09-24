@@ -309,6 +309,7 @@ window.I18N_UK = {
         'study.hint.days': 'через {n} дн',
         'study.hint.again': 'повторити ще раз',
         'study.hint.next': 'перейти далі',
+        'study.key.space': 'пробіл',
         'study.new': 'Нові',
         'study.learning': 'Вчу',
         'study.review': 'Повторити',
