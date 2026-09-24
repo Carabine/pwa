@@ -309,7 +309,6 @@ window.I18N_EN = {
         'study.hint.days': 'in {n} d',
         'study.hint.again': 'see it again',
         'study.hint.next': 'move on',
-        'study.key.space': 'space',
         'study.new': 'New',
         'study.learning': 'Learning',
         'study.review': 'Review',

@@ -489,8 +489,14 @@ function starterDeckWords() {
     return starterMergedDeck().map((card, i) => {
         const tr = starterTr(card);
         const video = starterClipUrl(card);
+        // id — ключ кэша клипов в IndexedDB. Раньше он был ПОЗИЦИОННЫМ
+        // ('starter-' + i): стоило переставить ядро в админке или заменить клип,
+        // и у зрителя из кэша под тем же ключом играло видео ПРЕЖНЕГО слова на
+        // этой позиции. Теперь ключ — слово + имя файла клипа: перестановка не
+        // путает клипы, а новый клип сам получает новый ключ.
+        const clipKey = video ? String(video).split('/').pop().replace(/\.\w+$/, '') : 'noclip';
         return {
-            id: 'starter-' + i,
+            id: 'starter:' + card.k + ':' + clipKey,
             kanji: card.k,
             word: card.k,
             kana: card.r,

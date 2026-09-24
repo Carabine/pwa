@@ -847,8 +847,9 @@
             {
                 const showBtn = makeButton(t('study.showAnswer'), 'show-btn', renderBack);
                 // Подсказка клавиши в углу (как «1»/«2» у оценок): ответ открывает
-                // пробел (см. onKey). CSS показывает её только на ПК.
-                showBtn.dataset.key = t('study.key.space');
+                // пробел (см. onKey) — рисуем его стандартным знаком ␣ (U+2423),
+                // без слова. CSS показывает подсказку только на ПК.
+                showBtn.dataset.key = '␣';
                 els.buttons.appendChild(showBtn);
             }
             // Кнопка «Уже знаю это слово» убрана по просьбе.

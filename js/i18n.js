@@ -313,7 +313,6 @@ const I18N = {
         'study.hint.days': 'через {n} дн',
         'study.hint.again': 'повторить ещё раз',
         'study.hint.next': 'перейти дальше',
-        'study.key.space': 'пробел',
         'study.new': 'Новые',
         'study.learning': 'Учу',
         'study.review': 'Повторить',
@@ -773,7 +772,11 @@ function applyI18n() {
         if (el.dataset.chatLink === 'text') el.textContent = chat.label;
     });
     document.querySelectorAll('[data-chat-ico]').forEach((el) => {
-        el.hidden = el.dataset.chatIco !== chat.kind;
+        // Значки — inline-SVG: у SVGElement нет свойства .hidden (оно только у
+        // HTMLElement), присваивание молча создавало expando и атрибут не менял —
+        // поэтому телеграм и дискорд показывались одновременно. Только атрибут.
+        if (el.dataset.chatIco === chat.kind) el.removeAttribute('hidden');
+        else el.setAttribute('hidden', '');
     });
 }
 

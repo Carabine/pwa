@@ -284,9 +284,9 @@
     right: 0;
     top: 0;
     z-index: 1;
-    padding: 14px 64px 48px 18px;
+    padding: 14px 64px 54px 18px;
     background: linear-gradient(180deg,
-        rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.7) 45%, rgba(0, 0, 0, 0.28) 80%, transparent);
+        rgba(0, 0, 0, 0.97), rgba(0, 0, 0, 0.84) 42%, rgba(0, 0, 0, 0.42) 76%, transparent);
     color: #fff;
     text-align: left;
     line-height: 1.2;
@@ -1257,6 +1257,19 @@
         font-size: 9.5px;
         font-weight: 700;
         opacity: 0.4;
+    }
+    /* Пробел — знаком ␣, но нарисованным CSS (скобка-«корытце»): у шрифтов
+       интерфейса глифа U+2423 нет, и текстом он выпадал в пустоту. */
+    .main.study .buttons .show-btn[data-key]::before {
+        content: '';
+        top: 9px;
+        left: 12px;
+        width: 20px;
+        height: 7px;
+        border: 1.5px solid currentColor;
+        border-top: 0;
+        border-radius: 0 0 3px 3px;
+        opacity: 0.45;
     }
 }
 

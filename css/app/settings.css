@@ -309,6 +309,10 @@
 }
 
 .feedback-btn svg { width: 17px; height: 17px; }
+/* Значок чужого чата (телеграм у EN, дискорд у RU/UK) прячет applyI18n атрибутом
+   hidden — но на inline-SVG браузерный [hidden] не действует, и рядом с
+   «Написать в Telegram» стоял и дискорд. Прячем явно. */
+[data-chat-ico][hidden] { display: none !important; }
 
 @media (hover: hover) and (pointer: fine) {
     .feedback-btn:hover {
