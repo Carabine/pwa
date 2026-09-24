@@ -251,32 +251,104 @@
     --reveal-stagger: 60ms;
 }
 
-/* Разделитель вопроса и ответа: нейтральная линия, тающая к краям.
-   Рисует её ::after, а не border-image: линию нужно ПРОЯВИТЬ вместе с ответом
-   (border-image не анимируется), иначе на открытии она возникала хлопком.
-   Прозрачный border-bottom оставлен ради места под неё — раскладка та же. */
+/* Шапка ответа — плашка-заголовок кадра (галерея _pp/topvar, вариант A2b):
+   слово с чтением у левого края, перевод у правого, тонированный фон, углы
+   скруглены только сверху — плашка «приклеена» к верху клипа. Ширина равна
+   ширине кадра (--clip-w из fitBackMedia; без клипа — вся карточка). На ПК
+   при наличии клипа плашка прячется, а те же строки ложатся титром на кадр
+   (.clip-title ниже). Сам титульный ряд НЕ гасим и НЕ двигаем: слово просто
+   встаёт на своё место ответа (гашение в ноль читалось как моргание). */
 .card-area:has(.back-side--visible) .front-side {
     position: relative;
-    border-bottom: 1px solid transparent;
-    /* Компактный титульный ряд ответа — сцена достаётся клипу. */
-    padding-bottom: 5px;
-    margin-bottom: 5px;
-    /* Сам титульный ряд НЕ гасим и НЕ двигаем: слово просто встаёт на своё
-       место ответа. Гасить его в ноль нельзя (крупное слово моргает — читается
-       как скачок), а переезжать оно пробовало — пролёт над кадром клипа
-       выглядел неопрятно. Всё движение осталось у оборота. */
+    width: min(100%, var(--clip-w, 100%));
+    margin: 0 auto;
+    justify-content: flex-start;
+    align-items: baseline;
+    gap: 0 12px;
+    padding: 11px 16px;
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: 12px 12px 0 0;
+    background: color-mix(in srgb, var(--text) 4.5%, var(--card));
 }
 
-.card-area:has(.back-side--visible) .front-side::after {
-    content: '';
+/* Титр на кадре (ПК): слово, чтение и перевод поверх верха клипа на плотной
+   тёмной плашке-градиенте (чёрный под словом, тает к середине кадра). Живёт
+   внутри .clip-player / .clip-skel — mountClipTitle в study-core.js. Клики
+   проходят сквозь него к видео (play/pause), кроме чтения — оно озвучивает. */
+.clip-title {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: -1px;
-    height: 1px;
-    background: linear-gradient(90deg,
-        transparent, var(--border) 22%, var(--border) 78%, transparent);
-    animation: back-in var(--reveal-body-dur) var(--reveal-ease) var(--reveal-body-delay) backwards;
+    top: 0;
+    z-index: 1;
+    padding: 14px 64px 48px 18px;
+    background: linear-gradient(180deg,
+        rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.7) 45%, rgba(0, 0, 0, 0.28) 80%, transparent);
+    color: #fff;
+    text-align: left;
+    line-height: 1.2;
+    font-family: var(--font);
+    pointer-events: none;
+}
+
+.clip-title__row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.clip-title__word {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.clip-title__reading {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    opacity: 0.85;
+}
+
+.clip-title__reading--speak {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.clip-title__meaning {
+    margin-top: 5px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #dfe3ff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* На ПК шапка нужна только карточке без клипа: с клипом (или его скелетоном)
+   её строки уже на кадре. Скелетон в условии обязателен — иначе шапка
+   исчезала бы в момент подмены скелетона плеером, дёргая раскладку. */
+@media (min-width: 481px) {
+    .card-area:has(.back-side--visible :is(.clip-player, .clip-skel)) .front-side {
+        display: none;
+    }
+}
+
+/* На телефоне титра на кадре нет — плашка над кадром, кадр под ней без
+   верхних скруглений (одно окно с титульной планкой). */
+@media (max-width: 480px) {
+    .clip-title { display: none; }
+    .card-area:has(.back-side--visible) .front-side { width: 100%; }
+    .card-area:has(.back-side--visible) .clip-player,
+    .card-area:has(.back-side--visible) .clip-skel { border-radius: 0 0 12px 12px; }
+}
+
+/* Карточка без клипа (только звук / клип не нашёлся): плашке не к чему
+   клеиться — замыкаем её нижней кромкой и скругляем все углы. Скелетон в
+   условии — чтобы во время загрузки клипа плашка не меняла форму. */
+.card-area:has(.back-side--visible):not(:has(.back-media :is(.clip-player, .clip-skel))) .front-side {
+    border-bottom: 1px solid var(--border);
+    border-radius: 12px;
 }
 
 /* Кадр подготовки. Сборка ответа — самый тяжёлый кадр в учёбе (раскладка всей
@@ -289,8 +361,8 @@
    стартовой позиции переезда — инлайновым transform, так что видимой разницы
    между «подготовкой» и первым кадром анимации нет. */
 .card-area.is-arming .back-side--visible,
-.card-area.is-arming .front-side::after,
-.card-area.is-arming .word-furigana {
+.card-area.is-arming .word-furigana,
+.card-area.is-arming .meaning {
     opacity: 0;
     animation: none !important;
 }
@@ -357,8 +429,8 @@
     .card-area:has(.back-side--visible) .word,
     .back-side--visible,
     .back-side--visible > *,
-    .card-area:has(.back-side--visible) .front-side::after,
     .word-furigana,
+    .meaning,
     .main.study .buttons > button,
     .sentence__spark { animation: none !important; }
 }
@@ -405,7 +477,8 @@
 .back-side--visible:has(.clip-skel) .back-media {
     flex: 0 0 auto;
     min-height: 0;
-    justify-content: center;
+    /* К верху слота: над ним плашка-заголовок, зазора между ними быть не должно. */
+    justify-content: flex-start;
     align-items: center;   /* центрируем клип, который теперь по ширине видео */
 }
 
@@ -683,14 +756,14 @@
     from { opacity: 0; transform: translateY(6px); }
 }
 
-/* Титул заметно крупнее перевода — слово остаётся главным и после открытия. */
+/* Титул заметно крупнее перевода — слово остаётся главным и после открытия.
+   В плашке: первым слева (order), чтение сразу за ним, перевод у правого края. */
 .card-area:has(.back-side--visible) .word {
-    /* Слово остаётся якорем ответа — крупнее и плотнее перевода, чтобы главным
-       оставался объект памяти (японское слово), а не его перевод. Компактнее,
-       чем раньше (46px): вертикаль отдана клипу. */
-    font-size: clamp(24px, 2.5vw, 30px);
-    font-weight: 500;
+    order: 1;
+    font-size: 24px;
+    font-weight: 600;
     letter-spacing: -0.01em;
+    text-align: left;
     animation: title-settle var(--reveal-body-dur) var(--reveal-ease) var(--reveal-body-delay) backwards;
 }
 
@@ -703,13 +776,14 @@
    неопрятно. Теперь на обороте двигается только сам оборот. */
 .word-furigana {
     animation: back-in var(--reveal-body-dur) var(--reveal-ease) var(--reveal-body-delay) backwards;
-    flex-basis: 100%;
-    text-align: center;
+    order: 2;
+    flex-basis: auto;
+    text-align: left;
     font-size: 13.5px;
     font-weight: 500;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.06em;
     color: var(--text-dim);
-    margin-bottom: 2px;
+    margin: 0;
 }
 
 .word-furigana--speak { cursor: pointer; transition: color var(--transition); }
@@ -730,15 +804,17 @@
     margin-left: 6px;
 }
 
-/* Перевод — подтверждение ответа: ясный и акцентный, но чуть спокойнее слова,
-   чтобы не перетягивать взгляд на себя (раньше он был крупнее/ярче самого слова). */
+/* Перевод — у правого края плашки, спокойнее слова: главным остаётся объект
+   памяти (японское слово). Проявляется вместе с ответом, как чтение. */
 .meaning {
-    font-size: clamp(19px, 2.6vw, 24px);
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    text-align: center;
-    text-wrap: balance;
-    color: var(--primary-hover);
+    order: 3;
+    margin-left: auto;
+    font-size: 16.5px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: right;
+    color: var(--text);
+    animation: back-in var(--reveal-body-dur) var(--reveal-ease) var(--reveal-body-delay) backwards;
 }
 
 /* Предложение — одна «субтитровая» плашка: японская строка (.sentence__jp),
@@ -1092,30 +1168,37 @@
     transition: background var(--transition), border-color var(--transition), transform 0.15s ease;
 }
 
+/* Оценка без красно-зелёного (галерея _pp/topvar, кнопки из C1 Codex):
+   «Забыл» — тихая нейтральная, «Помню» — с лёгким фирменным индиго как
+   главное действие; под подписью мелкая подсказка-следствие. */
 .main.study .keep-word-btn {
-    background: color-mix(in srgb, var(--danger) 15%, var(--card));
-    border-color: color-mix(in srgb, var(--danger) 42%, transparent);
-    color: var(--danger-hover);
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--text-muted);
 }
 
 .main.study .bury-word-btn {
-    background: color-mix(in srgb, var(--success) 15%, var(--card));
-    border-color: color-mix(in srgb, var(--success) 42%, transparent);
-    color: var(--success-hover);
+    background: color-mix(in srgb, var(--primary) 9%, var(--surface));
+    border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+    color: var(--primary-hover);
+}
+
+.main.study .bury-word-btn .rate__hint {
+    color: color-mix(in srgb, var(--primary-hover) 60%, var(--text-dim));
 }
 
 @media (hover: hover) and (pointer: fine) {
     .main.study .keep-word-btn:hover {
-        background: color-mix(in srgb, var(--danger) 26%, var(--card));
-        border-color: color-mix(in srgb, var(--danger) 62%, transparent);
+        background: color-mix(in srgb, var(--text) 6%, var(--surface));
+        border-color: color-mix(in srgb, var(--text) 18%, var(--border));
         transform: translateY(-1px);
     }
 }
 
 @media (hover: hover) and (pointer: fine) {
     .main.study .bury-word-btn:hover {
-        background: color-mix(in srgb, var(--success) 26%, var(--card));
-        border-color: color-mix(in srgb, var(--success) 62%, transparent);
+        background: color-mix(in srgb, var(--primary) 16%, var(--surface));
+        border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
         transform: translateY(-1px);
     }
 }
@@ -1138,13 +1221,13 @@
 }
 
 .rate__hint {
-    font-size: 10.5px;
-    font-weight: 500;
+    font-size: 10px;
+    font-weight: 400;
     letter-spacing: 0.01em;
     /* Строчными (buttons.css делает кнопки uppercase) — «через 7 дн» человечнее,
        чем «ЧЕРЕЗ 7 ДН», и не спорит с подписью-капсом над ней. */
     text-transform: none;
-    opacity: 0.72;
+    color: var(--text-dim);
 }
 
 /* Клавиша-подсказка (1/2) — деликатно в углу кнопки, только на десктопе
@@ -1669,15 +1752,17 @@
 
     .card-area:has(.back-side--visible) .word { font-size: 27px; }
 
-    /* Компактный ритм на телефоне — простор нужен только на ПК. */
-    .card-area:has(.back-side--visible) .front-side {
-        padding-bottom: 12px;
-        margin-bottom: 12px;
-    }
+    /* Плашка на телефоне: перевод переносится под слово, к левому краю. */
+    .card-area:has(.back-side--visible) .front-side { padding: 10px 14px; }
 
     .back-side { gap: 8px; }
 
-    .meaning { font-size: 20px; }
+    .meaning {
+        flex-basis: 100%;
+        margin: 2px 0 0;
+        text-align: left;
+        color: var(--text-muted);
+    }
 
     .sentence {
         max-width: 100%;
@@ -1777,12 +1862,9 @@
     .study-settings-panel { top: 52px; }
     .card-area { padding-top: 8px; padding-bottom: 8px; }
     .back-side { gap: 6px; }
-    .card-area:has(.back-side--visible) .front-side {
-        padding-bottom: 6px;
-        margin-bottom: 6px;
-    }
+    .card-area:has(.back-side--visible) .front-side { padding: 9px 14px; }
     .card-area:has(.back-side--visible) .word { font-size: 22px; }
-    .meaning { font-size: 17px; }
+    .meaning { font-size: 16px; }
     .sentence {
         padding-top: 6px;
         padding-bottom: 6px;
@@ -1799,8 +1881,7 @@
     }
     .main.study .show-btn,
     .main.study .keep-word-btn,
-    .main.study .bury-word-btn { padding: 10px 16px; }
-    .rate__hint { display: none; }
+    .main.study .bury-word-btn { padding: 8px 16px; }
     /* Потолок 320, а не 260: на высоком телефоне (dvh 800+) под карточкой всё
        равно остаётся пустое место, а не-16:9 исходник (4:3) упирался в лимит и
        выглядел мелким квадратом. Для 16:9 ограничителем остаётся ШИРИНА экрана,

@@ -311,6 +311,8 @@ const I18N = {
         'study.hint.soon': 'скоро',
         'study.hint.tomorrow': 'завтра',
         'study.hint.days': 'через {n} дн',
+        'study.hint.again': 'повторить ещё раз',
+        'study.hint.next': 'перейти дальше',
         'study.new': 'Новые',
         'study.learning': 'Учу',
         'study.review': 'Повторить',

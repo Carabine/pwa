@@ -307,6 +307,8 @@ window.I18N_UK = {
         'study.hint.soon': 'скоро',
         'study.hint.tomorrow': 'завтра',
         'study.hint.days': 'через {n} дн',
+        'study.hint.again': 'повторити ще раз',
+        'study.hint.next': 'перейти далі',
         'study.new': 'Нові',
         'study.learning': 'Вчу',
         'study.review': 'Повторити',

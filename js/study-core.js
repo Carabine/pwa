@@ -790,9 +790,9 @@
         // обучения), либо через реальный интервал повторения (дни). В cram-режиме
         // расписания нет — у «Помню» подсказки нет.
         function ratingHints() {
-            // Cram-режим — расписания нет; подсказки-интервалы не показываем вовсе,
-            // чтобы обе кнопки были одинаковой (однострочной) высоты.
-            if (!scheduled || !current) return { again: '', good: '' };
+            // Cram-режим — расписания нет; вместо интервалов подписываем, что
+            // сделает каждая кнопка, чтобы обе были одной высоты с обычным режимом.
+            if (!scheduled || !current) return { again: t('study.hint.again'), good: t('study.hint.next') };
             const again = t('study.hint.min');
             const nextLeft = current.left - 1;
             if (nextLeft > 0) return { again, good: t('study.hint.soon') };
@@ -814,6 +814,7 @@
             els.back.classList.remove('back-side--visible');
             els.front.innerHTML = '';
             els.front.classList.remove('hidden');
+            clipTitle = null;
             if (els.hintBtn) els.hintBtn.classList.add('hidden');
 
             const wordEl = document.createElement('div');
@@ -1586,7 +1587,9 @@
         function setClipSkeletonStatus(box, msgKey) {
             if (!box || !box.isConnected) return;
             box.removeAttribute('aria-hidden');
+            const title = box.querySelector('.clip-title');
             box.innerHTML = '';
+            if (title) box.appendChild(title);
             const sp = document.createElement('span');
             sp.className = 'clip-spinner';
             const txt = document.createElement('span');
@@ -1719,6 +1722,49 @@
             revealTimer = setTimeout(flushReveal, total + 800);
         }
 
+        // Титр на кадре (ПК): слово, чтение и перевод поверх верха клипа, на
+        // тёмной плашке-градиенте. Один элемент на карточку; в слот его сажает
+        // mountClipTitle, когда там появляется скелетон или сам плеер (клип
+        // приходит асинхронно и может подменяться). На телефоне скрыт CSS —
+        // там те же строки показывает плашка .front-side над кадром.
+        let clipTitle = null;
+        function buildClipTitle(w) {
+            const box = document.createElement('div');
+            box.className = 'clip-title';
+            const row = document.createElement('div');
+            row.className = 'clip-title__row';
+            const word = document.createElement('span');
+            word.className = 'clip-title__word';
+            word.textContent = w.word ?? w.kanji ?? '';
+            row.appendChild(word);
+            const fg = els.front.querySelector('.word-furigana');
+            const reading = fg && fg.firstChild ? String(fg.firstChild.textContent || '').trim() : '';
+            if (reading) {
+                const r = document.createElement('span');
+                r.className = 'clip-title__reading';
+                r.textContent = reading;
+                if (fg.classList.contains('word-furigana--speak')) {
+                    r.classList.add('clip-title__reading--speak');
+                    r.title = t('study.listen');
+                    r.addEventListener('click', (e) => { e.stopPropagation(); fg.click(); });
+                }
+                row.appendChild(r);
+            }
+            box.appendChild(row);
+            const m = document.createElement('div');
+            m.className = 'clip-title__meaning';
+            m.textContent = w.meaning ?? w.translation ?? '';
+            box.appendChild(m);
+            return box;
+        }
+
+        function mountClipTitle(slot) {
+            if (!clipTitle || !slot) return;
+            const host = slot.querySelector('.clip-player, .clip-skel');
+            if (!host) return;
+            if (clipTitle.parentNode !== host) host.appendChild(clipTitle);
+        }
+
         function renderBack() {
             const w = current.word;
             // Замеряем титульный ряд ДО перестройки — по этим числам поедет FLIP.
@@ -1736,7 +1782,20 @@
             // припоминания — держим её на верху, чтобы клип не вклинивался
             // между словом и переводом.
             renderFurigana(w);
-            addLine('meaning', w.meaning ?? w.translation ?? '');
+            // Перевод — в той же шапке, что слово и чтение (.front-side): на
+            // телефоне это плашка-заголовок, приклеенная к верху кадра; на ПК
+            // шапка целиком прячется, а те же строки ложатся титром на сам кадр
+            // (.clip-title, см. mountClipTitle). При перерисовке открытого
+            // ответа (reapplyCard) старый перевод в шапке снимаем сами.
+            {
+                const oldMeaning = els.front.querySelector('.meaning');
+                if (oldMeaning) oldMeaning.remove();
+                const m = document.createElement('div');
+                m.className = 'meaning';
+                m.textContent = w.meaning ?? w.translation ?? '';
+                els.front.appendChild(m);
+            }
+            clipTitle = buildClipTitle(w);
 
             // Медиа-контекст (клип/озвучка) — ниже ядра, как «награда», а не
             // преграда (совет Codex). Один слот: асинхронная подгрузка не должна
@@ -1761,6 +1820,7 @@
                 }
                 const skel = ready ? null : makeClipSkeleton();
                 if (skel) mediaSlot.appendChild(skel);
+                mountClipTitle(mediaSlot);
                 // Нет в IndexedDB — качаем через ОБЩУЮ очередь и играем уже из
                 // браузера. Раньше в этом случае видео тянулось потоком с сервера,
                 // и параллельно тот же файл качался «в кэш»: один клип приезжал по
@@ -1792,6 +1852,7 @@
                     const playUrl = warm ? warm.url : (blob ? URL.createObjectURL(blob) : src);
                     skel.remove();
                     mediaSlot.insertBefore(makeClipVideo(playUrl, w, warm && warm.video), mediaSlot.firstChild);
+                    mountClipTitle(mediaSlot);
                     fitBackMedia();
                 })).catch(() => afterReveal(() => {
                     // Клип не достали — вместо вечного мерцания говорим прямо.
@@ -1800,6 +1861,7 @@
                 }));
             } else if (src) {
                 mediaSlot.appendChild(makeClipVideo(src, w));
+                mountClipTitle(mediaSlot);
             } else if (w.noClip) {
                 // Карточка курируемой колоды, для которой видео ещё не подобрали.
                 mediaSlot.appendChild(makeClipPending('clip.soon', false));
@@ -1815,6 +1877,7 @@
                 if (expectsClip) {
                     pending = makeClipSkeleton();
                     mediaSlot.appendChild(pending);
+                    mountClipTitle(mediaSlot);
                 }
                 getClipUrl(wid).then((url) => afterReveal(() => {
                     if (!current || current.word.id !== wid) return;
@@ -1822,6 +1885,7 @@
                     if (url) {
                         if (pending) pending.remove();
                         mediaSlot.insertBefore(makeClipVideo(url, w), mediaSlot.firstChild);
+                        mountClipTitle(mediaSlot);
                         // Синхронно, а не через rAF: иначе только что вставленное
                         // видео успевает отрисоваться в свой потолочный размер (CSS
                         // max-height), и лишь СЛЕДУЮЩИМ кадром fitBackMedia ужимает
