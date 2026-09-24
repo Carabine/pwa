@@ -1458,6 +1458,21 @@ async function loadSubtitles(episodeNumber = 1) {
                 .forEach((k) => localStorage.removeItem(k));
             localStorage.setItem('animei:subsOffsetReset', '7');
         }
+        // Бамп «8» (24.09): автосинк теперь применяет и малые ОТРИЦАТЕЛЬНЫЕ сдвиги
+        // (см. lagging в maybeAutoSync). Сохранённые прежде нули автосинка
+        // («сдвиг мал — оставляем 0») сбрасываем, чтобы он пересчитал; ручные
+        // сдвиги, точный подбор и консенсус НЕ трогаем.
+        if (localStorage.getItem('animei:subsOffsetReset') !== '8') {
+            Object.keys(localStorage)
+                .filter((k) => k.startsWith('animei:subsOffset:') && !k.endsWith(':m'))
+                .forEach((k) => {
+                    const m = localStorage.getItem(k + ':m');
+                    if (m === 'manual' || m === 'whisper-verified' || m === 'consensus') return;
+                    localStorage.removeItem(k);
+                    localStorage.removeItem(k + ':m');
+                });
+            localStorage.setItem('animei:subsOffsetReset', '8');
+        }
         state.offset = parseFloat(localStorage.getItem(offsetStorageKey())) || 0;
         updateOffsetLabel();
         renderTranscript();
@@ -1638,7 +1653,7 @@ async function maybeAutoSync() {
             seriesKey,
             introEnd,
         }, { timeout: 130000 });
-        const { offset, confidence, matched, method } = res.data || {};
+        const { offset, confidence, matched, method, agree } = res.data || {};
         // За время запроса серия могла смениться или пользователь мог тронуть сдвиг —
         // тогда не трогаем.
         if (offsetStorageKey() !== key || localStorage.getItem(key) !== null) return;
@@ -1664,7 +1679,14 @@ async function maybeAutoSync() {
         // другим пользователем: применяем ЛЮБОЙ его размер (даже <1.2с), чтобы точный
         // результат раздавался всем. Порог 1.2с — только для alass/онсетов (там мелкий
         // «сдвиг» обычно естественное упреждение, а не рассинхрон).
-        if (trusted && (Math.abs(offset) >= 1.2 || method === 'whisper-verified')) {
+        // Исключение из порога 1.2с (24.09, «Атака титанов»): сабы, ОТСТАЮЩИЕ от
+        // речи, — всегда рассинхрон, а не «естественное упреждение» (упреждение
+        // даёт alass ПОЛОЖИТЕЛЬНЫЙ сдвиг). Отрицательный сдвиг от 0.7с, когда alass
+        // и онсеты согласны (agree) и уверенность высокая, применяем: у «Атаки»
+        // все дорожки давали −0.9…−1.0, порог их прятал, а Whisper по звуку
+        // подтвердил −0.9 (47 совпадений, conf 0.97).
+        const lagging = offset <= -0.7 && method === 'alass' && agree === true && confidence >= 0.9;
+        if (trusted && (Math.abs(offset) >= 1.2 || method === 'whisper-verified' || lagging)) {
             state.offset = offset;
             updateOffsetLabel();
             saveOffset();
