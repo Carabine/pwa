@@ -1788,15 +1788,22 @@
 
     .card-area:has(.back-side--visible) .word { font-size: 27px; }
 
-    /* Плашка на телефоне: перевод переносится под слово, к левому краю. */
-    .card-area:has(.back-side--visible) .front-side { padding: 10px 14px; }
+    /* Плашка на телефоне: слово с чтением одной строкой по центру, перевод
+       под ними тоже по центру (выбор по галерее _pp/topvar/8.html). */
+    .card-area:has(.back-side--visible) .front-side {
+        padding: 10px 14px;
+        justify-content: center;
+        gap: 0 10px;
+    }
+    .card-area:has(.back-side--visible) .word { text-align: center; }
+    .word-furigana { text-align: center; }
 
     .back-side { gap: 8px; }
 
     .meaning {
         flex-basis: 100%;
         margin: 2px 0 0;
-        text-align: left;
+        text-align: center;
         color: var(--text-muted);
     }
 
