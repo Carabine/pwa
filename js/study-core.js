@@ -1262,13 +1262,19 @@
             if (probeClient === naturalClient) {
                 // offsetTop/offsetHeight — координаты раскладки (не трогает
                 // transform каскадной анимации появления строк).
+                // Свободное место = высота оборота минус высота его СОДЕРЖИМОГО
+                // (от верха первого ребёнка до низа последнего), а не «до низа»:
+                // оборот центрирует детей по вертикали (justify-content), и
+                // расстояние до низа было бы лишь половиной пустоты.
+                let top = Infinity;
                 let bottom = 0;
                 for (const child of back.children) {
                     if (child.offsetHeight > 0) {
+                        top = Math.min(top, child.offsetTop);
                         bottom = Math.max(bottom, child.offsetTop + child.offsetHeight);
                     }
                 }
-                const slack = back.offsetTop + probeClient - bottom;
+                const slack = Number.isFinite(top) ? probeClient - (bottom - top) : probeClient;
                 h = 120 + slack - 2;
             }
             h = Math.min(h, ceil);
