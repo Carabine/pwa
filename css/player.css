@@ -3550,16 +3550,18 @@ html, body {
         padding: 6px 2px;
         cursor: pointer;
     }
-    /* Заголовки разделов */
+    /* Заголовки разделов. Были такими же мелкими капсами, как подписи полей,
+       и «ЧТО СМОТРИМ» слипалось с «СЕЗОН» в один блок. Теперь заголовок —
+       обычным регистром, крупнее и светлее, а подписи полей остаются капсами. */
     .sheet-group {
-        margin: 10px 0 2px;
-        font-size: 11px;
+        margin: 18px 0 8px;
+        font-size: 13px;
         font-weight: 700;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-        color: var(--text-dim);
+        letter-spacing: 0;
+        text-transform: none;
+        color: var(--text);
     }
-    .sheet-group:first-of-type { margin-top: 2px; }
+    .sheet-group:first-of-type { margin-top: 6px; }
 
     /* Селекты стоят как раньше: подпись над полем, сезон на всю строку,
        дорожка и серия рядом. Трогаем только вертикальные отступы, чтобы блок
