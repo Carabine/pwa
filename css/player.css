@@ -3405,7 +3405,8 @@ html, body {
 
 /* На телефоне у настоящих реплик времени нет — и у заглушки его быть не должно. */
 @media (max-width: 900px) {
-    .subs-skel__time { display: none; }
+    /* Специфичность не ниже .subs-skel__row i, иначе display: block побеждает. */
+    .subs-skel__row .subs-skel__time { display: none; }
 }
 
 @keyframes subs-skel-pulse {
