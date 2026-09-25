@@ -3874,10 +3874,15 @@ html, body {
 
 /* Карточка слова: главное значение и тихая строка с остальными смыслами
    (по одному слову на смысл, без подписи «также» — она ничего не добавляла). */
-.sense--main { font-weight: 600; }
+/* Дополнительные смыслы принадлежат главному переводу, поэтому жмутся к нему:
+   общий отступ между смыслами (11px) разводил их как два независимых блока. */
+.word-popup__body .sense--main {
+    font-weight: 600;
+    margin-bottom: 3px;
+}
 
-.sense--more {
-    margin-top: 2px;
+.word-popup__body .sense--more {
+    margin-top: 0;
     font-size: 13px;
     color: var(--text-muted);
 }
