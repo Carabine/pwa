@@ -3511,9 +3511,12 @@ html, body {
         text-align: center;
         color: var(--text-muted);
     }
+    /* Место под значок ИИ резервируем С ОБЕИХ сторон: при 12/32 содержимое
+       «по центру» вставало на 10px левее середины блока — это и читалось как
+       кривизна, хотя text-align был центральный. */
     .now-cue.ai-on {
-        padding-left: 12px;
-        padding-right: 32px;
+        padding-left: 24px;
+        padding-right: 24px;
     }
     /* Горячие клавиши — подсказка для клавиатуры, на телефоне её нет. */
     .hotkeys,
