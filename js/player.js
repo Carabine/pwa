@@ -2070,7 +2070,18 @@ function updateCoverage() {
     // Компактно: в шапке — «знакомо N%», полный текст «Ты знаешь N% слов этой
     // серии (K из N)» — в подсказке (title), чтобы не занимать строку. Значок
     // книги убран: словом понятнее, чем эмодзи с голой цифрой.
-    el.textContent = t('player.coverageShort').replace('{p}', pct);
+    // Слово («знакомо») в отдельной обёртке: на узких телефонах строка целиком
+    // не помещается и налезает на «Авто-колоду» — там CSS оставляет один процент.
+    const tpl = t('player.coverageShort');
+    const cut = tpl.indexOf('{p}');
+    el.textContent = '';
+    if (cut > 0) {
+        const word = document.createElement('span');
+        word.className = 'cov-w';
+        word.textContent = tpl.slice(0, cut);
+        el.appendChild(word);
+    }
+    el.append(pct + (cut >= 0 ? tpl.slice(cut + 3) : ''));
     el.title = t('player.coverage')
         .replace('{p}', pct)
         .replace('{k}', known)
