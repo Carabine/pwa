@@ -3475,30 +3475,35 @@ html, body {
     .now-cue {
         display: flex;
         min-height: 0;
-        max-height: none;
-        margin: 8px 14px 10px;
-        padding: 10px 14px;
+        /* Потолок обязателен: на длинной реплике блок разрастался до 132px и
+           выдавливал список. Лишнее подрезаем — полный текст есть строкой ниже,
+           он там подсвечен. Низ растворяем, чтобы обрез не выглядел поломкой. */
+        max-height: 100px;
+        margin: 6px 14px 8px;
+        padding: 8px 12px;
         border: 1px solid var(--border);
         border-radius: 14px;
         background: var(--surface);
         text-align: left;
-        overflow: visible;
+        overflow: hidden;
+        -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent 100%);
+        mask-image: linear-gradient(to bottom, #000 78%, transparent 100%);
     }
     .now-cue__jp {
         justify-content: flex-start;
-        font-size: 18px;
-        gap: 2px 9px;
+        font-size: 16.5px;
+        gap: 1px 8px;
     }
     .now-cue__ru {
-        margin-top: 4px;
-        font-size: 13px;
-        line-height: 1.35;
+        margin-top: 3px;
+        font-size: 12.5px;
+        line-height: 1.3;
         text-align: left;
         color: var(--text-muted);
     }
     .now-cue.ai-on {
-        padding-left: 14px;
-        padding-right: 34px;
+        padding-left: 12px;
+        padding-right: 32px;
     }
     /* Горячие клавиши — подсказка для клавиатуры, на телефоне её нет. */
     .hotkeys,
