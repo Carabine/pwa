@@ -2751,27 +2751,21 @@ async function openWordPopup(tok, cue, event) {
         }
 
         popupBody.innerHTML = '';
-        // Часть речи — по-человечески и без повторов: одинаковый заголовок у
-        // соседних смыслов показываем один раз, сами смыслы нумеруем.
-        const senses = entries[0].senses;
-        const multiSense = senses.length > 1;
-        let lastPosLabel = null;
-        senses.forEach((sense, si) => {
+        // Одно значение вместо словарной статьи. У 来る словарь отдаёт три
+        // смысла по три-четыре синонима — шесть строк, из которых при беглом
+        // взгляде нужна одна. Берём тот же shortTranslation, что уходит в
+        // карточку при сохранении (words-store.js): он предпочитает варианты
+        // без скобочных уточнений и режет близкие синонимы — так в попапе и в
+        // сохранённом слове написано одно и то же.
+        const senses = entries[0].senses || [];
+        const main = shortTranslation(entries[0], 1)
+            || (senses[0] && senses[0].definitions && senses[0].definitions[0]) || '';
+        if (main) {
             const div = document.createElement('div');
             div.className = 'sense';
-            const label = posLabel(sense.pos);
-            if (label && label !== lastPosLabel) {
-                const pos = document.createElement('div');
-                pos.className = 'sense__pos';
-                pos.textContent = label;
-                div.appendChild(pos);
-                lastPosLabel = label;
-            }
-            const defs = document.createElement('div');
-            defs.textContent = (multiSense ? (si + 1) + '. ' : '') + sense.definitions.join('; ');
-            div.appendChild(defs);
+            div.textContent = main;
             popupBody.appendChild(div);
-        });
+        }
 
         const meta = [];
         if (entries[0].isCommon) meta.push(t('popup.common'));
