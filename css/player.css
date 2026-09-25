@@ -3512,6 +3512,13 @@ html, body {
     /* Дети экрана не растягиваются по высоте: у .control-row базовое
        flex: 1 1 100%, и в колонке каждая строка забирала равную долю экрана. */
     .player-layout.sheet-open .player-controls > * { flex: 0 0 auto; }
+    /* .player-main липкий и с z-index — это контекст наложения, из которого
+       фиксированная панель не может подняться над шапкой сайта. Пока экран
+       настроек открыт, липкость не нужна: панель и так закрывает всё. */
+    .player-layout.sheet-open .player-main {
+        position: static;
+        z-index: auto;
+    }
     .sheet-head {
         display: flex;
         align-items: center;
@@ -3549,7 +3556,6 @@ html, body {
         margin: 0;
     }
     .player-controls .control-row .control-group { flex: 0 0 auto; }
-    .player-controls .control-group select { width: auto; }
     .player-controls .control-group {
         display: flex;
         align-items: center;
@@ -3567,13 +3573,18 @@ html, body {
         letter-spacing: 0;
         color: var(--text);
     }
+    /* Нативный select не сжимается ниже самого длинного пункта, и строка
+       выдавливала экран за правый край — отсюда min-width: 0 и обрезка. */
+    .player-controls .control-group { min-width: 0; }
     .player-controls .control-group select {
         flex: 0 1 auto;
+        width: auto;
         min-width: 0;
-        max-width: 66%;
+        max-width: 62%;
         height: 36px;
         padding: 0 30px 0 12px;
         font-size: 14px;
+        text-overflow: ellipsis;
     }
 
     /* Режимы: подпись словами слева, переключатель справа. */
