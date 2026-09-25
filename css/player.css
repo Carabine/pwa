@@ -3495,14 +3495,14 @@ html, body {
        кривым при высоте под 90px. Сейчас те же фразы укладываются в 55px. */
     .now-cue__jp {
         justify-content: flex-start;
-        font-size: 13.5px;
+        font-size: 12.5px;
         line-height: 1.35;
-        gap: 0 6px;
+        gap: 0 5px;
     }
-    .now-cue .ncw__read { font-size: 9px; }
+    .now-cue .ncw__read { font-size: 8.5px; }
     .now-cue__ru {
         margin-top: 2px;
-        font-size: 10.5px;
+        font-size: 10px;
         line-height: 1.3;
         text-align: left;
         color: var(--text-muted);
@@ -3768,13 +3768,13 @@ html, body {
     /* Список на телефоне мельче: 17px японского занимали пол-экрана на
        реплику, а список — то, что листаешь, а не читаешь по одной строке. */
     .cue__jp {
-        font-size: 15px;
+        font-size: 13.5px;
         line-height: 1.45;
-        gap: 1px 7px;
+        gap: 1px 6px;
     }
-    .cue .ncw__read { font-size: 9.5px; }
+    .cue .ncw__read { font-size: 9px; }
     .cue__ru {
-        font-size: 11.5px;
+        font-size: 10.5px;
         line-height: 1.35;
         margin-top: 2px;
     }
