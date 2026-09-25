@@ -2617,6 +2617,20 @@ html, body {
 }
 .player-layout.theater .transcript__fix--deck svg { width: 11px; height: 11px; }
 
+/* Кино-режим на телефоне: колонка субтитров узкая, и «Авто-колода» словом
+   съедает почти всю шапку. Оставляем один значок — рядом с «⋯» он читается
+   как пара кнопок, а название есть в подсказке. */
+@media (max-width: 900px) {
+    .player-layout.theater .transcript__fix--deck {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        justify-content: center;
+    }
+    .player-layout.theater .transcript__fix--deck span { display: none; }
+    .player-layout.theater .transcript__fix--deck svg { width: 13px; height: 13px; }
+}
+
 /* На совсем узких экранах (телефон в лендскейпе, колонка ~200px) от заголовка
    остаётся огрызок «Суб…» — толку от него ноль. Прячем целиком: в кино-режиме
    и так очевидно, что справа субтитры, а место уходит на «📖 N%» и колоду. */
