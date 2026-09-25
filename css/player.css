@@ -3704,7 +3704,10 @@ html, body {
         position: sticky;
         top: 0;
         z-index: 20;
-        padding: 0 0 4px;
+        /* Без нижнего отступа: он добавлялся к собственному padding строки
+           названия, и снизу воздуха было 12px против 8px сверху. Границу
+           со списком рисует рамка шапки субтитров. */
+        padding: 0;
         background: var(--bg);
     }
     .video-wrap { border-radius: 0; }
