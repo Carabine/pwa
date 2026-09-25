@@ -3478,30 +3478,37 @@ html, body {
         /* Потолок обязателен: на длинной реплике блок разрастался до 132px и
            выдавливал список. Лишнее подрезаем — полный текст есть строкой ниже,
            он там подсвечен. Низ растворяем, чтобы обрез не выглядел поломкой. */
-        max-height: 92px;
         margin: 6px 14px 8px;
-        /* Отступы как в прежней версии блока: 6/12/5 — он и был компактным. */
-        padding: 6px 12px 5px;
+        padding: 5px 10px;
         border: 1px solid var(--border);
         border-radius: 14px;
         background: var(--surface);
         text-align: left;
         overflow: hidden;
-        -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent 100%);
-        mask-image: linear-gradient(to bottom, #000 78%, transparent 100%);
+    }
+    /* Ограничиваем именно японский, а не весь блок: раньше потолок стоял на
+       карточке, и растворяющая маска задевала перевод — он выглядел
+       полустёртым, хотя помещался целиком. */
+    #now-cue-jp {
+        max-height: 58px;
+        overflow: hidden;
     }
     /* Кегль — по пропорциям прежнего блока: японский вровень со списком минус
        пара пунктов, перевод заметно тише. Раньше это было 14 и 9.5 при списке
        14/11.5; сегодня список 17/13, отсюда 15 и 11. */
+    /* Кегль подобран так, чтобы обычная реплика вставала в ОДНУ строку: при
+       15px хвост вроде «ね» переносился один на вторую строку и блок выглядел
+       кривым при высоте под 90px. Сейчас те же фразы укладываются в 55px. */
     .now-cue__jp {
         justify-content: flex-start;
-        font-size: 15px;
-        line-height: 1.4;
-        gap: 1px 7px;
+        font-size: 13.5px;
+        line-height: 1.35;
+        gap: 0 6px;
     }
+    .now-cue .ncw__read { font-size: 9px; }
     .now-cue__ru {
         margin-top: 2px;
-        font-size: 11px;
+        font-size: 10.5px;
         line-height: 1.3;
         text-align: left;
         color: var(--text-muted);
