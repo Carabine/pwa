@@ -3478,12 +3478,14 @@ html, body {
 
     /* --- настройки шторкой --- */
     .player-controls { display: none; }
+    /* Слой только для того, чтобы тап мимо шторки её закрывал. Затемнения нет
+       намеренно: оно гасило и кадр, из-за которого сюда и пришли. Шторку от
+       текста отделяет её собственная тень. */
     .player-layout.sheet-open::after {
         content: '';
         position: fixed;
         inset: 0;
         z-index: 59;
-        background: rgba(0, 0, 0, .55);
     }
     .player-layout.sheet-open .player-controls {
         display: flex;
@@ -3499,6 +3501,7 @@ html, body {
         border: 1px solid var(--border);
         border-radius: 18px 18px 0 0;
         background: var(--card);
+        box-shadow: 0 -12px 32px rgba(0, 0, 0, .45);
     }
     .sheet-head {
         display: flex;
