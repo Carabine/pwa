@@ -3509,6 +3509,9 @@ html, body {
         border-radius: 0;
         background: var(--bg);
     }
+    /* Дети экрана не растягиваются по высоте: у .control-row базовое
+       flex: 1 1 100%, и в колонке каждая строка забирала равную долю экрана. */
+    .player-layout.sheet-open .player-controls > * { flex: 0 0 auto; }
     .sheet-head {
         display: flex;
         align-items: center;
@@ -3541,9 +3544,12 @@ html, body {
     .player-controls .control-row {
         display: flex;
         flex-direction: column;
+        flex-wrap: nowrap;
         gap: 0;
         margin: 0;
     }
+    .player-controls .control-row .control-group { flex: 0 0 auto; }
+    .player-controls .control-group select { width: auto; }
     .player-controls .control-group {
         display: flex;
         align-items: center;
