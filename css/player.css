@@ -3722,13 +3722,21 @@ html, body {
     .mode-row { display: contents; }
 }
 
-/* Шапка списка во время поиска субтитров: вместо одинокого «Субтитры» и
-   пустого правого угла — такие же заглушки, как в самом списке. */
+/* Шапка списка во время поиска субтитров. Слово «Субтитры» не прячем: оно
+   известно всегда, и заглушка на месте постоянного текста только мигала.
+   Под заглушкой — то, что действительно едет: процент покрытия и кнопка
+   авто-колоды. Полоски выровнены по центру строки, а не по базовой линии. */
 .hdr-skel { display: none; }
 .transcript.is-loading .hdr-skel { display: inline-block; }
-.transcript.is-loading .transcript__title { display: none; }
+.transcript.is-loading .transcript__header { align-items: center; }
+.hdr-skel--cov {
+    width: 58px;
+    height: 11px;
+    margin-left: 8px;
+    border-radius: 6px;
+}
 .hdr-skel--pill {
-    width: 118px;
-    height: 26px;
-    border-radius: 13px;
+    width: 104px;
+    height: 24px;
+    border-radius: 12px;
 }
