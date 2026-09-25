@@ -1407,6 +1407,16 @@ function setSubsSkeleton(on) {
 // чёрная простыня с одной строкой «Ищем японские субтитры…».
 setSubsSkeleton(true);
 subsStatus.classList.add('transcript__status--searching');
+// Строка реплики под видео — тоже под заглушкой с первого кадра. Без этого
+// до загрузки субтитров карточка стоит пустой полоской в 14px: содержимого
+// ещё нет, а высоту ей держать нечем. Элементы ищем по id: их константы
+// объявлены ниже по файлу, и обращение к ним отсюда попало бы в TDZ.
+{
+    const jp = document.getElementById('now-cue-jp');
+    const ru = document.getElementById('now-cue-ru');
+    if (jp) jp.innerHTML = '<span class="skel skel-bar" style="width: 72%"></span>';
+    if (ru) ru.innerHTML = '<span class="skel skel-bar" style="width: 46%"></span>';
+}
 
 async function loadSubtitles(episodeNumber = 1) {
     // Поколение выбора серии на момент запроса: ответ по МЕДЛЕННОЙ серии не
