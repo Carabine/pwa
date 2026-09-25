@@ -459,14 +459,17 @@ html, body {
 }
 
 /* Кнопка качества видео — тот же стиль, что у скорости */
+/* Качество — самая широкая надпись в полосе, и в прежней яркости она
+   перетягивала внимание с кадра. Держим её тише соседних кнопок: выбор
+   качества нужен редко, обычно достаточно «Авто». */
 .player-ui__quality {
     min-width: 46px;
     height: 30px;
     padding: 0 10px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 999px;
-    color: rgba(255, 255, 255, 0.92);
+    color: rgba(255, 255, 255, 0.72);
     font-size: 12.5px;
     font-weight: 600;
     flex-shrink: 0;
@@ -474,14 +477,16 @@ html, body {
 
 @media (hover: hover) and (pointer: fine) {
     .player-ui__quality:hover {
-        background: rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.11);
     }
 }
 
+/* Ручной выбор качества подсвечиваем оттенком, а не заливкой градиентом:
+   розовая пилюля в полосе кричала громче самой картинки. */
 .player-ui__quality.is-custom {
-    background: var(--grad);
-    border-color: transparent;
-    color: #fff;
+    background: color-mix(in srgb, var(--primary) 20%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+    color: rgba(255, 255, 255, 0.92);
 }
 
 /* Всплывающие меню выбора качества и скорости (открываются над кнопкой).
