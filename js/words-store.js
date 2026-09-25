@@ -455,8 +455,19 @@ function glossCovers(a, b) {
 function shortTranslation(dict, limit = 2) {
     if (!dict || !dict.senses) return '';
     const all = dict.senses.flatMap((s) => s.definitions || []);
-    const clean = all.filter((d) => !/\(/.test(d));
-    const qualified = all.filter((d) => /\(/.test(d)).map((d) => d.replace(/\s*\([^)]*\)/g, '').trim());
+    // Скобки бывают двух сортов, и это решает порядок. Короткая скобка —
+    // управление глагола: «вести войну (на)», без предлога вариант неполный и
+    // обычно формальный, такие уводим в хвост. Длинная — пояснение к готовому
+    // переводу: «прийти (пространственно или во времени)», сам перевод здесь
+    // главный, и терять его нельзя (у 来る из-за этого первым значением
+    // оказывалось «подойти» вместо «прийти»).
+    const parenWords = (d) => {
+        const m = /\(([^)]*)\)/.exec(d);
+        return m ? m[1].trim().split(/\s+/).filter(Boolean).length : 0;
+    };
+    const strip = (d) => d.replace(/\s*\([^)]*\)/g, '').trim();
+    const clean = all.filter((d) => parenWords(d) === 0 || parenWords(d) >= 3).map(strip);
+    const qualified = all.filter((d) => { const n = parenWords(d); return n > 0 && n < 3; }).map(strip);
 
     const picked = [];
     const keys = [];
