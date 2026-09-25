@@ -3497,6 +3497,10 @@ html, body {
     .player-layout.sheet-open .player-controls {
         display: flex;
         flex-direction: column;
+        /* Именно nowrap: с базовым flex-wrap: wrap колонка складывает строки в
+           дополнительные колонки, ширина линии становится max-content (493px
+           при экране 390) и всё уезжает за правый край. */
+        flex-wrap: nowrap;
         align-items: stretch;
         position: fixed;
         inset: 0;
