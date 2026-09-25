@@ -3523,16 +3523,18 @@ html, body {
     }
     .mob-bar__btn {
         flex: none;
-        width: 28px;
-        height: 28px;
+        /* 24px — как кнопки в шапке субтитров; именно они задают высоту всей
+           строки (24 + 6 + 6 = 36), поэтому размер тут решает, а не текст. */
+        width: 24px;
+        height: 24px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         border: 0;
-        border-radius: 14px;
+        border-radius: 12px;
         background: var(--surface);
         color: var(--text-muted);
-        font: 700 16px var(--font);
+        font: 700 15px var(--font);
         line-height: 1;
         cursor: pointer;
     }
