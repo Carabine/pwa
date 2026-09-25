@@ -3592,12 +3592,14 @@ html, body {
     }
 
     /* Режимы: подпись словами слева, переключатель справа. */
-    .control-group--mode {
+    /* Специфичность не ниже .player-controls .control-group, иначе блок
+       остаётся flex-строкой и .offset-buttons сжимается по содержимому. */
+    .player-controls .control-group--mode {
         display: block;
         border-bottom: 0;
         padding: 0;
     }
-    .control-group--mode > label { display: none; }
+    .player-controls .control-group--mode > label { display: none; }
     .control-group--mode .offset-buttons {
         display: block;
         margin: 0;
