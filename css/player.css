@@ -3579,7 +3579,9 @@ html, body {
     .player-controls .control-group--mode > label { display: none; }
     .control-group--mode .offset-buttons {
         display: block;
-        margin: 0;
+        /* Отступ от заголовка раздела: без него «Как смотрим» стояло
+           вплотную к первой строке и читалось с ней как одно целое. */
+        margin: 8px 0 0;
     }
     /* Строка целиком: подпись слева, переключатель справа, одна линия снизу.
        (На ПК .mode-row — display: contents, и чипы лежат ряд в ряд как раньше.) */
