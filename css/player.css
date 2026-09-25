@@ -3529,7 +3529,48 @@ html, body {
         border-bottom: 1px solid var(--border);
     }
     .transcript__title { font-size: 13px; }
+    .transcript__header-left { gap: 0; }
     .episode-coverage::before { content: '·'; margin: 0 5px; opacity: .6; }
+
+    /* --- кадр во всю ширину, список плоский и без рамки --- */
+    /* Раскладка на телефоне больше не «две карточки с полями»: кадр упирается
+       в края, под ним текст без рамки. Кадр липкий — при чтении списка он
+       остаётся на месте, не надо прокручивать обратно. */
+    .player-layout {
+        padding: 0;
+        gap: 0;
+    }
+    .player-main {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        padding: 0 0 4px;
+        background: var(--bg);
+    }
+    .video-wrap { border-radius: 0; }
+    .transcript {
+        min-height: 0;
+        border: 0;
+        border-radius: 0;
+        background: none;
+    }
+    .transcript__list { padding: 0 0 24px; }
+    .cue {
+        position: relative;
+        margin: 0;
+        padding: 11px 14px;
+        border-left: 0;
+        border-radius: 0;
+    }
+    .cue--active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--primary, var(--pink));
+    }
 
     /* --- строки реплик: без времени и значка ИИ --- */
     .cue__time { display: none; }
