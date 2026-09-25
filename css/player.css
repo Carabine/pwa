@@ -3768,6 +3768,12 @@ html, body {
         overflow: hidden;
         text-overflow: ellipsis;
     }
+}
+
+/* На совсем узких телефонах процент не влезает и обрезается посреди слова —
+   лучше убрать его совсем: полная фраза всё равно есть в подсказке. */
+@media (max-width: 374px) {
+    .episode-coverage { display: none; }
 
     /* --- строки реплик: без времени и значка ИИ --- */
     .cue__time { display: none; }
