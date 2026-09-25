@@ -3085,10 +3085,16 @@ html, body {
 .transcript__deck[hidden] { display: none; }
 
 .transcript__fix--more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 3px 8px;
-    font-size: 14px;
-    line-height: 15px;
-    letter-spacing: 1px;
+}
+
+.transcript__fix--more svg {
+    width: 15px;
+    height: 15px;
+    display: block;
 }
 
 /* Выпадашка привязана к шапке субтитров: она задаёт и правый край, и предел
@@ -3765,8 +3771,12 @@ html, body {
     .transcript__fix--more {
         width: 24px;
         height: 24px;
+        padding: 0;
         border-radius: 8px;
-        font-size: 11px;
+    }
+    .transcript__fix--more svg {
+        width: 13px;
+        height: 13px;
     }
     .transcript__header-right { gap: 4px; }
     .transcript__title { flex: 0 0 auto; }

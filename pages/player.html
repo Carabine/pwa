@@ -278,7 +278,12 @@
                         <!-- «⋯»: прочие действия со словами серии (js/episode-known.js) -->
                         <button class="transcript__fix transcript__fix--more" id="episode-deck-more" type="button"
                                 aria-haspopup="true" aria-expanded="false" aria-controls="episode-deck-menu"
-                                data-i18n-title="edeck.more.title" title="Другие действия">⋯</button>
+                                data-i18n-title="edeck.more.title" title="Другие действия">
+                            <!-- Значок точками, а не символом «⋯»: у глифа своя
+                                 ширина и letter-spacing тянет его влево, в кнопке
+                                 фиксированного размера он вставал не по центру. -->
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
+                        </button>
                     </div>
                 </div>
                 <!-- Выпадашка живёт в шапке, а не в группе кнопок: шапка шире и
