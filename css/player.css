@@ -3611,8 +3611,14 @@ html, body {
         font-size: 14.5px;
         color: var(--text);
     }
+    /* Ячейка занимает всю свою колонку, а содержимое прижато вправо: иначе
+       подчёркивание под подписью и под переключателем шли разной длины и
+       между ними оставался разрыв. */
     .control-group--mode .offset-buttons > :not(.mode-lbl) {
-        justify-self: end;
+        justify-self: stretch;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
         padding: 6px 0;
         border-bottom: 1px solid var(--border);
         margin: 0;
