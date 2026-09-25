@@ -3502,6 +3502,9 @@ html, body {
         padding: 6px 14px;
     }
     .mob-bar__name {
+        /* Без явной высоты строки текст задавал строке лишние 4px поверх
+           кнопок: высоту должны держать кнопки (24px), а не line-height. */
+        line-height: 1.2;
         flex: 1 1 auto;
         min-width: 0;
         overflow: hidden;
@@ -3512,6 +3515,7 @@ html, body {
         color: var(--text);
     }
     .mob-bar__ep {
+        line-height: 1.2;
         flex: none;
         white-space: nowrap;
         font-size: 12.5px;
