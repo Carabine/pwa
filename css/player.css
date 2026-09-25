@@ -3705,6 +3705,59 @@ html, body {
         background: var(--primary, var(--pink));
     }
 
+    /* --- один фон и одна шкала у субтитров и настроек (выбор 26.09) ---
+       Было три уровня фона: страница и список #0a0a0f, шторка настроек #1a1a26,
+       поля внутри неё #13131a — темнее собственной подложки. Теперь уровня два:
+       чёрным остаётся только кадр, а вся работа (текст, кнопки, настройки) идёт
+       на одной серой подложке; контролы поверх неё — на --surface.
+       Важно: фон контролов задаём background-COLOR — шорткат background стёр бы
+       шеврон селекта, он нарисован фоновой картинкой. */
+    .transcript { background-color: var(--card); }
+    .transcript__header {
+        background-color: transparent;
+        border-top: 0;
+        padding: 9px 14px;
+    }
+    .player-controls .control-group select,
+    .transcript__fix--deck,
+    .transcript__fix--more,
+    .control-group--mode #reading-toggle { background-color: var(--surface); }
+
+    /* Одна шкала размеров в обеих зонах. */
+    .transcript__title,
+    .sheet-head__title {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: -.01em;
+    }
+    .sheet-group { font-size: 13px; }
+    .player-controls .control-group > label {
+        font-size: 11px;
+        letter-spacing: .06em;
+    }
+    .episode-coverage { font-size: 11px; }
+    .sheet-head__done { font-size: 14px; }
+    .mode-lbl,
+    .control-group--mode .mode-row { font-size: 14px; }
+    .player-controls .control-group select {
+        height: 34px;
+        border-radius: 12px;
+        font-size: 13.5px;
+        padding: 0 30px 0 12px;
+    }
+    .transcript__fix--deck {
+        height: 32px;
+        padding: 0 12px;
+        border-radius: 12px;
+        font-size: 13px;
+    }
+    .transcript__fix--more {
+        width: 32px;
+        height: 32px;
+        border-radius: 12px;
+        font-size: 13px;
+    }
+
     /* --- строки реплик: без времени и значка ИИ --- */
     .cue__time { display: none; }
     .cue__ai,
