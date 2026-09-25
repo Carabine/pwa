@@ -1384,6 +1384,12 @@ function setSubsSkeleton(on) {
     subsStatus.after(el);
 }
 
+// Скелетон ставим сразу при загрузке страницы, не дожидаясь списка серий:
+// первые секунды (пока едут серии и поток) на месте субтитров была пустая
+// чёрная простыня с одной строкой «Ищем японские субтитры…».
+setSubsSkeleton(true);
+subsStatus.classList.add('transcript__status--searching');
+
 async function loadSubtitles(episodeNumber = 1) {
     // Поколение выбора серии на момент запроса: ответ по МЕДЛЕННОЙ серии не
     // должен перетереть субтитры уже выбранной другой (см. bumpEpisodeGen).
@@ -3321,6 +3327,9 @@ function syncMobBar() {
         const opt = season && season.selectedOptions[0];
         name.textContent = titleRu || titleRomaji || (opt ? opt.textContent.trim() : '');
     }
+    // Настоящие данные пришли — снимаем скелетон строки и показываем «⋯».
+    const more = document.getElementById('mob-bar-more');
+    if (more) more.hidden = false;
     const ep = document.getElementById('mob-bar-ep');
     const opt = episodeSelect && episodeSelect.selectedOptions[0];
     if (ep) ep.textContent = opt ? opt.textContent.trim() : '';
