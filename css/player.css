@@ -3716,7 +3716,7 @@ html, body {
     .transcript__header {
         background-color: transparent;
         border-top: 0;
-        padding: 9px 14px;
+        padding: 8px 14px;
     }
     .player-controls .control-group select,
     .transcript__fix--deck,
@@ -3750,18 +3750,23 @@ html, body {
        Возвращаем им компактность и запрещаем заголовку ужиматься: восемь букв
        должны помещаться всегда, а уступает место второстепенное — процент. */
     .transcript__fix--deck {
-        height: 30px;
-        padding: 0 10px;
-        border-radius: 11px;
-        font-size: 12.5px;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 8px;
+        font-size: 11px;
+        gap: 4px;
+    }
+    .transcript__fix--deck svg {
+        width: 11px;
+        height: 11px;
     }
     .transcript__fix--more {
-        width: 30px;
-        height: 30px;
-        border-radius: 11px;
-        font-size: 13px;
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        font-size: 11px;
     }
-    .transcript__header-right { gap: 6px; }
+    .transcript__header-right { gap: 4px; }
     .transcript__title { flex: 0 0 auto; }
     .episode-coverage {
         min-width: 0;
