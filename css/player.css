@@ -3447,7 +3447,11 @@ html, body {
         align-items: center;
         gap: 8px;
         min-width: 0;
-        padding: 9px 12px 7px;
+        /* Высота фиксирована: пока строка в скелетоне, кнопок (28px) в ней нет,
+           и без min-height она была на 8px ниже — с приходом данных список
+           субтитров прыгал вниз. */
+        min-height: 44px;
+        padding: 8px 12px;
     }
     .mob-bar__name {
         flex: 1 1 auto;
