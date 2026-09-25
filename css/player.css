@@ -3540,8 +3540,8 @@ html, body {
         padding: 10px 16px calc(16px + env(safe-area-inset-bottom));
         border: 1px solid var(--border);
         border-radius: 18px 18px 0 0;
-        background: var(--card);
-        box-shadow: 0 -12px 32px rgba(0, 0, 0, .45);
+        background: var(--bg);
+        box-shadow: 0 -12px 32px rgba(0, 0, 0, .6);
     }
     /* Дети экрана не растягиваются по высоте: у .control-row базовое
        flex: 1 1 100%, и в колонке каждая строка забирала равную долю экрана. */
@@ -3712,10 +3712,12 @@ html, body {
        на одной серой подложке; контролы поверх неё — на --surface.
        Важно: фон контролов задаём background-COLOR — шорткат background стёр бы
        шеврон селекта, он нарисован фоновой картинкой. */
-    .transcript { background-color: var(--card); }
+    /* Фон везде чёрный, как на остальных экранах приложения: серый там
+       означает отдельный объект (карточка аниме, карточка повторения), а не
+       второй фон. Границы зон держат тонкие линии. */
+    .transcript { background-color: transparent; }
     .transcript__header {
         background-color: transparent;
-        border-top: 0;
         padding: 8px 14px;
     }
     .player-controls .control-group select,
