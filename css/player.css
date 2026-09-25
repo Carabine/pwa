@@ -1120,17 +1120,23 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 10px 20px;
-    background: var(--grad);
-    color: #fff;
+    /* Подсказка, а не призыв к действию: розовая пилюля с тенью перетягивала
+       на себя внимание с текста, ради которого экран и открыт. Тихая плашка
+       на размытии — заметно, но не кричит. */
+    padding: 8px 15px;
+    background: color-mix(in srgb, var(--card) 86%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
     border-radius: 999px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     /* В одну строку: «До поточної» (uk) длиннее «К текущей» и в узкой колонке
        ломалась на две строки — пилюля превращалась в кляксу поверх списка. */
     white-space: nowrap;
     max-width: calc(100% - 20px);
-    box-shadow: var(--shadow-pink);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease, transform 0.2s ease;
@@ -1148,8 +1154,9 @@ html, body {
 }
 
 .transcript__jump svg {
-    width: 17px;
-    height: 17px;
+    width: 15px;
+    height: 15px;
+    opacity: .8;
     transition: transform 0.2s ease;
 }
 
