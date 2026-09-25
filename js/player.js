@@ -1348,6 +1348,10 @@ function switchQuality(key) {
 // реплики» (тайм-код + японская строка из «слов» + строка перевода) с волной
 // прозрачности. Ширины фиксированы, чтобы картинка не прыгала между сериями.
 // renderTranscript() скелетон не трогает (чистит только .cue) — убираем сами.
+// Ширины «слов» в реплике (% строки) и ширина перевода под ней. Скелетон
+// повторяет настоящую структуру: над каждым словом — чтение, под строкой —
+// перевод. Раньше это были просто три полоски в ряд, и на загрузке было
+// непонятно, что за список едет.
 const SKEL_ROWS = [
     [[38, 24, 15], 55],
     [[28, 33], 40],
@@ -1373,12 +1377,22 @@ function setSubsSkeleton(on) {
         const row = document.createElement('div');
         row.className = 'subs-skel__row';
         row.appendChild(document.createElement('i')).className = 'subs-skel__time';
-        for (const w of jpWidths) {
-            const bar = document.createElement('i');
-            bar.className = 'subs-skel__jp';
-            bar.style.width = w + '%';
-            row.appendChild(bar);
-        }
+        const jp = document.createElement('div');
+        jp.className = 'subs-skel__jp';
+        jpWidths.forEach((w, i) => {
+            const word = document.createElement('span');
+            word.className = 'subs-skel__w';
+            word.style.width = w + '%';
+            const read = document.createElement('i');
+            read.className = 'subs-skel__read';
+            // Чтение над словом то короче, то длиннее самого слова — как ромадзи
+            // над кандзи; одинаковая ширина выглядела как таблица.
+            read.style.width = (i % 2 ? 62 : 88) + '%';
+            word.appendChild(read);
+            word.appendChild(document.createElement('i')).className = 'subs-skel__word';
+            jp.appendChild(word);
+        });
+        row.appendChild(jp);
         const ru = document.createElement('i');
         ru.className = 'subs-skel__ru';
         ru.style.width = ruWidth + '%';

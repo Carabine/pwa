@@ -3352,7 +3352,7 @@ html, body {
    «слов» + строка перевода, волна прозрачности сверху вниз. Строки вставляет
    player.js (setSubsSkeleton), ширины плашек задаются инлайном. */
 .subs-skel__row {
-    padding: 10px 16px;
+    padding: 11px 14px;
     animation: subs-skel-pulse 1.6s ease-in-out infinite;
 }
 
@@ -3362,31 +3362,50 @@ html, body {
 .subs-skel__row:nth-child(5) { animation-delay: 0.72s; }
 
 .subs-skel__row i {
-    display: inline-block;
-    height: 10px;
+    display: block;
     border-radius: 5px;
     background: rgba(255, 255, 255, .07);
-    margin-right: 6px;
 }
 
-.subs-skel__row .subs-skel__time {
-    display: block;
+.subs-skel__time {
     width: 30px;
     height: 8px;
     margin-bottom: 7px;
     opacity: .6;
 }
 
-.subs-skel__row .subs-skel__jp {
-    height: 14px;
+/* Строка реплики: слова в ряд, над каждым — полоска чтения. */
+.subs-skel__jp {
+    display: flex;
+    align-items: flex-end;
+    gap: 9px;
+}
+
+.subs-skel__w {
+    display: block;
+    min-width: 26px;
+}
+
+.subs-skel__read {
+    height: 6px;
+    margin-bottom: 5px;
+    opacity: .5;
+}
+
+.subs-skel__word {
+    height: 15px;
     background: rgba(255, 255, 255, .10);
 }
 
-.subs-skel__row .subs-skel__ru {
-    display: block;
+.subs-skel__ru {
     height: 9px;
-    margin-top: 7px;
+    margin-top: 9px;
     opacity: .75;
+}
+
+/* На телефоне у настоящих реплик времени нет — и у заглушки его быть не должно. */
+@media (max-width: 900px) {
+    .subs-skel__time { display: none; }
 }
 
 @keyframes subs-skel-pulse {
