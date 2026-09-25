@@ -3413,3 +3413,133 @@ html, body {
     /* Кнопки 40px и gap 6px — попап громкости доводим до кнопки Play. */
     .player-ui__vol.is-open .player-ui__vol-popup { left: -46px; }
 }
+
+/* ===== Телефон, редизайн 26.09: под кадром сразу текст =====
+   Раньше между видео и субтитрами стояли четыре полосы: блок текущей реплики,
+   вкладки «Настройки | Субтитры», шапка списка в два ряда и время со значком
+   ИИ в каждой строке. Теперь — одна строка «название · Серия N · › · ⋯»,
+   тонкая шапка с колодой и сразу текст. Всё редкое открывается шторкой по «⋯».
+   Блок идёт последним в файле намеренно: он переопределяет правила выше. */
+@media (max-width: 900px) {
+    /* Вкладок больше нет: их роль у «⋯». */
+    .mobile-tabs,
+    .controls-toggle { display: none !important; }
+    /* Блок текущей реплики дублировал первую строку списка. */
+    .now-cue { display: none !important; }
+    /* Горячие клавиши — подсказка для клавиатуры, на телефоне её нет. */
+    .hotkeys,
+    .hotkeys-hint { display: none !important; }
+    /* Список показываем всегда: раньше его прятала вкладка «Настройки». */
+    .player-layout.mtab-settings .transcript { display: flex; }
+    .player-layout.mtab-subs .transcript,
+    .player-layout.mtab-settings .transcript { margin-top: 0; }
+
+    /* --- строка под кадром --- */
+    .mob-bar:not([hidden]) {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        padding: 9px 12px 7px;
+    }
+    .mob-bar__name {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--text);
+    }
+    .mob-bar__ep {
+        flex: none;
+        white-space: nowrap;
+        font-size: 12.5px;
+        color: var(--text-muted);
+    }
+    .mob-bar__btn {
+        flex: none;
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 14px;
+        background: var(--surface);
+        color: var(--text-muted);
+        font: 700 16px var(--font);
+        line-height: 1;
+        cursor: pointer;
+    }
+    .mob-bar__btn svg { width: 15px; height: 15px; }
+    .mob-bar__btn[hidden] { display: none; }
+
+    /* --- настройки шторкой --- */
+    .player-controls { display: none; }
+    .player-layout.sheet-open::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 59;
+        background: rgba(0, 0, 0, .55);
+    }
+    .player-layout.sheet-open .player-controls {
+        display: flex;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 60;
+        max-height: 82svh;
+        overflow: auto;
+        margin: 0;
+        padding: 4px 14px calc(18px + env(safe-area-inset-bottom));
+        border: 1px solid var(--border);
+        border-radius: 18px 18px 0 0;
+        background: var(--card);
+    }
+    .sheet-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 6px 0 10px;
+    }
+    .sheet-head__title { font-size: 15px; font-weight: 700; color: var(--text); }
+    .sheet-head__close {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 16px;
+        background: var(--surface);
+        color: var(--text-muted);
+        cursor: pointer;
+    }
+    .sheet-head__close svg { width: 17px; height: 17px; }
+
+    /* --- тонкая шапка списка: «Субтитры · знакомо 24%» и колода --- */
+    .transcript__header {
+        padding: 9px 12px;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+    }
+    .transcript__title { font-size: 13px; }
+    .episode-coverage::before { content: '·'; margin: 0 5px; opacity: .6; }
+
+    /* --- строки реплик: без времени и значка ИИ --- */
+    .cue__time { display: none; }
+    .cue__ai,
+    .transcript__list.ai-on .cue__ai { display: none !important; }
+    .transcript__list.ai-on .cue { padding-right: 16px; }
+}
+
+/* На ПК строка под кадром не нужна — там есть и заголовок страницы, и селекты. */
+@media (min-width: 901px) {
+    .mob-bar,
+    .sheet-head { display: none !important; }
+}

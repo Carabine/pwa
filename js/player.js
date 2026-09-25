@@ -968,6 +968,7 @@ async function selectEpisode(index) {
     const gen = bumpEpisodeGen();
 
     episodeSelect.value = index;
+    syncMobBar();
     localStorage.setItem(epStorageKey(), String(index));
 
     // Если для этой серии есть сохранённая позиция — продолжим с неё после
@@ -2039,9 +2040,10 @@ function updateCoverage() {
     let pct = Math.round((100 * known) / bases.size);
     if (pct === 0 && known > 0) pct = '<1';
     else if (pct === 100 && known < bases.size) pct = 99;
-    // Компактно: в шапке — короткий значок «📖 N%», полный текст «Ты знаешь N%
-    // слов этой серии (K из N)» — в подсказке (title), чтобы не занимать строку.
-    el.textContent = '📖 ' + pct + '%';
+    // Компактно: в шапке — «знакомо N%», полный текст «Ты знаешь N% слов этой
+    // серии (K из N)» — в подсказке (title), чтобы не занимать строку. Значок
+    // книги убран: словом понятнее, чем эмодзи с голой цифрой.
+    el.textContent = t('player.coverageShort').replace('{p}', pct);
     el.title = t('player.coverage')
         .replace('{p}', pct)
         .replace('{k}', known)
@@ -3297,7 +3299,58 @@ if (mobileTabs) {
         b.addEventListener('click', () => setMobileTab(b.dataset.mtab));
     });
 }
-setMobileTab('settings'); // по умолчанию — настройки (выбрать серию/дорожку)
+setMobileTab('settings'); // на ПК классы ни на что не влияют, на телефоне вкладок больше нет
+
+// ---------- Телефон: строка под видео и шторка настроек ----------
+// На телефоне под кадром должен быть сразу текст, поэтому вместо вкладок и
+// блока настроек — одна строка «название · Серия N · › · ⋯», а всё редкое
+// (сезон, дорожка, выбор серии, режимы, синхронизация, горячие клавиши)
+// открывается шторкой по «⋯». Разметка та же, что на ПК, — меняется оформление.
+// Элементы ищем внутри функций, а не в константах модуля: syncMobBar зовёт
+// selectEpisode, объявленный на тысячу строк выше, — на константы из этого
+// места он налетел бы во «временной мёртвой зоне» при первой загрузке.
+function syncMobBar() {
+    const bar = document.getElementById('mob-bar');
+    if (!bar) return;
+    const name = document.getElementById('mob-bar-name');
+    if (name && !name.textContent) name.textContent = titleRu || titleRomaji || '';
+    const ep = document.getElementById('mob-bar-ep');
+    const opt = episodeSelect && episodeSelect.selectedOptions[0];
+    if (ep) ep.textContent = opt ? opt.textContent.trim() : '';
+    // Последняя серия: стрелку не показываем вовсе — отключённая кнопка здесь
+    // только занимает место и обещает то, чего нет.
+    const next = document.getElementById('mob-bar-next');
+    if (next) {
+        const cur = Number(episodeSelect && episodeSelect.value);
+        next.hidden = !(Number.isInteger(cur) && cur + 1 < state.episodes.length);
+    }
+    bar.hidden = false;
+}
+
+function setSheet(open) {
+    const layout = document.querySelector('.player-layout');
+    if (!layout) return;
+    layout.classList.toggle('sheet-open', open);
+    const more = document.getElementById('mob-bar-more');
+    if (more) more.setAttribute('aria-expanded', String(open));
+}
+
+document.getElementById('mob-bar-next')?.addEventListener('click', () => {
+    const cur = Number(episodeSelect.value);
+    if (Number.isInteger(cur)) selectEpisode(cur + 1);
+});
+document.getElementById('mob-bar-more')?.addEventListener('click',
+    () => setSheet(!document.querySelector('.player-layout').classList.contains('sheet-open')));
+document.getElementById('sheet-close')?.addEventListener('click', () => setSheet(false));
+// Тап по затемнению закрывает шторку. Затемнение — ::after самой раскладки,
+// поэтому целью клика оказывается она сама.
+playerLayout?.addEventListener('click', (e) => {
+    if (e.target === playerLayout && playerLayout.classList.contains('sheet-open')) setSheet(false);
+});
+// Выбрал серию или дорожку — шторка своё дело сделала, закрываем.
+episodeSelect?.addEventListener('change', () => { syncMobBar(); setSheet(false); });
+document.getElementById('translation-select')?.addEventListener('change', () => setSheet(false));
+document.getElementById('season-select')?.addEventListener('change', () => setSheet(false));
 
 // Следим за шириной кадра 16:9 и перекладываем её в --video-w на .player-layout
 // (десктоп):

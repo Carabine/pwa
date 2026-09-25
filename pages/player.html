@@ -127,6 +127,22 @@
                 </div>
             </div>
 
+            <!-- Телефон: одна строка вместо блока настроек и табов — название,
+                 серия, следующая серия и «⋯». Всё редкое (сезон, дорожка, выбор
+                 серии, режимы, синхронизация, горячие клавиши) уехало в шторку
+                 за «⋯»: на телефоне под видео должен быть сразу текст. -->
+            <div class="mob-bar" id="mob-bar" hidden>
+                <span class="mob-bar__name" id="mob-bar-name"></span>
+                <span class="mob-bar__ep" id="mob-bar-ep"></span>
+                <button class="mob-bar__btn" id="mob-bar-next" type="button"
+                        data-i18n-aria="aria.nextEpisode" aria-label="Следующая серия">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+                <button class="mob-bar__btn mob-bar__btn--more" id="mob-bar-more" type="button"
+                        aria-expanded="false" aria-controls="player-controls"
+                        data-i18n-aria="aria.playerSettings" aria-label="Настройки просмотра">⋯</button>
+            </div>
+
             <!-- Навигация по репликам — клавиши Q A D, на телефоне свайп по этой
                  строке. Кнопок нет намеренно: в полоске мало места. -->
             <div class="now-cue" id="now-cue" hidden>
@@ -154,6 +170,15 @@
             </button>
 
             <div class="player-controls" id="player-controls">
+                <!-- Шапка шторки: видна только на телефоне, где этот блок
+                     открывается поверх экрана по «⋯». На ПК скрыта стилями. -->
+                <div class="sheet-head">
+                    <span class="sheet-head__title" data-i18n="controls.settings">Настройки видео</span>
+                    <button class="sheet-head__close" id="sheet-close" type="button"
+                            data-i18n-aria="aria.close" aria-label="Закрыть">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                </div>
                 <!-- Сезон/дорожка/серия — компактный ряд: на ПК всегда в одну строку,
                      на телефоне сезон занимает всю строку, дорожка и серия — рядом. -->
                 <div class="control-row">
