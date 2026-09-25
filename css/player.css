@@ -3745,17 +3745,28 @@ html, body {
         font-size: 13.5px;
         padding: 0 30px 0 12px;
     }
+    /* Кнопки в шапке подросли вместе с общей шкалой и на узких телефонах
+       (360px) стали выдавливать заголовок — «Субтитры» обрезалось в «Субтит…».
+       Возвращаем им компактность и запрещаем заголовку ужиматься: восемь букв
+       должны помещаться всегда, а уступает место второстепенное — процент. */
     .transcript__fix--deck {
-        height: 32px;
-        padding: 0 12px;
-        border-radius: 12px;
-        font-size: 13px;
+        height: 30px;
+        padding: 0 10px;
+        border-radius: 11px;
+        font-size: 12.5px;
     }
     .transcript__fix--more {
-        width: 32px;
-        height: 32px;
-        border-radius: 12px;
+        width: 30px;
+        height: 30px;
+        border-radius: 11px;
         font-size: 13px;
+    }
+    .transcript__header-right { gap: 6px; }
+    .transcript__title { flex: 0 0 auto; }
+    .episode-coverage {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* --- строки реплик: без времени и значка ИИ --- */
