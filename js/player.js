@@ -3313,7 +3313,14 @@ function syncMobBar() {
     const bar = document.getElementById('mob-bar');
     if (!bar) return;
     const name = document.getElementById('mob-bar-name');
-    if (name && !name.textContent) name.textContent = titleRu || titleRomaji || '';
+    // Название приходит параметром адреса, но по ссылке без него (закладка,
+    // расшаренный url) строка оставалась пустой — тогда берём его из селекта
+    // сезона, он заполняется из каталога.
+    if (name && !name.textContent) {
+        const season = document.getElementById('season-select');
+        const opt = season && season.selectedOptions[0];
+        name.textContent = titleRu || titleRomaji || (opt ? opt.textContent.trim() : '');
+    }
     const ep = document.getElementById('mob-bar-ep');
     const opt = episodeSelect && episodeSelect.selectedOptions[0];
     if (ep) ep.textContent = opt ? opt.textContent.trim() : '';
