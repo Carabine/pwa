@@ -2762,8 +2762,21 @@ async function openWordPopup(tok, cue, event) {
             || (senses[0] && senses[0].definitions && senses[0].definitions[0]) || '';
         if (main) {
             const div = document.createElement('div');
-            div.className = 'sense';
+            div.className = 'sense sense--main';
             div.textContent = main;
+            popupBody.appendChild(div);
+        }
+        // Остальные смыслы — одной тихой строкой, по одному слову на смысл.
+        // Прогоняем каждый через тот же shortTranslation, чтобы и здесь
+        // работало правило про скобки-пояснения и скобки-управление.
+        const rest = senses.slice(1)
+            .map((sense) => shortTranslation({ senses: [sense] }, 1))
+            .filter((d) => d && d !== main);
+        const uniq = rest.filter((d, i) => rest.indexOf(d) === i).slice(0, 3);
+        if (uniq.length) {
+            const div = document.createElement('div');
+            div.className = 'sense sense--more';
+            div.textContent = uniq.join(' · ');
             popupBody.appendChild(div);
         }
 

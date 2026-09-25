@@ -3871,3 +3871,13 @@ html, body {
     height: 24px;
     border-radius: 8px;
 }
+
+/* Карточка слова: главное значение и тихая строка с остальными смыслами
+   (по одному слову на смысл, без подписи «также» — она ничего не добавляла). */
+.sense--main { font-weight: 600; }
+
+.sense--more {
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
