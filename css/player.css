@@ -3821,6 +3821,14 @@ html, body {
 .hdr-skel { display: none; }
 .transcript.is-loading .hdr-skel { display: inline-block; }
 .transcript.is-loading .transcript__header { align-items: center; }
+/* Пока идёт загрузка, заголовок тоже заглушка: живое белое слово рядом с
+   серыми полосками выбивалось и выглядело так, будто шапка уже готова. */
+.transcript.is-loading .transcript__title { display: none; }
+.hdr-skel--title {
+    width: 74px;
+    height: 13px;
+    border-radius: 7px;
+}
 .hdr-skel--cov {
     width: 58px;
     height: 11px;
@@ -3828,7 +3836,7 @@ html, body {
     border-radius: 6px;
 }
 .hdr-skel--pill {
-    width: 104px;
+    width: 106px;
     height: 24px;
-    border-radius: 12px;
+    border-radius: 8px;
 }
