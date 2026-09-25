@@ -1701,7 +1701,10 @@ async function maybeAutoSync() {
             localStorage.setItem(key + ':m', method || 'alass');
             renderTranscript();
             updateNowCue(state.activeCueIndex);
-            showSnackbar(t('subs.autoSynced'), { duration: 3500 });
+            // Плашку «Субтитры синхронизированы автоматически» не показываем:
+            // подгонка сдвига — рутина, о которой сообщать нечего, а всплывашка
+            // лезла поверх текста ровно в тот момент, когда его начинают читать.
+            // В статистику событие по-прежнему пишем.
             if (window.animeiTrack) window.animeiTrack('autosync', offset.toFixed(1) + ' · ' + confidence.toFixed(2));
         } else if (trusted) {
             // Сдвиг мал — субтитры уже практически синхронны, оставляем как есть (0).

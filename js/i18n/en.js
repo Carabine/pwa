@@ -620,7 +620,6 @@ window.I18N_EN = {
         'clip.recutStale': 'The video source has expired — open the episode in the player and save the word again',
         'clip.recutFail': 'Re-cut failed — try again later',
 
-        'subs.autoSynced': 'Subtitles synced automatically',
         'settings.autoSync': 'Auto-sync subtitles',
 
         'err.rateLimited': 'Too many attempts. Try again in a few minutes.',
