@@ -3483,54 +3483,154 @@ html, body {
     .mob-bar__btn svg { width: 15px; height: 15px; }
     .mob-bar__btn[hidden] { display: none; }
 
-    /* --- настройки шторкой --- */
+    /* --- настройки отдельным экраном ---
+       Шторка снизу оставляла куски интерфейса по краям и всё равно перекрывала
+       текст. Теперь это самостоятельный компактный экран поверх всего (включая
+       шапку сайта), с разделами и «Готово». Выпадашки остались настоящими. */
     .player-controls { display: none; }
-    /* Слой только для того, чтобы тап мимо шторки её закрывал. Затемнения нет
-       намеренно: оно гасило и кадр, из-за которого сюда и пришли. Шторку от
-       текста отделяет её собственная тень. */
     .player-layout.sheet-open::after {
         content: '';
         position: fixed;
         inset: 0;
-        z-index: 59;
+        z-index: 99;
     }
     .player-layout.sheet-open .player-controls {
         display: flex;
+        flex-direction: column;
+        align-items: stretch;
         position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 60;
-        max-height: 82svh;
+        inset: 0;
+        z-index: 100;
         overflow: auto;
+        gap: 0;
         margin: 0;
-        padding: 4px 14px calc(18px + env(safe-area-inset-bottom));
-        border: 1px solid var(--border);
-        border-radius: 18px 18px 0 0;
-        background: var(--card);
-        box-shadow: 0 -12px 32px rgba(0, 0, 0, .45);
+        padding: calc(10px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+        border: 0;
+        border-radius: 0;
+        background: var(--bg);
     }
     .sheet-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        width: 100%;
-        padding: 6px 0 10px;
+        gap: 12px;
+        padding: 4px 0 10px;
     }
-    .sheet-head__title { font-size: 15px; font-weight: 700; color: var(--text); }
-    .sheet-head__close {
-        width: 32px;
-        height: 32px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+    .sheet-head__title { font-size: 17px; font-weight: 700; color: var(--text); }
+    .sheet-head__done {
+        flex: none;
         border: 0;
-        border-radius: 16px;
-        background: var(--surface);
-        color: var(--text-muted);
+        background: none;
+        color: var(--pink);
+        font: 600 15px var(--font);
+        padding: 6px 2px;
         cursor: pointer;
     }
-    .sheet-head__close svg { width: 17px; height: 17px; }
+    /* Заголовки разделов */
+    .sheet-group {
+        margin: 10px 0 2px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+    }
+    .sheet-group:first-of-type { margin-top: 2px; }
+
+    /* Строка = подпись слева, управление справа. Ряд селектов больше не ряд. */
+    .player-controls .control-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin: 0;
+    }
+    .player-controls .control-group {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 0;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .player-controls .control-group > label {
+        flex: none;
+        margin: 0;
+        font: 500 14.5px var(--font);
+        text-transform: none;
+        letter-spacing: 0;
+        color: var(--text);
+    }
+    .player-controls .control-group select {
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 66%;
+        height: 36px;
+        padding: 0 30px 0 12px;
+        font-size: 14px;
+    }
+
+    /* Режимы: подпись словами слева, переключатель справа. */
+    .control-group--mode {
+        display: block;
+        border-bottom: 0;
+        padding: 0;
+    }
+    .control-group--mode > label { display: none; }
+    .control-group--mode .offset-buttons {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 0 12px;
+        margin: 0;
+    }
+    .mode-lbl {
+        padding: 11px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 14.5px;
+        color: var(--text);
+    }
+    .control-group--mode .offset-buttons > :not(.mode-lbl) {
+        justify-self: end;
+        padding: 6px 0;
+        border-bottom: 1px solid var(--border);
+        margin: 0;
+    }
+    /* Чипы «⏸ Авто-пауза» и «RU» на этом экране — тумблеры: подпись уже слева,
+       а текст внутри кнопки только сбивал. */
+    .control-group--mode #autopause-btn,
+    .control-group--mode #ru-toggle {
+        position: relative;
+        width: 46px;
+        height: 27px;
+        padding: 0;
+        border: 0;
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--text-dim) 40%, transparent);
+        font-size: 0;
+        color: transparent;
+        box-shadow: none;
+    }
+    .control-group--mode #autopause-btn::after,
+    .control-group--mode #ru-toggle::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 21px;
+        height: 21px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform .15s ease;
+    }
+    .control-group--mode #autopause-btn.chip-btn--active,
+    .control-group--mode #ru-toggle.chip-btn--active { background: var(--pink); }
+    .control-group--mode #autopause-btn.chip-btn--active::after,
+    .control-group--mode #ru-toggle.chip-btn--active::after { transform: translateX(19px); }
+    /* Сегмент «кана / ромадзи» остаётся сегментом — выбор из двух, не да/нет. */
+    .control-group--mode #reading-toggle { border-bottom: 1px solid var(--border); }
+
+    .subs-fix-link { align-self: flex-end; margin-top: 12px; }
 
     /* --- тонкая шапка списка: «Субтитры · знакомо 24%» и колода --- */
     .transcript__header {
@@ -3592,5 +3692,7 @@ html, body {
 /* На ПК строка под кадром не нужна — там есть и заголовок страницы, и селекты. */
 @media (min-width: 901px) {
     .mob-bar,
-    .sheet-head { display: none !important; }
+    .sheet-head,
+    .sheet-group,
+    .mode-lbl { display: none !important; }
 }
