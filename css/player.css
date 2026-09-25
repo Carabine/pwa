@@ -3468,8 +3468,38 @@ html, body {
     /* Вкладок больше нет: их роль у «⋯». */
     .mobile-tabs,
     .controls-toggle { display: none !important; }
-    /* Блок текущей реплики дублировал первую строку списка. */
-    .now-cue { display: none !important; }
+    /* Блок текущей реплики — карточкой под видео (вариант N2). Читать
+       реплику, не опуская глаз в список; слова в нём такие же тапабельные.
+       Своя подложка и рамка, как у контролов, — на чёрном фоне он не
+       сливается со списком, который идёт ниже. */
+    .now-cue {
+        display: flex;
+        min-height: 0;
+        max-height: none;
+        margin: 8px 14px 10px;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+        text-align: left;
+        overflow: visible;
+    }
+    .now-cue__jp {
+        justify-content: flex-start;
+        font-size: 18px;
+        gap: 2px 9px;
+    }
+    .now-cue__ru {
+        margin-top: 4px;
+        font-size: 13px;
+        line-height: 1.35;
+        text-align: left;
+        color: var(--text-muted);
+    }
+    .now-cue.ai-on {
+        padding-left: 14px;
+        padding-right: 34px;
+    }
     /* Горячие клавиши — подсказка для клавиатуры, на телефоне её нет. */
     .hotkeys,
     .hotkeys-hint { display: none !important; }
