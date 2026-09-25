@@ -1357,6 +1357,10 @@ const SKEL_ROWS = [
 ];
 
 function setSubsSkeleton(on) {
+    // Той же меткой накрываем шапку списка: заглушки вместо «Субтитры»,
+    // покрытия и авто-колоды, пока их нечем заполнить.
+    const panel = document.getElementById('transcript');
+    if (panel) panel.classList.toggle('is-loading', !!on);
     let el = document.getElementById('subs-skel');
     if (!on) { if (el) el.remove(); return; }
     if (el) return;

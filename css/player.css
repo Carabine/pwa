@@ -3701,3 +3701,14 @@ html, body {
     /* Обёртка строки на ПК прозрачна — чипы остаются одним рядом. */
     .mode-row { display: contents; }
 }
+
+/* Шапка списка во время поиска субтитров: вместо одинокого «Субтитры» и
+   пустого правого угла — такие же заглушки, как в самом списке. */
+.hdr-skel { display: none; }
+.transcript.is-loading .hdr-skel { display: inline-block; }
+.transcript.is-loading .transcript__title { display: none; }
+.hdr-skel--pill {
+    width: 118px;
+    height: 26px;
+    border-radius: 13px;
+}

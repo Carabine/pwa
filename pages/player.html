@@ -257,9 +257,14 @@
             <div class="transcript__header">
                 <div class="transcript__header-left">
                     <span class="transcript__title" data-i18n="transcript.title">Субтитры</span>
+                    <!-- Пока субтитры ищутся, шапка тоже под заглушкой: иначе
+                         «Субтитры» висит в одиночестве, а покрытие и авто-колода
+                         доезжают потом и достраивают строку на глазах. -->
+                    <span class="skel skel-bar hdr-skel" style="width: 82px" aria-hidden="true"></span>
                     <span class="episode-coverage" id="episode-coverage" hidden></span>
                 </div>
                 <div class="transcript__header-right">
+                    <span class="skel hdr-skel hdr-skel--pill" aria-hidden="true"></span>
                     <!-- Авто-колода: рядом со списком реплик, из которых
                          она и собирается. Всю группу показывает episode-deck.js,
                          когда субтитры серии загружены. -->
