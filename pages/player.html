@@ -204,14 +204,20 @@
                     <div class="offset-buttons">
                         <!-- Подписи словами: на телефоне чипы «⏸ / RU / あ A» стоят
                              строками с понятным текстом, на ПК подписи скрыты. -->
-                        <span class="mode-lbl" data-i18n="controls.autopause.row">Пауза после каждой реплики</span>
-                        <button id="autopause-btn" class="chip-btn" data-i18n="controls.autopause" data-i18n-title="controls.autopause.title" title="Пауза после каждой реплики (S)">⏸ Авто-пауза</button>
-                        <span class="mode-lbl" data-i18n="controls.ru.row">Показывать перевод</span>
-                        <button id="ru-toggle" class="chip-btn chip-btn--active" data-i18n-title="controls.ru.title" title="Показывать перевод в списке субтитров">RU</button>
-                        <span class="mode-lbl" data-i18n="controls.reading.row">Чтение над словами</span>
-                        <div id="reading-toggle" class="reading-seg" role="group" data-i18n-title="controls.reading.title" title="Чтение над словами: кана ⇄ ромадзи">
-                            <button type="button" class="reading-seg__btn" data-reading="kana" data-i18n-title="controls.reading.kana" title="Кана над словами">あ</button>
-                            <button type="button" class="reading-seg__btn" data-reading="romaji" data-i18n-title="controls.reading.romaji" title="Ромадзи над словами">A</button>
+                        <div class="mode-row">
+                            <span class="mode-lbl" data-i18n="controls.autopause.row">Пауза после каждой реплики</span>
+                            <button id="autopause-btn" class="chip-btn" data-i18n="controls.autopause" data-i18n-title="controls.autopause.title" title="Пауза после каждой реплики (S)">⏸ Авто-пауза</button>
+                        </div>
+                        <div class="mode-row">
+                            <span class="mode-lbl" data-i18n="controls.ru.row">Показывать перевод</span>
+                            <button id="ru-toggle" class="chip-btn chip-btn--active" data-i18n-title="controls.ru.title" title="Показывать перевод в списке субтитров">RU</button>
+                        </div>
+                        <div class="mode-row">
+                            <span class="mode-lbl" data-i18n="controls.reading.row">Чтение над словами</span>
+                            <div id="reading-toggle" class="reading-seg" role="group" data-i18n-title="controls.reading.title" title="Чтение над словами: кана ⇄ ромадзи">
+                                <button type="button" class="reading-seg__btn" data-reading="kana" data-i18n-title="controls.reading.kana" title="Кана над словами">あ</button>
+                                <button type="button" class="reading-seg__btn" data-reading="romaji" data-i18n-title="controls.reading.romaji" title="Ромадзи над словами">A</button>
+                            </div>
                         </div>
                     </div>
                 </div>

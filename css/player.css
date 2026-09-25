@@ -3599,29 +3599,24 @@ html, body {
     }
     .control-group--mode > label { display: none; }
     .control-group--mode .offset-buttons {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        align-items: center;
-        gap: 0 12px;
+        display: block;
         margin: 0;
     }
-    .mode-lbl {
-        padding: 11px 0;
-        border-bottom: 1px solid var(--border);
-        font-size: 14.5px;
-        color: var(--text);
-    }
-    /* Ячейка занимает всю свою колонку, а содержимое прижато вправо: иначе
-       подчёркивание под подписью и под переключателем шли разной длины и
-       между ними оставался разрыв. */
-    .control-group--mode .offset-buttons > :not(.mode-lbl) {
-        justify-self: stretch;
+    /* Строка целиком: подпись слева, переключатель справа, одна линия снизу.
+       (На ПК .mode-row — display: contents, и чипы лежат ряд в ряд как раньше.) */
+    .control-group--mode .mode-row {
         display: flex;
-        justify-content: flex-end;
         align-items: center;
+        justify-content: space-between;
+        gap: 12px;
         padding: 6px 0;
         border-bottom: 1px solid var(--border);
-        margin: 0;
+    }
+    .mode-lbl {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-size: 14.5px;
+        color: var(--text);
     }
     /* Чипы «⏸ Авто-пауза» и «RU» на этом экране — тумблеры: подпись уже слева,
        а текст внутри кнопки только сбивал. */
@@ -3655,7 +3650,7 @@ html, body {
     .control-group--mode #autopause-btn.chip-btn--active::after,
     .control-group--mode #ru-toggle.chip-btn--active::after { transform: translateX(19px); }
     /* Сегмент «кана / ромадзи» остаётся сегментом — выбор из двух, не да/нет. */
-    .control-group--mode #reading-toggle { border-bottom: 1px solid var(--border); }
+    .control-group--mode #reading-toggle { flex: none; }
 
     .subs-fix-link { align-self: flex-end; margin-top: 12px; }
 
@@ -3722,4 +3717,6 @@ html, body {
     .sheet-head,
     .sheet-group,
     .mode-lbl { display: none !important; }
+    /* Обёртка строки на ПК прозрачна — чипы остаются одним рядом. */
+    .mode-row { display: contents; }
 }
