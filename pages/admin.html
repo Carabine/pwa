@@ -160,7 +160,12 @@
     #statsRoot.statsview table { margin-top: 0; border-radius: 0; }
     #statsRoot.statsview th, #statsRoot.statsview td { padding: 5px 10px; font-size: 12px; }
     #statsRoot.statsview .tblwrap { border: 1px solid var(--border); border-radius: 10px; overflow: auto; margin-top: 0; }
-    #statsRoot.statsview th { white-space: nowrap; }
+    #statsRoot.statsview th, #statsRoot.statsview td { white-space: nowrap; }
+    #statsRoot.statsview td:last-child { white-space: normal; }
+    #statsRoot.statsview td .pct { font-size: 10.5px; }
+    /* подписи плиток в одну строку — иначе цифры стоят на разной высоте */
+    #statsRoot.statsview .card .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #statsRoot.statsview .visitor__meta { line-height: 1.35; }
     #statsRoot.statsview .pct { display: inline; margin-left: 3px; }
     /* пояснения под заголовками секций — только лишние строки на телефоне */
     #statsRoot.statsview .section-title + .sub { display: none; }
@@ -229,7 +234,7 @@
         </div>
 
         <div class="box">
-            <div class="box__h">Аккаунты<span class="r">слов · последний тайтл · был</span></div>
+            <div class="box__h">Аккаунты <b id="pAccN"></b><span class="r">слов · время 7д · тайтл · был</span></div>
             <div id="pPeople"><div class="msg">Загрузка…</div></div>
         </div>
 
@@ -436,7 +441,15 @@
     var SHORT_WHERE = { 'app/player': 'плеер', 'landing/index': 'лендинг', 'app/index': 'главная', 'app/catalog': 'каталог',
         'app/words': 'словарь', 'app/study': 'повторение', 'app/deck-study': 'колода', 'app/beginner': 'новичок',
         'app/progress': 'прогресс', 'app/settings': 'настройки', 'app/login': 'вход' };
-    function agoSec(s) { return s < 60 ? 'сейчас' : Math.round(s / 60) + ' мин'; }
+    // Длительность: «<1 мин», «12 мин», «1 ч 20 м».
+    function dur(sec) {
+        sec = Math.round(sec || 0);
+        if (sec < 60) return sec ? '<1 мин' : '—';
+        var m = Math.round(sec / 60);
+        if (m < 60) return m + ' мин';
+        var h = Math.floor(m / 60), r = m % 60;
+        return h + ' ч' + (r ? ' ' + r + ' м' : '');
+    }
     function loadOnline() {
         fetch(apiBase + '/api/v1/stats/online?' + keyQ(), { headers: authHeaders() }).then(requireKey).then(function (d) {
             document.getElementById('pOnlineN').textContent = d.count + ' на сайте';
@@ -447,7 +460,8 @@
             document.getElementById('pOnlineWho').innerHTML = d.count ? d.people.slice(0, 10).map(function (u) {
                 var name = u.email ? esc(shortMail(u.email)) : '<span class="mut">гость · ' + esc(devName(u.ua)) + '</span>';
                 return '<div class="row"><span class="l">' + name + '</span><span class="m">' +
-                    esc(u.title || SHORT_WHERE[u.page] || pageName(u.page)) + '</span><span class="r">' + agoSec(u.ago) + '</span></div>';
+                    esc(u.title || SHORT_WHERE[u.page] || pageName(u.page)) + '</span><span class="r" title="в этом заходе">' +
+                    dur(u.sessionSec) + '</span></div>';
             }).join('') : '<div class="row"><span class="l fnt">никого, кроме тебя</span></div>';
         }).catch(function () {});
     }
@@ -482,8 +496,10 @@
                 stat(fmt(d.today), 'сегодня', (dd > 0 ? '↑' + dd : dd < 0 ? '↓' + (-dd) : '=') + ' к вчера', dd > 0) +
                 stat(fmt(d.week), 'за 7 дней', (dw > 0 ? '↑' + dw : dw < 0 ? '↓' + (-dw) : '=') + ' к пр.', dw > 0) +
                 stat(fmt(d.activeWeek), 'действовали', share + '% из ' + fmt(d.week), false) +
-                stat(fmt(d.accountsTotal), plural(d.accountsTotal, 'аккаунт', 'аккаунта', 'аккаунтов'),
-                    '+' + (d.accountsNewWeek || 0) + ' за нед.', d.accountsNewWeek > 0);
+                stat(dur(d.timeToday), 'время',
+                    d.timePeopleWeek ? '~' + dur(d.timeWeek / d.timePeopleWeek) + '/чел' : 'за 7д пока нет', false);
+            document.getElementById('pAccN').textContent = fmt(d.accountsTotal) +
+                (d.accountsNewWeek ? ' · +' + d.accountsNewWeek + ' за нед.' : '');
             var sp = d.spark14 || d.spark, max = Math.max.apply(null, sp.concat([1]));
             document.getElementById('pChart').innerHTML = sp.map(function (v, i) {
                 return '<i' + (i === sp.length - 1 ? ' class="today"' : '') + ' style="height:' + Math.max(4, Math.round(v / max * 100)) +
@@ -496,7 +512,7 @@
                 function (x) { return x.source.replace(/^www\./, '').replace(/\.com$/, ''); }, function (x) { return x.people; });
             document.getElementById('pPeople').innerHTML = d.accounts.length ? d.accounts.map(function (u) {
                 return '<div class="row"><span class="l">' + esc(shortMail(u.email)) + '</span><span class="m">' +
-                    fmt(u.words) + ' · ' + esc(u.lastTitle || '—') + '</span><span class="r">' + esc(ago(u.lastSeen)) + '</span></div>';
+                    fmt(u.words) + ' · ' + dur(u.seconds7d) + ' · ' + esc(u.lastTitle || '—') + '</span><span class="r">' + esc(ago(u.lastSeen)) + '</span></div>';
             }).join('') : '<div class="row"><span class="l fnt">пока никого</span></div>';
         }).catch(function () {});
     }
