@@ -116,10 +116,10 @@
             'За ' + data.days + ' дн. · ' + mode + hidden + ' · обновлено ' + new Date().toLocaleString('ru-RU');
 
         gid('cards').innerHTML =
-            card('Всего открытий', data.totalHits) +
-            card('Посетителей (устройств)', data.totalVisitors) +
-            card('Сегодня открытий', data.today.hits) +
-            card('Сегодня посетителей', data.today.visitors);
+            card('Открытий', data.totalHits) +
+            card('Людей', data.totalVisitors) +
+            card('Откр. сегодня', data.today.hits) +
+            card('Людей сегодня', data.today.visitors);
 
         // График по дням
         var max = Math.max(1, ...data.perDay.map(function (d) { return d.hits; }));

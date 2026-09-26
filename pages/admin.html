@@ -8,261 +8,237 @@
 <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <meta name="theme-color" content="#0a0a0f">
 <style>
+    /* Плотная админка: 13px текст, строки по 5-7px, блоки-«коробки» с шапкой
+       мелкими капсами. Цель — много информации на экран телефона. */
     :root {
-        --bg: #0d0f14;
-        --card: #161920;
-        --card2: #1d212a;
-        --text: #eceef2;
-        --muted: #8b919c;
-        --faint: #5d636e;
-        --accent: #8aa4ff;
-        --accent2: #34405e;
-        --border: #242834;
-        --ok: #5fd08a;
-        --warn: #f2c14e;
-        --bad: #ff7676;
-        /* ниже по файлу местами зовутся так — держим синонимы, иначе рамки пропадали */
-        --line: var(--border);
-        --fg: var(--text);
+        --bg: #0d0f14; --card: #151820; --card2: #1b1f28; --border: #232733;
+        --text: #e6e8ec; --muted: #8b919c; --faint: #5d636e;
+        --accent: #8aa4ff; --accent2: #34405e;
+        --ok: #5fd08a; --warn: #f2c14e; --bad: #ff7676;
+        /* синонимы: так их зовут старые куски разметки и stats-view */
+        --line: var(--border); --fg: var(--text);
     }
     * { box-sizing: border-box; }
-    body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        padding: 24px 16px 48px;
-    }
-    .wrap { max-width: 1000px; margin: 0 auto; }
-    h1 { font-size: 20px; margin: 0 0 14px; letter-spacing: -.01em; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-    .h1-sub { color: var(--faint); font-size: 12px; font-weight: 400; }
-    .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--text);
+        font: 13px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+        padding: 10px 12px 40px; }
+    .wrap { max-width: 760px; margin: 0 auto; }
+    a { color: var(--accent); }
+    .n { font-variant-numeric: tabular-nums; }
+    .mut { color: var(--muted); } .fnt { color: var(--faint); }
+    .up { color: var(--ok); } .dn { color: var(--bad); }
+    .msg { color: var(--muted); padding: 14px 10px; text-align: center; font-size: 12.5px; }
 
-    .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-    .tabs button {
-        background: var(--card); color: var(--text); border: 1px solid var(--border);
-        padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
-    }
-    .tabs button.active { background: var(--accent); border-color: var(--accent); color: #0f1115; font-weight: 600; }
+    /* шапка: имя, время, плашка статуса */
+    .top { display: flex; align-items: center; gap: 8px; margin: 2px 0 8px; }
+    .top h1 { font-size: 15px; margin: 0; }
+    .top .fnt { font-size: 11.5px; }
+    .pill { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px;
+        background: var(--card); color: var(--muted); font: inherit; font-size: 12px; white-space: nowrap; border: 0; cursor: pointer;
+        max-width: 62%; overflow: hidden; text-overflow: ellipsis; }
+    .pill.is-ok { color: var(--ok); background: rgba(95,208,138,.08); }
+    .pill.is-warn { color: var(--warn); background: rgba(242,193,78,.1); }
+    .pill.is-bad { color: var(--bad); background: rgba(255,118,118,.1); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex: none; background: var(--faint); }
+    .dot--ok { background: var(--ok); } .dot--warn { background: var(--warn); } .dot--bad { background: var(--bad); }
 
+    /* вкладки: липкие, мелкие */
+    .tabs { position: sticky; top: 0; z-index: 10; display: flex; gap: 4px; padding: 6px 0; margin: 0 0 6px; background: var(--bg); }
+    .tabs button { flex: 1 1 auto; padding: 6px 8px; border-radius: 7px; background: var(--card); color: var(--muted);
+        border: 0; font: inherit; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+    .tabs button.active { background: var(--card2); color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
     .tab { display: none; }
     .tab.active { display: block; }
 
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-    .card .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
-    .card .value { font-size: 28px; font-weight: 700; }
-    .card .value.ok { color: var(--ok); }
-    .card .value.bad { color: var(--bad); }
+    /* коробка = блок с шапкой и строками */
+    .box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+    .box__h { display: flex; align-items: baseline; gap: 6px; padding: 7px 10px 5px; font-size: 11px; text-transform: uppercase;
+        letter-spacing: .05em; color: var(--faint); }
+    .box__h b { color: var(--text); font-size: 12px; letter-spacing: 0; text-transform: none; font-weight: 600; }
+    .box__h .r { margin-left: auto; text-transform: none; letter-spacing: 0; }
+    .box__h .btn { margin-left: auto; }
+    .box__h [id$="Sum"] { text-transform: none; letter-spacing: 0; color: var(--muted); }
+    .urow__top { display: flex; align-items: baseline; gap: 8px; }
+    .urow__top .urow__mail { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: normal; }
+    .urow__seen { color: var(--faint); font-size: 12px; white-space: nowrap; }
+    .urow__btns { margin-left: auto; display: flex; gap: 4px; }
+    .row { display: flex; align-items: baseline; gap: 8px; padding: 5px 10px; border-top: 1px solid var(--border); min-width: 0; }
+    .row .l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .row .m { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 56%; }
+    .row .r { color: var(--faint); white-space: nowrap; font-size: 12px; }
+    .row .v { font-weight: 600; white-space: nowrap; }
+    .row .dot { align-self: center; }
+    .meter { position: relative; }
+    .meter::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: var(--w); background: rgba(138,164,255,.09); }
+    .meter > * { position: relative; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .foot { margin: 10px 0 0; color: var(--faint); font-size: 12px; text-align: center; }
+    .foot button { background: none; border: 0; color: var(--muted); text-decoration: underline; font: inherit; cursor: pointer; padding: 4px 2px; }
 
-    .section-title { font-size: 15px; margin: 24px 0 12px; }
-    .note {
-        background: var(--card); border: 1px solid var(--accent2); border-left: 3px solid var(--accent);
-        border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--muted); margin-bottom: 16px;
-    }
-    .note b { color: var(--text); font-weight: 600; }
+    /* обзор: 4 цифры в строку + столбики по дням */
+    .stats4 { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .stat { padding: 7px 10px 8px; border-left: 1px solid var(--border); min-width: 0; }
+    .stat:first-child { border-left: 0; }
+    .stat__v { font-size: 18px; font-weight: 650; letter-spacing: -.02em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+    .stat__l { font-size: 11px; color: var(--muted); }
+    .stat__d { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stat__d.up { color: var(--ok); }
+    .chart { display: flex; align-items: flex-end; gap: 3px; height: 44px; padding: 6px 10px 0; border-top: 1px solid var(--border); }
+    .chart i { flex: 1; background: var(--accent); opacity: .8; border-radius: 2px 2px 0 0; min-height: 2px; }
+    .chart i.today { opacity: 1; background: #b3c4ff; }
+    .axis { display: flex; justify-content: space-between; padding: 2px 10px 6px; font-size: 10.5px; color: var(--faint); }
 
-    /* Таблицы живут в скролл-обёртке .tblwrap: на телефоне широкая таблица
-       скроллится по горизонтали внутри неё, а не распирает всю страницу.
-       Скругление — на обёртке (overflow:hidden на самой таблице резал бы скролл). */
-    .tblwrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--border); }
-    table { width: 100%; border-collapse: collapse; background: var(--card); }
-    th, td { text-align: left; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border); }
-    th { color: var(--muted); font-weight: 500; background: var(--card2); }
-    td.num, th.num { text-align: right; }
-    tr:last-child td { border-bottom: none; }
-
-    .msg { color: var(--muted); padding: 40px 0; text-align: center; }
-    /* Источники: строка на источник, точка состояния слева. Смотреть надо
-       глазами и быстро — «что сегодня отвалилось», поэтому цвет несёт смысл,
-       а подпись рядом объясняет, чем это грозит. */
-    .src { display: flex; align-items: baseline; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--border); }
-    .src:last-child { border-bottom: 0; }
-    .srcgrp { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; }
-    .srcgrp__head { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-    .src__dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; align-self: center; }
-    .src__dot--ok { background: var(--ok); }
-    .src__dot--bad { background: var(--bad); }
-    .src__dot--off { background: var(--muted); }
-    .src__name { font-size: 13.5px; font-weight: 600; flex: 0 0 auto; }
-    .src__note { font-size: 12.5px; color: var(--muted); flex: 1 1 auto; }
-    .src__note--bad { color: var(--bad); }
-    .src__hint { display: block; font-size: 11.5px; color: var(--muted); opacity: .75; }
-    .src__ms { font-size: 11.5px; color: var(--muted); flex: 0 0 auto; }
-    .srcsum { margin: 0 0 10px; font-size: 13px; }
-    #srcRefresh { margin-left: 10px; vertical-align: middle; font-weight: 400; }
-    @media (max-width: 560px) {
-        .src { flex-wrap: wrap; gap: 6px 10px; }
-        .src__note { flex-basis: 100%; }
-    }
-
-    /* Списки пользователей/регистраций — карточки-строки вместо таблиц:
-       читаются на любой ширине без горизонтального скролла. */
-    .ulist { display: flex; flex-direction: column; gap: 8px; }
-    .urow { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
-    .urow__mail { font-size: 13.5px; font-weight: 600; word-break: break-all; }
-    .urow__meta { margin-top: 3px; color: var(--muted); font-size: 12px; display: flex; gap: 6px 14px; flex-wrap: wrap; }
-    .urow__meta b { color: var(--text); font-weight: 600; }
-
-    .btn {
-        display: inline-block; text-decoration: none;
-        background: var(--card2); color: var(--text); border: 1px solid var(--border);
-        padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
-    }
+    /* кнопки */
+    .btn { display: inline-block; text-decoration: none; background: var(--card2); color: var(--text); border: 1px solid var(--border);
+        padding: 4px 10px; border-radius: 7px; cursor: pointer; font: inherit; font-size: 12px; }
     .btn:hover { border-color: var(--accent); }
-    .btn--primary { background: var(--accent); border-color: var(--accent); color: #0f1115; font-weight: 600; }
-    .btn--danger { color: var(--bad); }
-    .btn--small { padding: 4px 10px; font-size: 12px; }
+    .btn--small { padding: 3px 9px; font-size: 11.5px; }
 
+    /* таблицы (здоровье) */
+    .tblwrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 5px 10px; font-size: 12.5px; border-top: 1px solid var(--border); }
+    th { color: var(--faint); font-weight: 500; font-size: 11px; }
+    td.num, th.num { text-align: right; }
 
-    /* Ворота ключа: инлайн-поле вместо window.prompt (в PWA prompt ненадёжен). */
+    /* система: источники и синк — строки в коробке */
+    .srcsum { margin: 0; padding: 0 10px 6px; font-size: 12.5px; }
+    .srcgrp { border-top: 1px solid var(--border); }
+    .srcgrp__head { padding: 6px 10px 2px; font-size: 10.5px; color: var(--faint); text-transform: uppercase; letter-spacing: .05em; }
+    .src { display: flex; align-items: baseline; gap: 8px; padding: 4px 10px; }
+    .src__dot { width: 7px; height: 7px; border-radius: 50%; flex: none; align-self: center; }
+    .src__dot--ok { background: var(--ok); } .src__dot--bad { background: var(--bad); } .src__dot--off { background: var(--faint); }
+    .src__name { font-weight: 600; flex: none; font-size: 12.5px; }
+    .src__note { color: var(--muted); flex: 1 1 auto; min-width: 0; font-size: 12px; }
+    .src__note--bad { color: var(--bad); }
+    .src__hint { display: block; font-size: 11px; color: var(--faint); }
+    .src__ms { font-size: 11px; color: var(--faint); flex: none; }
+
+    /* пользователи: одна коробка со строками */
+    .ulist { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .urow { padding: 6px 10px; border-top: 1px solid var(--border); }
+    .urow:first-child { border-top: 0; }
+    .urow__mail { font-weight: 600; font-size: 13px; word-break: break-all; }
+    .urow__meta { margin-top: 1px; color: var(--muted); font-size: 12px; display: flex; gap: 4px 12px; flex-wrap: wrap; align-items: center; }
+    .urow__meta b { color: var(--text); font-weight: 600; }
+    .udecks-btn { padding: 2px 9px; border: 1px solid var(--border); border-radius: 999px; background: none;
+        color: var(--muted); font: inherit; font-size: 11.5px; cursor: pointer; }
+    .udecks-btn:hover { color: var(--text); }
+    .udecks, .uwords { margin-top: 6px; }
+    .udecks__sum { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .udeck { margin-bottom: 6px; }
+    .udeck__head { font-size: 12px; margin-bottom: 2px; }
+    .udeck__list, .uwords__ul { margin: 0 0 4px; padding-left: 16px; font-size: 12px; color: var(--muted); }
+    .udeck__list li { margin: 0; }
+    .uwords__ul li { margin: 2px 0; color: var(--text); }
+    .udeck__kana { opacity: .7; }
+    .udeck__rep { color: var(--accent); }
+    .uwords__q { width: 100%; max-width: 320px; margin-bottom: 4px; padding: 4px 8px; font: inherit; font-size: 16px;
+        color: var(--text); background: none; border: 1px solid var(--border); border-radius: 7px; }
+    .uword__sent { color: var(--muted); }
+    .uword__meta { font-size: 11px; color: var(--faint); }
+
+    /* вкладка «Посетители» — виджет stats-view, ужимаем его под плотность
+       (#statsRoot + класс перебивают его собственные стили) */
+    #statsRoot.statsview .wrap { max-width: none; }
+    #statsRoot.statsview h1 { display: none; }
+    #statsRoot.statsview .sub { font-size: 11.5px; margin-bottom: 8px; color: var(--faint); }
+    #statsRoot.statsview .periods { gap: 4px; margin-bottom: 8px; }
+    #statsRoot.statsview .periods button { padding: 5px 8px; font-size: 12px; border-radius: 7px; flex: 1 1 auto; }
+    #statsRoot.statsview .cards { grid-template-columns: repeat(4, 1fr); gap: 0; margin-bottom: 8px; background: var(--card);
+        border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    #statsRoot.statsview .card { border: 0; border-left: 1px solid var(--border); border-radius: 0; padding: 7px 10px; }
+    #statsRoot.statsview .card:first-child { border-left: 0; }
+    #statsRoot.statsview .card .label { font-size: 11px; margin: 0; }
+    #statsRoot.statsview .card .value { font-size: 18px; }
+    #statsRoot.statsview .section-title { font-size: 11px !important; text-transform: uppercase; letter-spacing: .05em;
+        color: var(--faint); font-weight: 500; margin: 12px 2px 5px !important; }
+    #statsRoot.statsview .section-title:has(+ #health-sub), #statsRoot.statsview #health-sub, #statsRoot.statsview #health { display: none; }
+    #statsRoot.statsview .chart { height: 90px; padding: 8px; border-radius: 10px; gap: 2px; }
+    #statsRoot.statsview .bar-date { font-size: 8px; height: 20px; }
+    #statsRoot.statsview table { margin-top: 0; border-radius: 0; }
+    #statsRoot.statsview th, #statsRoot.statsview td { padding: 5px 10px; font-size: 12px; }
+    #statsRoot.statsview .tblwrap { border: 1px solid var(--border); border-radius: 10px; overflow: auto; margin-top: 0; }
+    #statsRoot.statsview th { white-space: nowrap; }
+    #statsRoot.statsview .pct { display: inline; margin-left: 3px; }
+    /* пояснения под заголовками секций — только лишние строки на телефоне */
+    #statsRoot.statsview .section-title + .sub { display: none; }
+    #statsRoot.statsview #visitors-sub { display: block; }
+    #statsRoot.statsview .visitor { border-radius: 10px; margin-bottom: 6px; }
+    #statsRoot.statsview .visitor__head { padding: 7px 10px; gap: 4px 8px; }
+    #statsRoot.statsview .visitor__ip { font-size: 13px; font-family: inherit; }
+    #statsRoot.statsview .visitor__meta, #statsRoot.statsview .visitor__geo, #statsRoot.statsview .visitor__dev { font-size: 11px; }
+    #statsRoot.statsview .visitor__digest { line-height: 1.7; font-size: 11.5px; }
+    #statsRoot.statsview .visitor__digest .dg { padding: 0 7px; margin-right: 4px; }
+    #statsRoot.statsview .visitor__body { padding: 2px 10px 10px; }
+    #statsRoot.statsview .session { margin: 6px 0; border-radius: 8px; }
+    #statsRoot.statsview .session__head { padding: 5px 10px; font-size: 11.5px; }
+    #statsRoot.statsview .session__sum, #statsRoot.statsview .session__path { padding: 5px 10px 0; font-size: 11.5px; }
+    #statsRoot.statsview .msg { padding: 14px 0; }
+
+    /* ворота ключа */
     .key-gate { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(10, 12, 16, 0.94); padding: 20px; }
     .key-gate[hidden] { display: none; }
-    .key-gate__box { width: 100%; max-width: 340px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 12px; }
-    .key-gate__title { font-size: 18px; font-weight: 700; }
-    .key-gate__hint { color: var(--muted); font-size: 13px; margin-top: -8px; }
+    .key-gate__box { width: 100%; max-width: 340px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+    .key-gate__title { font-size: 16px; font-weight: 700; }
+    .key-gate__hint { color: var(--muted); font-size: 12.5px; margin-top: -6px; }
     /* 16px, чтобы iOS не зумил при фокусе. autocapitalize=off — без заглавной. */
-    .key-gate__input { width: 100%; padding: 12px 14px; font-size: 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--card2); color: var(--text); }
+    .key-gate__input { width: 100%; padding: 10px 12px; font-size: 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--card2); color: var(--text); }
     .key-gate__input:focus { outline: none; border-color: var(--accent); }
-    .key-gate__btn { padding: 12px; font-size: 15px; font-weight: 600; border: none; border-radius: 10px; background: var(--accent); color: #0f1115; cursor: pointer; }
-    .key-gate__err { color: var(--bad); font-size: 13px; }
+    .key-gate__btn { padding: 10px; font-size: 14px; font-weight: 600; border: none; border-radius: 8px; background: var(--accent); color: #0f1115; cursor: pointer; }
+    .key-gate__err { color: var(--bad); font-size: 12.5px; }
 
-    /* ---------- Пульс (обзор) ---------- */
-    .p-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; background: var(--faint); }
-    .p-dot--ok { background: var(--ok); } .p-dot--warn { background: var(--warn); } .p-dot--bad { background: var(--bad); }
-    .p-live { position: relative; }
-    .p-live::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--ok);
-        opacity: .5; animation: p-ping 2s ease-out infinite; }
-    @keyframes p-ping { from { transform: scale(.6); opacity: .6; } to { transform: scale(1.6); opacity: 0; } }
-    @media (prefers-reduced-motion: reduce) { .p-live::after { animation: none; } }
-    .p-hero { background: linear-gradient(160deg, #1b2233 0%, var(--card) 70%); border: 1px solid var(--border);
-        border-radius: 20px; padding: 18px 18px 12px; }
-    .p-hero__top { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
-    .p-hero__n { font-size: 56px; font-weight: 700; line-height: 1; margin: 10px 0 4px; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-    .p-hero__sub { color: var(--muted); font-size: 13px; }
-    .p-who { margin-top: 12px; }
-    .p-who div { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px; padding: 8px 0;
-        border-top: 1px solid rgba(255,255,255,.05); }
-    .p-who b { font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .p-who span { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
-    .p-sys { margin: 12px 0 18px; border-radius: 14px; background: var(--card); border: 1px solid var(--border); }
-    .p-sys.is-warn { border-color: rgba(242,193,78,.35); background: rgba(242,193,78,.05); }
-    .p-sys.is-bad { border-color: rgba(255,118,118,.4); background: rgba(255,118,118,.06); }
-    .p-status { display: flex; align-items: center; gap: 10px; padding: 13px 16px; font-size: 14px; cursor: pointer; list-style: none; }
-    .p-status::-webkit-details-marker { display: none; }
-    .p-status small { margin-left: auto; color: var(--muted); white-space: nowrap; }
-    .p-sys[open] .p-status small { color: var(--accent); }
-    .p-sys__body { padding: 0 12px 12px; }
-    .p-sys__h { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--faint);
-        margin: 14px 4px 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .p-sys__h span { text-transform: none; letter-spacing: 0; }
-    .p-sys__h .btn { margin-left: auto; }
-    .p-sys__p { font-size: 13px; color: var(--muted); margin: 0 4px; }
-    .p-sys .srcgrp { margin-bottom: 8px; }
-    .p-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
-    .p-tile { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; min-width: 0; }
-    .p-tile__l { color: var(--muted); font-size: 12px; }
-    .p-tile__v { font-size: 26px; font-weight: 650; margin-top: 2px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-    .p-tile__d { font-size: 12px; color: var(--muted); }
-    .p-tile__d.up { color: var(--ok); }
-    .p-tile svg { display: block; width: 100%; height: 26px; margin-top: 6px; }
-    .p-h2 { font-size: 13px; color: var(--muted); font-weight: 500; margin: 0 0 8px 2px; }
-    .p-list { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-    .p-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--border); }
-    .p-row:first-child { border-top: 0; }
-    .p-av { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 600;
-        font-size: 13px; color: #0d0f14; flex: none; text-transform: uppercase; }
-    .p-row__m { flex: 1; min-width: 0; }
-    .p-row__m b { display: block; font-weight: 500; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .p-row__m span { color: var(--muted); font-size: 12.5px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .p-row__r { color: var(--faint); font-size: 12px; white-space: nowrap; }
-    .p-foot { margin-top: 22px; color: var(--faint); font-size: 12px; text-align: center; }
-    .p-foot button { background: none; border: 0; color: var(--muted); text-decoration: underline; font: inherit; cursor: pointer; padding: 6px 2px; }
-
-    /* ---------- Телефон ---------- */
-    @media (max-width: 640px) {
-        body { padding: 14px 10px 40px; }
-        h1 { font-size: 18px; }
-        .tabs { gap: 6px; margin-bottom: 14px; }
-        .tabs button { padding: 7px 12px; flex: 1 1 auto; }
-        .cards { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 18px; }
-        .card { padding: 12px; }
-        .card .value { font-size: 22px; }
-        .section-title { margin: 18px 0 10px; }
-        /* Ячейки переносятся — таблицы влезают в экран без бокового скролла
-           (.tblwrap остаётся страховкой на совсем узких экранах). */
-        th, td { padding: 8px 10px; font-size: 12px; }
-        /* Вкладки прилипают к верху: длинный обзор листается, а переключиться
-           можно не возвращаясь наверх. */
-        .tabs { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 8px 0; margin: -8px 0 12px; }
-        .tabs button { padding: 10px 8px; font-size: 14px; }
-        /* Кнопки «колоды/слова» — под палец, а не 20px-таблетки. */
-        .udecks-btn { padding: 7px 12px; font-size: 12.5px; }
-        .urow__meta { gap: 6px 12px; align-items: center; }
-        #srcRefresh { padding: 7px 12px; }
+    @media (max-width: 380px) {
+        .stat { padding: 6px 7px; }
+        .stat__v { font-size: 16px; }
+        .two { grid-template-columns: 1fr; }
     }
-    .udecks-btn { padding: 2px 9px; border: 1px solid var(--line); border-radius: 999px; background: none;
-        color: var(--muted); font-size: 11px; cursor: pointer; font-family: inherit; }
-    .udecks-btn:hover { color: var(--fg); }
-    .udecks { margin-top: 8px; padding-left: 2px; }
-    .udecks__sum { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
-    .udeck { margin-bottom: 10px; }
-    .udeck__head { font-size: 12px; margin-bottom: 3px; }
-    .udeck__list { margin: 0; padding-left: 18px; font-size: 12px; color: var(--muted); }
-    .udeck__list li { margin: 1px 0; }
-    .udeck__kana { opacity: 0.7; }
-    .udeck__rep { color: var(--accent); }
-    .uwords { margin-top: 8px; padding-left: 2px; }
-    .uwords__q { width: 100%; max-width: 320px; margin-bottom: 6px; padding: 4px 8px; font: inherit;
-        font-size: 12px; color: var(--fg); background: none; border: 1px solid var(--line); border-radius: 8px; }
-    .uwords__ul { margin: 0 0 6px; padding-left: 18px; font-size: 12px; }
-    .uwords__ul li { margin: 4px 0; }
-    .uword__sent { color: var(--muted); }
-    .uword__meta { font-size: 11px; color: var(--muted); opacity: 0.8; }
 </style>
 </head>
 <body>
 <div class="wrap">
-    <h1>Animei <span class="h1-sub" id="sub"></span></h1>
+    <div class="top">
+        <h1>Animei</h1><span class="fnt" id="sub"></span>
+        <button class="pill" id="pStatus" type="button"><span class="dot"></span>проверяем систему…</button>
+    </div>
 
     <div class="tabs">
         <button data-tab="overview" class="active">Обзор</button>
-        <button data-tab="stats">Статистика</button>
+        <button data-tab="stats">Посетители</button>
         <button data-tab="users">Пользователи</button>
+        <button data-tab="system">Система</button>
     </div>
 
+    <!-- Обзор: кто на сайте → 4 цифры + дни → что смотрят/откуда → аккаунты → система. -->
     <div class="tab active" id="tab-overview">
-        <!-- Пульс: кто сейчас на сайте → одна строка про систему → 4 цифры → люди.
-             Всё техническое спрятано за строкой статуса. -->
-        <div class="p-hero">
-            <div class="p-hero__top"><span class="p-dot p-dot--ok p-live"></span> Сейчас на сайте</div>
-            <div class="p-hero__n" id="pOnlineN">—</div>
-            <div class="p-hero__sub" id="pOnlineSub">&nbsp;</div>
-            <div class="p-who" id="pOnlineWho"></div>
+        <div class="box">
+            <div class="box__h"><span class="dot dot--ok"></span><b id="pOnlineN">— на сайте</b><span class="r" id="pOnlineSub"></span></div>
+            <div id="pOnlineWho"></div>
         </div>
 
-        <details class="p-sys" id="pSys">
-            <summary class="p-status" id="pStatus"><span class="p-dot"></span><span>Проверяем систему…</span><small>система ›</small></summary>
-            <div class="p-sys__body">
-                <div class="p-sys__h">Сервер и база <span id="ovHealthSum"></span></div>
-                <div id="ovHealth" class="msg">Загрузка…</div>
-                <div class="p-sys__h">Источники <span id="ovSourcesSum"></span>
-                    <button class="btn btn--small" id="srcRefresh" type="button">проверить</button></div>
-                <div id="ovSources" class="msg">Загрузка…</div>
-                <div class="p-sys__h">Синхронизация субтитров <span id="ovSyncSum"></span></div>
-                <div id="ovSync" class="msg">Загрузка…</div>
-                <div class="p-sys__h">Материалы</div>
-                <p class="p-sys__p"><a href="https://animei.space/promo-vert-bf6b634a/" target="_blank" rel="noopener">🎬 Промо-ролики</a>
-                    — 6 сцен: вертикаль и ПК 16:9, RU/UA/EN</p>
-            </div>
-        </details>
+        <div class="box">
+            <div class="stats4" id="pStats"></div>
+            <div class="chart" id="pChart"></div>
+            <div class="axis"><span id="pChartFrom"></span><span>люди по дням</span><span>сегодня</span></div>
+        </div>
 
-        <div class="p-grid" id="pTiles"></div>
+        <div class="two">
+            <div class="box"><div class="box__h">Смотрят · 7д</div><div id="pTitles"><div class="msg">…</div></div></div>
+            <div class="box"><div class="box__h">Откуда · 7д</div><div id="pSources"><div class="msg">…</div></div></div>
+        </div>
 
-        <h2 class="p-h2">Люди</h2>
-        <div class="p-list" id="pPeople"><div class="msg">Загрузка…</div></div>
+        <div class="box">
+            <div class="box__h">Аккаунты<span class="r">слов · последний тайтл · был</span></div>
+            <div id="pPeople"><div class="msg">Загрузка…</div></div>
+        </div>
 
-        <div class="p-foot" id="ownerDev"></div>
+        <div class="box">
+            <div class="box__h">Система<span class="r"><a href="#" id="pSysMore">подробнее ›</a></span></div>
+            <div id="pSysRows"></div>
+        </div>
+
+        <div class="foot" id="ownerDev"></div>
     </div>
 
     <div class="tab" id="tab-stats">
@@ -271,6 +247,27 @@
 
     <div class="tab" id="tab-users">
         <div id="usersList" class="msg">Загрузка…</div>
+    </div>
+
+    <div class="tab" id="tab-system">
+        <div class="box">
+            <div class="box__h">Сервер и база <span id="ovHealthSum"></span></div>
+            <div id="ovHealth" class="msg">Загрузка…</div>
+        </div>
+        <div class="box">
+            <div class="box__h">Источники <span id="ovSourcesSum"></span>
+                <button class="btn btn--small" id="srcRefresh" type="button">проверить</button></div>
+            <div id="ovSources" class="msg">Загрузка…</div>
+        </div>
+        <div class="box">
+            <div class="box__h">Синхронизация субтитров <span id="ovSyncSum"></span></div>
+            <div id="ovSync" class="msg">Загрузка…</div>
+        </div>
+        <div class="box">
+            <div class="box__h">Материалы</div>
+            <div class="row"><span class="l"><a href="https://animei.space/promo-vert-bf6b634a/" target="_blank" rel="noopener">🎬 Промо-ролики</a></span>
+                <span class="m">6 сцен · вертикаль и 16:9 · RU/UA/EN</span></div>
+        </div>
     </div>
 </div>
 
@@ -395,8 +392,10 @@
                 var bad = Object.keys(h.checks || {}).filter(function (k) { return h.checks[k] !== 'ok'; });
                 foldSum('Health', bad.length ? 'сбой: ' + bad.join(', ') : 'всё ок · бэкап ' + bk, !bad.length,
                     'сбой сервера: ' + bad.join(', '));
+                if (!bad.length) rows = '<tr><td>Проверки</td><td style="color:var(--ok)">' +
+                    esc(Object.keys(h.checks || {}).join(' · ')) + ' — ок</td></tr>';
                 document.getElementById('ovHealth').outerHTML =
-                    tbl('<tr><th>Проверка</th><th>Статус</th></tr>' + rows +
+                    tbl(rows +
                     '<tr><td>Бэкап БД</td><td>' + esc(bk) + '</td></tr>' +
                     '<tr><td>Проверено</td><td>' + dt(h.at) + '</td></tr>');
             } else {
@@ -434,63 +433,71 @@
         return /iPhone/.test(ua || '') ? 'iPhone' : /iPad/.test(ua || '') ? 'iPad' : /Android/.test(ua || '') ? 'Android'
             : /Windows/.test(ua || '') ? 'Windows' : /Mac OS X/.test(ua || '') ? 'Mac' : /Linux/.test(ua || '') ? 'Linux' : 'устройство';
     }
-    var WHERE = { 'app/player': 'в плеере', 'landing/index': 'на лендинге', 'app/index': 'на главной',
-        'app/catalog': 'в каталоге', 'app/words': 'в словаре', 'app/study': 'в повторении', 'app/deck-study': 'в колоде',
-        'app/beginner': 'в разделе новичка', 'app/progress': 'в прогрессе', 'app/settings': 'в настройках', 'app/login': 'на входе' };
+    var SHORT_WHERE = { 'app/player': 'плеер', 'landing/index': 'лендинг', 'app/index': 'главная', 'app/catalog': 'каталог',
+        'app/words': 'словарь', 'app/study': 'повторение', 'app/deck-study': 'колода', 'app/beginner': 'новичок',
+        'app/progress': 'прогресс', 'app/settings': 'настройки', 'app/login': 'вход' };
+    function agoSec(s) { return s < 60 ? 'сейчас' : Math.round(s / 60) + ' мин'; }
     function loadOnline() {
         fetch(apiBase + '/api/v1/stats/online?' + keyQ(), { headers: authHeaders() }).then(requireKey).then(function (d) {
-            document.getElementById('pOnlineN').textContent = d.count;
+            document.getElementById('pOnlineN').textContent = d.count + ' на сайте';
             var pages = Object.keys(d.byPage).sort(function (a, b) { return d.byPage[b] - d.byPage[a]; });
-            document.getElementById('pOnlineSub').textContent = d.count
-                ? pages.map(function (p) { return d.byPage[p] + ' ' + (WHERE[p] || 'на «' + pageName(p) + '»'); }).join(' · ')
-                : 'никого, кроме тебя';
-            document.getElementById('pOnlineWho').innerHTML = d.people.slice(0, 8).map(function (u) {
-                var name = u.email ? shortMail(u.email) : 'гость · ' + devName(u.ua);
-                var where = u.title ? u.title : pageName(u.page);
-                return '<div><b>' + esc(name) + '</b><span>' + esc(where) + '</span></div>';
-            }).join('');
+            document.getElementById('pOnlineSub').textContent = pages.map(function (p) {
+                return d.byPage[p] + ' ' + (SHORT_WHERE[p] || pageName(p));
+            }).join(' · ');
+            document.getElementById('pOnlineWho').innerHTML = d.count ? d.people.slice(0, 10).map(function (u) {
+                var name = u.email ? esc(shortMail(u.email)) : '<span class="mut">гость · ' + esc(devName(u.ua)) + '</span>';
+                return '<div class="row"><span class="l">' + name + '</span><span class="m">' +
+                    esc(u.title || SHORT_WHERE[u.page] || pageName(u.page)) + '</span><span class="r">' + agoSec(u.ago) + '</span></div>';
+            }).join('') : '<div class="row"><span class="l fnt">никого, кроме тебя</span></div>';
         }).catch(function () {});
     }
 
-    // Четыре цифры + люди — из /stats/pulse (тот же фильтр ботов и своих).
-    function spark(arr) {
-        var max = Math.max.apply(null, arr.concat([1])), n = arr.length - 1 || 1;
-        var pts = arr.map(function (v, i) { return (i * 100 / n).toFixed(1) + ',' + (23 - v / max * 20).toFixed(1); }).join(' ');
-        return '<svg viewBox="0 0 100 26" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="#8aa4ff" stroke-width="2" vector-effect="non-scaling-stroke" points="' + pts + '"/></svg>';
-    }
-    function tile(label, value, delta, up, sp) {
-        return '<div class="p-tile"><div class="p-tile__l">' + label + '</div><div class="p-tile__v">' + value + '</div>' +
-            '<div class="p-tile__d' + (up ? ' up' : '') + '">' + delta + '</div>' + (sp || '') + '</div>';
-    }
+    // Цифры, дни, тайтлы, источники и аккаунты — из /stats/pulse (фильтр как везде).
     function ago(iso) {
         var m = (Date.now() - new Date(iso)) / 60000;
         if (m < 10) return 'сейчас';
         if (m < 60) return Math.round(m) + ' мин';
-        var d0 = new Date(); d0.setHours(0, 0, 0, 0);
-        var t = new Date(iso);
-        if (t >= d0) return t.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        if (m < 60 * 20) return Math.round(m / 60) + ' ч';
+        var t = new Date(iso), d0 = new Date(); d0.setHours(0, 0, 0, 0);
         if (t >= d0 - 86400000) return 'вчера';
         return t.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
     }
-    var AV_COLORS = ['#8aa4ff', '#f2c14e', '#5fd08a', '#ff9f7a', '#c79bff', '#6fd3e0'];
+    function stat(v, l, d, up) {
+        return '<div class="stat"><div class="stat__v">' + v + '</div><div class="stat__l">' + l + '</div>' +
+            '<div class="stat__d' + (up ? ' up' : '') + '">' + d + '</div></div>';
+    }
+    function meterRows(list, label, val) {
+        if (!list.length) return '<div class="row"><span class="l fnt">пока пусто</span></div>';
+        var max = Math.max.apply(null, list.map(val).concat([1]));
+        return list.map(function (x) {
+            return '<div class="row meter" style="--w:' + Math.round(val(x) / max * 100) + '%"><span class="l">' + esc(label(x)) +
+                '</span><span class="v n">' + fmt(val(x)) + '</span></div>';
+        }).join('');
+    }
     function loadPulse() {
         fetch(apiBase + '/api/v1/stats/pulse?' + keyQ(), { headers: authHeaders() }).then(requireKey).then(function (d) {
-            var dd = d.today - d.yesterday;
-            var wk = d.prevWeek ? Math.round((d.week - d.prevWeek) / d.prevWeek * 100) : null;
-            document.getElementById('pTiles').innerHTML =
-                tile('Люди сегодня', fmt(d.today), (dd > 0 ? '↑ ' + dd : dd < 0 ? '↓ ' + (-dd) : '=') + ' к вчера', dd > 0, spark(d.spark)) +
-                tile('За 7 дней', fmt(d.week), wk == null ? 'прошлых 7 дней нет' : (wk > 0 ? '↑ ' : wk < 0 ? '↓ ' : '') + Math.abs(wk) + '% к прошлым 7', wk > 0) +
-                tile('Что-то сделали', fmt(d.activeWeek), 'за 7 дней · смотрели, сохраняли, учили', false) +
-                tile('Аккаунтов', fmt(d.accountsTotal), (d.accountsNewWeek ? '+' + d.accountsNewWeek : '+0') + ' за неделю', d.accountsNewWeek > 0);
-            var el = document.getElementById('pPeople');
-            if (!d.accounts.length) { el.innerHTML = '<div class="msg">Пока никого</div>'; return; }
-            el.innerHTML = d.accounts.map(function (u, i) {
-                var sub = fmt(u.words) + ' ' + plural(u.words, 'слово', 'слова', 'слов') + (u.lastTitle ? ' · ' + u.lastTitle : '');
-                return '<div class="p-row"><div class="p-av" style="background:' + AV_COLORS[i % AV_COLORS.length] + '">' +
-                    esc(String(u.email || '?').charAt(0)) + '</div>' +
-                    '<div class="p-row__m"><b>' + esc(u.email) + '</b><span>' + esc(sub) + '</span></div>' +
-                    '<div class="p-row__r">' + esc(ago(u.lastSeen)) + '</div></div>';
+            var dd = d.today - d.yesterday, dw = d.week - d.prevWeek;
+            var share = d.week ? Math.round(d.activeWeek / d.week * 100) : 0;
+            document.getElementById('pStats').innerHTML =
+                stat(fmt(d.today), 'сегодня', (dd > 0 ? '↑' + dd : dd < 0 ? '↓' + (-dd) : '=') + ' к вчера', dd > 0) +
+                stat(fmt(d.week), 'за 7 дней', (dw > 0 ? '↑' + dw : dw < 0 ? '↓' + (-dw) : '=') + ' к пр.', dw > 0) +
+                stat(fmt(d.activeWeek), 'действовали', share + '% из ' + fmt(d.week), false) +
+                stat(fmt(d.accountsTotal), plural(d.accountsTotal, 'аккаунт', 'аккаунта', 'аккаунтов'),
+                    '+' + (d.accountsNewWeek || 0) + ' за нед.', d.accountsNewWeek > 0);
+            var sp = d.spark14 || d.spark, max = Math.max.apply(null, sp.concat([1]));
+            document.getElementById('pChart').innerHTML = sp.map(function (v, i) {
+                return '<i' + (i === sp.length - 1 ? ' class="today"' : '') + ' style="height:' + Math.max(4, Math.round(v / max * 100)) +
+                    '%" title="' + (d.dayKeys ? d.dayKeys[i] : '') + ': ' + v + '"></i>';
             }).join('');
+            if (d.dayKeys) document.getElementById('pChartFrom').textContent = d.dayKeys[0].slice(8) + '.' + d.dayKeys[0].slice(5, 7);
+            document.getElementById('pTitles').innerHTML = meterRows(d.topTitles || [],
+                function (x) { return x.title; }, function (x) { return x.people; });
+            document.getElementById('pSources').innerHTML = meterRows(d.topSources || [],
+                function (x) { return x.source.replace(/^www\./, '').replace(/\.com$/, ''); }, function (x) { return x.people; });
+            document.getElementById('pPeople').innerHTML = d.accounts.length ? d.accounts.map(function (u) {
+                return '<div class="row"><span class="l">' + esc(shortMail(u.email)) + '</span><span class="m">' +
+                    fmt(u.words) + ' · ' + esc(u.lastTitle || '—') + '</span><span class="r">' + esc(ago(u.lastSeen)) + '</span></div>';
+            }).join('') : '<div class="row"><span class="l fnt">пока никого</span></div>';
         }).catch(function () {});
     }
 
@@ -577,7 +584,7 @@
         }).join('');
 
         var names = broken.map(function (i) { return i.title; }).join(', ');
-        foldSum('Sources', broken.length ? 'сломано: ' + names : 'все живы', !broken.length,
+        foldSum('Sources', broken.length ? (items.length - broken.length) + '/' + items.length + ' · ' + names : 'все живы · ' + items.length, !broken.length,
             names + (broken.length === 1 ? ' не отвечает' : ' не отвечают'));
         document.getElementById('ovSources').className = '';
         document.getElementById('ovSources').innerHTML =
@@ -596,27 +603,38 @@
 
     document.getElementById('srcRefresh').addEventListener('click', function () { loadSources(true); });
 
-    // Строка статуса: три подсистемы сводятся в одну фразу. Всё ок — зелёная
-    // «Всё работает»; иначе — ЧТО именно сломалось, и панель раскрыта.
+    // Статус системы: три подсистемы → плашка в шапке + три строки в обзоре.
     var sysState = {};
+    var SYS_NAMES = { Health: 'Сервер, база', Sources: 'Источники', Sync: 'Синк сабов' };
     function foldSum(name, text, ok, problem) {
         var sum = document.getElementById('ov' + name + 'Sum');
         if (sum) { sum.textContent = '· ' + text; sum.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
-        sysState[name] = { ok: ok, problem: problem || text };
+        sysState[name] = { ok: ok, text: text, problem: problem || text };
         renderStatus();
     }
     function renderStatus() {
         var names = ['Health', 'Sources', 'Sync'];
         var known = names.filter(function (n) { return sysState[n]; });
         var bad = known.filter(function (n) { return !sysState[n].ok; });
-        var st = document.getElementById('pStatus'), box = document.getElementById('pSys');
-        var dot = bad.length ? (sysState.Health && !sysState.Health.ok ? 'bad' : 'warn') : (known.length === names.length ? 'ok' : '');
+        var level = bad.length ? (sysState.Health && !sysState.Health.ok ? 'bad' : 'warn') : (known.length === names.length ? 'ok' : '');
         var text = bad.length ? bad.map(function (n) { return sysState[n].problem; }).join(' · ')
-            : known.length === names.length ? 'Всё работает' : 'Проверяем систему…';
-        st.innerHTML = '<span class="p-dot' + (dot ? ' p-dot--' + dot : '') + '"></span><span>' + esc(text) + '</span><small>система ›</small>';
-        box.classList.toggle('is-warn', dot === 'warn');
-        box.classList.toggle('is-bad', dot === 'bad');
+            : known.length === names.length ? 'всё работает' : 'проверяем систему…';
+        var pill = document.getElementById('pStatus');
+        pill.className = 'pill' + (level ? ' is-' + level : '');
+        pill.innerHTML = '<span class="dot' + (level ? ' dot--' + level : '') + '"></span>' + esc(text);
+        document.getElementById('pSysRows').innerHTML = names.map(function (n) {
+            var st = sysState[n];
+            var cls = !st ? '' : st.ok ? 'ok' : (n === 'Health' ? 'bad' : 'warn');
+            return '<div class="row"><span class="dot' + (cls ? ' dot--' + cls : '') + '"></span><span class="l">' + SYS_NAMES[n] +
+                '</span><span class="m"' + (st && !st.ok ? ' style="color:var(--warn)"' : '') + '>' + esc(st ? st.text : '…') + '</span></div>';
+        }).join('');
     }
+    function openSystem(e) {
+        if (e) e.preventDefault();
+        document.querySelector('.tabs button[data-tab="system"]').click();
+    }
+    document.getElementById('pStatus').addEventListener('click', openSystem);
+    document.getElementById('pSysMore').addEventListener('click', openSystem);
 
     // ---------- «Это моё устройство» ----------
     // Владелец заходит с ПК и телефона, а мобильный Киевстар меняет IP на
@@ -663,14 +681,15 @@
             el.className = '';
             el.innerHTML = '<div class="ulist">' + r.data.map(function (u) {
                 var mark = u.isSeed ? ' <span style="color:var(--accent)">· seed</span>' : '';
-                return '<div class="urow" data-uid="' + esc(u.id) + '"><div class="urow__mail">' + esc(u.email) + mark + '</div>' +
+                return '<div class="urow" data-uid="' + esc(u.id) + '">' +
+                    '<div class="urow__top"><div class="urow__mail">' + esc(u.email) + mark + '</div>' +
+                    '<span class="urow__seen" title="' + esc(dt(u.lastSeen)) + '">' + esc(ago(u.lastSeen)) + '</span></div>' +
                     '<div class="urow__meta">' +
-                    '<span>рег. ' + dt(u.createdAt) + '</span>' +
-                    '<span>был ' + dt(u.lastSeen) + '</span>' +
-                    '<span>слов <b>' + fmt(u.words) + '</b></span>' +
-                    '<span>повторял <b>' + fmt(u.reviewedWords) + '</b></span>' +
-                    '<button class="udecks-btn" data-uid="' + esc(u.id) + '">колоды</button>' +
-                    '<button class="udecks-btn uwords-btn" data-uid="' + esc(u.id) + '">слова</button>' +
+                    '<span><b>' + fmt(u.words) + '</b> сл.</span>' +
+                    '<span>повт. <b>' + fmt(u.reviewedWords) + '</b></span>' +
+                    '<span>рег. ' + esc(new Date(u.createdAt).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })) + '</span>' +
+                    '<span class="urow__btns"><button class="udecks-btn" data-uid="' + esc(u.id) + '">колоды</button>' +
+                    '<button class="udecks-btn uwords-btn" data-uid="' + esc(u.id) + '">слова</button></span>' +
                     '</div><div class="udecks" hidden></div><div class="uwords" hidden></div></div>';
             }).join('') + '</div>';
             el.querySelectorAll('.udecks-btn').forEach(function (btn) {
