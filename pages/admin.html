@@ -9,16 +9,18 @@
 <meta name="theme-color" content="#0a0a0f">
 <style>
     :root {
-        --bg: #0f1115;
-        --card: #1a1d24;
-        --card2: #21252e;
-        --text: #e8eaed;
-        --muted: #9aa0a6;
-        --accent: #7c9cff;
-        --accent2: #3a4668;
-        --border: #2a2e37;
-        --ok: #6fd08c;
-        --bad: #ff7b7b;
+        --bg: #0d0f14;
+        --card: #161920;
+        --card2: #1d212a;
+        --text: #eceef2;
+        --muted: #8b919c;
+        --faint: #5d636e;
+        --accent: #8aa4ff;
+        --accent2: #34405e;
+        --border: #242834;
+        --ok: #5fd08a;
+        --warn: #f2c14e;
+        --bad: #ff7676;
         /* ниже по файлу местами зовутся так — держим синонимы, иначе рамки пропадали */
         --line: var(--border);
         --fg: var(--text);
@@ -32,7 +34,8 @@
         padding: 24px 16px 48px;
     }
     .wrap { max-width: 1000px; margin: 0 auto; }
-    h1 { font-size: 22px; margin: 0 0 4px; }
+    h1 { font-size: 20px; margin: 0 0 14px; letter-spacing: -.01em; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .h1-sub { color: var(--faint); font-size: 12px; font-weight: 400; }
     .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
 
     .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -95,10 +98,6 @@
 
     /* Списки пользователей/регистраций — карточки-строки вместо таблиц:
        читаются на любой ширине без горизонтального скролла. */
-    .online__n { color: var(--accent); }
-    .online__pages { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-    .online__chip { background: var(--card2); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; font-size: 12px; }
-    .online__empty { color: var(--muted); font-size: 13px; padding: 4px 0 8px; }
     .ulist { display: flex; flex-direction: column; gap: 8px; }
     .urow { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
     .urow__mail { font-size: 13.5px; font-weight: 600; word-break: break-all; }
@@ -128,6 +127,58 @@
     .key-gate__btn { padding: 12px; font-size: 15px; font-weight: 600; border: none; border-radius: 10px; background: var(--accent); color: #0f1115; cursor: pointer; }
     .key-gate__err { color: var(--bad); font-size: 13px; }
 
+    /* ---------- Пульс (обзор) ---------- */
+    .p-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; background: var(--faint); }
+    .p-dot--ok { background: var(--ok); } .p-dot--warn { background: var(--warn); } .p-dot--bad { background: var(--bad); }
+    .p-live { position: relative; }
+    .p-live::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--ok);
+        opacity: .5; animation: p-ping 2s ease-out infinite; }
+    @keyframes p-ping { from { transform: scale(.6); opacity: .6; } to { transform: scale(1.6); opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .p-live::after { animation: none; } }
+    .p-hero { background: linear-gradient(160deg, #1b2233 0%, var(--card) 70%); border: 1px solid var(--border);
+        border-radius: 20px; padding: 18px 18px 12px; }
+    .p-hero__top { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+    .p-hero__n { font-size: 56px; font-weight: 700; line-height: 1; margin: 10px 0 4px; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+    .p-hero__sub { color: var(--muted); font-size: 13px; }
+    .p-who { margin-top: 12px; }
+    .p-who div { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px; padding: 8px 0;
+        border-top: 1px solid rgba(255,255,255,.05); }
+    .p-who b { font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .p-who span { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
+    .p-sys { margin: 12px 0 18px; border-radius: 14px; background: var(--card); border: 1px solid var(--border); }
+    .p-sys.is-warn { border-color: rgba(242,193,78,.35); background: rgba(242,193,78,.05); }
+    .p-sys.is-bad { border-color: rgba(255,118,118,.4); background: rgba(255,118,118,.06); }
+    .p-status { display: flex; align-items: center; gap: 10px; padding: 13px 16px; font-size: 14px; cursor: pointer; list-style: none; }
+    .p-status::-webkit-details-marker { display: none; }
+    .p-status small { margin-left: auto; color: var(--muted); white-space: nowrap; }
+    .p-sys[open] .p-status small { color: var(--accent); }
+    .p-sys__body { padding: 0 12px 12px; }
+    .p-sys__h { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--faint);
+        margin: 14px 4px 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .p-sys__h span { text-transform: none; letter-spacing: 0; }
+    .p-sys__h .btn { margin-left: auto; }
+    .p-sys__p { font-size: 13px; color: var(--muted); margin: 0 4px; }
+    .p-sys .srcgrp { margin-bottom: 8px; }
+    .p-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+    .p-tile { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; min-width: 0; }
+    .p-tile__l { color: var(--muted); font-size: 12px; }
+    .p-tile__v { font-size: 26px; font-weight: 650; margin-top: 2px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+    .p-tile__d { font-size: 12px; color: var(--muted); }
+    .p-tile__d.up { color: var(--ok); }
+    .p-tile svg { display: block; width: 100%; height: 26px; margin-top: 6px; }
+    .p-h2 { font-size: 13px; color: var(--muted); font-weight: 500; margin: 0 0 8px 2px; }
+    .p-list { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .p-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--border); }
+    .p-row:first-child { border-top: 0; }
+    .p-av { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 600;
+        font-size: 13px; color: #0d0f14; flex: none; text-transform: uppercase; }
+    .p-row__m { flex: 1; min-width: 0; }
+    .p-row__m b { display: block; font-weight: 500; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .p-row__m span { color: var(--muted); font-size: 12.5px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .p-row__r { color: var(--faint); font-size: 12px; white-space: nowrap; }
+    .p-foot { margin-top: 22px; color: var(--faint); font-size: 12px; text-align: center; }
+    .p-foot button { background: none; border: 0; color: var(--muted); text-decoration: underline; font: inherit; cursor: pointer; padding: 6px 2px; }
+
     /* ---------- Телефон ---------- */
     @media (max-width: 640px) {
         body { padding: 14px 10px 40px; }
@@ -149,22 +200,7 @@
         .udecks-btn { padding: 7px 12px; font-size: 12.5px; }
         .urow__meta { gap: 6px 12px; align-items: center; }
         #srcRefresh { padding: 7px 12px; }
-        .fold > summary { padding: 12px; }
     }
-    /* Свёрнутые блоки обзора: длинные списки (источники, синк) прячутся под
-       итоговую строку и раскрываются тапом; если что-то сломано — блок
-       открыт сам. */
-    .fold { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; }
-    .fold > summary { list-style: none; cursor: pointer; padding: 10px 14px; font-size: 13.5px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
-    .fold > summary::-webkit-details-marker { display: none; }
-    .fold > summary::after { content: '▾'; margin-left: auto; color: var(--muted); transition: transform .15s; }
-    .fold[open] > summary::after { transform: rotate(180deg); }
-    .fold__body { padding: 0 10px 10px; }
-    .fold__body .srcgrp { margin-bottom: 8px; }
-    .owner-dev { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--muted);
-        background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; margin: 12px 0 18px; }
-    .owner-dev b { color: var(--text); }
-    .owner-dev .btn { margin-left: auto; }
     .udecks-btn { padding: 2px 9px; border: 1px solid var(--line); border-radius: 999px; background: none;
         color: var(--muted); font-size: 11px; cursor: pointer; font-family: inherit; }
     .udecks-btn:hover { color: var(--fg); }
@@ -187,8 +223,7 @@
 </head>
 <body>
 <div class="wrap">
-    <h1>🛠 Админка Animei</h1>
-    <div class="sub" id="sub">Загрузка…</div>
+    <h1>Animei <span class="h1-sub" id="sub"></span></h1>
 
     <div class="tabs">
         <button data-tab="overview" class="active">Обзор</button>
@@ -197,28 +232,37 @@
     </div>
 
     <div class="tab active" id="tab-overview">
-        <h2 class="section-title" style="margin-top:0">Сейчас на сайте <span class="online__n" id="ovOnlineN"></span></h2>
-        <div id="ovOnline" class="msg">Загрузка…</div>
-        <div class="owner-dev" id="ownerDev"></div>
-        <div class="cards" id="ovCards"></div>
+        <!-- Пульс: кто сейчас на сайте → одна строка про систему → 4 цифры → люди.
+             Всё техническое спрятано за строкой статуса. -->
+        <div class="p-hero">
+            <div class="p-hero__top"><span class="p-dot p-dot--ok p-live"></span> Сейчас на сайте</div>
+            <div class="p-hero__n" id="pOnlineN">—</div>
+            <div class="p-hero__sub" id="pOnlineSub">&nbsp;</div>
+            <div class="p-who" id="pOnlineWho"></div>
+        </div>
 
-        <details class="fold" id="foldHealth"><summary><b>Здоровье сервиса</b> <span id="ovHealthSum">…</span></summary>
-            <div class="fold__body"><div id="ovHealth" class="msg">Загрузка…</div></div></details>
-        <details class="fold" id="foldSources"><summary><b>Источники</b> <span id="ovSourcesSum">проверяем…</span></summary>
-            <div class="fold__body">
-                <button class="btn btn--small" id="srcRefresh" type="button" style="margin:0 0 10px">Проверить заново</button>
+        <details class="p-sys" id="pSys">
+            <summary class="p-status" id="pStatus"><span class="p-dot"></span><span>Проверяем систему…</span><small>система ›</small></summary>
+            <div class="p-sys__body">
+                <div class="p-sys__h">Сервер и база <span id="ovHealthSum"></span></div>
+                <div id="ovHealth" class="msg">Загрузка…</div>
+                <div class="p-sys__h">Источники <span id="ovSourcesSum"></span>
+                    <button class="btn btn--small" id="srcRefresh" type="button">проверить</button></div>
                 <div id="ovSources" class="msg">Загрузка…</div>
-            </div></details>
-        <details class="fold" id="foldSync"><summary><b>Синхронизация субтитров</b> <span id="ovSyncSum">…</span></summary>
-            <div class="fold__body"><div id="ovSync" class="msg">Загрузка…</div></div></details>
-        <details class="fold"><summary><b>Материалы</b></summary>
-            <div class="fold__body" style="font-size:13px">
-                <a href="https://animei.space/promo-vert-bf6b634a/" target="_blank" rel="noopener">🎬 Промо-ролики</a>
-                — 6 сцен: вертикаль (варианты A/B/C) и ПК 16:9, RU/UA/EN
-            </div></details>
+                <div class="p-sys__h">Синхронизация субтитров <span id="ovSyncSum"></span></div>
+                <div id="ovSync" class="msg">Загрузка…</div>
+                <div class="p-sys__h">Материалы</div>
+                <p class="p-sys__p"><a href="https://animei.space/promo-vert-bf6b634a/" target="_blank" rel="noopener">🎬 Промо-ролики</a>
+                    — 6 сцен: вертикаль и ПК 16:9, RU/UA/EN</p>
+            </div>
+        </details>
 
-        <h2 class="section-title">Последние регистрации</h2>
-        <div id="ovRecent" class="msg">Загрузка…</div>
+        <div class="p-grid" id="pTiles"></div>
+
+        <h2 class="p-h2">Люди</h2>
+        <div class="p-list" id="pPeople"><div class="msg">Загрузка…</div></div>
+
+        <div class="p-foot" id="ownerDev"></div>
     </div>
 
     <div class="tab" id="tab-stats">
@@ -337,13 +381,9 @@
         api('/overview').then(function (d) {
             // Доступ подтверждён — значит, это владелец: метим устройство.
             if (!loaded.ownerMarked) { loaded.ownerMarked = true; markOwnerDevice(); renderOwnerDev(); }
-            document.getElementById('sub').textContent = 'Обновлено ' + new Date().toLocaleString('ru-RU');
+            document.getElementById('sub').textContent = 'обновлено ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
-            // Здоровье — в свёрнутом блоке ниже (итог виден в его заголовке).
             var h = d.health;
-            document.getElementById('ovCards').innerHTML =
-                cardHtml('Пользователей', fmt(d.users)) +
-                cardHtml('Слов в базе', fmt(d.words));
 
             if (h) {
                 var rows = Object.keys(h.checks || {}).map(function (k) {
@@ -353,24 +393,19 @@
                 }).join('');
                 var bk = h.backupAgeHours >= 0 ? h.backupAgeHours + ' ч назад' : 'нет!';
                 var bad = Object.keys(h.checks || {}).filter(function (k) { return h.checks[k] !== 'ok'; });
-                foldSum('Health', bad.length ? 'сбой: ' + bad.join(', ') : 'всё ок · бэкап ' + bk, !bad.length);
+                foldSum('Health', bad.length ? 'сбой: ' + bad.join(', ') : 'всё ок · бэкап ' + bk, !bad.length,
+                    'сбой сервера: ' + bad.join(', '));
                 document.getElementById('ovHealth').outerHTML =
                     tbl('<tr><th>Проверка</th><th>Статус</th></tr>' + rows +
                     '<tr><td>Бэкап БД</td><td>' + esc(bk) + '</td></tr>' +
                     '<tr><td>Проверено</td><td>' + dt(h.at) + '</td></tr>');
             } else {
                 document.getElementById('ovHealth').textContent = 'health-status.json ещё не создан (cron не отработал)';
-                foldSum('Health', 'нет данных', false);
+                foldSum('Health', 'нет данных', false, 'нет данных о здоровье сервера');
             }
 
             renderSync(d.sync);
 
-            document.getElementById('ovRecent').outerHTML =
-                '<div class="ulist">' + d.recentUsers.map(function (u) {
-                    return '<div class="urow"><div class="urow__mail">' + esc(u.email) + '</div>' +
-                        '<div class="urow__meta"><span>' + dt(u.createdAt) + '</span>' +
-                        '<span>слов <b>' + fmt(u.words) + '</b></span></div></div>';
-                }).join('') + '</div>';
         }).catch(function () {});
     }
     // ---------- Сейчас на сайте ----------
@@ -388,25 +423,83 @@
             : /Mac OS X/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : '';
         return (/Mobile|iPhone|Android/.test(ua) ? '📱 ' : '🖥 ') + os;
     }
+    function plural(n, one, few, many) {
+        var m10 = n % 10, m100 = n % 100;
+        if (m10 === 1 && m100 !== 11) return one;
+        if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+        return many;
+    }
+    function shortMail(e) { return String(e || '').split('@')[0]; }
+    function devName(ua) {
+        return /iPhone/.test(ua || '') ? 'iPhone' : /iPad/.test(ua || '') ? 'iPad' : /Android/.test(ua || '') ? 'Android'
+            : /Windows/.test(ua || '') ? 'Windows' : /Mac OS X/.test(ua || '') ? 'Mac' : /Linux/.test(ua || '') ? 'Linux' : 'устройство';
+    }
+    var WHERE = { 'app/player': 'в плеере', 'landing/index': 'на лендинге', 'app/index': 'на главной',
+        'app/catalog': 'в каталоге', 'app/words': 'в словаре', 'app/study': 'в повторении', 'app/deck-study': 'в колоде',
+        'app/beginner': 'в разделе новичка', 'app/progress': 'в прогрессе', 'app/settings': 'в настройках', 'app/login': 'на входе' };
     function loadOnline() {
         fetch(apiBase + '/api/v1/stats/online?' + keyQ(), { headers: authHeaders() }).then(requireKey).then(function (d) {
-            document.getElementById('ovOnlineN').textContent = '· ' + d.count + (d.users ? ' (вошедших ' + d.users + ')' : '');
-            var el = document.getElementById('ovOnline');
-            el.className = '';
-            if (!d.count) { el.innerHTML = '<div class="online__empty">Никого — кроме тебя 🙂</div>'; return; }
-            var chips = Object.keys(d.byPage).sort(function (a, b) { return d.byPage[b] - d.byPage[a]; })
-                .map(function (p) { return '<span class="online__chip">' + esc(pageName(p)) + ' · <b>' + d.byPage[p] + '</b></span>'; }).join('');
-            el.innerHTML = '<div class="online__pages">' + chips + '</div><div class="ulist">' + d.people.map(function (u) {
-                return '<div class="urow"><div class="urow__mail">' + esc(u.email || 'гость') + '</div>' +
-                    '<div class="urow__meta"><span>' + esc(pageName(u.page)) + '</span><span>' + esc(devShort(u.ua)) + '</span>' +
-                    '<span>' + esc(u.ip) + '</span><span>' + (u.ago < 60 ? 'только что' : Math.round(u.ago / 60) + ' мин назад') + '</span></div></div>';
-            }).join('') + '</div>';
+            document.getElementById('pOnlineN').textContent = d.count;
+            var pages = Object.keys(d.byPage).sort(function (a, b) { return d.byPage[b] - d.byPage[a]; });
+            document.getElementById('pOnlineSub').textContent = d.count
+                ? pages.map(function (p) { return d.byPage[p] + ' ' + (WHERE[p] || 'на «' + pageName(p) + '»'); }).join(' · ')
+                : 'никого, кроме тебя';
+            document.getElementById('pOnlineWho').innerHTML = d.people.slice(0, 8).map(function (u) {
+                var name = u.email ? shortMail(u.email) : 'гость · ' + devName(u.ua);
+                var where = u.title ? u.title : pageName(u.page);
+                return '<div><b>' + esc(name) + '</b><span>' + esc(where) + '</span></div>';
+            }).join('');
         }).catch(function () {});
     }
-    // Пока открыт «Обзор» и вкладка на виду — обновляем раз в 30 с.
+
+    // Четыре цифры + люди — из /stats/pulse (тот же фильтр ботов и своих).
+    function spark(arr) {
+        var max = Math.max.apply(null, arr.concat([1])), n = arr.length - 1 || 1;
+        var pts = arr.map(function (v, i) { return (i * 100 / n).toFixed(1) + ',' + (23 - v / max * 20).toFixed(1); }).join(' ');
+        return '<svg viewBox="0 0 100 26" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="#8aa4ff" stroke-width="2" vector-effect="non-scaling-stroke" points="' + pts + '"/></svg>';
+    }
+    function tile(label, value, delta, up, sp) {
+        return '<div class="p-tile"><div class="p-tile__l">' + label + '</div><div class="p-tile__v">' + value + '</div>' +
+            '<div class="p-tile__d' + (up ? ' up' : '') + '">' + delta + '</div>' + (sp || '') + '</div>';
+    }
+    function ago(iso) {
+        var m = (Date.now() - new Date(iso)) / 60000;
+        if (m < 10) return 'сейчас';
+        if (m < 60) return Math.round(m) + ' мин';
+        var d0 = new Date(); d0.setHours(0, 0, 0, 0);
+        var t = new Date(iso);
+        if (t >= d0) return t.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        if (t >= d0 - 86400000) return 'вчера';
+        return t.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+    }
+    var AV_COLORS = ['#8aa4ff', '#f2c14e', '#5fd08a', '#ff9f7a', '#c79bff', '#6fd3e0'];
+    function loadPulse() {
+        fetch(apiBase + '/api/v1/stats/pulse?' + keyQ(), { headers: authHeaders() }).then(requireKey).then(function (d) {
+            var dd = d.today - d.yesterday;
+            var wk = d.prevWeek ? Math.round((d.week - d.prevWeek) / d.prevWeek * 100) : null;
+            document.getElementById('pTiles').innerHTML =
+                tile('Люди сегодня', fmt(d.today), (dd > 0 ? '↑ ' + dd : dd < 0 ? '↓ ' + (-dd) : '=') + ' к вчера', dd > 0, spark(d.spark)) +
+                tile('За 7 дней', fmt(d.week), wk == null ? 'прошлых 7 дней нет' : (wk > 0 ? '↑ ' : wk < 0 ? '↓ ' : '') + Math.abs(wk) + '% к прошлым 7', wk > 0) +
+                tile('Что-то сделали', fmt(d.activeWeek), 'за 7 дней · смотрели, сохраняли, учили', false) +
+                tile('Аккаунтов', fmt(d.accountsTotal), (d.accountsNewWeek ? '+' + d.accountsNewWeek : '+0') + ' за неделю', d.accountsNewWeek > 0);
+            var el = document.getElementById('pPeople');
+            if (!d.accounts.length) { el.innerHTML = '<div class="msg">Пока никого</div>'; return; }
+            el.innerHTML = d.accounts.map(function (u, i) {
+                var sub = fmt(u.words) + ' ' + plural(u.words, 'слово', 'слова', 'слов') + (u.lastTitle ? ' · ' + u.lastTitle : '');
+                return '<div class="p-row"><div class="p-av" style="background:' + AV_COLORS[i % AV_COLORS.length] + '">' +
+                    esc(String(u.email || '?').charAt(0)) + '</div>' +
+                    '<div class="p-row__m"><b>' + esc(u.email) + '</b><span>' + esc(sub) + '</span></div>' +
+                    '<div class="p-row__r">' + esc(ago(u.lastSeen)) + '</div></div>';
+            }).join('');
+        }).catch(function () {});
+    }
+
+    // Пока открыт «Обзор» и вкладка на виду — онлайн раз в 30 с, цифры раз в 5 мин.
+    var pulseTick = 0;
     setInterval(function () {
         var tab = document.getElementById('tab-overview');
         if (document.visibilityState === 'visible' && tab && tab.classList.contains('active')) loadOnline();
+        if (document.visibilityState === 'visible' && tab && tab.classList.contains('active') && ++pulseTick % 10 === 0) loadPulse();
     }, 30000);
 
     // ---------- Синхронизация субтитров (ночной прогон scripts/sync-health.mjs) ----------
@@ -417,7 +510,8 @@
         if (!sy) { el.textContent = 'sync-health.json ещё не создан (ночной прогон не отработал)'; foldSum('Sync', 'нет данных', true); return; }
         var s = sy.summary || {};
         foldSum('Sync', (sy.overall === 'ok' ? 'всё синхронно' : sy.overall === 'warn' ? 'есть подозрительные' : 'есть рассинхрон') +
-            ' · ок ' + fmt(s.ok) + '/' + fmt(s.total), sy.overall === 'ok' || sy.overall === 'warn');
+            ' · ок ' + fmt(s.ok) + '/' + fmt(s.total), sy.overall === 'ok' || sy.overall === 'warn',
+            'рассинхрон субтитров: ок ' + fmt(s.ok) + ' из ' + fmt(s.total));
         var col = sy.overall === 'ok' ? 'ok' : (sy.overall === 'warn' ? 'muted' : 'bad');
         var head = '<p class="srcsum"><b style="color:var(--' + col + ')">' +
             (sy.overall === 'ok' ? 'Всё синхронно' : sy.overall === 'warn' ? 'Есть подозрительные' : 'Есть рассинхрон') +
@@ -482,8 +576,9 @@
                 rows.map(srcHtml).join('') + '</div>';
         }).join('');
 
-        foldSum('Sources', broken.length ? 'сломано: ' + broken.map(function (i) { return i.title; }).join(', ')
-            : 'все живы', !broken.length);
+        var names = broken.map(function (i) { return i.title; }).join(', ');
+        foldSum('Sources', broken.length ? 'сломано: ' + names : 'все живы', !broken.length,
+            names + (broken.length === 1 ? ' не отвечает' : ' не отвечают'));
         document.getElementById('ovSources').className = '';
         document.getElementById('ovSources').innerHTML =
             '<p class="srcsum">' + sum + ' <span style="color:var(--muted)">· проверено ' + dt(d.checkedAt) +
@@ -501,14 +596,26 @@
 
     document.getElementById('srcRefresh').addEventListener('click', function () { loadSources(true); });
 
-    // Итог свёрнутого блока — в его заголовке; при поломке блок раскрываем сам
-    // и красим итог: глаз должен цепляться только за то, что сломано.
-    var FOLD_IDS = { Health: 'foldHealth', Sources: 'foldSources', Sync: 'foldSync' };
-    function foldSum(name, text, ok) {
+    // Строка статуса: три подсистемы сводятся в одну фразу. Всё ок — зелёная
+    // «Всё работает»; иначе — ЧТО именно сломалось, и панель раскрыта.
+    var sysState = {};
+    function foldSum(name, text, ok, problem) {
         var sum = document.getElementById('ov' + name + 'Sum');
         if (sum) { sum.textContent = '· ' + text; sum.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
-        var fold = document.getElementById(FOLD_IDS[name]);
-        if (fold && !ok) fold.open = true;
+        sysState[name] = { ok: ok, problem: problem || text };
+        renderStatus();
+    }
+    function renderStatus() {
+        var names = ['Health', 'Sources', 'Sync'];
+        var known = names.filter(function (n) { return sysState[n]; });
+        var bad = known.filter(function (n) { return !sysState[n].ok; });
+        var st = document.getElementById('pStatus'), box = document.getElementById('pSys');
+        var dot = bad.length ? (sysState.Health && !sysState.Health.ok ? 'bad' : 'warn') : (known.length === names.length ? 'ok' : '');
+        var text = bad.length ? bad.map(function (n) { return sysState[n].problem; }).join(' · ')
+            : known.length === names.length ? 'Всё работает' : 'Проверяем систему…';
+        st.innerHTML = '<span class="p-dot' + (dot ? ' p-dot--' + dot : '') + '"></span><span>' + esc(text) + '</span><small>система ›</small>';
+        box.classList.toggle('is-warn', dot === 'warn');
+        box.classList.toggle('is-bad', dot === 'bad');
     }
 
     // ---------- «Это моё устройство» ----------
@@ -535,10 +642,8 @@
         try { on = localStorage.getItem('animei:owner') === '1'; } catch (e) {}
         var el = document.getElementById('ownerDev');
         el.innerHTML = on
-            ? '<span>📵 <b>Это устройство — твоё</b>: в статистике и «онлайне» не считается.</span>' +
-              '<button class="btn btn--small" type="button" id="ownerToggle">Считать</button>'
-            : '<span>Это устройство <b>считается</b> в статистике.</span>' +
-              '<button class="btn btn--small" type="button" id="ownerToggle">Не считать</button>';
+            ? '📵 это устройство не считается · <button type="button" id="ownerToggle">считать</button>'
+            : 'это устройство считается в статистике · <button type="button" id="ownerToggle">не считать</button>';
         document.getElementById('ownerToggle').addEventListener('click', function () {
             if (on) { try { localStorage.removeItem('animei:owner'); } catch (e) {} }
             else markOwnerDevice();
@@ -668,6 +773,7 @@
 
     loadOverview();
     loadOnline();
+    loadPulse();
     renderOwnerDev();
     loadSources(false);
 </script>

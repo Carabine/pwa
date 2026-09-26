@@ -144,6 +144,8 @@
         if (automated || isOwnerDevice() || document.visibilityState !== 'visible') return;
         lastPing = Date.now();
         var body = { visitorId: visitorId, page: 'app/' + (file || 'index') };
+        // В плеере — что смотрит (плеер пишет тайтл в заголовок вкладки).
+        if (file === 'player') body.title = String(document.title || '').replace(/\s*—\s*Animei\s*$/, '').slice(0, 80);
         var uid = currentUserId();
         if (uid) body.userId = uid;
         fetch(domain + '/api/v1/stats/ping', {
