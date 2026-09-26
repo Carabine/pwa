@@ -211,6 +211,7 @@ function logout() {
     storageRemove(accessTokenKey);
     storageRemove('animei:email');
     storageRemove('animei:isAdmin'); // чтобы у следующего юзера не мигала ссылка «Админка»
+    storageRemove('animei:statsKey'); // ключ админки — следующий за этим браузером не должен войти без пароля
     clearAccountScopedState();
 }
 
@@ -344,6 +345,14 @@ function srsOutboxDrop(sentAt) {
 }
 
 let srsFlushing = null;
+
+// Запись из ящика досылки выбрасываем, только если сервер отказал ПО СУЩЕСТВУ
+// (400/404/409/422 — повтор ничего не изменит). 401/403 (сессия кончилась —
+// после входа дошлём), 408 и 429 (перегрузка) — временные, запись держим.
+function isPermanentReject(status) {
+    return !!status && status < 500 && ![401, 403, 408, 429].includes(status);
+}
+
 function flushSrsOutbox() {
     if (srsFlushing) return srsFlushing;                       // уже разгружаем
     if (!isLoggedIn() || navigator.onLine === false) return Promise.resolve(false);
@@ -361,11 +370,10 @@ function flushSrsOutbox() {
     srsFlushing = client.post('words/srs', { updates }, { silentErrors: true })
         .then(() => { srsOutboxDrop(sentAt); return true; })
         .catch((err) => {
-            // Сервер ОТВЕТИЛ (пусть и 4xx — например, сессия кончилась): держать
-            // запись вечно незачем, повтор ничего не изменит. Нет ответа вовсе
-            // (офлайн) или 5xx — оставляем в ящике до следующей попытки.
+            // Отказ по существу — выбрасываем; офлайн, 5xx, 429 и кончившаяся
+            // сессия — оставляем в ящике до следующей попытки (isPermanentReject).
             const status = err?.response?.status;
-            if (status && status < 500) srsOutboxDrop(sentAt);
+            if (isPermanentReject(status)) srsOutboxDrop(sentAt);
             return false;
         })
         .finally(() => { srsFlushing = null; });
@@ -424,9 +432,9 @@ function flushWordPatches() {
                 if (left[id] && left[id].at === at) { delete left[id]; wordPatchWrite(left); }
             } catch (err) {
                 const status = err?.response?.status;
-                // Ответ сервера (в т.ч. 4xx — слово удалили, сессия кончилась) —
-                // повторять нечего; обрыв связи или 5xx оставляем на потом.
-                if (status && status < 500) {
+                // Слово удалили (404) и т.п. — повторять нечего; обрыв связи, 5xx,
+                // 429 и кончившуюся сессию оставляем на потом (isPermanentReject).
+                if (isPermanentReject(status)) {
                     const left = wordPatchRead();
                     if (left[id] && left[id].at === at) { delete left[id]; wordPatchWrite(left); }
                 } else allSent = false;

@@ -65,7 +65,9 @@ self.addEventListener('fetch', (event) => {
     // (animei:wordsCache и прочее) и чистится при смене аккаунта.
     // Безличное (каталог, субтитры, словарь) кэшируем как раньше — на нём
     // держится офлайн-каталог.
-    if (/^\/api\/v1\/(words|decks|users|auth|stats)(\/|$)/.test(url.pathname)) {
+    // Админские ответы и любой запрос с Authorization — тоже личные.
+    if (/^\/api\/v1\/(words|decks|users|auth|stats|admin)(\/|$)/.test(url.pathname)
+        || request.headers.has('Authorization')) {
         return;
     }
 
@@ -112,7 +114,10 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((names) =>
             Promise.all(
-                names.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
+                // Cache Storage общий на весь origin: рядом живут кэши JP News
+                // (shell-*/data-*, см. nihongo-news/public/sw.js) — их не трогаем.
+                names.filter((name) => name !== CACHE_NAME && !/^(shell|data)-/.test(name))
+                    .map((name) => caches.delete(name))
             )
         ).then(() => self.clients.claim())
     );

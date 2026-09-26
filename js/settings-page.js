@@ -152,7 +152,10 @@
             }
             saveBtn.disabled = true;
             try {
-                await client.post('users/password', { currentPassword: cur, newPassword: nw });
+                const res = await client.post('users/password', { currentPassword: cur, newPassword: nw });
+                // Смена пароля гасит все сессии на сервере — этому устройству
+                // сервер сразу выдал новую пару, сохраняем её, чтобы не выкинуло.
+                if (res?.data?.accessToken && res.data.refreshToken) setRefreshedTokens(res.data);
                 showSnackbar(t('settings.passwordChanged'), { duration: 3000, type: 'success' });
                 curEl.value = '';
                 newEl.value = '';
