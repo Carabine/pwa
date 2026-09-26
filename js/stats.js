@@ -91,11 +91,29 @@
         }
     } catch (e) { /* sessionStorage может быть недоступен */ }
 
-    // Разовое событие входа в аккаунт — чтобы видеть переходы гость → аккаунт.
-    try {
-        if (currentUserId() && !sessionStorage.getItem('animei:sessionTracked')) {
-            sessionStorage.setItem('animei:sessionTracked', '1');
-            send('session', 'app/' + (file || 'index'));
-        }
-    } catch (e) { /* sessionStorage может быть недоступен */ }
+    // «Сейчас онлайн»: пока вкладка на виду, раз в минуту шлём пинг. В базу он
+    // не пишется — сервер держит только память «кто и где был последние
+    // пару минут». Без пинга человек, смотрящий серию, выглядел бы ушедшим:
+    // за 20 минут просмотра других событий может не быть вовсе.
+    var PING_MS = 60 * 1000;
+    var lastPing = 0;
+    function ping() {
+        if (document.visibilityState !== 'visible') return;
+        lastPing = Date.now();
+        var body = { visitorId: visitorId, page: 'app/' + (file || 'index') };
+        var uid = currentUserId();
+        if (uid) body.userId = uid;
+        fetch(domain + '/api/v1/stats/ping', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            keepalive: true
+        }).catch(function () {});
+    }
+    ping();
+    setInterval(ping, PING_MS);
+    // Вернулся на вкладку — сразу отмечаемся, не дожидаясь таймера.
+    document.addEventListener('visibilitychange', function () {
+        if (Date.now() - lastPing > 15000) ping();
+    });
 })();

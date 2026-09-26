@@ -156,7 +156,6 @@
                 showSnackbar(t('settings.passwordChanged'), { duration: 3000, type: 'success' });
                 curEl.value = '';
                 newEl.value = '';
-                if (typeof window.animeiTrack === 'function') window.animeiTrack('password_change', 'ok');
             } catch (err) {
                 const status = err?.response?.status;
                 const msg = status === 400 ? t('settings.passwordWrong') : t('settings.passwordError');

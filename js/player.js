@@ -469,7 +469,6 @@ async function selectTranslation(index) {
     state.subLang = opt.lang;
     translationSelect.value = String(state.subOptions.indexOf(opt));
     state.provider = t.provider || 'kodik';
-    if (window.animeiTrack) window.animeiTrack('voiceover', (isJpTrack(t) ? '🇯🇵 ' : '') + (t.title || ''));
     // Новая дорожка — свои сезоны/серии; сброс запомненного сезона обязателен.
     // Не-Kodik источники — оригинальные дорожки без Kodik-машинерии серий:
     // рисуем 1..N по числу серий тайтла.
@@ -733,7 +732,6 @@ async function detectShortFormChibi() {
         // Перерисуем сезоны/серии, не трогая текущее видео (keepCurrent).
         renderSeasons();
         populateEpisodes(false, true);
-        if (window.animeiTrack) window.animeiTrack('chibi_hidden', (titleRu || titleRomaji || '') + ' ×' + chibi.size);
     }
 }
 
@@ -948,7 +946,6 @@ function showSessionPanel(endedEpIndex) {
     panel.querySelector('.session-panel__next') && (panel.querySelector('.session-panel__next').textContent = t('session.next'));
 
     document.body.appendChild(panel);
-    if (window.animeiTrack) window.animeiTrack('session_card', 'player_shown:' + s.words.length);
 }
 
 // Номер «поколения» выбора серии. Запросы потока и субтитров асинхронные, и
@@ -1218,7 +1215,6 @@ function resumeAfterAttach() {
         state.resumeTime = null;
         if (rt) {
             try { video.currentTime = rt; } catch { /* поток короче — игнор */ }
-            if (window.animeiTrack) window.animeiTrack('resume', 'seek:' + rt);
         }
         video.play().catch(() => {});
     }
@@ -1733,7 +1729,6 @@ async function maybeAutoSync() {
             // подгонка сдвига — рутина, о которой сообщать нечего, а всплывашка
             // лезла поверх текста ровно в тот момент, когда его начинают читать.
             // В статистику событие по-прежнему пишем.
-            if (window.animeiTrack) window.animeiTrack('autosync', offset.toFixed(1) + ' · ' + confidence.toFixed(2));
         } else if (trusted) {
             // Сдвиг мал — субтитры уже практически синхронны, оставляем как есть (0).
             // Фиксируем это (offset 0 + метод), чтобы не перезапрашивать каждый заход.
@@ -3294,7 +3289,12 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ---------- Селекты ----------
-translationSelect.addEventListener('change', () => { selectTranslation(parseInt(translationSelect.value, 10)); });
+translationSelect.addEventListener('change', () => {
+    const opt = state.subOptions[parseInt(translationSelect.value, 10)];
+    // В статистику — только ручная смена дорожки; автовыбор при загрузке не действие.
+    if (opt && window.animeiTrack) window.animeiTrack('voiceover', (isJpTrack(opt.track) ? '🇯🇵 ' : '') + (opt.track.title || ''));
+    selectTranslation(parseInt(translationSelect.value, 10));
+});
 episodeSelect.addEventListener('change', () => { selectEpisode(parseInt(episodeSelect.value, 10)); });
 // Смена сезона: франшиза — переход на другой тайтл; группы — фильтр на клиенте
 seasonSelect.addEventListener('change', () => {

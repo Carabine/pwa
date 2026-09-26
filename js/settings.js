@@ -92,7 +92,8 @@ function lsJson(key, fallback = null) {
         if (k === 'studyTranscription') mirrorReading();
         if (k === 'theme') applyTheme();
 
-        if (typeof window.animeiTrack === 'function') {
+        // Громкость крутят ползунком — это десятки событий на одно движение, не выбор.
+        if (k !== 'volume' && typeof window.animeiTrack === 'function') {
             window.animeiTrack('setting', k + ':' + v);
         }
         document.dispatchEvent(new CustomEvent('animei:settingchange', { detail: { key: k, value: v } }));

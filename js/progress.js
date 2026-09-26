@@ -317,7 +317,6 @@
     // коллекции. До ответа сервера показываем заглушку.
     let pending = true;
     let lastHtml = '';
-    let tracked = false;
 
     function render() {
         const words = readWords();
@@ -371,13 +370,6 @@
                 ? tStreak(stats.streak.best)
                 : stats.streak.best + ' дн.';
             el('prg-subtitle').textContent = tr('progress.record', 'Рекорд серии: {n}').replace('{n}', n);
-        }
-        // Просмотр засчитываем один раз за загрузку и только по окончательным
-        // данным: render зовётся ещё и после ответа сервера, и раньше каждый
-        // заход считался в статистике дважды.
-        if (!pending && !tracked) {
-            tracked = true;
-            if (window.animeiTrack) animeiTrack('progress', 'view:' + stats.total);
         }
     }
 

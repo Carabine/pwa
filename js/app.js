@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.576';
+const APP_VERSION = 'v0.0.577';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -419,7 +419,6 @@ if ('serviceWorker' in navigator) {
     function setState(offline) {
         if (offline === shown) return;
         shown = offline;
-        if (window.animeiTrack) animeiTrack('offline', offline ? 'on' : 'off');
         render(offline);
         if (typeof showSnackbar !== 'function' || typeof t !== 'function') return;
         if (offline) {
@@ -521,7 +520,6 @@ function renderInstallHint() {
     // (например, после отказа в нативном диалоге) и снова дёрнуть эту функцию.
     if (el.dataset.wired === '1') return;
     el.dataset.wired = '1';
-    if (window.animeiTrack) window.animeiTrack('install', ios ? 'shown-ios' : 'shown');
 
     document.getElementById('install-hint-btn').addEventListener('click', async () => {
         if (window.animeiTrack) window.animeiTrack('install', 'click');
@@ -988,7 +986,6 @@ function renderContinueCard() {
         if (window.animeiTrack) window.animeiTrack('resume', 'dismiss');
     });
 
-    if (window.animeiTrack) window.animeiTrack('resume', 'shown');
     el.addEventListener('click', () => {
         if (window.animeiTrack) window.animeiTrack('resume', 'click');
     });
@@ -1044,7 +1041,6 @@ function renderSessionCard() {
         if (window.animeiTrack) window.animeiTrack('session_card', 'home_later');
     });
 
-    if (window.animeiTrack) window.animeiTrack('session_card', 'home_shown:' + s.words.length);
 }
 
 // ---- Дневной план -----------------------------------------------------------
@@ -1147,10 +1143,6 @@ function renderDailyPlan() {
     })();
 }
 
-// Один раз за загрузку отправляем состояние плана в аналитику. Флагом служит
-// отдельная переменная, а не наличие скелетона: у вошедшего первая заливка
-// может прийти уже после синка, и событие бы потерялось.
-let planTracked = false;
 
 // Отрисовка состояния плана по текущей локальной сводке. Вызывается один-два
 // раза (сразу и/или после синка) — повторный раз молча, без анимации.
@@ -1203,7 +1195,6 @@ function paintDailyPlan(el) {
             '<span class="daily-plan__sub">' + escHtml(t('plan.done.sub')) + '</span>' +
             '</div>' +
             '<span class="daily-plan__cta">' + escHtml(t('plan.done.cta')) + '</span>', 2);
-        if (!planTracked && window.animeiTrack) { planTracked = true; window.animeiTrack('daily_plan', 'done'); }
         return;
     }
 
@@ -1222,7 +1213,6 @@ function paintDailyPlan(el) {
         '<div class="daily-plan__chips">' + chips.join('') + '</div>' +
         '</div>' +
         '<span class="daily-plan__cta">' + escHtml(doneCount > 0 ? t('plan.resume') : t('plan.start')) + '</span>', 2);
-    if (!planTracked && window.animeiTrack) { planTracked = true; window.animeiTrack('daily_plan', 'shown:' + remaining); }
 }
 
 // Небольшая недельная активность: последние 7 дней + серия занятий (🔥).
