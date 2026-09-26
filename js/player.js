@@ -1884,8 +1884,10 @@ function buildWordCells(cue) {
     }
 
     return cue.tokens.map((tok) => {
+        fixKanaReading(tok);
         const cell = document.createElement('span');
         cell.className = 'ncw';
+        if (KATAKANA_WORD_RE.test(tok.surface)) cell.classList.add('ncw--kata');
 
         // Над словом — ОДНО чтение по выбранному режиму: кана ЛИБО ромадзи, не оба.
         let reading = '';
@@ -1926,8 +1928,26 @@ function buildWordCells(cue) {
 // чисто-канного слова чтение совпадает с ним самим, дублировать не нужно).
 function readingKana(tok) {
     if (!tok.reading || tok.reading === tok.surface) return '';
-    if (!KANJI_RE.test(tok.surface)) return '';
+    // Катакана (имена, заимствования): новичок её часто ещё не читает — даём
+    // хирагану сверху, как фуригану над кандзи.
+    if (!KANJI_RE.test(tok.surface) && !KATAKANA_RE.test(tok.surface)) return '';
     return tok.reading;
+}
+
+const KATAKANA_RE = /[ァ-ヺ]/;
+const KATAKANA_WORD_RE = /^[ァ-ヺー・]+$/;
+const KANA_ONLY_RE = /^[ぁ-ゖァ-ヺー・]+$/;
+
+// Слово без кандзи читается ровно так, как написано. MeCab же у незнакомых ему
+// имён чтения не знает: フリー|レン склеиваются в フリーレン, а чтение остаётся
+// «ふりー» — над именем висел обрубок «furii». Берём чтение из самого написания.
+// Токен правим на месте — тем же объектом пользуются карточка слова и сохранение.
+function fixKanaReading(tok) {
+    if (!KANA_ONLY_RE.test(tok.surface || '')) return;
+    const kana = tok.surface.replace(/[ァ-ヶ]/g,
+        (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+    tok.reading = kana;
+    if (tok.base === tok.surface) tok.baseReading = kana;
 }
 
 // Чтение слова для карточек попапа и итогов серии — в том же режиме, что и над

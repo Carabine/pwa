@@ -760,6 +760,12 @@ html, body {
     margin-bottom: 1px;
 }
 
+/* Над катаканой (имена, заимствования) — подсказка хираганой/ромадзи: та же
+   строка, но тише, чтобы не спорила с фуриганой над кандзи. */
+.ncw--kata .ncw__read {
+    opacity: 0.75;
+}
+
 .now-cue__ru {
     font-size: 12.5px;
     color: var(--text-muted);
