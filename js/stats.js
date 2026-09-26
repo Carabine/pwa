@@ -29,7 +29,17 @@
         } catch (e) { return null; }
     }
 
+    // Кого не считаем вовсе (надёжные признаки, а не эвристики):
+    //  - автоматизация: navigator.webdriver выставляют puppeteer/playwright/
+    //    selenium по стандарту WebDriver — это наши же тест-прогоны и скрейперы;
+    //  - устройство владельца: помечается в админке (animei:owner).
+    function isOwnerDevice() {
+        try { return localStorage.getItem('animei:owner') === '1'; } catch (e) { return false; }
+    }
+    var automated = navigator.webdriver === true;
+
     function send(event, page) {
+        if (automated || isOwnerDevice()) return;
         var body = { event: event, page: page, visitorId: visitorId };
         var uid = currentUserId();
         if (uid) body.userId = uid;
@@ -40,6 +50,39 @@
             keepalive: true
         }).catch(function () { /* статистика не должна мешать приложению */ });
     }
+
+    // Пометить/снять «это моё устройство» (кнопка в админке). Перед тем как
+    // замолчать, устройство один раз сообщает серверу 'owner' — так из
+    // статистики пропадёт и вся его прошлая история.
+    window.animeiSetOwnerDevice = function (on) {
+        try {
+            if (on) {
+                localStorage.removeItem('animei:owner');
+                send('owner', 'marked');
+                localStorage.setItem('animei:owner', '1');
+            } else {
+                localStorage.removeItem('animei:owner');
+            }
+        } catch (e) { /* localStorage недоступен */ }
+    };
+    window.animeiIsOwnerDevice = isOwnerDevice;
+
+    // Доказательство «здесь человек»: первый настоящий жест на устройстве
+    // (isTrusted — событие от пользователя, не из скрипта). Шлём один раз
+    // на устройство. Сервер не считает новые устройства без него — так
+    // отсеиваются краулеры, которые исполняют JS, но ничего не трогают.
+    (function () {
+        var HK = 'animei:human';
+        try { if (localStorage.getItem(HK)) return; } catch (e) { return; }
+        var kinds = ['pointerdown', 'touchstart', 'keydown', 'wheel'];
+        function onGesture(e) {
+            if (!e.isTrusted) return;
+            kinds.forEach(function (k) { window.removeEventListener(k, onGesture, true); });
+            try { localStorage.setItem(HK, '1'); } catch (err) { /* ок */ }
+            send('human', e.type);
+        }
+        kinds.forEach(function (k) { window.addEventListener(k, onGesture, { capture: true, passive: true }); });
+    })();
 
     // Публичный трекер действий: window.animeiTrack('save_word', '食べる')
     window.animeiTrack = function (event, detail) {
@@ -98,7 +141,7 @@
     var PING_MS = 60 * 1000;
     var lastPing = 0;
     function ping() {
-        if (document.visibilityState !== 'visible') return;
+        if (automated || isOwnerDevice() || document.visibilityState !== 'visible') return;
         lastPing = Date.now();
         var body = { visitorId: visitorId, page: 'app/' + (file || 'index') };
         var uid = currentUserId();

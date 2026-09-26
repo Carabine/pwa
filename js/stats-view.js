@@ -44,6 +44,9 @@
                     '\n.statsview .tl__tag { min-width: 70px; }' +
                     '\n.statsview .visitor__head { padding: 10px 12px; gap: 8px; }' +
                     '\n.statsview .chart { height: 150px; }' +
+                    '\n.statsview .periods button { flex: 1 1 auto; padding: 10px 8px; }' +
+                    '\n.statsview .session__head { gap: 4px 10px; }' +
+                    '\n.statsview .pct { display: block; }' +
                     '\n}';
                 document.head.appendChild(st);
             }
