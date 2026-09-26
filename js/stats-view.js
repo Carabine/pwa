@@ -156,7 +156,7 @@
                 function step(v) {
                     return fmt(v) + (n && v ? ' <span class="pct">' + Math.round(v / n * 100) + '%</span>' : '');
                 }
-                return '<tr><td>' + esc(String(s.source).replace(/^www\./, '').replace(/\.com$/, '')) +
+                return '<tr><td title="' + esc(s.source) + '">' + esc(srcName(s.source)) +
                        '</td><td class="num">' + fmt(n) + '</td><td class="num">' + step(s.app || 0) +
                        '</td><td class="num">' + step(s.active || 0) + '</td><td class="num">' + step(s.registered || 0) + '</td></tr>';
             }).join('');
@@ -202,8 +202,19 @@
         'app/watch': 'свой файл', 'app/words': 'словарь', 'app/study': 'повторение',
         'app/custom-study': 'своя учёба', 'app/beginner': 'для новичка',
         'app/settings': 'настройки', 'app/login': 'вход', 'app/feedback': 'отзыв',
-        'app/stats': 'статистика', 'landing/index': 'лендинг'
+        'app/stats': 'статистика', 'landing/index': 'лендинг',
+        'app/progress': 'прогресс', 'app/deck-study': 'колода', 'app/reset': 'сброс пароля',
+        'landing/webapp': 'лендинг · веб', 'landing/companion': 'лендинг · расширение',
+        'landing/support': 'лендинг · поддержка', 'landing/privacy': 'лендинг · политика'
     };
+    // Реферер-приложения приходят именем пакета — показываем по-человечески.
+    function srcName(src) {
+        var s = String(src || '').replace(/^www\./, '');
+        if (/googlequicksearchbox|^com\.google\.android/.test(s)) return 'google app';
+        if (/telegram/.test(s)) return 'telegram';
+        if (/^(android-app|com|org)\./.test(s)) return s.split('.').slice(-1)[0];
+        return s.replace(/\.com$/, '');
+    }
     var STUDY_LABELS = { srs: 'повторение', cram: 'зубрёжка' };
 
     function esc(s) {

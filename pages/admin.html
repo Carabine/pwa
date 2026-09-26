@@ -72,7 +72,7 @@
     .meter { position: relative; }
     .meter::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: var(--w); background: rgba(138,164,255,.09); }
     .meter > * { position: relative; }
-    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
     .foot { margin: 10px 0 0; color: var(--faint); font-size: 12px; text-align: center; }
     .foot button { background: none; border: 0; color: var(--muted); text-decoration: underline; font: inherit; cursor: pointer; padding: 4px 2px; }
 
@@ -106,11 +106,12 @@
     .srcsum { margin: 0; padding: 0 10px 6px; font-size: 12.5px; }
     .srcgrp { border-top: 1px solid var(--border); }
     .srcgrp__head { padding: 6px 10px 2px; font-size: 10.5px; color: var(--faint); text-transform: uppercase; letter-spacing: .05em; }
-    .src { display: flex; align-items: baseline; gap: 8px; padding: 4px 10px; }
+    .src { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; padding: 4px 10px; }
     .src__dot { width: 7px; height: 7px; border-radius: 50%; flex: none; align-self: center; }
     .src__dot--ok { background: var(--ok); } .src__dot--bad { background: var(--bad); } .src__dot--off { background: var(--faint); }
-    .src__name { font-weight: 600; flex: none; font-size: 12.5px; }
-    .src__note { color: var(--muted); flex: 1 1 auto; min-width: 0; font-size: 12px; }
+    .src__name { font-weight: 600; flex: 1 1 auto; min-width: 0; font-size: 12.5px; }
+    .src__ms { order: 2; }
+    .src__note { order: 3; flex: 1 0 100%; padding-left: 15px; color: var(--muted); min-width: 0; font-size: 12px; overflow-wrap: anywhere; }
     .src__note--bad { color: var(--bad); }
     .src__hint { display: block; font-size: 11px; color: var(--faint); }
     .src__ms { font-size: 11px; color: var(--faint); flex: none; }
@@ -126,6 +127,8 @@
         color: var(--muted); font: inherit; font-size: 11.5px; cursor: pointer; }
     .udecks-btn:hover { color: var(--text); }
     .udecks, .uwords { margin-top: 6px; }
+    .udecks .msg, .uwords .msg { padding: 4px 0; text-align: left; }
+    .uwords__q { padding: 3px 8px; }
     .udecks__sum { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
     .udeck { margin-bottom: 6px; }
     .udeck__head { font-size: 12px; margin-bottom: 2px; }
@@ -166,6 +169,19 @@
     /* подписи плиток в одну строку — иначе цифры стоят на разной высоте */
     #statsRoot.statsview .card .label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #statsRoot.statsview .visitor__meta { line-height: 1.35; }
+    /* график за 30/90 дней влезает в экран: столбики сжимаются, дата — у каждого 5-го */
+    #statsRoot.statsview .chart { overflow: hidden; }
+    #statsRoot.statsview .bar-col { min-width: 0; }
+    #statsRoot.statsview .bar-date { visibility: hidden; transform: none; height: 12px; font-size: 9px; margin-top: 3px; }
+    #statsRoot.statsview .bar-col:nth-child(5n+1) .bar-date { visibility: visible; }
+    /* страны — мелкими чипами, а не 27 крупными кнопками */
+    #statsRoot.statsview #countryFilter { gap: 4px; }
+    #statsRoot.statsview #countryFilter button { flex: 0 0 auto; padding: 2px 8px; font-size: 11.5px; border-radius: 999px; }
+    /* источники: имя не распирает таблицу */
+    #statsRoot.statsview #sources td:first-child { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+    /* шаги сессии плотнее */
+    #statsRoot.statsview .story__row { padding: 3px 0; font-size: 12.5px; gap: 8px; }
+    #statsRoot.statsview .story__time { min-width: 36px; font-size: 11px; }
     #statsRoot.statsview .pct { display: inline; margin-left: 3px; }
     /* пояснения под заголовками секций — только лишние строки на телефоне */
     #statsRoot.statsview .section-title + .sub { display: none; }
@@ -234,7 +250,7 @@
         </div>
 
         <div class="box">
-            <div class="box__h">Аккаунты <b id="pAccN"></b><span class="r">слов · время 7д · тайтл · был</span></div>
+            <div class="box__h">Аккаунты <b id="pAccN"></b><span class="r">слова · время 7д · тайтл</span></div>
             <div id="pPeople"><div class="msg">Загрузка…</div></div>
         </div>
 
@@ -497,7 +513,7 @@
                 stat(fmt(d.week), 'за 7 дней', (dw > 0 ? '↑' + dw : dw < 0 ? '↓' + (-dw) : '=') + ' к пр.', dw > 0) +
                 stat(fmt(d.activeWeek), 'действовали', share + '% из ' + fmt(d.week), false) +
                 stat(dur(d.timeToday), 'время',
-                    d.timePeopleWeek ? '~' + dur(d.timeWeek / d.timePeopleWeek) + '/чел' : 'за 7д пока нет', false);
+                    d.timePeopleWeek ? '~' + dur(d.timeWeek / d.timePeopleWeek) + '/чел' : 'копится', false);
             document.getElementById('pAccN').textContent = fmt(d.accountsTotal) +
                 (d.accountsNewWeek ? ' · +' + d.accountsNewWeek + ' за нед.' : '');
             var sp = d.spark14 || d.spark, max = Math.max.apply(null, sp.concat([1]));
@@ -512,7 +528,8 @@
                 function (x) { return x.source.replace(/^www\./, '').replace(/\.com$/, ''); }, function (x) { return x.people; });
             document.getElementById('pPeople').innerHTML = d.accounts.length ? d.accounts.map(function (u) {
                 return '<div class="row"><span class="l">' + esc(shortMail(u.email)) + '</span><span class="m">' +
-                    fmt(u.words) + ' · ' + dur(u.seconds7d) + ' · ' + esc(u.lastTitle || '—') + '</span><span class="r">' + esc(ago(u.lastSeen)) + '</span></div>';
+                    fmt(u.words) + ' сл' + (u.seconds7d >= 60 ? ' · ' + dur(u.seconds7d) : '') +
+                    (u.lastTitle ? ' · ' + esc(u.lastTitle) : '') + '</span><span class="r">' + esc(ago(u.lastSeen)) + '</span></div>';
             }).join('') : '<div class="row"><span class="l fnt">пока никого</span></div>';
         }).catch(function () {});
     }
