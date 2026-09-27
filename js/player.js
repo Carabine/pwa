@@ -119,7 +119,10 @@ const PROVIDERS = {
     // видно, что доступно (у них бывает и 1080p, и только 360p).
     kickassanime: {
         endpoint: 'catalog/kickassanime-stream',
-        params: (ep) => ({ shikimoriId, ep: ep.number, sub: state.subLang || 'en' }),
+        params: (ep) => ({ shikimoriId, ep: ep.number, sub: state.subLang || 'en',
+            // Английский дубляж (режим «учу английский») — тот же мастер, другая
+            // аудиодорожка; бэкенд сшивает манифест с ней (?audio=en).
+            ...(state.audioWant ? { audio: state.audioWant } : {}) }),
         qualities: true,
         overlaySubs: true,
         burnLang: 'en',
@@ -128,6 +131,11 @@ const PROVIDERS = {
 };
 
 const state = {
+    // Режим «учу английский» (LearnLang): 'dub' — английская озвучка KAA,
+    // 'sub' — озвучки нет, японский звук с английским текстом, '' — обычный
+    // японский режим. audioWant — язык звука для запроса потока ('en' | '').
+    enMode: '',
+    audioWant: '',
     translations: [],
     episodes: [],          // серии, показанные в дропдауне серий сейчас
     rawEpisodes: [],       // весь список серий текущего тайтла как пришёл от Kodik
@@ -222,6 +230,26 @@ async function init() {
         // из выбора. Фолбэк: если у тайтла ВООБЩЕ нет японской дорожки, оставляем
         // что есть, чтобы не оставить пользователя без видео.
         let tracks = info.translations.filter(isJpTrack);
+        // Режим «учу английский»: первой — дорожка с английской озвучкой KAA
+        // (текст серии тоже английский, см. loadSubtitles). Озвучки нет —
+        // берём чистое видео KAA с японским звуком и английскими субтитрами
+        // (читаем по-английски, слушаем оригинал). Нет и его — честно говорим и
+        // показываем обычные японские дорожки.
+        state.enMode = '';
+        if (learnEn()) {
+            const enDub = info.translations.filter((tr) => tr.audio === 'en');
+            const kaaSub = tracks.filter((tr) => tr.provider === 'kickassanime');
+            if (enDub.length) { tracks = enDub; state.enMode = 'dub'; }
+            else if (kaaSub.length) {
+                tracks = kaaSub; state.enMode = 'sub';
+                showSnackbar(t('player.noEnglishDub'), { duration: 7000 });
+            } else {
+                showSnackbar(t('player.noEnglish'), { duration: 7000 });
+            }
+        }
+        document.body.classList.toggle('is-en', !!state.enMode);
+        const readingSeg = document.getElementById('reading-toggle');
+        if (readingSeg) readingSeg.hidden = !!state.enMode;
         // Раньше дубляжи возвращались в список ещё и тогда, когда японские дорожки
         // были только от запасных провайдеров: AllAnime и MegaPlay часто отваливались,
         // и без этого тайтл вообще не открывался. После подключения AnimeJoy + Sibnet
@@ -268,7 +296,7 @@ async function init() {
         // Русские сабы бывают и ВШИТЫМИ (Kodik: lang=null + burned='ru') — для
         // RU/UK-интерфейса это тоже «русские», без этого дефолт съезжал на
         // английские у тайтлов, где у KickAssAnime нет своей русской дорожки.
-        const wantSub = getLang() === 'en' ? 'en' : 'ru';
+        const wantSub = (state.enMode || getLang() === 'en') ? 'en' : 'ru';
         let pref = state.subOptions.findIndex((o) =>
             o.lang === wantSub || (wantSub === 'ru' && o.burned === 'ru'));
         if (pref < 0) pref = 0;
@@ -313,6 +341,13 @@ async function loadHumanSubs(lang, episodeNumber) {
     }
 }
 
+// Режим «учу английский» (LearnLang, settings.js): английская дорожка и
+// английский текст серии; японские подсказки (чтение над словами, ромадзи,
+// авто-колода по JLPT) в нём не участвуют.
+function learnEn() {
+    return !!(window.LearnLang && LearnLang.get() === 'en');
+}
+
 // Оригинальная японская дорожка (озвучка + сабы). Kodik помечает такие
 // type='subtitles', но не всегда — подстраховываемся по названию дорожки.
 function isJpTrack(tr) {
@@ -337,6 +372,7 @@ function isDubTrack(tr) {
 // перевода сабов), поэтому по японскому аудио whisper запускался с `-l ru` и матчинг
 // всегда падал («не удалось»). Дубляж — на языке перевода.
 function trackAudioLang(tr) {
+    if (tr && tr.audio === 'en') return 'en';   // английский дубляж KAA
     if (PROVIDERS[state.provider]?.audioLang) return PROVIDERS[state.provider].audioLang;
     if (isJpTrack(tr)) return 'ja';
     return subsLang();
@@ -387,6 +423,15 @@ function buildSubOptions() {
     const langs = (kaa && kaa.subLangs) || [];
     const opts = [];
 
+    // Английский режим: одна дорожка (дубляж или чистое видео KAA) и английские
+    // сабы слоем поверх — выбирать тут нечего.
+    if (state.enMode) {
+        const track = state.translations[0];
+        return (track.subLangs || []).includes('en')
+            ? [{ lang: 'en', track }]
+            : [{ lang: null, track }];
+    }
+
     // Английские — только мягким слоем поверх чистой картинки.
     if (kaa && langs.includes('en')) opts.push({ lang: 'en', track: kaa });
 
@@ -436,7 +481,8 @@ function renderTranslations() {
         // Наш слой поверх картинки, в которой субтитры уже вшиты: строк на
         // экране будет две. Обещать чистый кадр здесь нельзя.
         const over = o.human && o.overBurned ? window.t('subs.overBurned') : '';
-        if (o.lang === 'en') name = window.t('subs.langEn') + over;
+        if (o.track.audio === 'en') name = window.t('subs.englishDub');
+        else if (o.lang === 'en') name = window.t('subs.langEn') + over;
         else if (o.lang === 'ru') name = window.t('subs.langRu') + over;
         else if (o.burned === 'ru') {
             // Русские субтитры, но вшитые в картинку — не наш слой. Для
@@ -469,6 +515,7 @@ async function selectTranslation(index) {
     state.subLang = opt.lang;
     translationSelect.value = String(state.subOptions.indexOf(opt));
     state.provider = t.provider || 'kodik';
+    state.audioWant = t.audio === 'en' ? 'en' : '';
     // Новая дорожка — свои сезоны/серии; сброс запомненного сезона обязателен.
     // Не-Kodik источники — оригинальные дорожки без Kodik-машинерии серий:
     // рисуем 1..N по числу серий тайтла.
@@ -1456,6 +1503,8 @@ async function loadSubtitles(episodeNumber = 1) {
                 // Наш id тайтла = MAL id: по нему сервер точно находит серию у
                 // anime365 и подмешивает человеческий перевод вместо машинного.
                 shikimoriId,
+                // Английский режим: текст серии английский (сабы KAA/anime365).
+                ...(state.enMode ? { lang: 'en' } : {}),
                 // Уже не подошедшие файлы — сервер подберёт следующий кандидат.
                 ...(state.subsExcluded && state.subsExcluded.length
                     ? { exclude: JSON.stringify(state.subsExcluded) } : {}),
@@ -1468,6 +1517,12 @@ async function loadSubtitles(episodeNumber = 1) {
         state.cues = cues;
         state.subsFile = res.data.file || '';
         subsStatus.style.display = 'none';
+        // Английская озвучка + английские сабы: текст — перевод японского, а не
+        // сценарий дубляжа. Предупреждаем один раз за сессию.
+        if (state.enMode === 'dub' && !sessionStorage.getItem('animei:enTextNote')) {
+            try { sessionStorage.setItem('animei:enTextNote', '1'); } catch { /* приватный режим */ }
+            showSnackbar(t('player.enTextNote'), { duration: 7000 });
+        }
         subsStatus.classList.remove('transcript__status--searching');
         setSubsSkeleton(false);
         // Сабы готовы — скелетон из полосы реплики убираем (до первой реплики
@@ -1617,6 +1672,8 @@ function setSyncing(on) {
 // время сразу при отрисовке сабов, а не только в момент запроса.
 function autoSyncEligible() {
     if (window.AnimeiSettings && window.AnimeiSettings.get('autoSyncSubs') === false) return false;
+    // Английский текст берётся с того же KAA, что и видео, — тайминги совпадают.
+    if (state.enMode) return false;
     // Несинкуемые источники (megaplay) — см. maybeAutoSync.
     if (PROVIDERS[state.provider]?.autoSyncable === false) return false;
     const key = offsetStorageKey();
@@ -1878,6 +1935,10 @@ function buildWordCells(cue) {
         return [span];
     }
 
+    // Английская реплика (токены entok, pos 'en'/'punct'): без чтения над
+    // словами, знаки препинания липнут к предыдущему слову.
+    if (cue.tokens.some((tk) => tk.pos === 'en')) return buildEnglishCells(cue);
+
     return cue.tokens.map((tok) => {
         fixKanaReading(tok);
         const cell = document.createElement('span');
@@ -1917,6 +1978,37 @@ function buildWordCells(cue) {
         cell.appendChild(jp);
         return cell;
     });
+}
+
+// Английская реплика: слово — ячейка в том же flex-ряду (зазор ряда = пробел),
+// пунктуация без пробела перед ней приклеивается к предыдущей ячейке.
+function buildEnglishCells(cue) {
+    const out = [];
+    for (const tok of cue.tokens) {
+        if (tok.pos === 'punct' && !tok.pre && out.length) {
+            out[out.length - 1].appendChild(document.createTextNode(tok.surface));
+            continue;
+        }
+        const cell = document.createElement('span');
+        cell.className = 'ncw ncw--en';
+        const w = document.createElement('span');
+        w.textContent = tok.surface;
+        w.className = 'ncw__jp tok';
+        if (tok.learnable) {
+            w.classList.add('tok--learnable');
+            w.dataset.base = tok.base || tok.surface;
+            if (state.knownWords.has(tok.base) || state.knownWords.has(tok.surface)) {
+                w.classList.add('tok--known');
+            }
+            w.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openWordPopup(tok, cue, e);
+            });
+        }
+        cell.appendChild(w);
+        out.push(cell);
+    }
+    return out;
 }
 
 // Кана-чтение слова для показа над ним — только если в слове есть кандзи (у
@@ -2729,10 +2821,12 @@ async function openWordPopup(tok, cue, event) {
 
     popupWord.textContent = tok.base;
     updateKnownBtn(tok.base);
+    // Английское слово: чтение — транскрипция из словаря (придёт ниже).
+    const en = tok.pos === 'en';
     // Показываем слово (tok.base) и чтение согласованно — от базовой формы:
     // baseReading (かえる), а не поверхностное tok.reading (かえっ). Ниже, если
     // найдётся словарная статья, чтение уточнится из неё.
-    popupReading.textContent = readingForDisplay(tok.baseReading || tok.reading || '',
+    popupReading.textContent = en ? '' : readingForDisplay(tok.baseReading || tok.reading || '',
         { surface: tok.base, pos: tok.pos });
     popupSentence.textContent = cue.text;
     popupBody.innerHTML = '<div class="dict-loading"></div>';
@@ -2756,7 +2850,11 @@ async function openWordPopup(tok, cue, event) {
         // silentErrors: у попапа своя обработка ошибки («Словарь не отвечает» +
         // «Повторить» прямо в теле) — глобальный снекбар дублировал бы её.
         const { data: res } = await client.get('dictionary', {
-            params: { q: tok.base, lang: (typeof getLang === 'function') ? getLang() : 'ru' },
+            params: {
+                q: tok.base, lang: (typeof getLang === 'function') ? getLang() : 'ru',
+                // Английское слово — англо-русский словарь с транскрипцией.
+                ...(en ? { target: 'en' } : {}),
+            },
             silentErrors: true,
         });
         const entries = res.data || [];
@@ -2771,7 +2869,7 @@ async function openWordPopup(tok, cue, event) {
         }
 
         if (entries[0].reading) {
-            popupReading.textContent = readingForDisplay(entries[0].reading,
+            popupReading.textContent = en ? entries[0].reading : readingForDisplay(entries[0].reading,
                 { surface: tok.base, pos: tok.pos });
         }
 
@@ -2808,6 +2906,14 @@ async function openWordPopup(tok, cue, event) {
         const meta = [];
         if (entries[0].isCommon) meta.push(t('popup.common'));
         if (entries[0].jlpt?.length) meta.push(entries[0].jlpt[0].toUpperCase());
+        if (en) {
+            // Часть речи, уровень по частоте и форма из реплики, если она
+            // отличается от словарной (celebrating → celebrate).
+            const pos = entries[0].senses?.[0]?.pos?.[0];
+            if (pos) meta.push(pos);
+            if (entries[0].level) meta.push(entries[0].level);
+            if (tok.surface.toLowerCase() !== tok.base) meta.push(t('popup.form').replace('{s}', tok.surface));
+        }
         // Сохранённое слово встретилось снова — покажем, в который раз:
         // маленькое «оно работает», не выходя из просмотра.
         const seenCount = loadWordSeen()[tok.base] || 0;
@@ -2913,7 +3019,9 @@ function renderExplain(data) {
             // но ромадзи-читателю подсказка всё равно нужна. В режиме каны — только
             // фуригана к словам с кандзи (когда чтение отличается от написания).
             let readingText;
-            if (state.readingMode === 'romaji') {
+            if (!b.reading && /^[\x00-\x7F]+$/.test(b.part || '')) {
+                readingText = '';   // английский кусок — чтения нет
+            } else if (state.readingMode === 'romaji') {
                 const rom = kanaToRomaji(b.reading || b.part, { surface: b.part });
                 readingText = rom && rom !== b.part ? rom : '';
             } else {
@@ -2965,11 +3073,12 @@ function renderExplain(data) {
 // запомнить» (у иконки реплики слова нет, разбираем всю реплику).
 async function fetchExplain(cue, word) {
     const lang = typeof getLang === 'function' ? getLang() : 'ru';
-    const key = lang + '|' + (word || '') + '|' + cue.text;
+    const key = (state.enMode ? 'en|' : '') + lang + '|' + (word || '') + '|' + cue.text;
     const cached = explainCache.get(key);
     if (cached) return cached;
     const params = { sentence: cue.text, context: cueContext(cue), lang };
     if (word) params.word = word;
+    if (state.enMode) params.target = 'en';   // английская реплика — свой промпт
     const { data: res } = await client.get('explain', { params, timeout: 60000 });
     const data = res.data.explanation;
     explainCache.set(key, data);

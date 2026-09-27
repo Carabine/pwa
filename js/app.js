@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.585';
+const APP_VERSION = 'v0.0.586';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -953,6 +953,12 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSessionCard();
     renderDailyPlan();
     renderWeekActivity();
+    // «Для новичков» — японские стартовые колоды; в английском режиме карточку
+    // прячем, чтобы не звать в японскую учёбу.
+    if (window.LearnLang && LearnLang.get() === 'en') {
+        const beg = document.querySelector('.hub-more a[href*="beginner"]');
+        if (beg) beg.style.display = 'none';   // у .mini-card свой display — [hidden] не сработал бы
+    }
     // На iOS beforeinstallprompt не бывает — там строку показывает уже этот
     // вызов; на Android её обычно поднимет пришедшее позже событие.
     renderInstallHint();
@@ -1230,17 +1236,18 @@ function paintDailyPlan(el) {
     // отправляем новичка сразу искать аниме: его первое действие — попробовать
     // учёбу на готовом, как было до редизайна главной.
     if (!s.total) {
-        // Английский режим без английских слов: конвейер ещё не подключён,
-        // стартовой колоды нет — говорим честно и никуда не ведём.
+        // Английский режим без английских слов: стартовой колоды нет —
+        // зовём в каталог, к серии с английской озвучкой.
         if (window.LearnLang && LearnLang.get() === 'en') {
-            el.removeAttribute('href');
+            el.href = './pages/catalog.html';
             el.className = 'daily-plan daily-plan--empty' + keep;
             fillSlot(el,
                 '<div class="daily-plan__body">' +
                 '<span class="daily-plan__eyebrow">' + escHtml(planTitle()) + '</span>' +
                 '<span class="daily-plan__headline">' + escHtml(t('plan.emptyEn.title')) + '</span>' +
                 '<span class="daily-plan__sub">' + escHtml(t('plan.emptyEn.sub')) + '</span>' +
-                '</div>', 2);
+                '</div>' +
+                '<span class="daily-plan__cta">' + escHtml(t('plan.emptyEn.cta')) + '</span>', 2);
             return;
         }
         el.href = './pages/beginner.html?deck=core';

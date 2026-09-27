@@ -85,14 +85,15 @@
 
         genBtn.addEventListener('click', async () => {
             // Голос читает само слово и, если есть, пример целиком.
+            const lang = (window.LearnLang && LearnLang.wordLang(wordData)) || 'ja';
             const text = [wordData.kanji, wordData.sentence]
-                .map((s) => String(s || '').trim()).filter(Boolean).join('。');
+                .map((s) => String(s || '').trim()).filter(Boolean).join(lang === 'en' ? '. ' : '。');
             if (!text) return;
             genBtn.disabled = true;
             const oldLabel = genBtn.textContent;
             genBtn.textContent = t('words.ttsBusy');
             try {
-                const { data } = await client.post('words/tts', { text }, {
+                const { data } = await client.post('words/tts', { text, lang }, {
                     responseType: 'blob', timeout: 60000,
                 });
                 const url = await setWordAudio(wordData, data);

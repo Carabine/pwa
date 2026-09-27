@@ -85,7 +85,9 @@
                 let readingText;
                 const romajiMode = transcriptionMode() === 'romaji'
                     && typeof window.kanaToRomaji === 'function';
-                if (romajiMode) {
+                if (!b.reading && /^[\x00-\x7F]+$/.test(b.part || '')) {
+                    readingText = '';   // английский кусок — чтения нет
+                } else if (romajiMode) {
                     const rom = window.kanaToRomaji(b.reading || b.part, { surface: b.part });
                     readingText = rom && rom !== b.part ? rom : '';
                 } else {
@@ -202,10 +204,10 @@
     // Может не иметь .btn-label — тогда просто крутим CSS-класс is-loading.
     // word — слово карточки: от него зависит блок «как запомнить» (у карточки
     // на чистой кане его нет — и мнемоники тоже не будет).
-    async function studyRunExplain(sentence, indicator, word) {
+    async function studyRunExplain(sentence, indicator, word, target = 'ja') {
         const modal = getExplainModal();
         const lang = typeof getLang === 'function' ? getLang() : 'ru';
-        const key = lang + '|' + (word || '') + '|' + sentence;
+        const key = target + '|' + lang + '|' + (word || '') + '|' + sentence;
         const cached = studyExplainCache.get(key);
         if (cached) { studyRenderExplain(modal.body, cached); modal.open(); return; }
         if (indicator && indicator._busy) return;
@@ -216,6 +218,7 @@
         try {
             const params = { sentence, lang };
             if (word) params.word = word;
+            if (target === 'en') params.target = 'en';   // английская реплика — свой промпт
             const { data: res } = await client.get('explain', { params, timeout: 60000 });
             const data = res.data.explanation;
             studyExplainCache.set(key, data);
@@ -242,6 +245,12 @@
     // «наклацал — и хирагана вместо ромадзи»). Кана — только явный выбор.
     function transcriptionMode() {
         return studyPref('studyTranscription') === 'kana' ? 'kana' : 'romaji';
+    }
+
+    // Английская карточка (LearnLang.wordLang): чтение — транскрипция из kana
+    // как есть, без ромадзи и без разбора предложения через MeCab.
+    function isEnWord(w) {
+        return !!(window.LearnLang && w && LearnLang.wordLang(w) === 'en');
     }
 
     // Иконка ИИ (спарклы) для кнопки «ИИ-разбор предложения».
@@ -837,10 +846,10 @@
                 const w = current.word;
                 const kana = w.kana || '';
                 const romajiMode = transcriptionMode() === 'romaji';
-                const reading = romajiMode
+                const reading = isEnWord(w) ? kana : (romajiMode
                     ? ((w.romaji && String(w.romaji).trim())
                         || (typeof window.kanaToRomaji === 'function' ? window.kanaToRomaji(kana) : ''))
-                    : kana;
+                    : kana);
                 const face = wordEl.textContent;
                 if (reading && reading !== face) {
                     const r = document.createElement('div');
@@ -861,7 +870,7 @@
             // перекроили бы его (шрифт — полной раскладкой, ячейки — высотой
             // фразы, из-за которой ужимался клип).
             warmJapaneseFont(current.word);
-            if (transcriptionMode() === 'romaji'
+            if (transcriptionMode() === 'romaji' && !isEnWord(current.word)
                 && studyPref('studySentenceRomaji') !== false) {
                 fetchSentenceTokens(current.word.sentence).catch(() => {});
             }
@@ -949,7 +958,7 @@
             const romaji = (w.romaji && String(w.romaji).trim())
                 ? String(w.romaji).trim()
                 : (typeof window.kanaToRomaji === 'function' ? window.kanaToRomaji(kana) : '');
-            const text = mode === 'romaji' ? (romaji || kana) : kana;
+            const text = isEnWord(w) ? kana : (mode === 'romaji' ? (romaji || kana) : kana);
             // Чисто-канное слово в режиме каны — не дублируем титул фуриганой.
             if (!text || text === (w.word ?? w.kanji)) return;
 
@@ -960,7 +969,8 @@
             // Тап по чтению — озвучка слова (совет Codex): произношение под рукой,
             // без похода в шестерёнку. Озвучиваем кану (однозначное чтение).
             if (typeof canSpeakJa === 'function' && canSpeakJa()) {
-                const speakText = kana || w.word || w.kanji || text;
+                const speakLang = isEnWord(w) ? 'en' : 'ja';
+                const speakText = isEnWord(w) ? (w.word || w.kanji || text) : (kana || w.word || w.kanji || text);
                 fg.classList.add('word-furigana--speak');
                 fg.setAttribute('role', 'button');
                 fg.setAttribute('tabindex', '0');
@@ -969,11 +979,11 @@
                 spk.className = 'word-furigana__speak';
                 spk.textContent = '🔊';
                 fg.appendChild(spk);
-                fg.addEventListener('click', () => speakJa(speakText));
+                fg.addEventListener('click', () => speakAny(speakText, speakLang));
                 // Enter — озвучить; stopPropagation, чтобы глобальный onKey не оценил
                 // карточку тем же нажатием. Space оставляем оценке (см. onKey).
                 fg.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); speakJa(speakText); }
+                    if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); speakAny(speakText, speakLang); }
                 });
             }
 
@@ -1160,7 +1170,7 @@
 
         // Кнопка озвучки: без видео с оригинальным звуком голос синтеза —
         // лучший способ услышать слово ещё раз.
-        function addSpeakButton(target, text) {
+        function addSpeakButton(target, text, lang = 'ja') {
             if (!text || typeof canSpeakJa !== 'function' || !canSpeakJa()) return;
             const btn = document.createElement('button');
             btn.className = 'speak-btn';
@@ -1169,7 +1179,7 @@
             btn.title = t('study.listen');
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                speakJa(text);
+                speakAny(text, lang);
             });
             target.appendChild(btn);
         }
@@ -1998,7 +2008,7 @@
 
                 const wid = current && current.word.id;
                 const romajiMode = transcriptionMode() === 'romaji';
-                const withRomaji = romajiMode && studyPref('studySentenceRomaji') !== false;
+                const withRomaji = romajiMode && !isEnWord(w) && studyPref('studySentenceRomaji') !== false;
                 const cachedTokens = withRomaji ? sentenceTokensCache.get(w.sentence) : null;
                 if (withRomaji && cachedTokens && cachedTokens.length) {
                     // Токены уже в кэше (их греет renderFront, пока человек
@@ -2047,7 +2057,7 @@
                     spark.innerHTML = AI_ICON;
                     spark.appendChild(sparkLabel);
                     sentenceLine.appendChild(spark);
-                    sentenceLine.addEventListener('click', () => studyRunExplain(w.sentence, spark, w.word ?? w.kanji));
+                    sentenceLine.addEventListener('click', () => studyRunExplain(w.sentence, spark, w.word ?? w.kanji, isEnWord(w) ? 'en' : 'ja'));
                 }
             }
 

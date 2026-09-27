@@ -309,6 +309,8 @@
     let levels;
     let levelsPromise = null;
     function ensureLevels() {
+        // Английский режим: уровни JLPT ни при чём — блока нет (null → пусто).
+        if (window.LearnLang && LearnLang.get() === 'en') { levels = null; return Promise.resolve(); }
         if (!levelsPromise) levelsPromise = loadLevels().then((v) => { levels = v; });
         return levelsPromise;
     }

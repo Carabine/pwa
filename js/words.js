@@ -40,6 +40,8 @@ function readingMode() {
 // (romaji.js подключён на странице слов).
 function readingOf(wordData) {
     const kana = wordData.kana || '';
+    // Английское слово: в kana лежит транскрипция — показываем как есть.
+    if (window.LearnLang && LearnLang.wordLang(wordData) === 'en') return kana;
     if (readingMode() !== 'romaji') return kana;
     if (wordData.romaji) return wordData.romaji;
     return (typeof kanaToRomaji === 'function' && kana) ? kanaToRomaji(kana) : kana;

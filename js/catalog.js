@@ -312,3 +312,9 @@ if (initialQ.length >= 2) {
 } else {
     loadPopular();
 }
+
+// Английский режим: подсказка каталога — про тайтлы с английской озвучкой.
+if (window.LearnLang && LearnLang.get() === 'en') {
+    const hint = document.querySelector('.catalog__hint');
+    if (hint && typeof t === 'function') { hint.removeAttribute('data-i18n'); hint.textContent = t('catalog.hintEn'); }
+}
