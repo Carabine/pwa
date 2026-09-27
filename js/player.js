@@ -3555,15 +3555,29 @@ function syncMobBar() {
     // Настоящие данные пришли — снимаем скелетон строки и показываем «⋯».
     const more = document.getElementById('mob-bar-more');
     if (more) more.hidden = false;
-    const ep = document.getElementById('mob-bar-ep');
-    const opt = episodeSelect && episodeSelect.selectedOptions[0];
-    if (ep) ep.textContent = opt ? opt.textContent.trim() : '';
-    // Последняя серия: стрелку не показываем вовсе — отключённая кнопка здесь
-    // только занимает место и обещает то, чего нет.
-    const next = document.getElementById('mob-bar-next');
-    if (next) {
-        const cur = Number(episodeSelect && episodeSelect.value);
-        next.hidden = !(Number.isInteger(cur) && cur + 1 < state.episodes.length);
+    // Серия — зеркало селекта из шторки: те же опции (с группами сезонов),
+    // то же текущее значение. Пересобираем, когда список серий сменился.
+    const wrap = document.getElementById('mob-bar-ep-wrap');
+    if (wrap && episodeSelect) {
+        let sel = document.getElementById('mob-bar-ep');
+        if (!sel) {
+            wrap.innerHTML = '';
+            sel = document.createElement('select');
+            sel.id = 'mob-bar-ep';
+            sel.className = 'mob-bar__ep';
+            sel.setAttribute('aria-label', window.t('controls.episode'));
+            sel.addEventListener('change', () => {
+                const idx = parseInt(sel.value, 10);
+                if (Number.isInteger(idx) && String(idx) !== String(episodeSelect.value)) selectEpisode(idx);
+            });
+            wrap.appendChild(sel);
+        }
+        if (sel.dataset.sig !== episodeSelect.innerHTML.length + ':' + state.episodes.length) {
+            sel.innerHTML = episodeSelect.innerHTML;
+            sel.dataset.sig = episodeSelect.innerHTML.length + ':' + state.episodes.length;
+        }
+        sel.value = episodeSelect.value;
+        sel.disabled = episodeSelect.disabled;
     }
     bar.hidden = false;
 }
@@ -3576,10 +3590,6 @@ function setSheet(open) {
     if (more) more.setAttribute('aria-expanded', String(open));
 }
 
-document.getElementById('mob-bar-next')?.addEventListener('click', () => {
-    const cur = Number(episodeSelect.value);
-    if (Number.isInteger(cur)) selectEpisode(cur + 1);
-});
 document.getElementById('mob-bar-more')?.addEventListener('click',
     () => setSheet(!document.querySelector('.player-layout').classList.contains('sheet-open')));
 document.getElementById('sheet-close')?.addEventListener('click', () => setSheet(false));

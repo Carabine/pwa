@@ -3590,12 +3590,32 @@ body.is-en #reading-toggle {
         font-weight: 600;
         color: var(--text);
     }
+    .mob-bar__ep-wrap { flex: none; display: inline-flex; align-items: center; }
+    /* Тихий селект серии: выглядит как подпись (без рамки и фона), только
+       маленький шеврон намекает, что это выбор. Высоту держат кнопки (24px). */
     .mob-bar__ep {
-        line-height: 1.2;
+        appearance: none;
+        -webkit-appearance: none;
         flex: none;
-        white-space: nowrap;
-        font-size: 11.5px;
+        max-width: 44vw;
+        height: 24px;
+        padding: 0 16px 0 6px;
+        border: 0;
+        border-radius: 12px;
+        background: transparent
+            url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>")
+            no-repeat right 3px center / 11px 11px;
         color: var(--text-muted);
+        font: 500 11.5px/1.2 var(--font);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+    }
+    .mob-bar__ep:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+    .mob-bar__ep:disabled { opacity: 0.5; cursor: default; }
+    @media (hover: hover) and (pointer: fine) {
+        .mob-bar__ep:hover { background-color: var(--surface); color: var(--text); }
     }
     .mob-bar__btn {
         flex: none;
