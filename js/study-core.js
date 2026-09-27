@@ -1076,7 +1076,10 @@
             title.textContent = t('study.settings.title');
             panel.appendChild(title);
 
-            // Сегмент «транскрипция слова»
+            // Сегмент «транскрипция слова» — только у японской карточки: у
+            // английской чтение из словаря, а переключатель менял бы общую
+            // настройку для японского режима.
+            if (!(current && isEnWord(current.word))) {
             const trRow = document.createElement('div');
             trRow.className = 'study-set-row';
             const trLabel = document.createElement('span');
@@ -1103,6 +1106,7 @@
                 });
             trRow.append(trLabel, seg);
             panel.appendChild(trRow);
+            }
 
             // Тумблеры
             function toggleRow(key, label, defOn) {

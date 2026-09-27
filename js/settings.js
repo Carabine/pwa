@@ -88,7 +88,15 @@ function lsJson(key, fallback = null) {
 
     function set(k, v) {
         state[k] = v;
-        persist();
+        // Пишем поверх АКТУАЛЬНОГО содержимого ключа, а не своего снимка:
+        // старая вкладка иначе откатывала выбор, сделанный в новой (например,
+        // изучаемый язык) — проверено сменой громкости во второй вкладке.
+        try {
+            const stored = lsJson(KEY, {}) || {};
+            stored[k] = v;
+            Object.assign(state, stored);
+            localStorage.setItem(KEY, JSON.stringify(state));
+        } catch { persist(); }
 
         // Зеркалим ключи, которые читают другие модули напрямую.
         if (k === 'volume') localStorage.setItem('animei:volume', String(v));
@@ -133,6 +141,14 @@ function lsJson(key, fallback = null) {
             mq.addListener(onSystemChange); // Safari <14
         }
     }
+
+    // Другая вкладка поменяла настройки — подхватываем без перезагрузки, чтобы
+    // чтение (get) не жило устаревшим снимком.
+    window.addEventListener('storage', (e) => {
+        if (e.key !== KEY) return;
+        Object.assign(state, lsJson(KEY, {}) || {});
+        applyTheme();
+    });
 
     window.AnimeiSettings = {
         get,

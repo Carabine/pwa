@@ -89,7 +89,7 @@
         _renderChips() {
             const box = this._ctx.chips;
             if (!box) return;
-            const decks = Decks.all();
+            const decks = Decks.visible();
 
             // Активную колоду удалили извне — откатываемся на «Все».
             if (this._activeId && this._activeId !== '__none__'
@@ -181,7 +181,7 @@
             };
 
             addRow(null, STACK_ICON, t('decks.allWords'), total);
-            for (const d of Decks.all()) {
+            for (const d of Decks.visible()) {
                 addRow(d.id, Decks.iconHtml(d), (d.frozen ? '❄ ' : '') + d.name, d.wordIds.length);
             }
             const loose = this._looseCount();
@@ -233,7 +233,7 @@
         _renderHint() {
             const el = this._ctx.hint;
             if (!el) return;
-            const show = Decks.all().length === 0 && localStorage.getItem(HINT_KEY) !== '1';
+            const show = Decks.visible().length === 0 && localStorage.getItem(HINT_KEY) !== '1';
             el.hidden = !show;
             // У вошедшего колоды синхронизируются с аккаунтом, у гостя — локальные.
             const signedIn = typeof isLoggedIn === 'function' && isLoggedIn();
@@ -289,7 +289,7 @@
             sheet.appendChild(head);
 
             const list = h('div', 'deck-sheet__list');
-            const decks = Decks.all();
+            const decks = Decks.visible();
             if (!decks.length) list.appendChild(h('div', 'deck-sheet__empty', esc(t('decks.noneYet'))));
             for (const d of decks) {
                 const row = h('button', 'deck-sheet__row',
@@ -344,7 +344,7 @@
 
             const renderList = () => {
                 list.innerHTML = '';
-                const decks = Decks.all();
+                const decks = Decks.visible();
                 if (!decks.length) {
                     list.appendChild(h('div', 'deck-sheet__empty', esc(t('decks.noneYet'))));
                 }

@@ -31,7 +31,11 @@ function normalizeWord(payload) {
     return {
         // Изучаемый язык записи (см. LearnLang в settings.js). Японская
         // письменность — всегда ja, даже если включён английский режим.
-        lang: window.LearnLang ? LearnLang.tagFor(payload.kanji) : 'ja',
+        // Уже помеченную запись (перенос гостя в аккаунт, импорт) не
+        // перекрашиваем под текущий режим — иначе английское слово гостя
+        // становилось японским при входе в японском режиме.
+        lang: (payload.lang === 'en' || payload.lang === 'ja') ? payload.lang
+            : (window.LearnLang ? LearnLang.tagFor(payload.kanji) : 'ja'),
         kanji: payload.kanji ?? '',
         kana: payload.kana ?? '',
         romaji: payload.romaji ?? '',

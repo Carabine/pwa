@@ -136,6 +136,7 @@
             try {
                 await client.put('decks/' + encodeURIComponent(id), {
                     name: d.name, emoji: d.emoji, icon: d.icon || '', frozen: !!d.frozen,
+                    lang: d.lang === 'en' ? 'en' : 'ja',
                     wordIds: d.wordIds, createdAt: d.createdAt,
                 });
                 dirty.delete(id); saveIdSet(DIRTY_KEY, dirty);
@@ -173,6 +174,7 @@
                 emoji: EMOJIS.includes(sd.emoji) ? sd.emoji : EMOJIS[0],
                 icon: sanitizeIcon(sd.icon),
                 frozen: sd.frozen === true,
+                lang: sd.lang === 'en' ? 'en' : 'ja',
                 wordIds: [...new Set((sd.wordIds || []).filter((x) => typeof x === 'string'))],
                 createdAt: Number(sd.createdAt) || Date.now(),
                 updatedAt: Number(sd.updatedAt) || Date.now(),
@@ -208,6 +210,12 @@
 
         // Копии — чтобы наружу не утекала мутируемая ссылка на внутреннее состояние.
         all() { return decks.map(clone); },
+        // Колоды текущего изучаемого языка (без поля — японские): списки и
+        // фильтры страниц берут их отсюда; заморозка и зеркало гостя — all().
+        visible() {
+            const cur = window.LearnLang ? LearnLang.get() : 'ja';
+            return decks.filter((d) => (d.lang === 'en' ? 'en' : 'ja') === cur).map(clone);
+        },
         get(id) { return clone(find(id)); },
         count(id) { const d = find(id); return d ? d.wordIds.length : 0; },
 
@@ -219,6 +227,7 @@
                 emoji: EMOJIS.includes(emoji) ? emoji : EMOJIS[0],
                 icon: sanitizeIcon(icon),
                 frozen: false,
+                lang: window.LearnLang ? LearnLang.get() : 'ja',
                 wordIds: [],
                 createdAt: now,
                 updatedAt: now,

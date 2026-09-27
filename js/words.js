@@ -127,7 +127,12 @@ function sortWords(list) {
     };
     const arr = list.slice();
     if (sortMode === 'az') {
-        arr.sort((a, b) => String(a.kana || a.kanji || '').localeCompare(String(b.kana || b.kanji || ''), 'ja'));
+        // Английские слова — по написанию с английской локалью (в kana лежит
+        // транскрипция, по ней сортировать нечего); японские — по чтению.
+        const en = window.LearnLang && LearnLang.get() === 'en';
+        arr.sort((a, b) => (en
+            ? String(a.kanji || '').localeCompare(String(b.kanji || ''), 'en')
+            : String(a.kana || a.kanji || '').localeCompare(String(b.kana || b.kanji || ''), 'ja')));
     } else if (sortMode === 'old') {
         arr.sort((a, b) => ts(a) - ts(b));
     } else {
@@ -1162,7 +1167,7 @@ function openKnownManager() {
 // Считаем по загруженному списку слов — так цифры совпадают с тем, что видно
 // на странице (в колоде могли остаться id уже удалённых слов).
 function ankiDeckOptions() {
-    const decks = window.Decks ? Decks.all() : [];
+    const decks = window.Decks ? Decks.visible() : [];
     const opts = [{ id: '', label: t('words.exportAnki.deckAll'), n: allWords.length }];
     for (const d of decks) {
         opts.push({ id: d.id, label: `${d.emoji} ${d.name}`, n: allWords.filter((w) => Decks.has(d.id, w.id)).length });
@@ -1302,7 +1307,8 @@ async function exportAnki(withVideo, deckId) {
 
 // deckId — как у exportAnki: '' = все слова, '__none__' = вне колод, иначе id.
 async function exportWords(deckId) {
-    const all = await fetchWords();
+    // Только слова текущего языка — как на странице и в счётчиках диалога.
+    const all = ownLang(await fetchWords());
     const deck = (deckId && deckId !== '__none__' && window.Decks) ? Decks.get(deckId) : null;
     let words = all;
     if (deck) words = all.filter((w) => Decks.has(deck.id, w.id));
