@@ -56,9 +56,14 @@ function scheduleClipRefresh() {
     setTimeout(async () => {
         clipRefreshScheduled = false;
         clipRefreshLeft--;
-        try { allWords = await fetchWords(); } catch { /* оставим что было */ }
+        try { allWords = ownLang(await fetchWords()); } catch { /* оставим что было */ }
         renderWords();
     }, 8000);
+}
+
+// На странице — только слова текущего изучаемого языка (LearnLang, settings.js).
+function ownLang(words) {
+    return window.LearnLang ? LearnLang.filter(words) : words;
 }
 
 // Заглушка списка на время загрузки. Раньше здесь стояла одна строка
@@ -75,14 +80,16 @@ function renderWordsSkeleton() {
 async function loadWords() {
     renderWordsSkeleton();
 
+    let all = [];
     try {
-        allWords = await fetchWords();
+        all = await fetchWords();
     } catch (err) {
         console.error('Failed to load words:', err);
-        allWords = [];
     }
-    // Чистим из колод «мёртвые» id — слова, которых уже нет в коллекции.
-    if (window.Decks) Decks.sanitize(allWords.map((w) => w.id));
+    // Чистим из колод «мёртвые» id — слова, которых уже нет в коллекции
+    // (по ПОЛНОЙ коллекции: слова другого языка живы, просто не показаны).
+    if (window.Decks) Decks.sanitize(all.map((w) => w.id));
+    allWords = ownLang(all);
     renderWords();
 }
 
@@ -1039,7 +1046,7 @@ async function knownToDeck(words, progress) {
     }
     const deck = Decks.create(t('known.deckName'), '📚');
     Decks.addMany(deck.id, ids);
-    allWords = await fetchWords();
+    allWords = ownLang(await fetchWords());
     renderWords();
     return { deck, count: ids.length };
 }

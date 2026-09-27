@@ -29,6 +29,9 @@ function makeLocalId() {
 // (строки и videoStart/videoEnd — Int), поэтому проставляем дефолты.
 function normalizeWord(payload) {
     return {
+        // Изучаемый язык записи (см. LearnLang в settings.js). Японская
+        // письменность — всегда ja, даже если включён английский режим.
+        lang: window.LearnLang ? LearnLang.tagFor(payload.kanji) : 'ja',
         kanji: payload.kanji ?? '',
         kana: payload.kana ?? '',
         romaji: payload.romaji ?? '',

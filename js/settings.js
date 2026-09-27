@@ -41,6 +41,9 @@ function lsJson(key, fallback = null) {
         studyTranscription: 'romaji',  // kana | romaji (легаси both/none = romaji)
         studySentenceRomaji: true,     // ромадзи над каждым словом предложения (при ромадзи-транскрипции)
         studyAutoplayClip: true,       // автозапуск клипа на обороте карточки
+        // Что учим: ja | en. Не путать с языком интерфейса (animei:lang) —
+        // тот про меню, этот про слова, план и карточки. См. window.LearnLang.
+        learnLang: 'ja',
     };
 
     const state = { ...DEFAULTS, ...lsJson(KEY, {}) };
@@ -138,5 +141,56 @@ function lsJson(key, fallback = null) {
         DEFAULTS,
         effectiveTheme,
         applyTheme,
+    };
+})();
+
+// Изучаемый язык — одна настройка на всё приложение (AnimeiSettings.learnLang).
+// Язык лежит ВНУТРИ записи слова (word.lang), а не в отдельных ключах
+// хранилища: синк, офлайн-ящики и гостевое зеркало о языках не знают, меняются
+// только фильтры при чтении. У старых записей поля нет — они японские.
+// Переключатель живёт в меню профиля (app.js, renderAuthState) и показывается
+// только при русском/украинском интерфейсе: английский интерфейс + английский
+// как цель — перевод EN→EN, бессмысленно.
+(function () {
+    const LANGS = ['ja', 'en'];
+    const JP_RE = /[぀-ヿ㐀-鿿ｦ-ﾟ]/;
+
+    function get() {
+        const v = window.AnimeiSettings.get('learnLang');
+        return LANGS.includes(v) ? v : 'ja';
+    }
+
+    // Язык записи: явное поле, иначе японский — до появления английского других
+    // слов не было. (Сервер поле lang пока не хранит — см. концепцию, этап 0.)
+    function wordLang(w) {
+        return (w && LANGS.includes(w.lang)) ? w.lang : 'ja';
+    }
+
+    // Какой язык проставить новому слову: японская письменность всегда ja —
+    // из японского плеера в английском режиме слово не должно уехать в EN.
+    function tagFor(text) {
+        return JP_RE.test(String(text || '')) ? 'ja' : get();
+    }
+
+    function filter(words, lang = get()) {
+        if (!Array.isArray(words)) return [];
+        return words.filter((w) => w && wordLang(w) === lang);
+    }
+
+    // Английский режим пока только на устройстве владельца (помечается в
+    // админке): конвейер английской озвучки и словаря ещё не подключён, и
+    // публике обещать его рано. Снять, когда этап 1 из концепции будет готов.
+    function englishAvailable() {
+        try { return localStorage.getItem('animei:owner') === '1'; } catch { return false; }
+    }
+
+    window.LearnLang = {
+        LANGS,
+        get,
+        set: (v) => { if (LANGS.includes(v)) window.AnimeiSettings.set('learnLang', v); },
+        wordLang,
+        tagFor,
+        filter,
+        englishAvailable,
     };
 })();

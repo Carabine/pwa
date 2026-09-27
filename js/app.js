@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.584';
+const APP_VERSION = 'v0.0.585';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -190,6 +190,60 @@ document.addEventListener('click', (e) => {
     e.preventDefault();
     AnimeiBack.navigate(a.href);
 });
+
+// ---- Изучаемый язык: пункт в меню профиля и шторка выбора ------------------
+// Настройка и фильтры — LearnLang (settings.js). Показываем только при русском
+// и украинском интерфейсе: с английским меню английский как цель — перевод
+// EN→EN, а японский там и так единственный.
+function learnLangVisible() {
+    if (!window.LearnLang || typeof getLang !== 'function') return false;
+    return getLang() === 'ru' || getLang() === 'uk';
+}
+
+// Слова по языкам из локального снимка коллекции (без похода на сервер:
+// шторка должна открываться мгновенно и работать офлайн).
+function learnLangCounts() {
+    const words = (lsJson('words', []) || []).filter((w) => w && w.id);
+    const counts = { ja: 0, en: 0 };
+    for (const w of words) counts[LearnLang.wordLang(w)]++;
+    return counts;
+}
+
+function openLearnLangSheet() {
+    const cur = LearnLang.get();
+    const counts = learnLangCounts();
+    const enOk = LearnLang.englishAvailable();
+    const overlay = document.createElement('div');
+    overlay.className = 'deck-sheet__overlay';
+    const box = document.createElement('div');
+    box.className = 'deck-editor learn-sheet';
+    const opt = (code, glyph, enabled) =>
+        `<button type="button" class="learn-sheet__opt${code === cur ? ' is-on' : ''}${enabled ? '' : ' is-soon'}" data-lang="${code}"${enabled ? '' : ' disabled'}>` +
+        `<span class="learn-sheet__glyph learn-sheet__glyph--${code}">${glyph}</span>` +
+        `<span class="learn-sheet__body"><span class="learn-sheet__name">${escHtml(t('learn.' + code))}</span>` +
+        `<span class="learn-sheet__desc">${escHtml(t('learn.' + code + '.desc'))}</span></span>` +
+        `<span class="learn-sheet__count">${enabled ? escHtml(tWords(counts[code])) : escHtml(t('learn.soon'))}</span>` +
+        `<span class="learn-sheet__radio" aria-hidden="true"></span></button>`;
+    box.innerHTML =
+        `<div class="deck-editor__title">${escHtml(t('learn.title'))}</div>` +
+        `<p class="learn-sheet__sub">${escHtml(t('learn.sub'))}</p>` +
+        opt('ja', 'あ', true) +
+        opt('en', 'A', enOk);
+    overlay.appendChild(box);
+    const modal = modalLayer(overlay);
+    box.querySelectorAll('.learn-sheet__opt').forEach((b) => {
+        b.addEventListener('click', () => {
+            const code = b.dataset.lang;
+            if (code === cur) { modal.close(); return; }
+            LearnLang.set(code);
+            if (window.animeiTrack) animeiTrack('learn_lang', code);
+            // Проще перезагрузить: план, списки и подписи пересчитаются под
+            // новый язык на всех страницах разом (как при смене языка меню).
+            window.location.reload();
+        });
+    });
+    modal.open();
+}
 
 // Иконки для пунктов меню (сайдбар + профиль). Единый набор, вставляется JS —
 // так не дублируем svg в каждой HTML-странице и покрываем динамические пункты.
@@ -1144,6 +1198,17 @@ function renderDailyPlan() {
 }
 
 
+// Надзаголовок плана. Пока язык один — просто «План на сегодня»; когда слова
+// есть в обоих языках, подписываем, чей это план: «План на сегодня · English».
+function planTitle() {
+    const base = t('plan.title');
+    if (!window.LearnLang) return base;
+    const counts = learnLangCounts();
+    if (!counts.ja || !counts.en) return base;
+    const cur = LearnLang.get();
+    return base + ' · ' + (cur === 'en' ? t('learn.en.short') : t('learn.ja'));
+}
+
 // Отрисовка состояния плана по текущей локальной сводке. Вызывается один-два
 // раза (сразу и/или после синка) — повторный раз молча, без анимации.
 function paintDailyPlan(el) {
@@ -1165,11 +1230,24 @@ function paintDailyPlan(el) {
     // отправляем новичка сразу искать аниме: его первое действие — попробовать
     // учёбу на готовом, как было до редизайна главной.
     if (!s.total) {
+        // Английский режим без английских слов: конвейер ещё не подключён,
+        // стартовой колоды нет — говорим честно и никуда не ведём.
+        if (window.LearnLang && LearnLang.get() === 'en') {
+            el.removeAttribute('href');
+            el.className = 'daily-plan daily-plan--empty' + keep;
+            fillSlot(el,
+                '<div class="daily-plan__body">' +
+                '<span class="daily-plan__eyebrow">' + escHtml(planTitle()) + '</span>' +
+                '<span class="daily-plan__headline">' + escHtml(t('plan.emptyEn.title')) + '</span>' +
+                '<span class="daily-plan__sub">' + escHtml(t('plan.emptyEn.sub')) + '</span>' +
+                '</div>', 2);
+            return;
+        }
         el.href = './pages/beginner.html?deck=core';
         el.className = 'daily-plan daily-plan--empty' + keep;
         fillSlot(el,
             '<div class="daily-plan__body">' +
-            '<span class="daily-plan__eyebrow">' + escHtml(t('plan.title')) + '</span>' +
+            '<span class="daily-plan__eyebrow">' + escHtml(planTitle()) + '</span>' +
             '<span class="daily-plan__headline">' + escHtml(t('plan.empty.title')) + '</span>' +
             '<span class="daily-plan__sub">' + escHtml(t('plan.empty.sub')) + '</span>' +
             '</div>' +
@@ -1208,7 +1286,7 @@ function paintDailyPlan(el) {
     fillSlot(el,
         ringHTML(frac, doneCount + '/' + target) +
         '<div class="daily-plan__body">' +
-        '<span class="daily-plan__eyebrow">' + escHtml(t('plan.title')) + '</span>' +
+        '<span class="daily-plan__eyebrow">' + escHtml(planTitle()) + '</span>' +
         '<span class="daily-plan__headline">≈ ' + mins + ' ' + escHtml(t('plan.min')) + '</span>' +
         '<div class="daily-plan__chips">' + chips.join('') + '</div>' +
         '</div>' +
@@ -1290,6 +1368,14 @@ function renderAuthState() {
     // приложение. Гостю показываем тоже — прогресс до входа считается локально.
     const progressUrl = appUrl('pages/progress.html');
     const progressItem = `<a href="${progressUrl}">${NAV_ICONS['nav.progress']}<span class="nav-label" data-i18n="nav.progress">My progress</span></a>`;
+    // «Учу: Японский ›» — изучаемый язык, первым пунктом: это про человека, а не
+    // про приложение. Только при русском/украинском интерфейсе (см. LearnLang).
+    const learnItem = learnLangVisible()
+        ? `<a href="#" id="learn-lang-item" class="profile-menu__learn">` +
+          `<span class="nav-icon nav-icon--glyph">${LearnLang.get() === 'en' ? 'A' : 'あ'}</span>` +
+          `<span class="nav-label" data-i18n="nav.learn">Learning</span>` +
+          `<span class="profile-menu__val"><span id="learn-lang-val"></span><span class="profile-menu__caret">›</span></span></a>`
+        : '';
 
     if (typeof isLoggedIn === 'function' && isLoggedIn()) {
         const email = localStorage.getItem('animei:email');
@@ -1298,18 +1384,30 @@ function renderAuthState() {
             ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])) : '';
         menu.innerHTML =
             (safeEmail ? `<span class="profile-menu__email">${safeEmail}</span>` : '') +
+            learnItem +
             progressItem +
             `<a href="${settingsUrl}#account">${NAV_ICONS['nav.account']}<span class="nav-label" data-i18n="nav.account">Account settings</span></a>` +
             `<a href="#" id="logout-btn">${NAV_ICONS['nav.logout']}<span class="nav-label" data-i18n="nav.logout">Log out</span></a>`;
     } else {
         menu.innerHTML =
             `<a href="${loginUrl}" id="login-link">${NAV_ICONS['nav.login']}<span class="nav-label" data-i18n="nav.login">Log in</span></a>` +
+            learnItem +
             progressItem +
             `<a href="${settingsUrl}">${NAV_ICONS['nav.settings']}<span class="nav-label" data-i18n="nav.settings">Settings</span></a>`;
     }
 
     // Если на странице подключён i18n — переведём только что вставленные пункты.
     if (typeof applyI18n === 'function') applyI18n();
+
+    const learnEl = document.getElementById('learn-lang-item');
+    if (learnEl) {
+        document.getElementById('learn-lang-val').textContent = t('learn.' + LearnLang.get());
+        learnEl.addEventListener('click', (e) => {
+            e.preventDefault();
+            menu.classList.remove('open');
+            openLearnLangSheet();
+        });
+    }
 
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {

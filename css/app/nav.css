@@ -160,6 +160,98 @@
     color: var(--text-muted);
 }
 
+/* Пункт «Учу: Японский ›» — иконка-глиф (あ / A) и значение справа. */
+.nav-icon--glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Noto Sans JP', var(--font);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--primary);
+}
+.profile-menu__val {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.profile-menu__caret { color: var(--text-dim); }
+
+/* Шторка выбора изучаемого языка (каркас — .deck-sheet__overlay + .deck-editor). */
+.learn-sheet__sub {
+    margin: -6px 0 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+.learn-sheet__opt {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    font-family: inherit;
+    text-align: left;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+.learn-sheet__opt:last-child { margin-bottom: 0; }
+.learn-sheet__opt.is-on {
+    border-color: var(--primary);
+    box-shadow: inset 0 0 0 1px var(--primary);
+}
+.learn-sheet__opt.is-soon { cursor: default; }
+.learn-sheet__opt.is-soon .learn-sheet__body { opacity: 0.55; }
+@media (hover: hover) and (pointer: fine) {
+    .learn-sheet__opt:not(.is-soon):hover { border-color: var(--primary); }
+}
+.learn-sheet__glyph {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    font-family: 'Noto Sans JP', var(--font);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 18%, var(--card));
+}
+.learn-sheet__glyph--en {
+    color: #5fb3a2;
+    background: color-mix(in srgb, #5fb3a2 18%, var(--card));
+}
+.is-soon .learn-sheet__glyph {
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px dashed var(--border);
+}
+.learn-sheet__body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.learn-sheet__name { font-size: 15px; font-weight: 600; }
+.learn-sheet__desc { font-size: 12.5px; color: var(--text-muted); }
+.learn-sheet__count { flex: none; font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+.learn-sheet__radio {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+}
+.is-on .learn-sheet__radio {
+    border-color: var(--primary);
+    background: radial-gradient(var(--primary) 45%, transparent 50%);
+}
+
 /* Почта вошедшего — заголовок меню, не кликается */
 .profile-menu__email {
     display: block;

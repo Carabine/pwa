@@ -364,6 +364,18 @@ const I18N = {
         'plan.empty.title': 'Начни с готовой колоды',
         'plan.empty.sub': '15 карточек со сценами из культовых аниме. Понравятся — добавишь в свои слова.',
         'plan.empty.cta': 'Попробовать',
+        'plan.emptyEn.title': 'Английский — в работе',
+        'plan.emptyEn.sub': 'Плеер, словарь и карточки для английского ещё готовятся. Японские слова и план никуда не делись — переключись обратно в профиле.',
+        // Переключатель изучаемого языка (меню профиля → шторка)
+        'nav.learn': 'Учу',
+        'learn.title': 'Что учим',
+        'learn.sub': 'Слова, колоды и план дня у каждого языка свои. Стрик общий.',
+        'learn.ja': 'Японский',
+        'learn.ja.desc': 'аниме с оригинальной озвучкой',
+        'learn.en': 'Английский',
+        'learn.en.desc': 'те же аниме с английской озвучкой',
+        'learn.en.short': 'English',
+        'learn.soon': 'скоро',
         'week.title': 'Эта неделя',
         'week.days': 'Вс,Пн,Вт,Ср,Чт,Пт,Сб',
         'week.milestone': 'так держать!',
@@ -695,6 +707,19 @@ const STREAK_FORMS = {
     uk: ['день поспіль', 'дні поспіль', 'днів поспіль'],
     en: ['day streak', 'day streak', 'day streak'],
 };
+
+// «40 слов», «2 слова», «1 слово» — счётчик в переключателе изучаемого языка.
+const WORD_FORMS = {
+    ru: ['слово', 'слова', 'слов'],
+    uk: ['слово', 'слова', 'слів'],
+    en: ['word', 'words', 'words'],
+};
+
+function tWords(n) {
+    const lang = getLang();
+    const forms = WORD_FORMS[lang] || WORD_FORMS.ru;
+    return n + ' ' + forms[pluralIndex(n, lang)];
+}
 
 function tStreak(n) {
     const lang = getLang();

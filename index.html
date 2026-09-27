@@ -120,9 +120,15 @@
             // поэтому нужное определяем здесь. Расчёт зеркалит srsSummary()
             // из js/study-core.js: правим в обоих местах.
             var words = json('words');
+            var cfg = json('animei:settings');
             // Как в srsSummary(): записи без id не считаются коллекцией —
             // иначе тут резервировался бы «план», а app.js рисовал «пусто».
-            var list = (Array.isArray(words) ? words : []).filter(function (w) { return w && w.id; });
+            // И только слова текущего изучаемого языка (LearnLang.filter:
+            // без поля lang запись японская).
+            var learn = (cfg && cfg.learnLang === 'en') ? 'en' : 'ja';
+            var list = (Array.isArray(words) ? words : []).filter(function (w) {
+                return w && w.id && ((w.lang === 'en' ? 'en' : 'ja') === learn);
+            });
             var token = null;
             try { token = localStorage.getItem('animei:accessToken'); } catch (e) { /* приватный режим */ }
             var planSlot;
@@ -141,7 +147,6 @@
                     else if (sc.due <= todayKey) due++;
                 }
                 var perDay = 20;
-                var cfg = json('animei:settings');
                 if (cfg && Number(cfg.newPerDay) > 0) perDay = Number(cfg.newPerDay);
                 planSlot = (due + Math.min(fresh, perDay)) > 0 ? 'hub-slot-plan' : 'hub-slot-plan-done';
             }

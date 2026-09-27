@@ -45,7 +45,9 @@
     // ---- Сбор данных ------------------------------------------------------
     function readWords() {
         const raw = lsJson('words', []);
-        return Array.isArray(raw) ? raw.filter((w) => w && w.id) : [];
+        const list = Array.isArray(raw) ? raw.filter((w) => w && w.id) : [];
+        // Прогресс — по текущему изучаемому языку (стрик общий, он из srs:days).
+        return window.LearnLang ? LearnLang.filter(list) : list;
     }
     function readSchedule() {
         const raw = lsJson('srs:schedule:v2', {});

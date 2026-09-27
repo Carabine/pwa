@@ -377,6 +377,13 @@
         return window.Freeze ? Freeze.forStudy(words) : words;
     }
 
+    // Коллекция текущего изучаемого языка (снимок localStorage 'words' общий
+    // для всех языков, режем при чтении — см. LearnLang в settings.js).
+    function collection() {
+        const words = lsJson('words', []);
+        return window.LearnLang ? LearnLang.filter(words) : words;
+    }
+
     function loadSchedule() {
         const raw = lsJson(SCHEDULE_KEY, {});
         return (raw && typeof raw === 'object') ? raw : {};
@@ -478,7 +485,7 @@
     function srsSummary() {
         // Замороженные слова в сводке не участвуют: главная обещает работу,
         // которую учёба реально даст (см. js/freeze.js).
-        const words = studyPool(lsJson('words', []).filter(w => w && w.id));
+        const words = studyPool(collection().filter(w => w && w.id));
         const schedule = loadSchedule();
         const today = dayKey(todayStart());
 
@@ -554,7 +561,7 @@
                 return ordered ? items : shuffle(items);
             }
 
-            const words = studyPool(lsJson('words', []).filter(w => w && w.id));
+            const words = studyPool(collection().filter(w => w && w.id));
 
             if (!scheduled) {
                 // Cram: every word, no schedule involved.
@@ -2173,7 +2180,7 @@
 
             // Слов нет совсем — вместо «нечего повторять» предлагаем стартовый набор
             if (total === 0 && !deck && typeof STARTER_DECK !== 'undefined') {
-                const words = lsJson('words', []);
+                const words = collection();
                 if (!words.length) {
                     renderStarterOffer();
                     return;
