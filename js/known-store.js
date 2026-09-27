@@ -48,12 +48,24 @@
     //  - простой список (слово в строке, можно «слово — перевод»),
     //  - экспорт Anki «Notes in Plain Text» (TSV, строки-заголовки с #).
     // Возвращает уникальные словарные формы (только японские фрагменты).
-    function parseImport(text) {
+    // Английское слово/фраза из поля экспорта: латиница, апострофы, дефисы,
+    // до трёх слов (фразовые глаголы), в нижнем регистре.
+    const EN_CHUNK = /[A-Za-z][A-Za-z'’-]*(?:\s+[A-Za-z][A-Za-z'’-]*){0,2}/;
+    function parseImport(text, lang = 'ja') {
         const out = new Set();
         for (const rawLine of String(text || '').split(/\r?\n/)) {
             const line = rawLine.trim();
             if (!line || line.startsWith('#')) continue;   // заголовки экспорта Anki
             const fields = line.includes('\t') ? line.split('\t') : [line];
+            if (lang === 'en') {
+                // Первое поле с латиницей — слово; кириллица (перевод) не подходит.
+                const field = fields.find((f) => /[A-Za-z]/.test(f) && !/[\u0400-\u04ff]/.test(f)) || fields.find((f) => /[A-Za-z]/.test(f));
+                if (!field) continue;
+                const m = cleanField(field).match(EN_CHUNK);
+                if (m && m[0].length <= 40) out.add(m[0].toLowerCase().replace(/’/g, "'"));
+                if (out.size >= MAX) break;
+                continue;
+            }
             // Берём первое поле с японским текстом (в Anki слово обычно первым,
             // но бывают колоды «перевод → слово»).
             const field = fields.find((f) => JP_CHAR.test(f));
@@ -232,9 +244,18 @@
     window.addEventListener('animei:network', (e) => { if (e.detail && e.detail.online) sync(); });
     window.addEventListener('online', () => { sync(); });
 
+    // Язык отметки — по письменности: сервер поле lang у известных слов не
+    // хранит, но японское и английское слово по буквам не спутать.
+    const isJa = (w) => JP_CHAR.test(w);
+    function forLang(lang) {
+        const en = lang === 'en';
+        return [...set].filter((w) => isJa(w) !== en);
+    }
+
     window.KnownWords = {
         all() { return [...set]; },
-        count() { return set.size; },
+        forLang,
+        count(lang) { return lang ? forLang(lang).length : set.size; },
         has(w) { return set.has(w); },
         parseImport,
         sync,
@@ -278,12 +299,21 @@
             }
         },
 
-        clear() {
+        clear(lang) {
             if (!set.size) return;
+            // С языком — только слова этого языка (обычным списком на удаление);
+            // без языка — всё целиком, флагом clear у эндпоинта.
+            if (lang) {
+                const drop = forLang(lang);
+                if (!drop.length) return;
+                for (const w of drop) set.delete(w);
+                save();
+                queue('remove', drop);
+                flush();
+                return;
+            }
             set.clear();
             save();
-            // На сервере тоже чистим целиком: перечислять тысячи слов в очереди
-            // бессмысленно, для этого у эндпоинта есть флаг clear.
             if (signedIn()) {
                 saveOutbox({ add: [], remove: [], clear: true });
                 flush();

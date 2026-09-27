@@ -780,7 +780,7 @@ body.is-en .word-popup__sentence,
 body.is-en .word-popup__word {
     font-family: var(--font);
 }
-body.is-en #episode-deck-wrap,
+body.is-en #episode-deck-btn,
 body.is-en #reading-toggle {
     display: none !important;
 }

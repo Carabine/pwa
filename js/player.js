@@ -64,7 +64,7 @@ const subsFixBtn = document.getElementById('subs-fix');
 // «Не совпадают?» — тихая ссылка в блоке настроек; появляется, когда субтитры
 // подобраны (до этого синхронизировать нечего).
 // В английском режиме ручной подбор файла не нужен: текст с того же источника.
-function setSubsFixVisible(v) { subsFixBtn.hidden = !v || !!state.enMode; }
+function setSubsFixVisible(v) { subsFixBtn.hidden = !v || (!!state.enMode && !state.subsForeign); }
 const subsPreciseBtn = document.getElementById('subs-precise');
 const subsPreciseStatus = document.getElementById('subs-precise-status');
 
@@ -920,9 +920,12 @@ function rememberSessionWord(word) {
     const epIndex = Number(episodeSelect.value);
     const ep = state.episodes[epIndex];
     const epNum = ep?.number ?? epIndex + 1;
+    // Язык сессии: слова английского просмотра не должны смешиваться с
+    // японскими и предлагаться в другом режиме (см. renderSessionCard).
+    const lang = learnEn() ? 'en' : 'ja';
     let s = loadLastSession();
-    if (!s || s.processed || String(s.animeId) !== String(shikimoriId) || s.epNum !== epNum) {
-        s = { animeId: shikimoriId, title: titleRu || titleRomaji || '', epNum, words: [], processed: false };
+    if (!s || s.processed || String(s.animeId) !== String(shikimoriId) || s.epNum !== epNum || (s.lang || 'ja') !== lang) {
+        s = { animeId: shikimoriId, title: titleRu || titleRomaji || '', epNum, lang, words: [], processed: false };
     }
     if (!s.words.some((w) => String(w.id) === String(word.id))) {
         s.words.push({ id: word.id, kanji: word.kanji, kana: word.kana || '', translation: word.translation || '' });
@@ -1087,6 +1090,16 @@ async function selectEpisode(index) {
             state.syncPromise = maybeAutoSync();
         } catch (err) {
             console.error(err);
+            // Английский режим: у этой серии дубляжа на выбранном источнике нет
+            // (наличие проверяется по первой серии) — пробуем следующую дорожку,
+            // а не оставляем зрителя с ошибкой.
+            const cur = currentSubOption();
+            const idx = state.subOptions.indexOf(cur);
+            if (state.enMode && idx >= 0 && idx + 1 < state.subOptions.length && !isStaleGen(gen)) {
+                showSnackbar(t('player.enFallbackTrack'), { duration: 5000 });
+                await selectTranslation(idx + 1);
+                return;
+            }
             videoLoading.classList.add('is-error');
             videoLoading.textContent = t('player.streamError');
         }
@@ -1532,6 +1545,18 @@ async function loadSubtitles(episodeNumber = 1) {
 
         state.cues = cues;
         state.subsFile = res.data.file || '';
+        // Английский режим: текст не с того источника, что видео (сабов у
+        // источника не нашлось) — тайминг может разойтись. Говорим об этом и
+        // возвращаем ручной сдвиг («Не совпадают субтитры?»).
+        state.subsForeign = !!(state.enMode && res.data.source && res.data.source !== state.provider);
+        const oldNote = transcriptList.querySelector('.transcript__note--foreign');
+        if (oldNote) oldNote.remove();
+        if (state.subsForeign) {
+            const note = document.createElement('div');
+            note.className = 'transcript__note transcript__note--foreign';
+            note.textContent = t('subs.foreignEn');
+            transcriptList.prepend(note);
+        }
         subsStatus.style.display = 'none';
         // Английская озвучка + английские сабы: текст — перевод японского, а не
         // сценарий дубляжа. Предупреждаем один раз за сессию.

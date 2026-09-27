@@ -207,6 +207,22 @@ html, body {
 }
 
 /* Рейтинг */
+/* Английский режим: метка дубляжа на постере; без дубляжа — приглушено. */
+.anime-card__en {
+    position: absolute;
+    right: 9px;
+    bottom: 9px;
+    background: rgba(95, 179, 162, 0.92);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    z-index: 2;
+}
+.anime-card--noen .anime-card__poster { opacity: 0.5; }
+
 .anime-card__score {
     position: absolute;
     top: 9px;

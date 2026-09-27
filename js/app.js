@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.592';
+const APP_VERSION = 'v0.0.593';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -1062,6 +1062,9 @@ function renderSessionCard() {
     if (!el) return;
     const s = lsJson('animei:lastSession');
     if (!s || s.processed || !Array.isArray(s.words) || !s.words.length) { dropSlot(el); return; }
+    // Сессия другого языка (см. rememberSessionWord): не показываем и не
+    // помечаем обработанной — вернётся при переключении обратно.
+    if (window.LearnLang && (s.lang || 'ja') !== LearnLang.get()) { dropSlot(el); return; }
 
     fillSlot(el,
         '<span class="session-card__chip">' +

@@ -63,6 +63,11 @@ function scheduleClipRefresh() {
     }, 8000);
 }
 
+// Текущий изучаемый язык (LearnLang, settings.js); без помощника — японский.
+function curLearnLang() {
+    return window.LearnLang ? LearnLang.get() : 'ja';
+}
+
 // На странице — только слова текущего изучаемого языка (LearnLang, settings.js).
 function ownLang(words) {
     return window.LearnLang ? LearnLang.filter(words) : words;
@@ -684,7 +689,7 @@ function renderBulkBar(visibleWords) {
 function updateKnownMenuLabel() {
     const el = document.getElementById('known-count');
     if (!el || !window.KnownWords) return;
-    const n = KnownWords.count();
+    const n = KnownWords.count(curLearnLang());
     el.textContent = n ? String(n) : '';
     el.hidden = !n;
 }
@@ -897,7 +902,7 @@ function openKnownImport() {
         let parsed = [];
 
         const reparse = () => {
-            parsed = KnownWords.parseImport(ta.value);
+            parsed = KnownWords.parseImport(ta.value, curLearnLang());
             recognizedEl.textContent = parsed.length
                 ? t('known.recognized').replace('{n}', parsed.length) : '';
             doBtn.disabled = parsed.length === 0;
@@ -909,7 +914,7 @@ function openKnownImport() {
         // и можно поправить руками; галка переключает «изученные/все».
         // Поля заметки разделены \x1f — заменяем на таб, дальше parseImport.
         const notesToWords = (notes) => KnownWords.parseImport(
-            notes.map((n) => String(n.flds || '').replace(/\x1f/g, '\t')).join('\n'));
+            notes.map((n) => String(n.flds || '').replace(/\x1f/g, '\t')).join('\n'), curLearnLang());
         let apkgNotes = null;
 
         const applyApkg = () => {
@@ -1038,7 +1043,7 @@ async function knownToDeck(words, progress) {
         let kana = '';
         let translation = '';
         try {
-            const { data: res } = await client.get('dictionary', { params: { q: w, lang } });
+            const { data: res } = await client.get('dictionary', { params: { q: w, lang, ...(curLearnLang() === 'en' ? { target: 'en' } : {}) } });
             const entries = (res && res.data) || [];
             const entry = entries.find((e) => e.word === w) || entries[0];
             if (entry) {
@@ -1082,7 +1087,7 @@ function openKnownManager() {
         const SHOW_MAX = 300;   // список может быть на тысячи слов — не рисуем всё
 
         const renderList = () => {
-            const all = KnownWords.all();
+            const all = KnownWords.forLang(curLearnLang());
             totalEl.textContent = all.length;
             const q = filterEl.value.trim();
             const matched = q ? all.filter((w) => w.includes(q)) : all;
@@ -1145,8 +1150,8 @@ function openKnownManager() {
 
         filterEl.addEventListener('input', renderList);
         clearBtn.addEventListener('click', () => {
-            if (!confirm(t('known.clearConfirm').replace('{n}', KnownWords.count()))) return;
-            KnownWords.clear();
+            if (!confirm(t('known.clearConfirm').replace('{n}', KnownWords.count(curLearnLang())))) return;
+            KnownWords.clear(curLearnLang());
             updateKnownMenuLabel();
             showSnackbar(t('known.cleared'), { duration: 2500 });
             renderList();

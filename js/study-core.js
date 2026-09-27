@@ -611,7 +611,11 @@
                     for (let i = fresh.length - 1; i >= 0; i--) {
                         if (inPicked.has(String(fresh[i].id))) fresh.splice(i, 1);
                     }
-                    localStorage.removeItem('srs:pickedFirst');
+                    // Снимаем только использованные id: отмеченные слова
+                    // другого языка дождутся своего режима.
+                    const rest = pickedIds.filter((id) => !inPicked.has(String(id)));
+                    if (rest.length) localStorage.setItem('srs:pickedFirst', JSON.stringify(rest));
+                    else localStorage.removeItem('srs:pickedFirst');
                 }
             } catch { /* localStorage может быть недоступен */ }
 

@@ -58,6 +58,7 @@ function buildCard(anime, i) {
 
     const card = document.createElement('div');
     card.className = 'anime-card';
+    card.dataset.id = anime.shikimoriId;
     card.style.animationDelay = Math.min(i * 30, 400) + 'ms';
     card.innerHTML = `
         <div class="anime-card__poster">
@@ -111,6 +112,35 @@ function renderCards(items, append = false) {
     }
 
     items.forEach((anime, i) => resultsEl.appendChild(buildCard(anime, i)));
+    markEnglishDub(items);
+}
+
+// Английский режим: у каких тайтлов есть дубляж — спрашиваем бэкенд пачкой
+// (наличие проверяется по MegaPlay, ответ кэшируется) и помечаем карточки.
+// Без метки карточка приглушена, но открыть её можно: там японский звук с
+// английским текстом, если у KAA есть сабы.
+async function markEnglishDub(items) {
+    if (!(window.LearnLang && LearnLang.get() === 'en') || !items.length) return;
+    const ids = items.map((a) => String(a.shikimoriId)).filter(Boolean);
+    for (let i = 0; i < ids.length; i += 40) {
+        const chunk = ids.slice(i, i + 40);
+        try {
+            const { data: res } = await client.get('catalog/en-dub', { params: { ids: chunk.join(',') }, silentErrors: true, timeout: 45000 });
+            const map = (res && res.data) || {};
+            for (const id of chunk) {
+                const card = resultsEl.querySelector(`.anime-card[data-id="${id}"]`);
+                if (!card || card.querySelector('.anime-card__en')) continue;
+                if (map[id]) {
+                    const b = document.createElement('span');
+                    b.className = 'anime-card__en';
+                    b.textContent = 'EN';
+                    card.querySelector('.anime-card__poster').appendChild(b);
+                } else if (id in map) {
+                    card.classList.add('anime-card--noen');
+                }
+            }
+        } catch { /* нет ответа — карточки без пометок */ }
+    }
 }
 
 // ---- Ленивая подгрузка популярного: сентинел под сеткой, при подходе к нему
