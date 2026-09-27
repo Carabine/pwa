@@ -169,3 +169,14 @@
         });
     }
 })();
+
+// Английский режим: транскрипция кана/ромадзи — японская настройка, прячем
+// ряд вместе с подсказкой (в английском чтение слова — из словаря).
+(function () {
+    if (!(window.LearnLang && LearnLang.get() === 'en')) return;
+    const seg = document.getElementById('set-studyTranscription');
+    const row = seg && seg.closest('.settings-row');
+    if (row) row.style.display = 'none';   // у .settings-row свой display — [hidden] не сработал бы
+    const hint = document.querySelector('p[data-i18n="settings.transcription.hint"]');
+    if (hint) hint.style.display = 'none';
+})();

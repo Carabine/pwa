@@ -784,6 +784,15 @@ body.is-en #episode-deck-wrap,
 body.is-en #reading-toggle {
     display: none !important;
 }
+/* Строка над списком реплик: английский режим, но у тайтла нет английской
+   дорожки — честно говорим, что ниже японские субтитры. */
+.transcript__note {
+    padding: 10px 16px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+}
 
 .now-cue__ru {
     font-size: 12.5px;

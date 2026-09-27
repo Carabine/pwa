@@ -40,6 +40,19 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
         startStudy({ scheduled: false, deck, collectable: true, ordered: true });
     }
 
+    const main = document.querySelector('.main.study');
+
+    // Английский режим: стартовые колоды японские — вместо выбора зовём в каталог.
+    if (window.LearnLang && LearnLang.get() === 'en' && main) {
+        const note = document.createElement('div');
+        note.className = 'deck-choice';
+        note.innerHTML = '<div class="deck-choice__title"></div><a class="btn btn--primary" href="./catalog.html"></a>';
+        note.querySelector('.deck-choice__title').textContent = t('beginner.enOnly');
+        note.querySelector('a').textContent = t('beginner.enOnly.cta');
+        main.appendChild(note);
+        return;
+    }
+
     const chosen = params.get('deck');
     if (chosen === 'core' || chosen === 'full') {
         startDeck(chosen);
@@ -47,7 +60,6 @@ starterLoadSavedSet().then((set) => { window.starterSavedKanji = set; });
     }
 
     // Выбор колоды: 15 сцен (главное предложение) или все 50 слов.
-    const main = document.querySelector('.main.study');
     if (!main) { startDeck('core'); return; }
 
     const box = document.createElement('div');

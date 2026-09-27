@@ -63,7 +63,8 @@ const jumpBtn = document.getElementById('transcript-jump');
 const subsFixBtn = document.getElementById('subs-fix');
 // «Не совпадают?» — тихая ссылка в блоке настроек; появляется, когда субтитры
 // подобраны (до этого синхронизировать нечего).
-function setSubsFixVisible(v) { subsFixBtn.hidden = !v; }
+// В английском режиме ручной подбор файла не нужен: текст с того же источника.
+function setSubsFixVisible(v) { subsFixBtn.hidden = !v || !!state.enMode; }
 const subsPreciseBtn = document.getElementById('subs-precise');
 const subsPreciseStatus = document.getElementById('subs-precise-status');
 
@@ -244,7 +245,12 @@ async function init() {
                 tracks = kaaSub; state.enMode = 'sub';
                 showSnackbar(t('player.noEnglishDub'), { duration: 7000 });
             } else {
-                showSnackbar(t('player.noEnglish'), { duration: 7000 });
+                // Ни озвучки, ни английских сабов: играем японское, но говорим об
+                // этом не всплывашкой на 7 секунд, а строкой над списком реплик.
+                const note = document.createElement('div');
+                note.className = 'transcript__note';
+                note.textContent = t('player.enFallback');
+                transcriptList.prepend(note);
             }
         }
         document.body.classList.toggle('is-en', !!state.enMode);
@@ -1485,7 +1491,7 @@ async function loadSubtitles(episodeNumber = 1) {
     nowCueRu.innerHTML = '<span class="skel skel-bar" style="width: 46%"></span>';
     renderTranscript();
     subsStatus.style.display = '';
-    subsStatus.textContent = t('subs.searching');
+    subsStatus.textContent = t(state.enMode ? 'subs.searchingEn' : 'subs.searching');
     // Пока идёт поиск — компактная строка со спиннером вплотную над скелетоном
     // (без модификатора это крупный центрированный текст для «не найдены»).
     subsStatus.classList.add('transcript__status--searching');
@@ -1570,7 +1576,7 @@ async function loadSubtitles(episodeNumber = 1) {
 
         // Одноразовая подсказка новичку: сабы из архива часто чуть съезжают,
         // а кнопка «Сейчас!» неочевидна
-        if (!localStorage.getItem('animei:syncHintShown')) {
+        if (!localStorage.getItem('animei:syncHintShown') && !state.enMode) {
             localStorage.setItem('animei:syncHintShown', '1');
             showSnackbar(t('player.syncHint'), { duration: 6000 });
         }
@@ -1585,12 +1591,14 @@ async function loadSubtitles(episodeNumber = 1) {
             subsStatus.textContent = '';
             // Сигнал качества: к серии вообще не нашлось субтитров.
             if (window.animeiTrack) animeiTrack('subs_missing', (titleRomaji || '') + ' · эп ' + episodeNumber);
-            subsStatus.append(t('subs.notFound'));
-            subsStatus.appendChild(document.createElement('br'));
-            const link = document.createElement('a');
-            link.href = './watch.html';
-            link.textContent = t('subs.notFoundLink');
-            subsStatus.appendChild(link);
+            subsStatus.append(t(state.enMode ? 'subs.notFoundEn' : 'subs.notFound'));
+            if (!state.enMode) {
+                subsStatus.appendChild(document.createElement('br'));
+                const link = document.createElement('a');
+                link.href = './watch.html';
+                link.textContent = t('subs.notFoundLink');
+                subsStatus.appendChild(link);
+            }
         } else {
             subsStatus.textContent = t('subs.error');
         }

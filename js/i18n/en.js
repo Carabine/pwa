@@ -194,6 +194,11 @@ window.I18N_EN = {
         'subs.syncing': 'Syncing subtitles to the audio…',
         'subs.notFound': 'No Japanese subs for this title in the archive 😔 You can still watch without them',
         'subs.error': 'Failed to load subtitles',
+        'subs.searchingEn': 'Looking for English subtitles…',
+        'subs.notFoundEn': 'No English subtitles for this episode 😔 You can still watch without them',
+        'player.enFallback': 'This title has no English track — these are Japanese subtitles. Frieren, Demon Slayer, Dandadan, Attack on Titan and Death Note have an English dub.',
+        'beginner.enOnly': 'Starter decks are Japanese-only for now. In English mode, start with an episode: open an anime with an English dub and tap words in the subtitles.',
+        'beginner.enOnly.cta': 'Watch anime',
         'subs.synced': 'Subs synced to the current moment',
         'subs.wrong': 'Subtitles don’t match?',
         'subs.wrong.title': 'Subtitles don’t match the audio? Sync precisely',
@@ -533,7 +538,7 @@ window.I18N_EN = {
         'known.wkFail': 'WaniKani did not respond — check the API token',
 
         'feedback.title': 'Feedback',
-        'feedback.text': 'Help us make learning Japanese even better — share your thoughts, ideas or problems.',
+        'feedback.text': 'Help us make Animei even better — share your thoughts, ideas or problems.',
         // Английский интерфейс ведёт в Discord, а не в телеграм — см. CHATS в i18n.js
         'feedback.telegram': 'Join our Discord:',
         'feedback.write': 'Join us on Discord',
