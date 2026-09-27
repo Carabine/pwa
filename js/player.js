@@ -1701,6 +1701,8 @@ async function maybeAutoSync() {
     // «синхронизация» пару минут и всё равно ничего не находит. Пропускаем: для
     // японской дорожки синк делает кнопка «Не совпадают?» (точный подбор по звуку).
     if (PROVIDERS[state.provider]?.autoSyncable === false) { state.autoSyncKey = key; setSyncing(false); return; }
+    // Английский режим: текст и видео с одного источника (KAA), синк не нужен.
+    if (state.enMode) { state.autoSyncKey = key; setSyncing(false); return; }
     state.autoSyncKey = key;
 
     // Отдаём реплики шире (до 340с) — бэкенд анализирует более длинное окно, чтобы
