@@ -2189,7 +2189,9 @@
             els.buttons.innerHTML = '';
 
             // Слов нет совсем — вместо «нечего повторять» предлагаем стартовый набор
-            if (total === 0 && !deck && typeof STARTER_DECK !== 'undefined') {
+            // Стартовая колода японская — в английском режиме её не предлагаем.
+            if (total === 0 && !deck && typeof STARTER_DECK !== 'undefined'
+                && !(window.LearnLang && LearnLang.get() === 'en')) {
                 const words = collection();
                 if (!words.length) {
                     renderStarterOffer();
