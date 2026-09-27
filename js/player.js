@@ -90,12 +90,16 @@ const PROVIDERS = {
     // (в мастер-плейлисте свои варианты, hls.js выберет сам).
     megaplay: {
         endpoint: 'catalog/megaplay-stream',
-        params: (ep) => ({ mal: state.megaMal, ep: ep.number, type: 'sub' }),
+        // dub — английский дубляж (режим «учу английский»), иначе японский звук.
+        params: (ep) => ({ mal: state.megaMal, ep: ep.number, type: state.audioWant === 'en' ? 'dub' : 'sub' }),
         streamUrl: (d) => d.hls,
         intro: true,
         audioLang: 'ja',
         autoSyncable: false,
         syncIntroEnd: true,
+        // Мягкие английские сабы плеера — слоем поверх чистой картинки.
+        overlaySubs: true,
+        pictureSub: null,
     },
     // Оригинальная японская дорожка (маппинг shikimori→showId→wixmp через наш
     // прокси), без выбора качества; в картинку вжат английский саб.
@@ -238,7 +242,9 @@ async function init() {
         // показываем обычные японские дорожки.
         state.enMode = '';
         if (learnEn()) {
-            const enDub = info.translations.filter((tr) => tr.audio === 'en');
+            // Дубляж KAA первым (чистый мастер с обеими дорожками), MegaPlay — вторым.
+            const enDub = info.translations.filter((tr) => tr.audio === 'en')
+                .sort((a, b) => (a.provider === 'kickassanime' ? 0 : 1) - (b.provider === 'kickassanime' ? 0 : 1));
             const kaaSub = tracks.filter((tr) => tr.provider === 'kickassanime');
             if (enDub.length) { tracks = enDub; state.enMode = 'dub'; }
             else if (kaaSub.length) {
@@ -432,10 +438,9 @@ function buildSubOptions() {
     // Английский режим: одна дорожка (дубляж или чистое видео KAA) и английские
     // сабы слоем поверх — выбирать тут нечего.
     if (state.enMode) {
-        const track = state.translations[0];
-        return (track.subLangs || []).includes('en')
-            ? [{ lang: 'en', track }]
-            : [{ lang: null, track }];
+        return state.translations.map((track) => ((track.subLangs || []).includes('en')
+            ? { lang: 'en', track }
+            : { lang: null, track }));
     }
 
     // Английские — только мягким слоем поверх чистой картинки.
@@ -487,7 +492,11 @@ function renderTranslations() {
         // Наш слой поверх картинки, в которой субтитры уже вшиты: строк на
         // экране будет две. Обещать чистый кадр здесь нельзя.
         const over = o.human && o.overBurned ? window.t('subs.overBurned') : '';
-        if (o.track.audio === 'en') name = window.t('subs.englishDub');
+        if (o.track.audio === 'en') {
+            // Два дубляжа (KAA и MegaPlay) — второй нумеруем, источники не называем.
+            const dubs = state.subOptions.filter((x) => x.track.audio === 'en');
+            name = window.t('subs.englishDub') + (dubs.length > 1 && dubs.indexOf(o) > 0 ? ' · ' + (dubs.indexOf(o) + 1) : '');
+        }
         else if (o.lang === 'en') name = window.t('subs.langEn') + over;
         else if (o.lang === 'ru') name = window.t('subs.langRu') + over;
         else if (o.burned === 'ru') {
@@ -1509,8 +1518,9 @@ async function loadSubtitles(episodeNumber = 1) {
                 // Наш id тайтла = MAL id: по нему сервер точно находит серию у
                 // anime365 и подмешивает человеческий перевод вместо машинного.
                 shikimoriId,
-                // Английский режим: текст серии английский (сабы KAA/anime365).
-                ...(state.enMode ? { lang: 'en' } : {}),
+                // Английский режим: текст серии английский (сабы KAA/MegaPlay/anime365);
+                // source — откуда видео, чтобы взять сабы того же источника.
+                ...(state.enMode ? { lang: 'en', source: state.provider } : {}),
                 // Уже не подошедшие файлы — сервер подберёт следующий кандидат.
                 ...(state.subsExcluded && state.subsExcluded.length
                     ? { exclude: JSON.stringify(state.subsExcluded) } : {}),
