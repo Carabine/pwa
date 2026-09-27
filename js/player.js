@@ -2304,7 +2304,9 @@ async function loadBurnedSubs(url) {
     try {
         const r = await fetch(apiOrigin() + url);
         if (!r.ok) return;
-        state.burnedCues = parseVttCues(await r.text());
+        // Водяной знак источника («kaa.lt» первой строкой) — не реплика.
+        state.burnedCues = parseVttCues(await r.text())
+            .filter((c) => !/^\s*(?:kaa\.(?:lt|to|si)|krussdomi\.com)\s*$/i.test(c.text || ''));
         // Реплики есть — помечаем контейнер, чтобы в полноэкранном режиме CSS
         // спрятал учебный оверлей и в кадре осталась одна строка текста.
         if (state.burnedCues.length) videoWrap?.classList.add('has-burned-sub');
