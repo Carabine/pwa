@@ -186,7 +186,7 @@
         known_import: 'импорт известных', tts: 'озвучка карточки', clip_recut: 'пересобрал клип',
         subs_precise: 'точный подбор сабов', subs_missing: 'НЕТ СУБТИТРОВ',
         video_error: 'ВИДЕО НЕ ПОШЛО', offline: 'офлайн', auth: 'аккаунт',
-        ref: 'пришёл',
+        ref: 'пришёл', leave: 'вышел из приложения', return: 'вернулся',
         // Лендинг: клики по кнопкам и демо-плеер (data-stat в landing/*.html)
         cta_header: 'кнопка в шапке', cta_hero: 'кнопка на первом экране',
         cta_hero_deck: 'кнопка «колода» на первом экране', cta_final: 'кнопка внизу',
@@ -268,6 +268,8 @@
             case 'subs_missing': return 'субтитров нет: ' + p;
             case 'video_error': return 'видео не поднялось (' + p + ')';
             case 'offline': return p === 'on' ? 'потерял сеть' : 'сеть вернулась';
+            case 'leave': return PAGE_LABELS[p] ? 'со страницы «' + PAGE_LABELS[p] + '»' : '';
+            case 'return': return 'через ' + awayText(p);
             case 'auth':
                 return { login: 'вошёл', register: 'зарегистрировался', logout: 'вышел' }[p] || p;
             case 'session_card':
@@ -573,6 +575,8 @@
             case 'auth': return { icon: '🔑', text: detailText({ event: ev, page: p }) };
             case 'setting': return { icon: '⚙️', text: 'настройка: ' + p };
             case 'password_change': return { icon: '🔑', text: 'сменил пароль' };
+            case 'leave': return { icon: '🚪', text: 'вышел из приложения' + (PAGE_LABELS[p] ? ' (' + PAGE_LABELS[p] + ')' : '') };
+            case 'return': return { icon: '↩', text: 'вернулся через ' + awayText(p), dim: true };
             case 'offline': return { icon: '📴', text: p === 'on' ? 'потерял сеть' : 'сеть вернулась', warn: p === 'on' };
             default: {
                 // Незнакомое событие показываем как есть — лучше непонятная
@@ -589,6 +593,28 @@
                 return { icon: ico, text: lbl + (det && det !== lbl ? ': ' + det : '') };
             }
         }
+    }
+
+    // Сколько отсутствовал: секунды из события 'return' → «5 мин», «2 ч».
+    function awayText(sec) {
+        var n = Math.max(0, Math.round(Number(sec) || 0));
+        if (n < 3600) return Math.max(1, Math.round(n / 60)) + ' мин';
+        return (n / 3600).toFixed(1).replace('.0', '') + ' ч';
+    }
+
+    // Свернул на минуту и вернулся — не уход: пару leave/return убираем, иначе
+    // каждое переключение вкладки превращалось бы в два шага.
+    var SHORT_TRIP_SEC = 60;
+    function dropShortTrips(events) {
+        var out = [];
+        (events || []).forEach(function (e) {
+            if (e.event === 'return' && (Number(e.page) || 0) < SHORT_TRIP_SEC) {
+                if (out.length && out[out.length - 1].event === 'leave') out.pop();
+                return;
+            }
+            out.push(e);
+        });
+        return out;
     }
 
     function buildSteps(events, endAt) {
@@ -681,7 +707,7 @@
             ? '<div class="session__path">' + pageSeq.map(function (x) { return '<b>' + esc(x) + '</b>'; }).join('<span class="arr">→</span>') + '</div>'
             : '';
 
-        var collapsed = collapseEvents(s.events || []);
+        var collapsed = collapseEvents(dropShortTrips(s.events));
         var steps = collapsed.map(function (item) {
             var verb = EVENT_LABELS[item.event] || item.event;
             var rep = '';
@@ -704,7 +730,7 @@
         var dev = s.ua ? uaShort(s.ua) : String(s.visitorId || '—').slice(0, 8);
         // Пересказ действий — главное в сессии: по строке на дело, техника
         // свёрнута в пометки. Сырой лог остаётся ниже под спойлером.
-        var steps2 = buildSteps(s.events || [], s.end);
+        var steps2 = buildSteps(dropShortTrips(s.events), s.end);
         var storyBlock = stepsHtml(steps2, pageSeq);
 
         // Откуда пришёл: событие ref шлётся один раз за визит.

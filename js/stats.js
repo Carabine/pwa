@@ -157,8 +157,45 @@
     }
     ping();
     setInterval(ping, PING_MS);
+
+    // «Вышел из приложения»: вкладку/PWA закрыли, свернули или переключились —
+    // страница скрылась НЕ из-за перехода внутри приложения. Переход по своим
+    // страницам тоже скрывает страницу, поэтому его помечаем заранее: событие
+    // navigate (Navigation API — ссылки, location.href, перезагрузка) и, где
+    // его нет, клик по ссылке на свой же сайт. Вернулся — 'return' с временем
+    // отсутствия (короткие отлучки таймлайн в админке схлопывает).
+    // Пометка живёт несколько секунд: клик по ссылке-скачиванию страницу не
+    // уводит, и вечная пометка съела бы настоящий уход позже.
+    var NAV_GRACE_MS = 5000;
+    var navAt = 0;
+    var hiddenAt = 0;
+    if (window.navigation && typeof window.navigation.addEventListener === 'function') {
+        window.navigation.addEventListener('navigate', function (e) {
+            // pushState/якорь — страница остаётся на месте, это не переход.
+            if (e.hashChange || (e.destination && e.destination.sameDocument)) return;
+            navAt = Date.now();
+        });
+    }
+    document.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!a || a.target === '_blank' || a.hasAttribute('download') || e.defaultPrevented) return;
+        try { if (new URL(a.href, location.href).origin === location.origin) navAt = Date.now(); } catch (err) { /* ок */ }
+    }, true);
+    // Вернулись назад из bfcache — прежний переход уже не наш «уход».
+    window.addEventListener('pageshow', function () { navAt = 0; });
+
     // Вернулся на вкладку — сразу отмечаемся, не дожидаясь таймера.
     document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') {
+            if (Date.now() - navAt < NAV_GRACE_MS) return;
+            hiddenAt = Date.now();
+            send('leave', 'app/' + (file || 'index'));
+            return;
+        }
+        if (hiddenAt) {
+            send('return', String(Math.round((Date.now() - hiddenAt) / 1000)));
+            hiddenAt = 0;
+        }
         if (Date.now() - lastPing > 15000) ping();
     });
 })();
