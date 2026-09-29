@@ -192,6 +192,7 @@ window.I18N_EN = {
         'dump.busy': 'A download is already running — wait for it to finish',
         'transcript.title': 'Subtitles',
         'subs.searching': 'Looking for Japanese subtitles…',
+        'subs.searchingAny': 'Looking for subtitles…',
         'subs.syncing': 'Syncing subtitles to the audio…',
         'subs.notFound': 'No Japanese subs for this title in the archive 😔 You can still watch without them',
         'subs.error': 'Failed to load subtitles',

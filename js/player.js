@@ -59,6 +59,15 @@ setSelectGhost(episodeSelect, true);
 setSelectGhost(seasonSelect, true);
 const transcriptList = document.getElementById('transcript-list');
 const subsStatus = document.getElementById('subs-status');
+// Язык субтитров в статусе — сразу по языку изучения. Раньше в разметке стояло
+// «Ищем японские субтитры», и в режиме «учу английский» эта строка висела всю
+// загрузку каталога: английский текст ставился, только когда дорожки уже
+// выбраны. В разметке теперь нейтральное «Ищем субтитры…». Ключ меняем вместе
+// с текстом, иначе повторное применение переводов вернуло бы прежний.
+if (subsStatus) {
+    subsStatus.dataset.i18n = learnEn() ? 'subs.searchingEn' : 'subs.searching';
+    subsStatus.textContent = t(subsStatus.dataset.i18n);
+}
 const jumpBtn = document.getElementById('transcript-jump');
 const subsFixBtn = document.getElementById('subs-fix');
 // «Не совпадают?» — тихая ссылка в блоке настроек; появляется, когда субтитры
@@ -1515,7 +1524,8 @@ async function loadSubtitles(episodeNumber = 1) {
     nowCueRu.innerHTML = '<span class="skel skel-bar" style="width: 46%"></span>';
     renderTranscript();
     subsStatus.style.display = '';
-    subsStatus.textContent = t(state.enMode ? 'subs.searchingEn' : 'subs.searching');
+    subsStatus.dataset.i18n = state.enMode ? 'subs.searchingEn' : 'subs.searching';
+    subsStatus.textContent = t(subsStatus.dataset.i18n);
     // Пока идёт поиск — компактная строка со спиннером вплотную над скелетоном
     // (без модификатора это крупный центрированный текст для «не найдены»).
     subsStatus.classList.add('transcript__status--searching');
