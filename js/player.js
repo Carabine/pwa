@@ -159,6 +159,7 @@ const state = {
     cues: [],
     activeCueIndex: -1,
     offset: 0,
+    segs: null,            // кусочный сдвиг поверх offset: [{ from, d }] (см. cueOff)
     // Стартовые значения берём из глобальных настроек (js/settings.js).
     autoPause: !!(window.AnimeiSettings && window.AnimeiSettings.get('autopause')),
     autoPauseAt: null,
@@ -1054,6 +1055,7 @@ async function selectEpisode(index) {
     // вызов выйдет по guard'у, а синк сделает вызов после setState нового видео.
     state.currentVideoUrl = '';
     state.autoSyncKey = null;
+    state.segKey = null;
     // Сабы источника принадлежат конкретной дорожке — при смене серии или
     // провайдера гасим их, иначе поверх нового видео висел бы старый текст.
     clearBurnedSubs();
@@ -1579,7 +1581,11 @@ async function loadSubtitles(episodeNumber = 1) {
         // Kodik, уезжал зрителю KickAssAnime), консенсус соседних серий перебивал
         // верные серии (у «Наруто» первая серия получала −31с), а продолжения
         // получали субтитры чужого сезона — все сдвиги той эпохи мусорные.
-        if (localStorage.getItem('animei:subsOffsetReset') !== '7') {
+        // Уровень миграций сравниваем ЧИСЛОМ: прежнее `!== '7'` срабатывало и на
+        // «8», и каждая загрузка сабов стирала ВСЕ сохранённые сдвиги (в том числе
+        // ручные) — с 24.09 сдвиги не переживали перезагрузку.
+        const resetLevel = parseInt(localStorage.getItem('animei:subsOffsetReset'), 10) || 0;
+        if (resetLevel < 7) {
             Object.keys(localStorage)
                 .filter((k) => k.startsWith('animei:subsOffset:'))
                 .forEach((k) => localStorage.removeItem(k));
@@ -1589,7 +1595,7 @@ async function loadSubtitles(episodeNumber = 1) {
         // (см. lagging в maybeAutoSync). Сохранённые прежде нули автосинка
         // («сдвиг мал — оставляем 0») сбрасываем, чтобы он пересчитал; ручные
         // сдвиги, точный подбор и консенсус НЕ трогаем.
-        if (localStorage.getItem('animei:subsOffsetReset') !== '8') {
+        if (resetLevel < 8) {
             Object.keys(localStorage)
                 .filter((k) => k.startsWith('animei:subsOffset:') && !k.endsWith(':m'))
                 .forEach((k) => {
@@ -1601,6 +1607,7 @@ async function loadSubtitles(episodeNumber = 1) {
             localStorage.setItem('animei:subsOffsetReset', '8');
         }
         state.offset = parseFloat(localStorage.getItem(offsetStorageKey())) || 0;
+        state.segs = loadSegs(offsetStorageKey());
         updateOffsetLabel();
         renderTranscript();
         updateNowCue(state.activeCueIndex);
@@ -1655,6 +1662,44 @@ function currentSubOption() {
     const i = parseInt(translationSelect.value, 10);
     if (!state.subOptions.length) return null;
     return state.subOptions[i] || state.subOptions[0];
+}
+
+// Кусочный сдвиг: монтаж источника бывает не таким, как у файла субтитров, и
+// одного сдвига на серию мало (у Kodik «One Punch Man» 2 опенинг длиннее: до
+// него сабы на месте, после — всё на +10с). Сервер находит такие куски и
+// проверяет каждый по звуку (subtitles/segments). state.segs = [{ from, d }]:
+// реплики, начинающиеся в сабах с from и дальше, получают к state.offset
+// добавку d. Ручные «±» двигают базу state.offset — все куски вместе с ней.
+function segDelta(segs, start) {
+    let d = 0;
+    if (segs) {
+        for (const s of segs) {
+            if (start >= s.from) d = s.d;
+            else break;
+        }
+    }
+    return d;
+}
+
+// Сдвиг конкретной реплики (с учётом её куска). Все переводы «время сабов →
+// время видео» идут через него.
+function cueOff(cue) {
+    return state.offset + segDelta(state.segs, cue.start);
+}
+
+// Куски храним отдельно от сдвига: старые разовые чистки перебирают все ключи
+// «animei:subsOffset:*» и не должны их задеть.
+function segStorageKey(offsetKey) {
+    return offsetKey.replace('animei:subsOffset:', 'animei:subsSeg:');
+}
+
+function loadSegs(offsetKey) {
+    try {
+        const v = JSON.parse(localStorage.getItem(segStorageKey(offsetKey)));
+        return Array.isArray(v) && v.length ? v : null;
+    } catch {
+        return null;
+    }
 }
 
 function offsetStorageKey() {
@@ -1731,6 +1776,12 @@ function autoSyncEligible() {
 // сдвиг найден уверенно, применяем его. Один раз на серию; ждём, пока готовы И
 // субтитры, И видеопоток (вызывается из обоих мест).
 async function maybeAutoSync() {
+    await autoSyncOnce();
+    // Не ждём: кусочный сдвиг считается минуты и приходит, когда готов.
+    maybeSegments();
+}
+
+async function autoSyncOnce() {
     if (window.AnimeiSettings && window.AnimeiSettings.get('autoSyncSubs') === false) { setSyncing(false); return; }
     const key = offsetStorageKey();
     if (state.autoSyncKey === key) return;                       // уже пробовали для этой серии
@@ -1845,6 +1896,75 @@ async function maybeAutoSync() {
         // серии — не гасим их, чтобы у неё не мелькнуло неверное время.
         if (offsetStorageKey() === key) setSyncing(false);
     }
+}
+
+// Кусочный сдвиг (см. cueOff). Один раз на серию спрашиваем сервер, не разный
+// ли у этой серии сдвиг по кускам. Посчитано — применяем сразу; нет — сервер
+// ставит расчёт в очередь (звук всей серии + проверка Whisper'ом, 1–3 мин), и
+// мы опрашиваем его, пока зритель на этой серии. Только японская речь: куски
+// сервер проверяет по японскому тексту реплик.
+async function maybeSegments() {
+    const key = offsetStorageKey();
+    if (state.segKey === key) return;
+    if (!state.cues.length || !state.currentVideoUrl) return;
+    state.segKey = key;
+    const sk = segStorageKey(key);
+    if (localStorage.getItem(sk + ':q')) return;                      // уже узнавали
+    if (localStorage.getItem(key + ':m') === 'manual') return;        // сдвиг выставлен руками
+    if (window.AnimeiSettings && window.AnimeiSettings.get('autoSyncSubs') === false) return;
+    if (state.enMode || PROVIDERS[state.provider]?.autoSyncable === false) return;
+    const audioLang = trackAudioLang(selectedTrack());
+    if (audioLang !== 'ja') return;
+
+    // Ключ серии на сервере — тот же, что у subtitles/align: по репликам окна.
+    const win = state.cues
+        .filter((c) => Number.isFinite(c.start) && c.start >= 0 && c.start < 340)
+        .slice(0, 260);
+    if (win.length < 5) return;
+    const base = { videoUrl: state.currentVideoUrl, cues: win.map((c) => c.start), introEnd: 0, audioLang };
+    const all = state.cues.filter((c) => Number.isFinite(c.start)).slice(0, 1500);
+    const full = {
+        ...base,
+        allStarts: all.map((c) => c.start),
+        allEnds: all.map((c) => (Number.isFinite(c.end) ? c.end : c.start + 2)),
+        allTexts: all.map((c) => c.text || ''),
+    };
+    const deadline = Date.now() + 10 * 60 * 1000;
+    let body = full;   // полный список нужен только чтобы поставить расчёт в очередь
+    while (Date.now() < deadline) {
+        if (offsetStorageKey() !== key) return;
+        try {
+            const { data: res } = await client.post('subtitles/segments', body, { timeout: 30000, silentErrors: true });
+            const r = res.data || {};
+            if (Array.isArray(r.segments) && r.segments.length >= 2) {
+                applySegments(key, r.segments);
+                return;
+            }
+            // Посчитано и кусков нет — запоминаем, больше не спрашиваем.
+            if (r.known) { localStorage.setItem(sk + ':q', '1'); return; }
+            if (!r.pending) return;   // не взяли в расчёт (очередь, рестарт) — спросим в другой заход
+        } catch { /* сеть — пробуем на следующем круге */ }
+        body = base;
+        await new Promise((res) => setTimeout(res, 15000));
+    }
+}
+
+function applySegments(key, segments) {
+    if (offsetStorageKey() !== key) return;
+    if (localStorage.getItem(key + ':m') === 'manual') return;
+    const base = segments[0].offset;
+    state.offset = base;
+    state.segs = segments.slice(1).map((s) => ({ from: s.from, d: Math.round((s.offset - base) * 10) / 10 }));
+    saveOffset();
+    localStorage.setItem(key + ':m', 'segments');
+    const sk = segStorageKey(key);
+    localStorage.setItem(sk, JSON.stringify(state.segs));
+    localStorage.setItem(sk + ':q', '1');
+    updateOffsetLabel();
+    renderTranscript();
+    updateNowCue(state.activeCueIndex);
+    refreshOffsetDisplay();
+    if (window.animeiTrack) animeiTrack('subs_segments', String(segments.length));
 }
 
 // Точный подбор сдвига по запросу («не те?» → Whisper). Распознаёт речь дубляжа и
@@ -2109,7 +2229,7 @@ function renderTranscript() {
         time.className = 'cue__time';
         // Показываем время С УЧЁТОМ сдвига — иначе после автосинка (напр. +85с у
         // оригинальной дорожки) тайм-коды реплик не совпадали с позицией видео.
-        time.textContent = formatTime(Math.max(0, cue.start + state.offset));
+        time.textContent = formatTime(Math.max(0, cue.start + cueOff(cue)));
         div.appendChild(time);
 
         // Реплика — ПОСЛОВНО, как эталон (полоска субтитров под видео): над каждым
@@ -2140,7 +2260,7 @@ function renderTranscript() {
         div.appendChild(aiBtn);
 
         div.addEventListener('click', () => {
-            video.currentTime = cue.start + state.offset + 0.01;
+            video.currentTime = cue.start + cueOff(cue) + 0.01;
             video.play().catch(() => {});
         });
 
@@ -2264,20 +2384,22 @@ function markKnownEverywhere(base) {
 // отсортированы, поэтому держим стартовый индекс: реплика, закончившаяся до t,
 // уже никогда не совпадёт. При перемотке назад, смене сдвига или новом списке
 // начинаем сначала — результат идентичен полному проходу.
-let cueScanFrom = 0, cueScanT = -1, cueScanOffset = 0, cueScanList = null;
+let cueScanFrom = 0, cueScanT = -1, cueScanOffset = 0, cueScanList = null, cueScanSegs = null;
 function findCueIndex(t) {
-    if (state.cues !== cueScanList || t < cueScanT || state.offset !== cueScanOffset) {
+    if (state.cues !== cueScanList || t < cueScanT || state.offset !== cueScanOffset
+        || state.segs !== cueScanSegs) {
         cueScanFrom = 0;
         cueScanList = state.cues;
     }
     cueScanT = t;
     cueScanOffset = state.offset;
+    cueScanSegs = state.segs;
     while (cueScanFrom < state.cues.length
-        && state.cues[cueScanFrom].end + state.offset < t) cueScanFrom++;
+        && state.cues[cueScanFrom].end + cueOff(state.cues[cueScanFrom]) < t) cueScanFrom++;
     for (let i = cueScanFrom; i < state.cues.length; i++) {
         const c = state.cues[i];
-        if (t >= c.start + state.offset && t <= c.end + state.offset) return i;
-        if (c.start + state.offset > t) return -1;
+        if (t >= c.start + cueOff(c) && t <= c.end + cueOff(c)) return i;
+        if (c.start + cueOff(c) > t) return -1;
     }
     return -1;
 }
@@ -2433,7 +2555,7 @@ function syncCues() {
             if (state.followCue && !state.syncing) scrollCueIntoView(el);
         }
         if (state.autoPause) {
-            state.autoPauseAt = state.cues[idx].end + state.offset;
+            state.autoPauseAt = state.cues[idx].end + cueOff(state.cues[idx]);
         }
     }
     // Реплика сменилась, пока список пролистан вручную — стрелка «К текущей» могла
@@ -2494,7 +2616,7 @@ function currentCueEl() {
         const t = video.currentTime;
         let idx = 0;
         for (let i = 0; i < state.cues.length; i++) {
-            if (state.cues[i].start + state.offset <= t) idx = i;
+            if (state.cues[i].start + cueOff(state.cues[i]) <= t) idx = i;
             else break;
         }
         el = transcriptList.querySelector(`.cue[data-index="${idx}"]`);
@@ -2527,7 +2649,7 @@ function setFollowCue(on) {
             const t = video.currentTime;
             let idx = 0;
             for (let i = 0; i < state.cues.length; i++) {
-                if (state.cues[i].start + state.offset <= t) idx = i;
+                if (state.cues[i].start + cueOff(state.cues[i]) <= t) idx = i;
                 else break;
             }
             el = transcriptList.querySelector(`.cue[data-index="${idx}"]`);
@@ -2562,7 +2684,7 @@ function updateOffsetLabel() {
 function updateTranscriptTimes() {
     const times = transcriptList.querySelectorAll('.cue__time');
     state.cues.forEach((cue, i) => {
-        if (times[i]) times[i].textContent = formatTime(Math.max(0, cue.start + state.offset));
+        if (times[i]) times[i].textContent = formatTime(Math.max(0, cue.start + cueOff(cue)));
     });
 }
 
@@ -2579,7 +2701,7 @@ const ruToggle = document.getElementById('ru-toggle');
 function toggleAutoPause() {
     state.autoPause = !state.autoPause;
     state.autoPauseAt = state.autoPause && state.activeCueIndex >= 0
-        ? state.cues[state.activeCueIndex].end + state.offset
+        ? state.cues[state.activeCueIndex].end + cueOff(state.cues[state.activeCueIndex])
         : null;
     autopauseBtn.classList.toggle('chip-btn--active', state.autoPause);
 }
@@ -2627,8 +2749,8 @@ autopauseBtn.classList.toggle('chip-btn--active', state.autoPause);
 // Общие для хоткеев, кнопок у строки субтитров и свайпа на телефоне.
 
 function seekToCue(cue) {
-    video.currentTime = cue.start + state.offset + 0.01;
-    if (state.autoPause) state.autoPauseAt = cue.end + state.offset;
+    video.currentTime = cue.start + cueOff(cue) + 0.01;
+    if (state.autoPause) state.autoPauseAt = cue.end + cueOff(cue);
     video.play().catch(() => {});
 }
 
@@ -2637,14 +2759,14 @@ function replayCue() {
     let cue = state.activeCueIndex >= 0 ? state.cues[state.activeCueIndex] : null;
     if (!cue) {
         const t = video.currentTime;
-        cue = [...state.cues].reverse().find(c => c.start + state.offset <= t);
+        cue = [...state.cues].reverse().find(c => c.start + cueOff(c) <= t);
     }
     if (cue) seekToCue(cue);
 }
 
 function nextCue() {
     const t = video.currentTime;
-    const next = state.cues.find(c => c.start + state.offset > t + 0.05);
+    const next = state.cues.find(c => c.start + cueOff(c) > t + 0.05);
     if (next) seekToCue(next);
 }
 
@@ -2654,7 +2776,7 @@ function prevCue() {
     const t = video.currentTime;
     let cue = null;
     for (const c of state.cues) {
-        if (c.start + state.offset < t - 0.8) cue = c;
+        if (c.start + cueOff(c) < t - 0.8) cue = c;
         else break;
     }
     if (cue) seekToCue(cue);
@@ -3271,8 +3393,8 @@ popupSave.addEventListener('click', async () => {
             translation,
             sentence: ctx.cue.text,
             sentenceTranslation: ctx.cue.translation || '',
-            videoStart: Math.max(0, ctx.cue.start + state.offset),
-            videoEnd: ctx.cue.end + state.offset,
+            videoStart: Math.max(0, ctx.cue.start + cueOff(ctx.cue)),
+            videoEnd: ctx.cue.end + cueOff(ctx.cue),
             videoUrl: state.currentVideoUrl || '',
             hint: '',
         });
@@ -3357,6 +3479,9 @@ function nudgeOffset(delta) {
 
 function resetOffset() {
     state.offset = 0;
+    // «Сброс» — значит «без сдвига вовсе», куски тоже убираем.
+    state.segs = null;
+    localStorage.removeItem(segStorageKey(offsetStorageKey()));
     applyManualOffset();
 }
 
@@ -3406,8 +3531,12 @@ async function tryOtherSubsFile() {
     state.subsExcluded.push(prev);
     localStorage.removeItem(offsetStorageKey());
     localStorage.removeItem(offsetStorageKey() + ':m');
+    localStorage.removeItem(segStorageKey(offsetStorageKey()));
+    localStorage.removeItem(segStorageKey(offsetStorageKey()) + ':q');
     state.offset = 0;
+    state.segs = null;
     state.autoSyncKey = null;   // автосинк заново для нового файла
+    state.segKey = null;
     const ep = state.episodes[parseInt(episodeSelect.value, 10)];
     const epNum = ep && ep.number != null ? ep.number : 1;
     try {

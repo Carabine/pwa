@@ -511,6 +511,11 @@
         return url ? apiOrigin() + url : '';
     }
 
+    // Сдвиг реплики серии-источника: база + добавка её куска (segDelta — player.js).
+    function setOff(set, cue) {
+        return (set.offset || 0) + segDelta(set.segs, cue.start);
+    }
+
     async function alignOffset(set, videoUrl) {
         const saved = parseFloat(localStorage.getItem(offsetKeyFor(set.epNumber)));
         if (Number.isFinite(saved)) return saved;
@@ -554,12 +559,15 @@
                 try { await state.syncPromise; } catch { /* автосинк не критичен */ }
                 set.videoUrl = state.currentVideoUrl || '';
                 set.offset = state.offset || 0;
+                set.segs = state.segs;
                 return set;
             }
             scanEl.hidden = false;
             scanEl.textContent = t('edeck.sync').replace('{n}', set.epNumber);
             try { set.videoUrl = await resolveEpisodeStream(set.epIndex); } catch { set.videoUrl = ''; }
             set.offset = set.videoUrl ? await alignOffset(set, set.videoUrl) : 0;
+            // Кусочный сдвиг — только если серию уже смотрели и он сохранён (см. cueOff).
+            set.segs = loadSegs(offsetKeyFor(set.epNumber));
 
             // Контроль дрейфа (как в beginner-deck): сверяем одну реплику из
             // середины серии по звуку; не сошлось — слова серии без клипов.
@@ -571,7 +579,7 @@
                     if (probe) {
                         const { data: res } = await client.post('subtitles/verify-window', {
                             videoUrl: set.videoUrl,
-                            start: Math.max(0, probe.start + set.offset - 1),
+                            start: Math.max(0, probe.start + setOff(set, probe) - 1),
                             duration: (probe.end - probe.start) + 3,
                             text: probe.text,
                         }, { timeout: 90000, silentErrors: true });
@@ -613,8 +621,8 @@
             translation: entry.translation || buildTranslation(dict),
             sentence: cue.text,
             sentenceTranslation: cue.translation || '',
-            videoStart: Math.max(0, cue.start + (set.offset || 0)),
-            videoEnd: cue.end + (set.offset || 0),
+            videoStart: Math.max(0, cue.start + setOff(set, cue)),
+            videoEnd: cue.end + setOff(set, cue),
             videoUrl: set.videoUrl || '',
             hint: '',
         });

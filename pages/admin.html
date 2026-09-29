@@ -565,7 +565,9 @@
             var note = r.fail ? r.fail
                 : ('sim ' + (r.bestSim == null ? '—' : r.bestSim) + ' · сдвиг ' + (r.align ? r.align.offset : '—') +
                    (r.align && r.align.method ? ' (' + r.align.method + ', c=' + r.align.confidence + ')' : '') +
-                   ' → применён ' + r.applied + ' · ' + (r.track || ''));
+                   ' → применён ' + (r.segments
+                       ? 'по кускам ' + r.segments.map(function (g) { return Math.round(g.from) + 'с:' + g.offset; }).join(', ')
+                       : r.applied) + ' · ' + (r.track || ''));
             return '<div class="src"><span class="src__dot src__dot--' + (SYNC_CLS[v] || 'off') + '"></span>' +
                 '<span class="src__name">' + esc(r.name + ' ep' + r.ep + ' · ' + r.uiLang) + '</span>' +
                 '<span class="src__note' + (v === 'desync' || v === 'fail' ? ' src__note--bad' : '') + '">' + esc(SYNC_LABEL[v] || v) +
