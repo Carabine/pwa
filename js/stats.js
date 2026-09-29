@@ -96,7 +96,7 @@
 
     // Короткие метки вместо utm_source: ?r=lj в ссылке не выглядит рекламным
     // хвостом, а в панели разворачивается в понятное имя площадки. Неизвестный
-    // код проходит как есть; ?r=tg-name — это канал tg_name.
+    // код проходит как есть; ?r=tg-name — это канал tg_name, ?r=rd-name — сабреддит reddit_name.
     var REF_CODES = {
         lj: 'reddit_learnjapanese', sp: 'reddit_sideproject', hn: 'hn', ph: 'ph',
         ih: 'ih', hb: 'habr', vc: 'vc', at: 'alternativeto', un: 'uneed'
@@ -106,6 +106,7 @@
         if (!v) return null;
         if (REF_CODES[v]) return REF_CODES[v];
         if (v.indexOf('tg-') === 0) return 'tg_' + v.slice(3);
+        if (v.indexOf('rd-') === 0) return 'reddit_' + v.slice(3);
         return v;
     }
 
