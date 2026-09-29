@@ -47,6 +47,51 @@
         return parts.join('_');
     }
 
+    // Субтитры серии для выгрузки — мягкими дорожками (сервер кладёт их в MKV):
+    // оригинал и перевод, со сдвигом, который сейчас стоит в плеере (cueOff —
+    // с учётом кусков). Время — секунды видео.
+    const SUB_LANG = { ru: ['rus', 'Русский'], uk: ['ukr', 'Українська'], en: ['eng', 'English'] };
+    function subTracks() {
+        const cues = (state.cues || []).filter((c) => Number.isFinite(c.start));
+        if (!cues.length) return [];
+        const at = (c) => {
+            const off = typeof cueOff === 'function' ? cueOff(c) : (state.offset || 0);
+            const end = Number.isFinite(c.end) && c.end > c.start ? c.end : c.start + 2;
+            return [c.start + off, end + off];
+        };
+        const tracks = [{
+            lang: state.enMode ? 'eng' : 'jpn',
+            title: state.enMode ? 'English' : '日本語',
+            cues: cues.filter((c) => c.text).map((c) => [...at(c), c.text]),
+        }];
+        // Перевод — если он у реплик реально есть (у части источников его нет).
+        const withTr = cues.filter((c) => c.translation);
+        const ui = typeof subsLang === 'function' ? subsLang() : 'ru';
+        const trLang = SUB_LANG[ui] || SUB_LANG.ru;
+        if (withTr.length >= cues.length * 0.2 && trLang[0] !== tracks[0].lang) {
+            tracks.push({ lang: trLang[0], title: trLang[1], cues: withTr.map((c) => [...at(c), c.translation]) });
+        }
+        return tracks;
+    }
+
+    // Меню закрывается через history.go(-1) (кнопка «назад» на телефоне). Если
+    // запустить загрузку раньше, чем этот переход по истории завершится, он её
+    // отменяет — отсюда «качает не с первого раза». Ждём popstate (с запасом
+    // по времени, если его почему-то не будет).
+    function afterHistorySettles() {
+        return new Promise((resolve) => {
+            let fin = false;
+            const done = () => {
+                if (fin) return;
+                fin = true;
+                window.removeEventListener('popstate', done);
+                resolve();
+            };
+            window.addEventListener('popstate', done);
+            setTimeout(done, 700);
+        });
+    }
+
     async function startDump(dur) {
         if (!state.currentVideoUrl) { snack(tr('dump.noStream', 'Поток ещё не загружен')); return; }
 
@@ -60,6 +105,7 @@
                 start,
                 dur,
                 name: dumpName(),
+                subs: subTracks(),
             });
 
             const url = (window.ANIMEI_ORIGIN || location.origin)
@@ -83,7 +129,9 @@
             const code = err && err.response && err.response.status;
             snack(code === 403
                 ? tr('dump.denied', 'Нет доступа к выгрузке')
-                : tr('dump.error', 'Не удалось начать выгрузку'));
+                : code === 409
+                    ? tr('dump.busy', 'Уже идёт выгрузка — дождитесь её конца')
+                    : tr('dump.error', 'Не удалось начать выгрузку'));
         }
     }
 
@@ -121,9 +169,11 @@
             opt.textContent = tr('dump.range.' + r.key, r.dur == null
                 ? 'Серия целиком'
                 : (r.dur < 60 ? r.dur + ' с отсюда' : (r.dur / 60) + ' мин отсюда'));
-            opt.addEventListener('click', (e) => {
+            opt.addEventListener('click', async (e) => {
                 e.stopPropagation();
+                const viaHistory = !!layer;
                 closeMenu();
+                if (viaHistory) await afterHistorySettles();
                 startDump(r.dur);
             });
             menu.appendChild(opt);
