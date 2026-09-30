@@ -596,6 +596,25 @@ html, body {
     }
 }
 
+/* Во весь экран громкость на таче выезжает ВПРАВО прямо в ряду (как на ПК по
+   наведению), а не всплывающей карточкой над кнопками: карточка сдвинута влево
+   до Play и закрывала его. Места в альбомном ряду хватает — время просто
+   отъезжает вправо. Ширину анимирует базовый transition (.player-ui__vol-popup). */
+.video-wrap.is-fs .player-ui__vol.is-open .player-ui__vol-popup {
+    position: static;
+    width: 120px;
+    margin: 0 6px 0 2px;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+    overflow: hidden;
+}
+.video-wrap.is-fs .player-ui__vol.is-open .player-ui__vol-popup input[type="range"] {
+    width: 120px;
+    height: 30px;
+}
+
 /* Субтитр из кадра лежит выше панели (z-index 6 против 5) и закрывал пункты
    открытого меню — пока выбираешь качество/скорость, прячем его. */
 .video-wrap:has(.player-ui__quality-wrap.is-open, .player-ui__speed-wrap.is-open) .burned-sub {
