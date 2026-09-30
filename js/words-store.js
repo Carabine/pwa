@@ -91,7 +91,8 @@ async function saveWord(payload) {
     }
     if (isSignedIn()) {
         // Клип режет и хранит сервер (см. POST /words) — videoUrl уходит туда.
-        const { data: res } = await client.post('words', data);
+        // uiLang — язык ИИ-разбора: сервер сразу считает разбор реплики в фоне.
+        const { data: res } = await client.post('words', { ...data, uiLang: explainLang() });
         const saved = res?.data ?? res;
         // Офлайн-копии пополняем сразу, не задерживая ответ: слово — в кэш
         // списка, клип — в IndexedDB, как только сервер его дорежет.
@@ -130,6 +131,7 @@ async function saveWord(payload) {
     const words = getGuestWords();
     words.push(word);
     setGuestWords(words);
+    warmGuestExplain(word);
 
     // У гостя клип хранится в браузере. Ждём его, чтобы видео было готово
     // к первому показу карточки, но неудача клипа не ломает сохранение слова.
@@ -145,6 +147,24 @@ async function saveWord(payload) {
         }
     }
     return word;
+}
+
+// ---------- ИИ-разбор сразу при сохранении ----------
+// Разбор реплики считается десятки секунд — пусть он будет готов к первому
+// открытию карточки. Язык разбора = язык интерфейса, как в самой карточке
+// (studyRunExplain в study-core.js): иначе ключ кэша не совпадёт.
+function explainLang() {
+    return typeof getLang === 'function' ? getLang() : 'ru';
+}
+
+// У вошедшего разбор считает сервер (POST /words). Гостевое слово сервер не
+// видит — шлём тот же запрос, что пошлёт карточка, и ответ не ждём: он ляжет
+// в серверный кэш разборов.
+function warmGuestExplain(word) {
+    if (!word || !word.sentence || !word.kanji || typeof client === 'undefined') return;
+    const params = { sentence: word.sentence, lang: explainLang(), word: word.kanji };
+    if (word.lang === 'en') params.target = 'en';
+    client.get('explain', { params, timeout: 90000, silentErrors: true }).catch(() => { /* не вышло — карточка спросит сама */ });
 }
 
 // Получить все слова пользователя (серверная форма).
