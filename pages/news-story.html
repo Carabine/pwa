@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JP News — Animei</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../img/icons/180x180.png">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="icon" type="image/png" href="../img/favicon.png">
+    <meta name="theme-color" content="#0a0a0f">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <script>
+        (function () {
+            var th = 'dark';
+            try {
+                var s = JSON.parse(localStorage.getItem('animei:settings') || '{}');
+                if (s && s.theme) th = s.theme;
+            } catch (e) { /* приватный режим */ }
+            if (th === 'system') {
+                th = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'light' : 'dark';
+            }
+            th = th === 'light' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', th);
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute('content', th === 'light' ? '#f4f5fa' : '#0a0a0f');
+        })();
+    </script>
+    <link href="../css/app.css" rel="stylesheet">
+    <script>
+        (function () {
+            var langs = { ru: 1, uk: 1, en: 1 };
+            var lang = null;
+            try { lang = localStorage.getItem('animei:lang'); } catch (e) { /* приватный режим */ }
+            if (!langs[lang]) {
+                lang = 'ru';
+                var prefs = [navigator.language].concat(navigator.languages || []);
+                for (var i = 0; i < prefs.length; i++) {
+                    var c = String(prefs[i] || '').toLowerCase().split('-')[0];
+                    if (langs[c]) { lang = c; break; }
+                }
+            }
+            if (lang !== 'ru') document.write('<scr' + 'ipt src="../js/i18n/' + lang + '.js" defer></scr' + 'ipt>');
+        })();
+    </script>
+</head>
+<body>
+<div class="app">
+    <header class="header header--flush-left">
+        <div class="header__left">
+            <button class="icon-btn menu-btn" aria-label="Menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="header__logo">
+            <img src="../favicon.svg" alt="" class="header__logo-mark">
+            <span class="header__logo-text">Animei</span>
+        </div>
+        <form class="header__search" role="search"><button type="button" class="icon-btn header__search-toggle" aria-label="Search" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><input class="header__search-input" name="q" type="search" autocomplete="off" data-i18n-placeholder="header.search" placeholder="Поиск аниме"></form>
+        <div class="header__right">
+            <div class="profile-wrap">
+                <button class="icon-btn profile-btn" aria-label="Profile">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </button>
+                <div class="profile-menu" id="profile-menu">
+                    <a href="#" id="logout-btn">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="reader">
+        <div class="rd-top">
+            <a class="rd-back" id="rd-back" href="./news.html">← <span data-i18n="news.back">К выпуску</span></a>
+            <div class="seg" id="rd-level" role="group"></div>
+            <button type="button" class="rd-furi" id="rd-furi">あ</button>
+        </div>
+
+        <div class="rd-media" id="rd-media" hidden></div>
+        <div class="rd-meta" id="rd-meta"></div>
+        <h1 class="rd-title" id="rd-title"><span class="skel skel-bar" style="width:80%"></span></h1>
+        <p class="rd-title-tr" id="rd-title-tr"></p>
+
+        <div class="rd-text furi-all" id="rd-text">
+            <p class="rd-p"><span class="skel skel-bar" style="width:100%"></span><span class="skel skel-bar" style="width:92%"></span><span class="skel skel-bar" style="width:70%"></span></p>
+            <p class="rd-p"><span class="skel skel-bar" style="width:100%"></span><span class="skel skel-bar" style="width:60%"></span></p>
+        </div>
+
+        <!-- Панель активного предложения: переезжает под выбранное предложение -->
+        <div class="rd-sbar" id="rd-sbar" hidden>
+            <span class="rd-sbar__tr" hidden></span>
+            <div class="rd-sbar__row">
+                <button type="button" class="rd-sbar__speak">🔊 <span data-i18n="news.sentence.speak">Слушать</span></button>
+                <button type="button" class="rd-sbar__explain">✦ <span data-i18n="news.sentence.explain">Разбор</span></button>
+            </div>
+        </div>
+
+        <div class="rd-src" id="rd-src"></div>
+
+        <section class="rd-quiz" id="rd-quiz" hidden></section>
+    </main>
+
+    <div class="rd-bar">
+        <div class="rd-bar__inner">
+            <button type="button" id="rd-tr">文 <span data-i18n="news.translate">Перевод</span></button>
+            <button type="button" id="rd-listen">▶ <span data-i18n="news.listen">Слушать</span></button>
+            <button type="button" id="rd-check" class="rd-bar__primary" data-i18n="news.check">Проверить понимание</button>
+        </div>
+    </div>
+
+    <!-- Карточка слова -->
+    <div class="deck-sheet__overlay" id="rd-word" hidden>
+        <div class="news-sheet" role="dialog" aria-modal="true">
+            <div class="news-sheet__head">
+                <span class="news-sheet__word"></span>
+                <span class="news-sheet__reading"></span>
+                <button type="button" class="news-sheet__speak" aria-label="Speak">🔊</button>
+                <button type="button" class="news-sheet__x" aria-label="Close">×</button>
+            </div>
+            <div class="news-sheet__body"></div>
+            <div class="news-sheet__sentence"></div>
+            <div class="news-sheet__actions">
+                <button type="button" class="btn btn--primary news-sheet__save">★</button>
+                <button type="button" class="btn btn--ghost news-sheet__known" data-i18n="popup.known">Уже знаю</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ИИ-разбор предложения -->
+    <div class="explain-modal" id="rd-explain" hidden>
+        <div class="explain-modal__dialog" role="dialog" aria-modal="true">
+            <div class="explain-modal__head">
+                <span class="explain-modal__title"></span>
+                <button class="explain-modal__close" type="button" aria-label="Close">✕</button>
+            </div>
+            <div class="explain-modal__body card-explain-out"></div>
+        </div>
+    </div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar__brand">Animei</div>
+        <a href="../index.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/></svg><span class="nav-label" data-i18n="nav.home">Главная</span></a>
+        <a href="./catalog.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="nav-label" data-i18n="nav.catalog">Поиск аниме</span></a>
+        <a href="./watch.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="10 9 16 12 10 15 10 9" fill="currentColor" stroke="none"/></svg><span class="nav-label" data-i18n="nav.watch">Своё видео</span></a>
+        <a href="./words.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="nav-label" data-i18n="nav.dictionary">Мои слова</span></a>
+        <a href="./news.html" class="active"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h13v14a2 2 0 0 0 2 2H5a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1z"/><line x1="7" y1="9" x2="14" y2="9"/><line x1="7" y1="13" x2="14" y2="13"/><line x1="7" y1="17" x2="11" y2="17"/></svg><span class="nav-label" data-i18n="nav.news">JP News</span><span class="nav-new">NEW</span></a>
+    </nav>
+    <div class="overlay" id="overlay"></div>
+</div>
+
+<script src="../libs/axios/axios.min.js" defer></script>
+<script src="../libs/snackbar/snackbar.js" defer></script>
+<script src="../js/settings.js" defer></script>
+<script src="../js/i18n.js" defer></script>
+<script src="../js/speech.js" defer></script>
+<script src="../js/axiosClient.js" defer></script>
+<script src="../js/video-store.js" defer></script>
+<script src="../js/words-store.js" defer></script>
+<script src="../js/decks-store.js" defer></script>
+<script src="../js/freeze.js" defer></script>
+<script src="../js/known-store.js" defer></script>
+<script src="../js/app.js" defer></script>
+<script src="../js/news-core.js" defer></script>
+<script src="../js/news-reader.js" defer></script>
+<script src="../js/stats.js" defer></script>
+<script src="../js/guest-mirror.js" defer></script>
+</body>
+</html>
