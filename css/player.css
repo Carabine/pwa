@@ -3611,7 +3611,10 @@ body.is-en #reading-toggle {
         text-overflow: ellipsis;
         cursor: pointer;
     }
-    .mob-bar__ep:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+    /* Без рамки фокуса: после тапа Android держит фокус на селекте, и вокруг
+       «Серии N» висела синяя рамка. Клавиатуры на телефоне нет — рамка не нужна. */
+    .mob-bar__ep:focus,
+    .mob-bar__ep:focus-visible { outline: none; }
     .mob-bar__ep:disabled { opacity: 0.5; cursor: default; }
     @media (hover: hover) and (pointer: fine) {
         .mob-bar__ep:hover { background-color: var(--surface); color: var(--text); }
