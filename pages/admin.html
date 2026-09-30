@@ -285,6 +285,11 @@
             <div id="ovSync" class="msg">Загрузка…</div>
         </div>
         <div class="box">
+            <div class="box__h">Сбои плеера <span id="ovIssuesSum"></span>
+                <button class="btn btn--small" id="issuesRefresh" type="button">обновить</button></div>
+            <div id="ovIssues" class="msg">Загрузка…</div>
+        </div>
+        <div class="box">
             <div class="box__h">Материалы</div>
             <div class="row"><span class="l"><a href="https://animei.space/promo-vert-bf6b634a/" target="_blank" rel="noopener">🎬 Промо-ролики</a></span>
                 <span class="m">6 сцен · вертикаль и 16:9 · RU/UA/EN</span></div>
@@ -638,6 +643,55 @@
 
     document.getElementById('srcRefresh').addEventListener('click', function () { loadSources(true); });
 
+    // ---------- Сбои плеера (pwa/js/player-watchdog.js → /stats/player-issue) ----------
+    // Плеер сам ловит «время идёт, а кадров/звука нет», зависания и ошибки потока
+    // и шлёт снимок <video> + журнал событий. Раскрой строку — там журнал.
+    var ISSUE_LABEL = {
+        frozen_picture: 'картинка застыла', no_audio: 'нет звука', stuck: 'зависло',
+        media_error: 'ошибка видео', hls_fatal: 'ошибка потока', js_error: 'ошибка JS', manual: 'вручную'
+    };
+    function uaShort(ua) {
+        ua = ua || '';
+        var os = /Android [\d.]+/.exec(ua) || /iPhone OS [\d_]+/.exec(ua) || /Windows|Mac OS X|Linux/.exec(ua);
+        var br = /(Chrome|Firefox|Version)\/(\d+)/.exec(ua);
+        return (os ? os[0] : '?') + (br ? ' · ' + (br[1] === 'Version' ? 'Safari' : br[1]) + ' ' + br[2] : '');
+    }
+    function renderIssues(d) {
+        var items = d.items || [];
+        var el = document.getElementById('ovIssues');
+        var dayAgo = Date.now() - 24 * 3600 * 1000;
+        var fresh = items.filter(function (i) { return !i.automated && new Date(i.at).getTime() > dayAgo; });
+        var sum = document.getElementById('ovIssuesSum');
+        sum.textContent = '· ' + (fresh.length ? fresh.length + ' за сутки' : 'за сутки нет');
+        sum.style.color = fresh.length ? 'var(--warn)' : 'var(--muted)';
+        if (!items.length) { el.className = 'msg'; el.textContent = 'Сбоев не было'; return; }
+        el.className = '';
+        el.innerHTML = items.slice(0, 40).map(function (i) {
+            var v = i.v || {};
+            var tags = (i.owner ? ' · моё' : '') + (i.automated ? ' · тест' : '');
+            var logTxt = (i.log || []).map(function (l) {
+                return l.s + 's  t=' + l.t + '  ' + l.e + (l.d ? ' ' + l.d : '') + (l.n ? ' ×' + l.n : '');
+            }).join('\n');
+            var snap = 't=' + v.t + '/' + v.dur + ' rs=' + v.rs + ' paused=' + v.paused + ' muted=' + v.muted + ' vol=' + v.vol +
+                ' ' + v.w + 'x' + v.h + ' frames=' + v.frames + ' audioBytes=' + v.aBytes +
+                ' buf=' + JSON.stringify(v.buf || []) + (v.hls ? ' hls=' + JSON.stringify(v.hls) : '') + (v.err ? ' err=' + v.err : '');
+            return '<details class="src" style="display:block"><summary style="cursor:pointer;display:flex;gap:8px;align-items:baseline">' +
+                '<span class="src__dot src__dot--' + (i.automated ? 'off' : 'bad') + '"></span>' +
+                '<span class="src__name">' + esc((ISSUE_LABEL[i.kind] || i.kind) + ' — ' + (i.title || '?') + ' · ' + (i.ep || '')) + '</span>' +
+                '<span class="src__note">' + esc((i.source || '') + ' · ' + (i.track || '') + ' · ' + (i.quality || '')) +
+                '<span class="src__hint">' + esc(uaShort(i.ua) + ' · ' + (i.net || '') + ' · ' + (i.fragHost || i.host || '') + ' · ' + (i.ver || '') + tags) + '</span></span>' +
+                '<span class="src__ms">' + dt(i.at) + '</span></summary>' +
+                '<pre style="white-space:pre-wrap;font-size:11px;margin:6px 0 10px;color:var(--muted)">' +
+                esc((i.detail || '') + '\n' + snap + '\n\n' + logTxt) + '</pre></details>';
+        }).join('');
+    }
+    function loadIssues() {
+        api('/player-issues').then(renderIssues).catch(function () {
+            document.getElementById('ovIssues').textContent = 'Не удалось загрузить';
+        });
+    }
+    document.getElementById('issuesRefresh').addEventListener('click', loadIssues);
+
     // Статус системы: три подсистемы → плашка в шапке + три строки в обзоре.
     var sysState = {};
     var SYS_NAMES = { Health: 'Сервер, база', Sources: 'Источники', Sync: 'Синк сабов' };
@@ -830,6 +884,7 @@
     loadPulse();
     renderOwnerDev();
     loadSources(false);
+    loadIssues();
 </script>
 </body>
 </html>
