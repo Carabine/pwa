@@ -179,6 +179,7 @@ window.I18N_UK = {
         'ui.mute.title': 'Звук (M)',
         'ui.speed.title': 'Швидкість відтворення',
         'ui.fs.title': 'На весь екран (F)',
+        'ui.nextEp.title': 'Наступна серія',
         'ui.theater.title': 'Кіно-режим: відео + субтитри збоку',
         'dump.title': 'Завантажити серію із субтитрами',
         'dump.group': 'Для адміна',

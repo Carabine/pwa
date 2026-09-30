@@ -193,6 +193,70 @@ html, body {
     pointer-events: auto;
 }
 
+/* Во весь экран: серия и «следующая» в правом верхнем углу. Появляются и
+   прячутся вместе с нижней панелью; вне fullscreen их нет вовсе. Без полосы-
+   градиента: две пилюли на полупрозрачной подложке читаются на любом кадре. */
+.player-ui__top {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 5;
+}
+.video-wrap.is-fs .player-ui__top { display: flex; }
+.video-wrap.is-fs.show-ui .player-ui__top,
+.video-wrap.is-fs.is-paused .player-ui__top {
+    opacity: 1;
+    pointer-events: auto;
+}
+.player-ui__ep {
+    appearance: none;
+    -webkit-appearance: none;
+    max-width: 40vw;
+    height: 34px;
+    padding: 0 30px 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    background: rgba(15, 17, 25, 0.55)
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>")
+        no-repeat right 12px center / 13px 13px;
+    color: #fff;
+    font: 600 13px var(--font);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+.player-ui__ep:focus,
+.player-ui__ep:focus-visible { outline: none; }
+.player-ui__ep option {
+    background: var(--surface);
+    color: var(--text);
+}
+.player-ui__next {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    background: rgba(15, 17, 25, 0.55);
+    color: #fff;
+    cursor: pointer;
+}
+.player-ui__next svg { width: 18px; height: 18px; }
+.player-ui__next:disabled { opacity: 0.4; cursor: default; }
+@media (hover: hover) and (pointer: fine) {
+    .player-ui__ep:hover,
+    .player-ui__next:not(:disabled):hover { background-color: rgba(255, 255, 255, 0.16); }
+}
+
 /* Когда панель спрятана — прячем и курсор */
 .video-wrap:not(.show-ui):not(.is-paused) {
     cursor: none;

@@ -179,6 +179,7 @@ window.I18N_EN = {
         'ui.mute.title': 'Sound (M)',
         'ui.speed.title': 'Playback speed',
         'ui.fs.title': 'Fullscreen (F)',
+        'ui.nextEp.title': 'Next episode',
         'ui.theater.title': 'Theater mode: video + subtitles beside',
         'dump.title': 'Download episode with subtitles',
         'dump.group': 'Admin only',

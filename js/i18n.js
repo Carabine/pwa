@@ -183,6 +183,7 @@ const I18N = {
         'ui.mute.title': 'Звук (M)',
         'ui.speed.title': 'Скорость воспроизведения',
         'ui.fs.title': 'Во весь экран (F)',
+        'ui.nextEp.title': 'Следующая серия',
         'ui.theater.title': 'Кино-режим: видео + субтитры сбоку',
         'dump.title': 'Скачать серию с субтитрами',
         'dump.group': 'Для админа',

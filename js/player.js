@@ -3680,6 +3680,7 @@ setMobileTab('settings'); // на ПК классы ни на что не вли
 // selectEpisode, объявленный на тысячу строк выше, — на константы из этого
 // места он налетел бы во «временной мёртвой зоне» при первой загрузке.
 function syncMobBar() {
+    syncFsEpisode();
     const bar = document.getElementById('mob-bar');
     if (!bar) return;
     const name = document.getElementById('mob-bar-name');
@@ -3711,15 +3712,40 @@ function syncMobBar() {
             });
             wrap.appendChild(sel);
         }
-        if (sel.dataset.sig !== episodeSelect.innerHTML.length + ':' + state.episodes.length) {
-            sel.innerHTML = episodeSelect.innerHTML;
-            sel.dataset.sig = episodeSelect.innerHTML.length + ':' + state.episodes.length;
-        }
-        sel.value = episodeSelect.value;
-        sel.disabled = episodeSelect.disabled;
+        mirrorEpisodeSelect(sel);
     }
     bar.hidden = false;
 }
+
+// Зеркало селекта серий из шторки: те же опции (с группами сезонов) и то же
+// текущее значение. Опции пересобираем, только когда сменился сам список.
+function mirrorEpisodeSelect(sel) {
+    const sig = episodeSelect.innerHTML.length + ':' + state.episodes.length;
+    if (sel.dataset.sig !== sig) {
+        sel.innerHTML = episodeSelect.innerHTML;
+        sel.dataset.sig = sig;
+    }
+    sel.value = episodeSelect.value;
+    sel.disabled = episodeSelect.disabled;
+}
+
+// Во весь экран: серия и «следующая» в правом верхнем углу кадра (показ —
+// стилями .video-wrap.is-fs). Синхронизируем при каждой смене серии/списка.
+function syncFsEpisode() {
+    const sel = document.getElementById('fs-ep-select');
+    const next = document.getElementById('fs-ep-next');
+    if (!sel || !episodeSelect) return;
+    mirrorEpisodeSelect(sel);
+    if (next) next.disabled = episodeSelect.disabled || !state.episodes[Number(episodeSelect.value) + 1];
+}
+document.getElementById('fs-ep-select')?.addEventListener('change', (e) => {
+    const idx = parseInt(e.target.value, 10);
+    if (Number.isInteger(idx) && String(idx) !== String(episodeSelect.value)) selectEpisode(idx);
+});
+document.getElementById('fs-ep-next')?.addEventListener('click', () => {
+    const idx = Number(episodeSelect.value) + 1;
+    if (state.episodes[idx]) selectEpisode(idx);
+});
 
 function setSheet(open) {
     const layout = document.querySelector('.player-layout');

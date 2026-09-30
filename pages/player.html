@@ -97,6 +97,17 @@
                     <button class="player-ui__bigplay" id="big-play" data-i18n-aria="aria.play" aria-label="Играть">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72c0 .8.87 1.3 1.55.88l10.8-6.86a1.04 1.04 0 0 0 0-1.76L9.55 4.26A1.04 1.04 0 0 0 8 5.14z"/></svg>
                     </button>
+                    <!-- Во весь экран: серия и «следующая» в правом верхнем углу
+                         (вариант C из галереи _pp/fs-ep, 30.09). Селект — зеркало
+                         #episode-select, как в строке под видео; вне fullscreen скрыт. -->
+                    <div class="player-ui__top" id="fs-ep">
+                        <select class="player-ui__ep" id="fs-ep-select" data-i18n-aria="controls.episode" aria-label="Серия"></select>
+                        <button class="player-ui__next" id="fs-ep-next" type="button"
+                                data-i18n-title="ui.nextEp.title" title="Следующая серия"
+                                data-i18n-aria="ui.nextEp.title" aria-label="Следующая серия">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 5.5v13a1 1 0 0 0 1.5.86L16 13.6V18a1 1 0 0 0 2 0V6a1 1 0 0 0-2 0v4.4L6.5 4.64A1 1 0 0 0 5 5.5z"/></svg>
+                        </button>
+                    </div>
                     <div class="player-ui__bottom">
                         <div class="player-ui__seek" id="seek">
                             <div class="player-ui__seek-buffered" id="seek-buffered"></div>
