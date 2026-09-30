@@ -566,6 +566,42 @@ html, body {
     color: #fff;
 }
 
+/* Телефон, видео в странице: кадр всего ~220px в высоту, и столбик из пяти
+   пунктов (Авто/1080/720/540/360, скорости тоже пять) вылезал за верх кадра.
+   Здесь меню — одна строка над панелью, по правому краю ряда (обёртки кнопок
+   static, якорь — сам ряд, иначе меню скорости уезжало бы за левый край).
+   Во весь экран высоты хватает — там остаётся обычный столбик. */
+@media (max-width: 900px) {
+    .video-wrap:not(.is-fs) .player-ui__row { position: relative; }
+    .video-wrap:not(.is-fs) .player-ui__quality-wrap,
+    .video-wrap:not(.is-fs) .player-ui__speed-wrap { position: static; }
+    .video-wrap:not(.is-fs) .player-ui__quality-menu,
+    .video-wrap:not(.is-fs) .player-ui__speed-menu {
+        right: 0;
+        min-width: 0;
+        padding: 4px;
+        border-radius: 10px;
+    }
+    .video-wrap:not(.is-fs) .player-ui__quality-wrap.is-open .player-ui__quality-menu,
+    .video-wrap:not(.is-fs) .player-ui__speed-wrap.is-open .player-ui__speed-menu {
+        display: flex;
+        gap: 2px;
+    }
+    .video-wrap:not(.is-fs) .player-ui__quality-opt,
+    .video-wrap:not(.is-fs) .player-ui__speed-opt {
+        width: auto;
+        padding: 8px 10px;
+        justify-content: center;
+        white-space: nowrap;
+    }
+}
+
+/* Субтитр из кадра лежит выше панели (z-index 6 против 5) и закрывал пункты
+   открытого меню — пока выбираешь качество/скорость, прячем его. */
+.video-wrap:has(.player-ui__quality-wrap.is-open, .player-ui__speed-wrap.is-open) .burned-sub {
+    visibility: hidden;
+}
+
 /* ---------- Полноэкранный режим ---------- */
 
 .video-wrap.is-fs {
