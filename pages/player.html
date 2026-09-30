@@ -114,12 +114,6 @@
                             <div class="player-ui__spacer"></div>
                             <button class="player-ui__speed" id="ctrl-speed" data-i18n-title="ui.speed.title" title="Скорость воспроизведения">1×</button>
                             <button class="player-ui__quality" id="ctrl-quality" data-i18n-title="ui.quality.title" title="Качество видео" hidden>auto</button>
-                            <!-- Отладочная выгрузка дорожки. Только для владельца: обёртку
-                                 показывает player-dump.js, доступ проверяет сервер. -->
-                            <button class="player-ui__btn" id="ctrl-dump" type="button"
-                                    data-i18n-title="dump.title" title="Выгрузить дорожку (отладка)" hidden>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg>
-                            </button>
                             <button class="player-ui__btn" id="ctrl-theater" data-i18n-title="ui.theater.title" title="Кино-режим: видео + субтитры сбоку"></button>
                             <button class="player-ui__btn" id="ctrl-fs" data-i18n-title="ui.fs.title" title="Во весь экран (F)"></button>
                         </div>
@@ -224,6 +218,14 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                <!-- Выгрузка серии для разбора — только владельцу: блок показывает
+                     player-dump.js (по кэшу animei:isAdmin), доступ проверяет сервер.
+                     Скрыт через style.display, не hidden: у .control-group свой display. -->
+                <div class="control-group control-group--dump" id="dump-group" style="display: none">
+                    <div class="sheet-group" data-i18n="dump.group">Для админа</div>
+                    <label data-i18n="dump.title">Скачать серию с субтитрами</label>
+                    <div class="offset-buttons" id="dump-buttons"></div>
                 </div>
                 <!-- Синхронизация — тихая ссылка в углу настроек, а не кнопка:
                      нужна редко (сдвиг подбирается автоматически). -->

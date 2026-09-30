@@ -181,6 +181,7 @@ window.I18N_EN = {
         'ui.fs.title': 'Fullscreen (F)',
         'ui.theater.title': 'Theater mode: video + subtitles beside',
         'dump.title': 'Download episode with subtitles',
+        'dump.group': 'Admin only',
         'dump.range.s30': '30 s from here',
         'dump.range.m2': '2 min from here',
         'dump.range.full': 'Whole episode',

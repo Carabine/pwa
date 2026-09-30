@@ -1,21 +1,24 @@
-// Отладочная выгрузка текущей дорожки в mp4 — кнопка ТОЛЬКО для владельца.
+// Отладочная выгрузка текущей дорожки — ТОЛЬКО для владельца. Живёт в настройках
+// видео (группа «Для админа», чипы 30 с / 2 мин / серия), а не кнопкой в панели
+// плеера: там она теснила нужные на каждый день кнопки.
 //
 // Зачем: разбор проблем с источниками требует самого файла. Какой РЕАЛЬНО язык
 // звука (метка «SUB» у источника врёт — на этом сгорел solarmovies/embedmaster),
 // где именно уехали субтитры, что вжато в кадр. До этого приходилось ходить по
 // ssh на VPS и гонять ffmpeg по прокси-ссылке руками.
 //
-// Кнопка — УДОБСТВО, а не защита: и тикет (/admin/stream-dump/ticket), и сам
+// Чипы — УДОБСТВО, а не защита: и тикет (/admin/stream-dump/ticket), и сам
 // стрим (/proxy/dump) закрыты на сервере через hasOwnerAccess. Кто угодно может
-// снять hidden в DevTools — и получит 403. Публичной кнопки «скачать серию»
+// показать группу в DevTools — и получит 403. Публичной кнопки «скачать серию»
 // здесь нет намеренно: это не функция изучения языка.
 //
-// Подключать ПОСЛЕ player.js (нужны state, client, t) и app.js (AnimeiBack).
+// Подключать ПОСЛЕ player.js (нужны state, client, t, video).
 (function () {
     'use strict';
 
-    const btn = document.getElementById('ctrl-dump');
-    if (!btn) return;
+    const group = document.getElementById('dump-group');
+    const buttons = document.getElementById('dump-buttons');
+    if (!group || !buttons) return;
 
     // Сколько выгружать от текущей позиции. dur: null = до конца серии.
     const RANGES = [
@@ -74,24 +77,6 @@
         return tracks;
     }
 
-    // Меню закрывается через history.go(-1) (кнопка «назад» на телефоне). Если
-    // запустить загрузку раньше, чем этот переход по истории завершится, он её
-    // отменяет — отсюда «качает не с первого раза». Ждём popstate (с запасом
-    // по времени, если его почему-то не будет).
-    function afterHistorySettles() {
-        return new Promise((resolve) => {
-            let fin = false;
-            const done = () => {
-                if (fin) return;
-                fin = true;
-                window.removeEventListener('popstate', done);
-                resolve();
-            };
-            window.addEventListener('popstate', done);
-            setTimeout(done, 700);
-        });
-    }
-
     async function startDump(dur) {
         if (!state.currentVideoUrl) { snack(tr('dump.noStream', 'Поток ещё не загружен')); return; }
 
@@ -135,74 +120,26 @@
         }
     }
 
-    // ---------- Меню (стиль и поведение — как у меню качества) ----------
-
-    const wrap = document.createElement('div');
-    wrap.className = 'player-ui__dump-wrap';
-    // Скрыта по умолчанию: показываем только владельцу (в самом низу файла).
-    // Прячем ОБЁРТКУ, а не кнопку: у кнопки hidden снимается вместе с показом,
-    // а меню осталось бы в потоке.
-    //
-    // ВАЖНО: именно style.display, а НЕ атрибут hidden. У обёртки в css есть
-    // display: inline-flex (общий с качеством/скоростью), и он перебивает
-    // [hidden] — кнопка оставалась видна всем. Те же грабли, что с hidden-vs-flex
-    // в v0.0.180. Так же (inline display) прячет себя обёртка качества.
-    wrap.style.display = 'none';
-    btn.parentNode.insertBefore(wrap, btn);
-    wrap.appendChild(btn);
-    btn.hidden = false;   // видимостью управляет обёртка
-
-    const menu = document.createElement('div');
-    menu.className = 'player-ui__dump-menu';
-    wrap.appendChild(menu);
-
-    let layer = null;
-    const hideMenu = () => { layer = null; wrap.classList.remove('is-open'); };
-    const closeMenu = () => { if (layer) AnimeiBack.close(layer); else hideMenu(); };
-
-    function buildMenu() {
-        menu.innerHTML = '';
-        RANGES.forEach((r) => {
-            const opt = document.createElement('button');
-            opt.type = 'button';
-            opt.className = 'player-ui__dump-opt';
-            opt.textContent = tr('dump.range.' + r.key, r.dur == null
-                ? 'Серия целиком'
-                : (r.dur < 60 ? r.dur + ' с отсюда' : (r.dur / 60) + ' мин отсюда'));
-            opt.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const viaHistory = !!layer;
-                closeMenu();
-                if (viaHistory) await afterHistorySettles();
-                startDump(r.dur);
-            });
-            menu.appendChild(opt);
-        });
-    }
-
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (wrap.classList.contains('is-open')) { closeMenu(); return; }
-        // Не держим два меню плеера открытыми сразу (качество/скорость/звук).
-        document.dispatchEvent(new CustomEvent('animei:player-menu', { detail: wrap }));
-        buildMenu();
-        wrap.classList.add('is-open');
-        layer = AnimeiBack.open(hideMenu);
+    // ---------- Чипы диапазонов ----------
+    // Шторку настроек не закрываем: закрытие идёт через history.go(-1), и
+    // начатая в этот момент загрузка отменялась («качает не с первого раза»).
+    RANGES.forEach((r) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'chip-btn';
+        chip.textContent = tr('dump.range.' + r.key, r.dur == null
+            ? 'Серия целиком'
+            : (r.dur < 60 ? r.dur + ' с отсюда' : (r.dur / 60) + ' мин отсюда'));
+        chip.addEventListener('click', () => startDump(r.dur));
+        buttons.appendChild(chip);
     });
 
-    document.addEventListener('click', (e) => {
-        if (!wrap.contains(e.target) && wrap.classList.contains('is-open')) closeMenu();
-    });
-    document.addEventListener('animei:player-menu', (e) => {
-        if (e.detail !== wrap && wrap.classList.contains('is-open')) closeMenu();
-    });
-
-    // ---------- Показ кнопки ----------
+    // ---------- Показ группы ----------
     // Кэш animei:isAdmin ведёт app.js (он же рисует ссылку на админку). Читаем
     // его, а не дёргаем whoami ещё раз: лишний запрос на каждом открытии плеера
-    // не нужен, а ошибиться кэш может только в сторону «показали лишнюю кнопку»,
-    // которая без ключа/сессии всё равно вернёт 403.
+    // не нужен, а ошибиться кэш может только в сторону «показали лишние чипы»,
+    // которые без ключа/сессии всё равно получат 403.
     try {
-        if (localStorage.getItem('animei:isAdmin') === 'yes') wrap.style.display = '';
-    } catch { /* приватный режим — кнопки не будет, это нормально */ }
+        if (localStorage.getItem('animei:isAdmin') === 'yes') group.style.display = '';
+    } catch { /* приватный режим — группы не будет, это нормально */ }
 })();

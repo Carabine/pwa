@@ -181,6 +181,7 @@ window.I18N_UK = {
         'ui.fs.title': 'На весь екран (F)',
         'ui.theater.title': 'Кіно-режим: відео + субтитри збоку',
         'dump.title': 'Завантажити серію із субтитрами',
+        'dump.group': 'Для адміна',
         'dump.range.s30': '30 с звідси',
         'dump.range.m2': '2 хв звідси',
         'dump.range.full': 'Серія повністю',

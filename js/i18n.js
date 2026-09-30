@@ -185,6 +185,7 @@ const I18N = {
         'ui.fs.title': 'Во весь экран (F)',
         'ui.theater.title': 'Кино-режим: видео + субтитры сбоку',
         'dump.title': 'Скачать серию с субтитрами',
+        'dump.group': 'Для админа',
         'dump.range.s30': '30 с отсюда',
         'dump.range.m2': '2 мин отсюда',
         'dump.range.full': 'Серия целиком',

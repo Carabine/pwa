@@ -492,16 +492,14 @@ html, body {
 /* Всплывающие меню выбора качества и скорости (открываются над кнопкой).
    Одинаковый стиль, чтобы дропдауны плеера выглядели заедино. */
 .player-ui__quality-wrap,
-.player-ui__speed-wrap,
-.player-ui__dump-wrap {
+.player-ui__speed-wrap {
     position: relative;
     flex-shrink: 0;
     display: inline-flex;
 }
 
 .player-ui__quality-menu,
-.player-ui__speed-menu,
-.player-ui__dump-menu {
+.player-ui__speed-menu {
     position: absolute;
     bottom: calc(100% + 8px);
     right: 0;
@@ -519,24 +517,12 @@ html, body {
 }
 
 .player-ui__quality-wrap.is-open .player-ui__quality-menu,
-.player-ui__speed-wrap.is-open .player-ui__speed-menu,
-.player-ui__dump-wrap.is-open .player-ui__dump-menu {
+.player-ui__speed-wrap.is-open .player-ui__speed-menu {
     display: block;
 }
 
-/* Подписи диапазонов выгрузки длиннее, чем «720p», под который считан общий
-   min-width — иначе каждая ломается на две строки. */
-.player-ui__dump-menu {
-    min-width: 160px;
-}
-
-.player-ui__dump-opt {
-    white-space: nowrap;
-}
-
 .player-ui__quality-opt,
-.player-ui__speed-opt,
-.player-ui__dump-opt {
+.player-ui__speed-opt {
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -554,8 +540,7 @@ html, body {
 
 @media (hover: hover) and (pointer: fine) {
     .player-ui__quality-opt:hover,
-.player-ui__speed-opt:hover,
-.player-ui__dump-opt:hover {
+.player-ui__speed-opt:hover {
         background: rgba(255, 255, 255, 0.12);
     }
 }
@@ -1053,6 +1038,12 @@ body.is-en #reading-toggle {
     border-color: transparent;
     color: #fff;
 }
+
+/* «Скачать серию» (только владельцу): чипы диапазонов в настройках, а не
+   кнопка в панели плеера. На телефоне заголовок «Для админа» над ними — отступ
+   как у остальных разделов (first-of-type внутри обёртки дал бы 6px). */
+.control-group--dump .offset-buttons { flex-wrap: wrap; }
+.control-group--dump .sheet-group:first-of-type { margin-top: 18px; }
 
 /* Горячие клавиши: значок «i» + раскрывающаяся строка подсказок. */
 /* «Не совпадают субтитры?» — тихая ссылка в углу настроек: нужна редко,
