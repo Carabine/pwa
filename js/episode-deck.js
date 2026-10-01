@@ -143,6 +143,8 @@
                     const tok = toks[ti];
                     if (!tok.learnable || !CONTENT_POS.has(tok.pos)) continue;
                     if (names.has(ti)) continue;
+                    // Звуки и обрывки разбора (ちち → ち|ち «散る», ちっ, うっ) — не слова.
+                    if (window.TokenNoise && TokenNoise.isNoise(tok, tok.base || tok.surface, (w) => !!jlptMap[w])) continue;
                     const base = tok.base || tok.surface;
                     if (STOPLIST.has(base)) continue;
                     // Однобуквенные обрывки каны (气/へ/め от неудачного разбора) — мимо.

@@ -143,6 +143,7 @@ window.BeginnerDeck = (function () {
                     const tok = toks[ti];
                     if (!tok.learnable || !CONTENT_POS.has(tok.pos)) continue;
                     if (names.has(ti)) continue;
+                    if (window.TokenNoise && TokenNoise.isNoise(tok, tok.base || tok.surface, (w) => !!jlptMap[w])) continue;
                     const base = tok.base || tok.surface;
                     if (STOPLIST.has(base)) continue;
                     if (base.length < 2 && !KANJI.test(base)) continue;

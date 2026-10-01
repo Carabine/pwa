@@ -79,42 +79,10 @@
     // Словарь JLPT нужен фильтру шума (короткие глаголы каной) уже при открытии.
     if (window.JlptLevels) JlptLevels.load().catch(() => {});
 
-    // Звуки, смех и обрывки разбора — не слова, отмечать их «знаю» бессмысленно.
-    // Смотрим и на написание в реплике: MeCab принимает звуки за формы глаголов
-    // (うっ → うる, くっ → くる, ほっ → ほる, うう → うい), и по словарной форме
-    // их не отличить от настоящих くる/うる. Сюда попадают:
-    //  • всё на «っ/ッ»: ハッ, ぐっ, ウウッ, おおっ;
-    //  • однобуквенная кана (う, い, ま) и обрывки с маленькой каны/«ー» (ゅぶつ, ーン);
-    //  • смех и рычание катаканой с тройным повтором (ハハハ, フフフ, ガルルル) или
-    //    из двух одинаковых букв (ウウ; ミミック остаётся), выкрики из одних гласных
-    //    (ウワア, イエーイ, ワオン), короткое с маленькой гласной (フゥ), междометия
-    //    катаканой (アハハ, ハア);
-    //  • стоны хираганой с маленькой гласной (はぁ, ぐぅ) и на ぐ (ぐお, ぐわ),
-    //    повтор одной буквы, если такого слова нет в словаре (うう; いい, ここ — слова);
-    //  • двухбуквенные «глаголы» каной, которых нет в словаре (えむ, いむ, ちる).
-    // Настоящие слова каной (ありがとう, すみません, ヤツ, ダメ, ワクワク) остаются.
-    const KANA_H = /^[ぁ-ゖー]+$/;
-    const KANA_K = /^[ァ-ヿ]+$/;
-    // Словарные проверки — только когда JLPT уже загружен, иначе выкинули бы и する.
+    // Звуки, смех и обрывки разбора — фильтр общий с автоколодой (js/char-names.js).
+    const inJlpt = (w) => !!(window.JlptLevels && JlptLevels.level(w));
     const jlptReady = () => !!(window.JlptLevels && JlptLevels.loaded());
-    const inJlpt = (w) => !!JlptLevels.level(w);
-    function isNoise(tok, base) {
-        const surf = tok.surface || base;
-        for (const w of [surf, base]) {
-            if (/^[ぁ-ゖァ-ヿー]+[っッ]$/.test(w)) return true;
-            if (w.length < 2 && !/[一-龯々]/.test(w)) return true;
-            if (/^[ぁぃぅぇぉゃゅょゎっァィゥェォャュョヮッー]/.test(w)) return true;
-            if (KANA_K.test(w) && (/([ァ-ヶ])\1\1/.test(w) || /^([ァ-ヶ])\1$/.test(w)
-                || /^[アイウエオァィゥェォーッワンヴ]+$/.test(w)
-                || (w.length <= 3 && /[ァィゥェォ]/.test(w)))) return true;
-            if (KANA_H.test(w) && (/[ぁぃぅぇぉ]/.test(w) || (/^ぐ/.test(w) && w.length <= 3)
-                || (/^([ぁ-ゖ])\1+$/.test(w) && jlptReady() && !inJlpt(w)))) return true;
-        }
-        if (tok.pos === '感動詞' && KANA_K.test(base)) return true;
-        if ((tok.pos === '動詞' || tok.pos === '形容詞') && KANA_H.test(base) && base.length <= 2
-            && jlptReady() && !inJlpt(base)) return true;
-        return false;
-    }
+    const isNoise = (tok, base) => window.TokenNoise ? TokenNoise.isNoise(tok, base, jlptReady() ? inJlpt : null) : false;
 
     function collectWords() {
         const byBase = new Map();
