@@ -218,12 +218,19 @@
                 location.href = 'deck-study.html?deck=' + encodeURIComponent(deck.id);
             });
 
+            // Прописи — отдельное приложение (/app/kanji/), открываем сразу на этой колоде.
+            const write = h('button', 'btn btn--ghost deck-study__write', `✍ ${esc(t('decks.write'))}`);
+            write.addEventListener('click', () => {
+                location.href = '../kanji/?deck=' + encodeURIComponent(deck.id);
+            });
+
             const more = h('button', 'btn btn--ghost deck-study__more', PENCIL_ICON);
             more.title = t('decks.manage');
             more.setAttribute('aria-label', t('decks.manage'));
             more.addEventListener('click', () => this._openEditor({ mode: 'manage', id: deck.id }));
 
             row.appendChild(learn);
+            row.appendChild(write);
             row.appendChild(more);
             row.hidden = false;
         },

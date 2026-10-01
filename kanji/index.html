@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Прописи — Animei</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon-180.png">
+    <link rel="icon" type="image/svg+xml" href="./icon.svg">
+    <meta name="theme-color" content="#0a0a0f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Прописи">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <script>
+        // Тема до первой отрисовки — зеркало effectiveTheme() из ../js/settings.js
+        // (тот же код, что в <head> страниц приложения).
+        (function () {
+            var th = 'dark';
+            try {
+                var s = JSON.parse(localStorage.getItem('animei:settings') || '{}');
+                if (s && s.theme) th = s.theme;
+            } catch (e) { /* приватный режим */ }
+            if (th === 'system') {
+                th = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'light' : 'dark';
+            }
+            th = th === 'light' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', th);
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute('content', th === 'light' ? '#f4f5fa' : '#0a0a0f');
+        })();
+    </script>
+    <link href="../css/app.css" rel="stylesheet">
+    <link href="./kanji.css" rel="stylesheet">
+    <script>
+        // Языковой пак uk/en — лениво, как на остальных страницах (см. i18n.js).
+        (function () {
+            var langs = { ru: 1, uk: 1, en: 1 };
+            var lang = null;
+            try { lang = localStorage.getItem('animei:lang'); } catch (e) { /* приватный режим */ }
+            if (!langs[lang]) {
+                lang = 'ru';
+                var prefs = [navigator.language].concat(navigator.languages || []);
+                for (var i = 0; i < prefs.length; i++) {
+                    var c = String(prefs[i] || '').toLowerCase().split('-')[0];
+                    if (langs[c]) { lang = c; break; }
+                }
+            }
+            if (lang !== 'ru') document.write('<scr' + 'ipt src="../js/i18n/' + lang + '.js" defer></scr' + 'ipt>');
+        })();
+    </script>
+</head>
+<body class="kj">
+<!--
+  Прописи: отдельное приложение Animei для письма иероглифов из колод.
+  Один HTML, три экрана (главная / сессия / итог), переключаются классом
+  на <body>. Разметка экранов рисуется скриптом (kanji-app.js), здесь —
+  только каркас, чтобы первый кадр не прыгал.
+-->
+<div class="kj-app">
+    <header class="kj-top">
+        <a class="kj-top__back" href="../index.html" aria-label="Animei">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            <span>Animei</span>
+        </a>
+        <div class="kj-top__brand">
+            <span class="kj-top__glyph" aria-hidden="true">書</span>
+            <span data-i18n="kanji.title">Прописи</span>
+        </div>
+        <button class="kj-top__btn" id="kj-settings-btn" aria-label="Settings" data-i18n-aria="kanji.settings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+    </header>
+
+    <!-- Главная: сводка + источники (колоды, все слова, кана) -->
+    <main class="kj-screen kj-home" id="kj-home"></main>
+
+    <!-- Колода: сетка знаков + кнопки запуска -->
+    <main class="kj-screen kj-deck" id="kj-deck" hidden></main>
+
+    <!-- Сессия письма -->
+    <main class="kj-screen kj-session" id="kj-session" hidden></main>
+
+    <!-- Итог сессии -->
+    <main class="kj-screen kj-summary" id="kj-summary" hidden></main>
+</div>
+
+<!-- Скрытый svg для измерения эталонных штрихов (getTotalLength) -->
+<svg id="kj-measure" viewBox="0 0 109 109" width="0" height="0" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"></svg>
+
+<script src="../libs/axios/axios.min.js" defer></script>
+<script src="../js/snackbar.js" defer></script>
+<script src="../js/settings.js" defer></script>
+<script src="../js/i18n.js" defer></script>
+<script src="../js/speech.js" defer></script>
+<script src="../js/axiosClient.js" defer></script>
+<script src="../js/video-store.js" defer></script>
+<script src="../js/words-store.js" defer></script>
+<script src="../js/freeze.js" defer></script>
+<script src="../js/decks-store.js" defer></script>
+<script src="./kanji-core.js" defer></script>
+<script src="./kanji-store.js" defer></script>
+<script src="./kanji-app.js" defer></script>
+</body>
+</html>
