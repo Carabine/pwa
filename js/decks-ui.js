@@ -9,7 +9,6 @@
 //   DecksUI.refresh()           — перерисовать чипы/кнопку/подсказку
 (function () {
     function t(k) { return typeof window.t === 'function' ? window.t(k) : k; }
-    function snack(msg) { if (typeof showSnackbar === 'function') showSnackbar(msg, { duration: 2000 }); }
 
     // Экранирование — единое escHtml из app.js (вызов отложен: порядок загрузки).
     function esc(s) {
@@ -273,8 +272,15 @@
             const close = modal.close;
 
             const finishAdd = (deck) => {
+                // Запоминаем, каких слов в колоде не было, — «Отменить» уберёт только их.
+                const fresh = ids.filter((id) => !Decks.has(deck.id, id));
                 const added = Decks.addMany(deck.id, ids);
-                snack(t('decks.addedN').replace('{n}', added));
+                const self = this;
+                if (typeof showSnackbar === 'function') {
+                    showSnackbar(t('decks.addedN').replace('{n}', added), fresh.length ? {
+                        action: { label: t('common.undo'), onClick: () => { Decks.removeMany(deck.id, fresh); self.refresh(); self._ctx.onChange(); } },
+                    } : { duration: 2500 });
+                }
                 close();
                 this.refresh();
                 if (onDone) onDone(added, deck);
@@ -479,13 +485,13 @@
                         note.hidden = !frozen;
                         this.refresh();
                         this._ctx.onChange();
-                        snack(t(frozen ? 'decks.frozenOn' : 'decks.frozenOff'));
+                        // Состояние видно в самом окне (плашка «заморожена») — без тоста.
                     },
                     onDelete: async () => {
                         if (!(await confirmDialog({ title: t('decks.deleteConfirm'), ok: t('decks.delete'), danger: true }))) return;
                         Decks.remove(id);
                         if (this._activeId === id) this._activeId = null;
-                        snack(t('decks.deleted'));
+                        // Колода исчезла из списка — это и есть подтверждение.
                         this.refresh();
                         this._ctx.onChange();
                         finish(null);
@@ -554,7 +560,7 @@
                     const created = Decks.create(name, chosen);
                     if (window.animeiTrack) animeiTrack('deck', 'create');
                     localStorage.setItem(HINT_KEY, '1');
-                    snack(t('decks.created'));
+                    // Новая колода сразу видна в списке — без тоста.
                     this.refresh();
                     finish(created);
                 }

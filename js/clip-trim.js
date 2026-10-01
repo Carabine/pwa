@@ -174,8 +174,7 @@
             w.trimStart = s;
             w.trimEnd = e;
             persistTrim(w.id, s, e);
-            refresh();
-            snack(tr('clip.saved'));
+            refresh();   // новые границы видны сразу — тост «Длина сохранена» на каждый тап был шумом
         }
 
         function group(labelKey, onMinus, onPlus) {

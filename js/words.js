@@ -628,10 +628,14 @@ function renderBulkBar(visibleWords) {
     });
     bar.querySelector('#bulk-undeck')?.addEventListener('click', () => {
         if (!selected.size || !window.Decks) return;
-        const removed = Decks.removeMany(deckActive, [...selected]);
+        const deckId = deckActive;
+        const ids = [...selected].filter((id) => Decks.has(deckId, id));
+        const removed = Decks.removeMany(deckId, ids);
         if (window.animeiTrack) animeiTrack('words_bulk', 'from_deck:' + removed);
-        showSnackbar(t('words.removedFromDeckN').replace('{n}', removed), { duration: 2500 });
         exitSelect();
+        showSnackbar(t('words.removedFromDeckN').replace('{n}', removed), {
+            action: { label: t('common.undo'), onClick: () => { Decks.addMany(deckId, ids); if (window.DecksUI) DecksUI.refresh(); renderWords(); } },
+        });
     });
     bar.querySelector('#bulk-freeze').addEventListener('click', async (e) => {
         const ids = [...selected];
@@ -640,15 +644,26 @@ function renderBulkBar(visibleWords) {
         btn.disabled = true;
         const next = !bulkUnfreeze;
         let done = 0;
+        const changed = [];
         for (const id of ids) {
             const w = allWords.find((x) => x.id === id);
             if (!w || !!w.frozen === next) continue;
-            try { await Freeze.setWord(id, next); w.frozen = next; done++; }
+            try { await Freeze.setWord(id, next); w.frozen = next; done++; changed.push(w); }
             catch (err) { console.error('Не удалось изменить заморозку слова', id, err); }
         }
         if (window.animeiTrack) animeiTrack('words_bulk', (next ? 'freeze:' : 'unfreeze:') + done);
-        showSnackbar(t(next ? 'words.frozenN' : 'words.unfrozenN').replace('{n}', done), { duration: 2500 });
         exitSelect();
+        showSnackbar(t(next ? 'words.frozenN' : 'words.unfrozenN').replace('{n}', done), changed.length ? {
+            action: {
+                label: t('common.undo'),
+                onClick: async () => {
+                    for (const w of changed) {
+                        try { await Freeze.setWord(w.id, !next); w.frozen = !next; } catch { /* останется как есть */ }
+                    }
+                    renderWords();
+                },
+            },
+        } : { duration: 2500 });
     });
     bar.querySelector('#bulk-delete').addEventListener('click', async () => {
         const ids = [...selected];
@@ -903,6 +918,7 @@ function openKnownImport() {
         learnedCb.addEventListener('change', applyApkg);
 
         const handleApkg = async (f) => {
+            formMessage(recognizedEl, '');
             recognizedEl.textContent = t('known.apkgReading');
             doBtn.disabled = true;
             try {
@@ -920,10 +936,8 @@ function openKnownImport() {
                 apkgNotes = null;
                 learnedRow.hidden = true;
                 recognizedEl.textContent = '';
-                showSnackbar(
-                    String(err && err.message) === 'modern' ? t('known.apkgModern') : t('known.apkgFail'),
-                    { duration: 6000, type: 'error' },
-                );
+                // Окно импорта открыто — ошибка в нём, под строкой «распознано».
+                formMessage(recognizedEl, String(err && err.message) === 'modern' ? t('known.apkgModern') : t('known.apkgFail'));
             }
         };
 
@@ -951,6 +965,7 @@ function openKnownImport() {
         wkBtn.addEventListener('click', async () => {
             const token = wkToken.value.trim();
             if (!token) { wkToken.focus(); return; }
+            formMessage(wkBtn, '');
             wkBtn.disabled = true;
             const oldLabel = wkBtn.textContent;
             try {
@@ -985,7 +1000,7 @@ function openKnownImport() {
                 reparse();
             } catch (err) {
                 console.error('WaniKani import failed:', err);
-                showSnackbar(t('known.wkFail'), { duration: 4000, type: 'error' });
+                formMessage(wkBtn, t('known.wkFail'));
             } finally {
                 wkBtn.textContent = oldLabel;
                 wkBtn.disabled = false;

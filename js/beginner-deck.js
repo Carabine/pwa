@@ -365,15 +365,13 @@ window.BeginnerDeck = (function () {
         if (!done) {
             window.Decks.remove(deck.id);
             setBusy(false);
-            showSnackbar(t('edeck.error'), { duration: 4000, type: 'error' });
+            showSnackbar(t('edeck.error'), { type: 'error' });
             return;
         }
         if (window.animeiTrack) window.animeiTrack('beginner_deck', 'anime_created:' + done);
-        showSnackbar(
-            (failed ? t('edeck.partial').replace('{k}', done).replace('{n}', total)
-                : t('edeck.done').replace('{name}', deck.name).replace('{n}', done)),
-            { duration: 4000, type: failed ? 'error' : undefined },
-        );
+        // Успех не объявляем: сразу открывается учёба новой колоды — это и есть
+        // результат. Частичный — сказать стоит (часть слов не сохранилась).
+        if (failed) showSnackbar(t('edeck.partial').replace('{k}', done).replace('{n}', total), { type: 'warning' });
         // Сразу к учёбе новой колоды: клипы догоняют в фоне («видео готовится»).
         // Уходим через AnimeiBack.navigate — он снимает записи слоёв из history,
         // иначе «назад» с deck-study вернул бы сюда лишние пустые шаги.

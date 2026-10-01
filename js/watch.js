@@ -840,8 +840,9 @@ document.getElementById("save-confirm").addEventListener("click", async () => {
     }
   } catch (err) {
     console.error("Не удалось сохранить слово:", err);
-    if (typeof showSnackbar === "function") {
-      showSnackbar(t("popup.saveError"), { type: "error" });
-    }
+    // Окно сохранения не закрываем — ошибка в нём, у кнопки.
+    const btnSave = document.getElementById("save-confirm");
+    if (btnSave && typeof formMessage === "function") formMessage(btnSave.parentElement, t(typeof isSignedIn === "function" && isSignedIn() ? "popup.saveErrorNet" : "popup.saveError"));
+    else if (typeof showSnackbar === "function") showSnackbar(t("popup.saveError"), { type: "error" });
   }
 });

@@ -3565,6 +3565,7 @@ async function tryOtherSubsFile() {
     const altBtn = document.getElementById('subs-alt-file');
     if (!state.subsFile || !altBtn || altBtn.disabled) return;
     altBtn.disabled = true;
+    formMessage(altBtn, '');
     const prev = state.subsFile;
     state.subsExcluded.push(prev);
     localStorage.removeItem(offsetStorageKey());
@@ -3582,10 +3583,10 @@ async function tryOtherSubsFile() {
         if (!state.cues.length) {
             // Другого файла в архиве нет — возвращаем прежний, чтобы не остаться без сабов.
             state.subsExcluded = state.subsExcluded.filter((n) => n !== prev);
-            showSnackbar(t('subs.noOther'), { duration: 3500 });
+            formMessage(altBtn, t('subs.noOther'), 'info');   // у кнопки, а не тостом поверх видео
             await loadSubtitles(epNum);
         } else {
-            showSnackbar(t('subs.otherLoaded'), { duration: 3000 });
+            formMessage(altBtn, t('subs.otherLoaded'), 'success');
             state.syncPromise = maybeAutoSync();
         }
     } finally {

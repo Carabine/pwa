@@ -410,8 +410,8 @@
             if (btn) { btn.disabled = true; btn.textContent = tt('dl.syncing'); }
             const r = await syncOffline({ manual: true }).catch(() => null);
             if (sheet && sheet.syncBtn) sheet.syncBtn.textContent = tt('dl.syncNow');
-            if (r && !r.clips && !r.explains && !activeCount() && typeof showSnackbar === 'function') {
-                showSnackbar(tt('dl.syncDone'), { duration: 2500 });
+            if (r && !r.clips && !r.explains && !activeCount() && sheet && typeof formMessage === 'function') {
+                formMessage(sheet.syncBtn.parentElement, tt('dl.syncDone'), 'success');   // в самом окне
             }
             renderSheet();
         });

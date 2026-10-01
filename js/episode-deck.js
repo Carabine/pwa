@@ -437,7 +437,7 @@
             await loadJlpt();
         } catch (err) {
             console.error('Не удалось загрузить JLPT-словарь:', err);
-            showSnackbar(t('edeck.error'), { duration: 3500, type: 'error' });
+            formMessage(createBtn, t('edeck.error'));
             btn.disabled = false;
             return;
         }
@@ -707,7 +707,7 @@
         if (!done) {
             window.Decks.remove(deck.id);   // пустую колоду не оставляем
             updateCount();
-            showSnackbar(t('edeck.error'), { duration: 4000, type: 'error' });
+            formMessage(createBtn, t('edeck.error'));   // окно открыто — ошибка в нём
             return;
         }
         if (layer) AnimeiBack.close(layer); else hideModal();
@@ -717,7 +717,11 @@
         if (failed) {
             showSnackbar(t('edeck.partial').replace('{k}', done).replace('{n}', total), { duration: 5000, type: 'error' });
         } else {
-            showSnackbar(t('edeck.done').replace('{name}', deck.name).replace('{n}', done), { duration: 5000 });
+            // Следующий шаг — одной кнопкой: сразу учить новую колоду.
+            showSnackbar(t('edeck.done').replace('{name}', deck.name).replace('{n}', done), {
+                type: 'success',
+                action: { label: t('decks.study'), onClick: () => { location.href = 'deck-study.html?deck=' + encodeURIComponent(deck.id); } },
+            });
         }
     });
 
