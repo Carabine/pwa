@@ -1,0 +1,672 @@
+/* Улица слов — 3D-прогулка. Three.js, процедурная геометрия, вывески как canvas-текстуры.
+ * Улица тянется вдоль -z, кварталы (колоды) идут один за другим и разделены арками.
+ * Строятся только кварталы рядом с камерой (±1), остальные освобождаются.
+ */
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+
+const D = window.StreetData;
+const JP = '"Noto Sans JP","Hiragino Sans","Yu Gothic","Meiryo",sans-serif';
+const UI = 'Inter,system-ui,sans-serif';
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+function mulberry32(seed) { let a = seed >>> 0; return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function rgba(h, a) { const c = hexToRgb(h); return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
+function mix(h1, h2, t) { const a = hexToRgb(h1), b = hexToRgb(h2); const r = Math.round(lerp(a[0], b[0], t)), g = Math.round(lerp(a[1], b[1], t)), bl = Math.round(lerp(a[2], b[2], t)); return '#' + ((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1); }
+function luma(h) { const c = hexToRgb(h); return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255; }
+function roundRect(g, x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); g.beginPath(); g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r); g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h); g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r); g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y); g.closePath(); }
+
+const THEMES = {
+    shinjuku: {
+        id: 'shinjuku', W: 7.2, floors: [4, 8], floorH: 3.3, lenB: [5, 9], rain: true, lanterns: null,
+        fog: '#10102a', fogD: 0.028, sky: '#04040c', ground: '#07070e',
+        palette: { 5: '#ffd23f', 4: '#ff6b35', 3: '#ff3fa4', 2: '#36e2ff', 1: '#b06bff', 0: '#7c8cf8' },
+        wallColors: ['#15151f', '#181422', '#121a22', '#1a1624'], winColors: ['#ffd9a0', '#9ad0ff', '#ffb0c8'], shopGlow: ['#ffb060', '#7c8cf8', '#ff5a8a', '#52e0ff'],
+        tiers: [{ y0: 4.2, y1: 7.8, w: 0.95, chars: 4 }, { y0: 8.0, y1: 11.6, w: 0.95, chars: 4 }, { y0: 11.8, y1: 16.5, w: 1.05, chars: 5 }],
+        spacing: 2.7, awning: 3.3, hbox: { y0: 3.45, y1: 4.15, minChars: 4 }, vending: true, umbrellas: true,
+    },
+    yokocho: {
+        id: 'yokocho', W: 3.2, floors: [2, 2], floorH: 2.9, lenB: [2.4, 3.8], rain: false,
+        lanterns: { y: 2.45, r: 0.2, step: 0.9, maxChars: 2 },
+        fog: '#2a180a', fogD: 0.05, sky: '#07050a', ground: '#0a0806',
+        palette: { 5: '#ffcf5a', 4: '#ff8a3c', 3: '#ff5f7a', 2: '#5ad8c8', 1: '#b98cff', 0: '#8c9bff' },
+        wallColors: ['#2a1c12', '#241a14', '#2e2016', '#1f1812'], winColors: ['#ffc070', '#ffd9a0'], shopGlow: ['#ffb060', '#ffcf7a', '#ff9a4a'],
+        tiers: [{ y0: 3.3, y1: 5.9, w: 0.55, chars: 5 }],
+        spacing: 1.7, awning: 2.95, hbox: { y0: 2.98, y1: 3.42, minChars: 6 }, noren: { y0: 1.55, y1: 2.2, maxChars: 3 },
+    },
+};
+
+// ---------- текстуры вывесок (тот же стиль, что в 2D-макете) ----------
+function makeTex(c) { const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; }
+function drawVChars(g, list, cx, top, cell, fs, fillFor) {
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 ' + fs + 'px ' + JP;
+    list.forEach((ch, i) => { const y = top + cell * (i + 0.5); g.fillStyle = fillFor(i); if (ch === 'ー') { g.save(); g.translate(cx, y); g.rotate(Math.PI / 2); g.fillText(ch, 0, 0); g.restore(); } else g.fillText(ch, cx, y); });
+}
+function texVertical(sign, lit) {
+    const w = 128, h = Math.round(w * sign.h / sign.w);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d'), col = sign.color, inten = sign.inten, n = sign.chars.length;
+    const cell = (h - w * 0.4) / n, fs = Math.min(w * 0.76, cell * 0.9), top = w * 0.2;
+    if (sign.style === 'vbox') {
+        if (lit) {
+            g.fillStyle = rgba(mix(col, '#ffffff', 0.08), 1); roundRect(g, 0, 0, w, h, 6); g.fill();
+            const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.5, 'rgba(255,255,255,' + 0.3 * inten + ')'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fill();
+            if (inten < 1) { g.fillStyle = 'rgba(0,0,0,' + (1 - inten) * 0.5 + ')'; g.fill(); }
+            const dark = luma(col) > 0.5 ? '#1a1030' : '#ffffff';
+            drawVChars(g, sign.chars, w / 2, top, cell, fs, (i) => i === sign.dead ? rgba(dark, 0.25) : dark);
+        } else {
+            g.fillStyle = mix(col, '#07070c', 0.85); roundRect(g, 0, 0, w, h, 6); g.fill();
+            drawVChars(g, sign.chars, w / 2, top, cell, fs, () => 'rgba(255,255,255,0.18)');
+        }
+    } else {
+        g.fillStyle = lit ? '#0c0c15' : '#09090f'; roundRect(g, 0, 0, w, h, 6); g.fill();
+        if (lit) {
+            g.shadowColor = rgba(col, 0.95); g.shadowBlur = 14 * inten; g.strokeStyle = rgba(col, 0.9 * inten); g.lineWidth = 5;
+            roundRect(g, 7, 7, w - 14, h - 14, 5); g.stroke();
+            const tube = rgba(col, 0.95 * inten), core = mix(col, '#ffffff', 0.75);
+            drawVChars(g, sign.chars, w / 2, top, cell, fs, (i) => i === sign.dead ? 'rgba(255,255,255,0.12)' : tube);
+            drawVChars(g, sign.chars, w / 2, top, cell, fs, (i) => i === sign.dead ? 'rgba(0,0,0,0)' : tube);
+            g.shadowBlur = 4; drawVChars(g, sign.chars, w / 2, top, cell, fs, (i) => i === sign.dead ? 'rgba(0,0,0,0)' : rgba(core, 0.9 * inten + 0.1));
+        } else {
+            g.strokeStyle = 'rgba(255,255,255,0.09)'; g.lineWidth = 4; roundRect(g, 4, 4, w - 8, h - 8, 5); g.stroke();
+            drawVChars(g, sign.chars, w / 2, top, cell, fs, () => 'rgba(255,255,255,0.14)');
+        }
+    }
+    if (sign.state === 'worn') { const rr = mulberry32(sign.seed); for (let i = 0; i < 4; i++) { const x = rr() * w, len = h * (0.3 + rr() * 0.6); const gr = g.createLinearGradient(0, 0, 0, len); gr.addColorStop(0, 'rgba(70,35,15,0.6)'); gr.addColorStop(1, 'rgba(70,35,15,0)'); g.fillStyle = gr; g.fillRect(x, 0, 8, len); } }
+    return makeTex(c);
+}
+function texHorizontal(sign, lit) {
+    const h = 128, w = Math.round(h * sign.len / sign.hh);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d'), col = sign.color, inten = sign.inten, n = sign.chars.length;
+    const fs = Math.min(h * 0.66, (w * 0.86) / Math.max(n, 1) * 1.05);
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 ' + fs + 'px ' + JP;
+    const cw = fs, x0 = w / 2 - cw * (n - 1) / 2;
+    if (lit) {
+        g.fillStyle = rgba(mix(col, '#ffffff', 0.06), 1); roundRect(g, 0, 0, w, h, 6); g.fill();
+        const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,255,255,' + 0.3 * inten + ')'); gr.addColorStop(0.5, 'rgba(255,255,255,0)'); gr.addColorStop(1, 'rgba(0,0,0,0.12)'); g.fillStyle = gr; g.fill();
+        if (inten < 1) { g.fillStyle = 'rgba(0,0,0,' + (1 - inten) * 0.5 + ')'; g.fill(); }
+        const tc = luma(col) > 0.5 ? '#1a1030' : '#ffffff';
+        sign.chars.forEach((ch, i) => { g.fillStyle = i === sign.dead ? 'rgba(0,0,0,0.25)' : tc; g.fillText(ch, x0 + cw * i, h * 0.52); });
+    } else {
+        g.fillStyle = mix(col, '#07070c', 0.85); roundRect(g, 0, 0, w, h, 6); g.fill();
+        g.fillStyle = 'rgba(255,255,255,0.2)'; sign.chars.forEach((ch, i) => g.fillText(ch, x0 + cw * i, h * 0.52));
+    }
+    return makeTex(c);
+}
+function texLantern(sign, lit) {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+    const g = c.getContext('2d');
+    const body = sign.white ? (lit ? '#f6e6c4' : '#4a4034') : (lit ? '#ee4a2e' : '#52170f');
+    const hot = sign.white ? '#fff6dc' : '#ffb257';
+    const gr = g.createLinearGradient(0, 0, 0, 256);
+    gr.addColorStop(0, mix(body, '#000', 0.5)); gr.addColorStop(0.4, lit ? mix(body, hot, 0.5 * sign.inten) : body); gr.addColorStop(0.6, lit ? mix(body, hot, 0.5 * sign.inten) : body); gr.addColorStop(1, mix(body, '#000', 0.5));
+    g.fillStyle = gr; g.fillRect(0, 0, 512, 256);
+    g.strokeStyle = 'rgba(0,0,0,0.22)'; g.lineWidth = 3;
+    for (let i = 1; i < 7; i++) { g.beginPath(); g.moveTo(0, 256 * i / 7); g.lineTo(512, 256 * i / 7); g.stroke(); }
+    const n = sign.chars.length, cell = 170 / Math.max(n, 1), fs = Math.min(80, cell * 0.9);
+    [128, 384].forEach((cx) => drawVChars(g, sign.chars, cx, 128 - 85, cell, fs, (i) => i === sign.dead ? 'rgba(0,0,0,0.25)' : (lit ? 'rgba(20,8,4,0.92)' : 'rgba(0,0,0,0.55)')));
+    const t = makeTex(c); return t;
+}
+function texNoren(sign, lit) {
+    const c = document.createElement('canvas'); c.width = 384; c.height = 160;
+    const g = c.getContext('2d');
+    g.fillStyle = sign.cloth; g.fillRect(0, 0, 384, 160);
+    const gr = g.createLinearGradient(0, 0, 0, 160); gr.addColorStop(0, lit ? 'rgba(255,220,160,0.3)' : 'rgba(255,255,255,0.03)'); gr.addColorStop(1, 'rgba(0,0,0,0.25)'); g.fillStyle = gr; g.fillRect(0, 0, 384, 160);
+    g.strokeStyle = 'rgba(0,0,0,0.55)'; g.lineWidth = 3; [128, 256].forEach((x) => { g.beginPath(); g.moveTo(x, 18); g.lineTo(x, 160); g.stroke(); });
+    const n = sign.chars.length, cell = 128 / Math.max(n, 1), fs = Math.min(60, cell * 0.9);
+    drawVChars(g, sign.chars, 192, 16, cell, fs, (i) => i === sign.dead ? 'rgba(255,255,255,0.2)' : (lit ? 'rgba(255,250,235,0.95)' : 'rgba(255,255,255,0.45)'));
+    return makeTex(c);
+}
+function texFacade(th, b, rnd) {
+    const pxm = 24, w = Math.round(b.len * pxm), h = Math.round(b.H * pxm);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    const Y = (y) => h - y * pxm;
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, mix(b.color, '#000', 0.4)); gr.addColorStop(0.5, b.color); gr.addColorStop(1, mix(b.color, '#000', 0.2));
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    if (th.id === 'yokocho') { g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 1; for (let y = 0.3; y < b.H; y += 0.3) { g.beginPath(); g.moveTo(0, Y(y)); g.lineTo(w, Y(y)); g.stroke(); } }
+    const cols = Math.max(1, Math.round(b.len / 1.7));
+    for (let fl = 1; fl < b.floors; fl++) {
+        g.strokeStyle = 'rgba(0,0,0,0.35)'; g.beginPath(); g.moveTo(0, Y(fl * th.floorH)); g.lineTo(w, Y(fl * th.floorH)); g.stroke();
+        for (let ci = 0; ci < cols; ci++) {
+            const x0 = w * (ci + 0.22) / cols, x1 = w * (ci + 0.78) / cols, y0 = fl * th.floorH + 0.9, y1 = fl * th.floorH + 2.2;
+            const lit = rnd() < 0.38, wc = th.winColors[Math.floor(rnd() * th.winColors.length)];
+            g.fillStyle = lit ? rgba(wc, 0.5 + rnd() * 0.45) : 'rgba(0,0,0,0.4)';
+            g.fillRect(x0, Y(y1), x1 - x0, (y1 - y0) * pxm);
+            if (lit && rnd() < 0.5) { g.fillStyle = 'rgba(0,0,0,0.3)'; g.fillRect((x0 + x1) / 2 - 1, Y(y1), 2, (y1 - y0) * pxm); }
+        }
+        if (th.id !== 'yokocho' && rnd() < 0.55) { // ярусная панель без слов
+            const col = th.winColors[Math.floor(rnd() * th.winColors.length)], lit = rnd() < 0.5;
+            g.fillStyle = lit ? rgba(col, 0.25) : 'rgba(0,0,0,0.3)'; g.fillRect(8, Y(fl * th.floorH + 0.7), w - 16, 0.55 * pxm);
+            g.strokeStyle = lit ? rgba(col, 0.5) : 'rgba(255,255,255,0.06)'; g.strokeRect(8, Y(fl * th.floorH + 0.7), w - 16, 0.55 * pxm);
+        }
+    }
+    // витрина
+    if (b.shop) {
+        const sc = b.shopColor;
+        const gl = g.createLinearGradient(0, Y(th.awning - 0.5), 0, Y(0.2)); gl.addColorStop(0, rgba(sc, b.shutter ? 0.1 : 0.35)); gl.addColorStop(1, rgba(sc, b.shutter ? 0.04 : 0.1));
+        g.fillStyle = gl; g.fillRect(6, Y(th.awning - 0.5), w - 12, (th.awning - 0.7) * pxm);
+        if (b.shutter) { g.strokeStyle = 'rgba(0,0,0,0.45)'; for (let y = 0.4; y < th.awning - 0.5; y += 0.22) { g.beginPath(); g.moveTo(6, Y(y)); g.lineTo(w - 6, Y(y)); g.stroke(); } }
+        else {
+            g.fillStyle = rgba(mix(sc, '#ffffff', 0.5), 0.45); g.fillRect(12, Y(th.awning - 0.9), w - 24, (th.awning - 1.4) * pxm);
+            g.strokeStyle = 'rgba(255,255,255,0.35)'; for (let y = 0.9; y < th.awning - 1.0; y += 0.45) { g.beginPath(); g.moveTo(14, Y(y)); g.lineTo(w - 14, Y(y)); g.stroke(); }
+            g.fillStyle = 'rgba(0,0,0,0.45)'; const n = 2 + Math.floor(rnd() * 3); for (let i = 0; i < n; i++) { const x = 12 + rnd() * (w - 30); g.fillRect(x, Y(0.2 + 0.8 + rnd() * 1.1), 4 + rnd() * 6, (0.8) * pxm); }
+            g.strokeStyle = 'rgba(0,0,0,0.6)'; g.lineWidth = 2; for (let x = 6; x < w - 6; x += (th.id === 'yokocho' ? 0.45 : 1.1) * pxm) { g.beginPath(); g.moveTo(x, Y(th.awning - 0.5)); g.lineTo(x, Y(0.2)); g.stroke(); }
+            if (th.id === 'yokocho') { const nm = 2 + Math.floor(rnd() * 4); for (let i = 0; i < nm; i++) { const x = 8 + rnd() * (w - 20), y0 = 1.75 + rnd() * 0.4; g.fillStyle = rnd() < 0.5 ? '#f1e6cc' : '#e0c080'; g.fillRect(x, Y(y0 + 0.5), 0.18 * pxm, 0.5 * pxm); g.fillStyle = 'rgba(0,0,0,0.5)'; for (let k = 0; k < 3; k++) g.fillRect(x + 1, Y(y0 + 0.42 - k * 0.13), 0.18 * pxm - 2, 1); } }
+        }
+        g.fillStyle = 'rgba(0,0,0,0.6)'; g.fillRect(w - 1.1 * pxm, Y(2.1), 0.8 * pxm, 2.1 * pxm);
+    }
+    // навес (тёмная полоса) и труба
+    g.fillStyle = 'rgba(0,0,0,0.5)'; g.fillRect(0, Y(th.awning + 0.1), w, 0.25 * pxm);
+    g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(0, 0, 2, h);
+    const t = makeTex(c); return t;
+}
+function texGradientDisc() {
+    const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+    const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return makeTex(c);
+}
+function texStreak() {
+    const c = document.createElement('canvas'); c.width = 8; c.height = 64; const g = c.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, 'rgba(200,215,255,0)'); gr.addColorStop(0.5, 'rgba(200,215,255,0.9)'); gr.addColorStop(1, 'rgba(200,215,255,0)');
+    g.fillStyle = gr; g.fillRect(3, 0, 2, 64); return makeTex(c);
+}
+function texGate(name, emoji, color) {
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 256; const g = c.getContext('2d');
+    g.fillStyle = '#0c0c15'; roundRect(g, 0, 0, 1024, 256, 20); g.fill();
+    g.shadowColor = color; g.shadowBlur = 30; g.strokeStyle = color; g.lineWidth = 10; roundRect(g, 14, 14, 996, 228, 16); g.stroke();
+    g.fillStyle = '#ffffff'; g.font = '800 96px ' + UI; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowBlur = 24; g.shadowColor = color;
+    g.fillText((emoji ? emoji + '  ' : '') + name, 512, 136);
+    return makeTex(c);
+}
+function texPuddles(seed) {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 512; const g = c.getContext('2d');
+    g.fillStyle = 'rgb(40,40,40)'; g.fillRect(0, 0, 512, 512);
+    const rnd = mulberry32(seed);
+    for (let i = 0; i < 40; i++) { const x = rnd() * 512, y = rnd() * 512, r = 20 + rnd() * 70; const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgb(235,235,235)'); gr.addColorStop(0.6, 'rgb(180,180,180)'); gr.addColorStop(1, 'rgb(40,40,40)'); g.fillStyle = gr; g.save(); g.translate(x, y); g.scale(1, 0.5 + rnd() * 0.5); g.beginPath(); g.arc(0, 0, r, 0, 6.28); g.fill(); g.restore(); }
+    const t = makeTex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+
+// ---------- приложение ----------
+const params = new URLSearchParams(location.search);
+const themeId = params.get('theme') || (document.body.dataset.theme || 'shinjuku');
+const th = THEMES[themeId] || THEMES.shinjuku;
+const SET_KEY = 'animei:street';
+function lsSet() { try { return JSON.parse(localStorage.getItem(SET_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function saveSet(p) { try { localStorage.setItem(SET_KEY, JSON.stringify(Object.assign(lsSet(), p))); } catch (e) { /* приватный режим */ } }
+const settings = lsSet();
+let source = params.get('src') || settings.source || 'demo';
+const opts = { rain: settings.rain !== false, reflect: settings.reflect !== false, bloom: true };
+
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(th.sky);
+scene.fog = new THREE.FogExp2(new THREE.Color(th.fog), th.fogD);
+const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 160);
+camera.position.set(0, 1.6, 3);
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(390, 844), 0.85, 0.5, 0.62);
+composer.addPass(bloom);
+
+const discTex = texGradientDisc(), streakTex = texStreak();
+const W2 = th.W / 2;
+
+// ---- данные ----
+let data, quarters = [], today = D.todayKey(), jlptMap = {};
+function colorFor(w) { const lvl = (data.jlpt[w.kanji] != null ? data.jlpt[w.kanji] : (jlptMap[w.kanji] || 0)) | 0; w._jlpt = lvl; return th.palette[lvl] || th.palette[0]; }
+function litCount() { return data.words.filter((w) => w._state === 'lit' || w._state === 'warm' || w._state === 'worn').length; }
+
+// ---- раскладка кварталов вдоль улицы ----
+const blocks = []; // { q, z0, z1, signs:[], built:false, group }
+let streetLen = 0;
+function planBlocks() {
+    blocks.length = 0;
+    let z = -4;
+    quarters.forEach((q, qi) => {
+        const n = q.words.length;
+        const perM = th.lanterns ? 2.4 : (2 * th.tiers.length) / th.spacing;
+        const len = Math.max(14, Math.ceil(n / perM) + 8);
+        const b = { q, qi, z0: z, z1: z - len, len, signs: [], built: false, group: null };
+        layoutBlock(b);
+        blocks.push(b);
+        z -= len;
+    });
+    streetLen = -z + 6;
+}
+function layoutBlock(b) {
+    const words = b.q.words.slice().sort((a, c) => String(c.createdAt || '').localeCompare(String(a.createdAt || '')));
+    const slots = [];
+    const zs = b.z0 - 3, ze = b.z1 + 3;
+    th.tiers.forEach((t, ti) => [-1, 1].forEach((side) => { let z = zs - (ti * 0.37 + (side > 0 ? 0.5 : 0)) * th.spacing; let i = 0; while (z > ze) { slots.push({ kind: 'vsign', side, z, tier: t, style: (i + ti + (side > 0 ? 1 : 0)) % 3 === 0 ? 'vbox' : 'vneon' }); z -= th.spacing; i++; } }));
+    if (th.lanterns) [-1, 1].forEach((side) => { let z = zs - (side > 0 ? 0.45 : 0); let i = 0; while (z > ze) { slots.push({ kind: 'lantern', side, z, white: i % 3 === 2 }); z -= th.lanterns.step; i++; } });
+    if (th.noren) [-1, 1].forEach((side) => { for (let z = zs - 1; z > ze + 1.5; z -= 3.1) slots.push({ kind: 'noren', side, z, len: 1.5 }); });
+    if (th.hbox) [-1, 1].forEach((side) => { for (let z = zs - 2.5; z > ze + 3; z -= 5.5) slots.push({ kind: 'hbox', side, z, len: 3.8 }); });
+    // ближе к началу квартала — новее
+    slots.sort((a, c) => c.z - a.z);
+    const used = new Set();
+    const take = (pred) => { for (let i = 0; i < slots.length; i++) if (!used.has(i) && pred(slots[i])) { used.add(i); return slots[i]; } return null; };
+    words.forEach((w, idx) => {
+        const text = w.kanji || w.kana || '', chars = Array.from(text), n = chars.length;
+        let s = null;
+        if (n <= 2 && th.lanterns && idx % 3 !== 1) s = take((sl) => sl.kind === 'lantern');
+        if (!s && n <= 3 && th.noren && idx % 4 === 2) s = take((sl) => sl.kind === 'noren');
+        if (!s && th.hbox && n >= th.hbox.minChars) s = take((sl) => sl.kind === 'hbox');
+        if (!s) s = take((sl) => sl.kind === 'vsign' && n <= sl.tier.chars);
+        if (!s) s = take((sl) => sl.kind === 'hbox');
+        if (!s && th.lanterns && n <= 2) s = take((sl) => sl.kind === 'lantern');
+        if (!s) return;
+        const sign = { word: w, text, chars, state: w._state, color: w._color, kind: s.kind, side: s.side, z: s.z, seed: hashStr(text) % 1000, tex: {} };
+        sign.inten = sign.state === 'warm' ? 0.55 : 1;
+        sign.isLit = sign.state === 'lit' || sign.state === 'warm' || sign.state === 'worn';
+        sign.dead = sign.state === 'worn' ? sign.seed % n : -1;
+        if (s.kind === 'vsign') { sign.style = s.style; sign.w = s.tier.w; sign.h = Math.min(s.tier.y1 - s.tier.y0, n * s.tier.w * 0.92 + s.tier.w * 0.45); sign.y1 = s.tier.y1 - 0.15; sign.y0 = sign.y1 - sign.h; }
+        else if (s.kind === 'lantern') { sign.white = s.white; sign.r = th.lanterns.r; sign.y = th.lanterns.y; }
+        else if (s.kind === 'noren') { sign.len = s.len; sign.hh = th.noren.y1 - th.noren.y0; sign.y0 = th.noren.y0; sign.cloth = ['#1d2a5c', '#2a1e4c', '#4a1a1a', '#1a3a3a', '#101018'][sign.seed % 5]; }
+        else { sign.len = s.len; sign.hh = th.hbox.y1 - th.hbox.y0; sign.y0 = th.hbox.y0; }
+        b.signs.push(sign);
+    });
+    // пустые фонари заполняют ряд
+    if (th.lanterns) slots.forEach((sl, i) => { if (!used.has(i) || sl.kind !== 'lantern') { if (sl.kind === 'lantern' && !used.has(i)) b.signs.push({ deco: true, chars: [], text: '', state: 'warm', inten: 0.75, isLit: true, dead: -1, color: th.palette[0], kind: 'lantern', side: sl.side, z: sl.z, white: sl.white, r: th.lanterns.r, y: th.lanterns.y, seed: i, tex: {} }); } });
+}
+
+// ---- постоянная геометрия: здания, земля, провода ----
+const world = new THREE.Group(); scene.add(world);
+const signsGroup = new THREE.Group(); scene.add(signsGroup);
+const dynSigns = []; // мигающие и зажигающиеся
+function buildWorld() {
+    const killMat = (mt) => { if (!mt) return; (Array.isArray(mt) ? mt : [mt]).forEach((x) => { if (x.map && x.map.dispose) x.map.dispose(); if (x.alphaMap && x.alphaMap.dispose) x.alphaMap.dispose(); x.dispose(); }); };
+    while (world.children.length) { const o = world.children.pop(); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); killMat(m.material); }); }
+    const rnd = mulberry32(hashStr(th.id + source) + 11);
+    [-1, 1].forEach((side) => {
+        let z = 6;
+        while (z > -streetLen - 10) {
+            const len = lerp(th.lenB[0], th.lenB[1], rnd());
+            const floors = th.floors[0] + Math.floor(rnd() * (th.floors[1] - th.floors[0] + 1));
+            const b = { len, floors, H: floors * th.floorH + 0.6, color: th.wallColors[Math.floor(rnd() * th.wallColors.length)], shop: rnd() < 0.8, shutter: rnd() < 0.25, shopColor: th.shopGlow[Math.floor(rnd() * th.shopGlow.length)] };
+            const tex = texFacade(th, b, rnd);
+            const depth = 6;
+            const geo = new THREE.BoxGeometry(depth, b.H, len);
+            const faceMat = new THREE.MeshBasicMaterial({ map: tex, fog: true });
+            const sideMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(b.color, '#000', 0.3)), fog: true });
+            const mats = [side < 0 ? faceMat : sideMat, side < 0 ? sideMat : faceMat, sideMat, sideMat, sideMat, sideMat];
+            const m = new THREE.Mesh(geo, mats);
+            m.position.set(side * (W2 + depth / 2), b.H / 2, z - len / 2);
+            if (side < 0) { tex.repeat.x = -1; tex.offset.x = 1; }
+            world.add(m);
+            // навес
+            const aw = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, len - 0.1), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(b.color, '#000', 0.5)), fog: true }));
+            aw.position.set(side * (W2 - 0.4), th.awning, z - len / 2); world.add(aw);
+            if (b.shop && !b.shutter) { // световая кромка навеса
+                const col = th.id === 'yokocho' ? '#ffd080' : b.shopColor;
+                const strip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, len - 0.3), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(col, '#000000', 0.25)) }));
+                strip.position.set(side * (W2 - 0.8), th.awning - 0.08, z - len / 2); world.add(strip);
+                // пятно от витрины на земле
+                const pool = new THREE.Mesh(new THREE.PlaneGeometry(2.6, len * 0.9), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(col), transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false }));
+                pool.rotation.x = -Math.PI / 2; pool.position.set(side * (W2 - 0.9), 0.02, z - len / 2); world.add(pool);
+            }
+            if (th.vending && rnd() < 0.35 && len > 4) {
+                const vc = ['#dce9ff', '#ffe9c0', '#ffd6e4'][Math.floor(rnd() * 3)];
+                const vm = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.85, 1.0), [new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(vc, '#000', 0.7)) }), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(vc, '#000', 0.7)) }), new THREE.MeshBasicMaterial({ color: 0x111 }), new THREE.MeshBasicMaterial({ color: 0x111 }), new THREE.MeshBasicMaterial({ color: new THREE.Color(vc) }), new THREE.MeshBasicMaterial({ color: new THREE.Color(vc) })]);
+                vm.material[side < 0 ? 0 : 1] = new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(vc, '#000000', 0.45)) });
+                vm.position.set(side * (W2 - 0.38), 0.925, z - len / 2); world.add(vm);
+            }
+            if (th.id === 'yokocho' && rnd() < 0.7) { // ящики
+                const cc = ['#d9b23a', '#3a6fd9', '#d94a3a'][Math.floor(rnd() * 3)];
+                for (let k = 0; k < 1 + Math.floor(rnd() * 3); k++) { const cr = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.3, 0.5), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(cc, '#000', 0.45)), fog: true })); cr.position.set(side * (W2 - 0.25), 0.15 + k * 0.31, z - 0.4 - rnd() * (len - 1)); world.add(cr); }
+            }
+            z -= len;
+        }
+    });
+    // земля: отражение + мокрый асфальт с лужами
+    const gw = th.W + 0.2, gl = streetLen + 30;
+    if (opts.reflect) {
+        const refl = new Reflector(new THREE.PlaneGeometry(gw, gl), { textureWidth: 640, textureHeight: 640, color: 0x777788, clipBias: 0.003 });
+        refl.rotation.x = -Math.PI / 2; refl.position.set(0, -0.005, -gl / 2 + 8); world.add(refl);
+    } else {
+        const g0 = new THREE.Mesh(new THREE.PlaneGeometry(gw, gl), new THREE.MeshBasicMaterial({ color: new THREE.Color(th.ground) })); g0.rotation.x = -Math.PI / 2; g0.position.set(0, -0.01, -gl / 2 + 8); world.add(g0);
+    }
+    const pud = texPuddles(hashStr(th.id)); pud.repeat.set(gw / 6, gl / 6);
+    const wet = new THREE.Mesh(new THREE.PlaneGeometry(gw, gl), new THREE.MeshBasicMaterial({ color: new THREE.Color(th.ground), transparent: true, opacity: opts.reflect ? 0.72 : 1, alphaMap: pud, fog: true, depthWrite: false }));
+    // alphaMap: светлое = непрозрачно → инвертируем смыслы: лужи тёмные в текстуре
+    wet.material.alphaMap = null; wet.material.opacity = 1;
+    const wetTex = texPuddlesInverse(hashStr(th.id)); wetTex.repeat.set(gw / 6, gl / 6);
+    wet.material.alphaMap = wetTex; wet.material.transparent = true;
+    wet.rotation.x = -Math.PI / 2; wet.position.set(0, 0.0, -gl / 2 + 8); world.add(wet);
+    // бордюры
+    [-1, 1].forEach((side) => { const cb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, gl), new THREE.MeshBasicMaterial({ color: 0x1a1a22, fog: true })); cb.position.set(side * (W2 - 0.25), 0.06, -gl / 2 + 8); world.add(cb); });
+    // провода поперёк
+    const wireMat = new THREE.LineBasicMaterial({ color: 0x000000 });
+    for (let z = 2; z > -streetLen; z -= 7 + (hashStr('w' + z) % 5)) {
+        const y = (th.id === 'yokocho' ? 4.6 : 6.6) + (hashStr('y' + z) % 3) * 0.5, sag = 0.5;
+        const pts = []; for (let k = 0; k <= 16; k++) { const x = -W2 - 0.3 + (th.W + 0.6) * k / 16; pts.push(new THREE.Vector3(x, y - sag * (1 - Math.pow(x / W2, 2)), z)); }
+        world.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), wireMat));
+        const pts2 = pts.map((p) => new THREE.Vector3(p.x, p.y - 0.25, p.z + 0.05)); world.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts2), wireMat));
+    }
+    [-1, 1].forEach((side) => { for (let i = 0; i < 2; i++) { const y = (th.id === 'yokocho' ? 4.3 : 6.3) + i * 0.35; world.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(side * (W2 - 0.2 - i * 0.15), y, 8), new THREE.Vector3(side * (W2 - 0.2 - i * 0.15), y, -streetLen - 10)]), wireMat)); } });
+    // арки между кварталами
+    blocks.forEach((b, i) => {
+        const next = blocks[i + 1];
+        const col = (next || b).q.words.find((w) => w._state === 'lit')?._color || '#7c8cf8';
+        const z = b.z1;
+        const post = new THREE.MeshBasicMaterial({ color: 0x0c0c15 });
+        [-1, 1].forEach((side) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.25, 4.2, 0.25), post); p.position.set(side * (W2 - 0.35), 2.1, z); world.add(p); });
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(th.W - 0.4, 0.25, 0.25), post); beam.position.set(0, 4.2, z); world.add(beam);
+        const tube = new THREE.Mesh(new THREE.BoxGeometry(th.W - 0.4, 0.06, 0.06), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(col, '#ffffff', 0.4)) })); tube.position.set(0, 4.05, z + 0.14); world.add(tube);
+        const name = next ? next.q.name : 'Начало';
+        const gt = texGate(next ? name : '↻ ' + name, next ? next.q.emoji : '', col);
+        const sign = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(th.W - 0.8, 4.4), Math.min(th.W - 0.8, 4.4) / 4), new THREE.MeshBasicMaterial({ map: gt, side: THREE.DoubleSide, transparent: true }));
+        sign.position.set(0, 3.4, z); world.add(sign);
+        const halo = new THREE.Mesh(new THREE.PlaneGeometry(th.W * 1.4, 5), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(col), transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+        halo.position.set(0, 2.5, z - 0.3); world.add(halo);
+    });
+    // прохожие
+    const fig = new THREE.MeshBasicMaterial({ color: 0x07070c, fog: true });
+    for (let i = 0; i < Math.floor(streetLen / 9); i++) {
+        const z = -9 - rnd() * (streetLen - 13), x = (rnd() - 0.5) * (th.W - 1.6), h = 1.5 + rnd() * 0.3;
+        const g = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.CapsuleGeometry(h * 0.16, h * 0.5, 4, 8), fig); body.position.y = h * 0.45; g.add(body);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(h * 0.075, 8, 8), fig); head.position.y = h * 0.88; g.add(head);
+        if (th.umbrellas && rnd() < 0.8) { const um = new THREE.Mesh(new THREE.SphereGeometry(h * 0.38, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshBasicMaterial({ color: new THREE.Color(['#1b1b24', '#22243a', '#2a1a2a'][Math.floor(rnd() * 3)]), fog: true })); um.position.y = h * 1.05; um.scale.y = 0.35; g.add(um); }
+        g.position.set(x, 0, z); g.rotation.y = rnd() * 6.28; world.add(g);
+    }
+}
+function texPuddlesInverse(seed) {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 512; const g = c.getContext('2d');
+    g.fillStyle = 'rgb(190,190,190)'; g.fillRect(0, 0, 512, 512);
+    const rnd = mulberry32(seed);
+    for (let i = 0; i < 40; i++) { const x = rnd() * 512, y = rnd() * 512, r = 20 + rnd() * 70; const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgb(60,60,60)'); gr.addColorStop(0.6, 'rgb(110,110,110)'); gr.addColorStop(1, 'rgb(190,190,190)'); g.fillStyle = gr; g.save(); g.translate(x, y); g.scale(1, 0.5 + rnd() * 0.5); g.beginPath(); g.arc(0, 0, r, 0, 6.28); g.fill(); g.restore(); }
+    const t = makeTex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+
+// ---- вывески квартала (строятся лениво) ----
+function signTexture(sign, lit) {
+    const key = lit ? 'on' : 'off';
+    if (sign.tex[key]) return sign.tex[key];
+    let t;
+    if (sign.kind === 'vsign') t = texVertical(sign, lit);
+    else if (sign.kind === 'lantern') t = texLantern(sign, lit);
+    else if (sign.kind === 'noren') t = texNoren(sign, lit);
+    else t = texHorizontal(sign, lit);
+    sign.tex[key] = t; return t;
+}
+function setSignLit(sign, lit) {
+    const t = signTexture(sign, lit);
+    sign.meshes.forEach((m) => { m.material.map = t; m.material.needsUpdate = true; });
+    if (sign.glow) sign.glow.forEach((g) => { g.visible = lit; });
+}
+function buildBlock(b) {
+    if (b.built) return;
+    b.built = true;
+    const g = new THREE.Group(); b.group = g; signsGroup.add(g);
+    b.signs.forEach((s) => {
+        s.meshes = []; s.glow = [];
+        const col = s.kind === 'lantern' ? (s.white ? '#ffd79a' : '#ff7a3a') : (s.kind === 'noren' ? '#ffc080' : s.color);
+        if (s.kind === 'vsign') {
+            const geo = new THREE.PlaneGeometry(s.w, s.h);
+            const x = s.side * (W2 - 0.12 - s.w / 2), y = (s.y0 + s.y1) / 2;
+            [0, Math.PI].forEach((ry) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: signTexture(s, s.isLit && s.state !== 'due'), fog: true })); m.position.set(x, y, s.z + (ry ? -0.03 : 0.03)); m.rotation.y = ry; m.userData.sign = s; g.add(m); s.meshes.push(m); });
+            if (s.state === 'worn') s.meshes.forEach((m) => { m.rotation.z = (s.seed % 2 ? 1 : -1) * 0.04; });
+            // кронштейны
+            const br = new THREE.Mesh(new THREE.BoxGeometry(W2 - Math.abs(x) + 0.05, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: 0x0a0a0e }));
+            br.position.set(s.side * (W2 - (W2 - Math.abs(x)) / 2), s.y1 - 0.05, s.z); g.add(br);
+            const br2 = br.clone(); br2.position.y = s.y0 + 0.08; g.add(br2);
+            // свет на стене и на земле
+            const wg = new THREE.Mesh(new THREE.PlaneGeometry(s.h * 1.6, s.h * 1.6), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(col), transparent: true, opacity: 0.35 * s.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
+            wg.position.set(s.side * (W2 - 0.02), y, s.z); wg.rotation.y = -s.side * Math.PI / 2; g.add(wg); s.glow.push(wg);
+            const gg = new THREE.Mesh(new THREE.PlaneGeometry(s.w * 3.5, s.h * 1.2), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(col), transparent: true, opacity: 0.22 * s.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
+            gg.rotation.x = -Math.PI / 2; gg.position.set(x, 0.015, s.z); g.add(gg); s.glow.push(gg);
+        } else if (s.kind === 'lantern') {
+            const geo = new THREE.SphereGeometry(s.r, 16, 12);
+            const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: signTexture(s, s.isLit && s.state !== 'due'), fog: true }));
+            const x = s.side * (W2 - 0.5);
+            m.position.set(x, s.y, s.z); m.scale.y = 1.35; m.userData.sign = s; g.add(m); s.meshes.push(m);
+            const cap = new THREE.Mesh(new THREE.CylinderGeometry(s.r * 0.45, s.r * 0.45, 0.05, 10), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+            cap.position.set(x, s.y + s.r * 1.35, s.z); g.add(cap); const cap2 = cap.clone(); cap2.position.y = s.y - s.r * 1.35; g.add(cap2);
+            g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x, s.y + s.r * 1.35, s.z), new THREE.Vector3(x, th.awning - 0.1, s.z)]), new THREE.LineBasicMaterial({ color: 0x000000 })));
+            const hl = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: new THREE.Color(col), transparent: true, opacity: 0.5 * s.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
+            hl.position.set(x, s.y, s.z); hl.scale.set(s.r * 6, s.r * 6, 1); g.add(hl); s.glow.push(hl);
+            const gg = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.6), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(col), transparent: true, opacity: 0.15 * s.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
+            gg.rotation.x = -Math.PI / 2; gg.position.set(x, 0.015, s.z); g.add(gg); s.glow.push(gg);
+        } else { // фасадные: норэн, короб
+            const geo = new THREE.PlaneGeometry(s.len, s.hh);
+            const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: signTexture(s, s.isLit && s.state !== 'due'), fog: true, side: THREE.DoubleSide }));
+            m.position.set(s.side * (W2 - 0.06), s.y0 + s.hh / 2, s.z - s.len / 2); m.rotation.y = -s.side * Math.PI / 2; m.userData.sign = s; g.add(m); s.meshes.push(m);
+            if (s.kind === 'noren') { const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), new THREE.MeshBasicMaterial({ color: s.isLit ? 0xffe6b0 : 0x3a3024 })); lamp.position.set(s.side * (W2 - 0.15), s.y0 + s.hh + 0.25, s.z - s.len / 2); g.add(lamp); }
+            const gg = new THREE.Mesh(new THREE.PlaneGeometry(s.len * 1.3, 2.2), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(col), transparent: true, opacity: 0.2 * s.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
+            gg.rotation.x = -Math.PI / 2; gg.position.set(s.side * (W2 - 0.9), 0.015, s.z - s.len / 2); g.add(gg); s.glow.push(gg);
+        }
+        if (s.state === 'due') dynSigns.push(s);
+        if (!s.isLit || s.state === 'due') s.glow.forEach((x) => { x.visible = false; });
+    });
+}
+function disposeBlock(b) {
+    if (!b.built) return;
+    b.built = false;
+    signsGroup.remove(b.group);
+    b.group.traverse((m) => { if (m.geometry) m.geometry.dispose(); if (m.material) (Array.isArray(m.material) ? m.material : [m.material]).forEach((x) => x.dispose()); });
+    b.signs.forEach((s) => { Object.values(s.tex).forEach((t) => t.dispose()); s.tex = {}; s.meshes = []; const i = dynSigns.indexOf(s); if (i >= 0) dynSigns.splice(i, 1); });
+    b.group = null;
+}
+function blockAt(z) { for (let i = 0; i < blocks.length; i++) if (z <= blocks[i].z0 + 4 && z > blocks[i].z1) return i; return z > 0 ? 0 : blocks.length - 1; }
+function ensureBlocks() {
+    const bi = blockAt(camera.position.z);
+    blocks.forEach((b, i) => { if (Math.abs(i - bi) <= 1) buildBlock(b); else if (Math.abs(i - bi) > 2) disposeBlock(b); });
+    return bi;
+}
+
+// ---- дождь и пар ----
+let rain = null;
+function buildRain() {
+    if (rain) { scene.remove(rain); rain.geometry.dispose(); rain = null; }
+    if (!th.rain) return;
+    const n = 1400, pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * 14; pos[i * 3 + 1] = Math.random() * 14; pos[i * 3 + 2] = (Math.random() - 0.5) * 24; }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    rain = new THREE.Points(geo, new THREE.PointsMaterial({ map: streakTex, size: 0.16, transparent: true, opacity: 0.4, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true }));
+    rain.frustumCulled = false; scene.add(rain);
+}
+const steam = [];
+function buildSteam() {
+    for (let i = 0; i < 4; i++) {
+        const side = i % 2 ? 1 : -1;
+        for (let k = 0; k < 6; k++) {
+            const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: 0xffffff, transparent: true, opacity: 0.12, depthWrite: false }));
+            sp.userData = { side, vent: i, age: Math.random() * 3, life: 2.6 + Math.random(), dx: (Math.random() - 0.5) * 0.4 };
+            scene.add(sp); steam.push(sp);
+        }
+    }
+}
+
+// ---- управление ----
+let yaw = 0, pitch = 0; // yaw 0 = смотрим вдоль -z
+const move = { f: 0, s: 0 };
+let autoWalk = false;
+const joy = { active: false, id: null, x0: 0, y0: 0, dx: 0, dy: 0 };
+let look = null, tapStart = null;
+const joyEl = document.getElementById('joy'), joyKnob = document.getElementById('joy-knob');
+canvas.addEventListener('pointerdown', (e) => {
+    if (e.clientX < innerWidth * 0.42 && e.clientY > innerHeight * 0.55 && e.pointerType === 'touch') { joy.active = true; joy.id = e.pointerId; joy.x0 = e.clientX; joy.y0 = e.clientY; joyEl.style.left = (e.clientX - 50) + 'px'; joyEl.style.top = (e.clientY - 50) + 'px'; joyEl.classList.add('on'); return; }
+    look = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false }; tapStart = { x: e.clientX, y: e.clientY, t: performance.now() };
+});
+window.addEventListener('pointermove', (e) => {
+    if (joy.active && e.pointerId === joy.id) { joy.dx = clamp((e.clientX - joy.x0) / 50, -1, 1); joy.dy = clamp((e.clientY - joy.y0) / 50, -1, 1); joyKnob.style.transform = `translate(${joy.dx * 30}px, ${joy.dy * 30}px)`; return; }
+    if (look && e.pointerId === look.id) { const dx = e.clientX - look.x, dy = e.clientY - look.y; if (Math.abs(dx) + Math.abs(dy) > 6) look.moved = true; yaw -= dx * 0.004; pitch = clamp(pitch - dy * 0.003, -0.9, 0.9); look.x = e.clientX; look.y = e.clientY; }
+});
+window.addEventListener('pointerup', (e) => {
+    if (joy.active && e.pointerId === joy.id) { joy.active = false; joy.dx = joy.dy = 0; joyKnob.style.transform = ''; joyEl.classList.remove('on'); return; }
+    if (look && e.pointerId === look.id) { if (!look.moved && tapStart && performance.now() - tapStart.t < 450) tap(e.clientX, e.clientY); look = null; }
+});
+const keys = {};
+window.addEventListener('keydown', (e) => { keys[e.code] = true; if (e.code === 'Escape') closeSheet(); if (e.code === 'Space') { e.preventDefault(); toggleWalk(); } });
+window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+function toggleWalk() { autoWalk = !autoWalk; document.getElementById('walk').classList.toggle('on', autoWalk); }
+document.getElementById('walk').addEventListener('click', toggleWalk);
+
+const ray = new THREE.Raycaster();
+function tap(x, y) {
+    ray.setFromCamera(new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1), camera);
+    const hits = ray.intersectObjects(signsGroup.children, true);
+    const h = hits.find((o) => o.object.userData.sign && !o.object.userData.sign.deco);
+    if (h) openSheet(h.object.userData.sign);
+}
+
+// ---- карточка ----
+const STATE_LABEL = { lit: 'выучено', warm: 'учу', new: 'новое', due: 'пора повторить', worn: 'забывается' };
+const sheet = document.getElementById('sheet');
+let current = null, openedAt = 0;
+function openSheet(s) {
+    current = s; const w = s.word;
+    document.getElementById('s-kanji').textContent = w.kanji || w.kana;
+    document.getElementById('s-kana').textContent = w.kana && w.kana !== w.kanji ? w.kana : '';
+    document.getElementById('s-tr').textContent = w.translation || '';
+    const st = document.getElementById('s-state'); st.textContent = STATE_LABEL[s.state] || s.state; st.className = 'state ' + s.state; st.style.setProperty('--c', s.color);
+    const jl = document.getElementById('s-jlpt'); jl.textContent = w._jlpt ? 'N' + w._jlpt : ''; jl.hidden = !w._jlpt;
+    document.getElementById('s-kanji').style.setProperty('--c', s.color);
+    document.getElementById('s-review').hidden = s.state === 'lit';
+    sheet.classList.add('open'); openedAt = performance.now();
+}
+function closeSheet() { sheet.classList.remove('open'); current = null; }
+document.getElementById('s-close').addEventListener('click', closeSheet);
+sheet.addEventListener('click', (e) => { if (e.target === sheet && performance.now() - openedAt > 400) closeSheet(); });
+document.getElementById('s-review').addEventListener('click', () => {
+    if (!current) return; const s = current; closeSheet();
+    s.word._state = 'lit'; s.state = 'lit'; s.inten = 1; s.isLit = true; s.dead = -1; s.tex = {};
+    s.meshes.forEach((m) => { m.rotation.z = 0; });
+    s.anim = { t0: performance.now() }; if (dynSigns.indexOf(s) < 0) dynSigns.push(s);
+    s.glow.forEach((g) => { g.material.opacity = Math.min(0.5, g.material.opacity / 0.55); });
+    updateHud(); toast(source === 'demo' ? 'Вывеска зажглась (в макете расписание не меняется)' : 'Вывеска зажглась — повторение считается в тренажёре');
+});
+
+// ---- HUD ----
+function plural(n, a, b, c) { const m = n % 10, h = n % 100; if (m === 1 && h !== 11) return a; if (m >= 2 && m <= 4 && (h < 10 || h >= 20)) return b; return c; }
+let hudBlock = -1;
+function updateHud(force) {
+    const bi = blockAt(camera.position.z);
+    const lit = litCount();
+    document.getElementById('lit-n').textContent = lit;
+    document.getElementById('lit-l').textContent = plural(lit, 'вывеска горит', 'вывески горят', 'вывесок горит');
+    if (bi !== hudBlock || force) {
+        hudBlock = bi; const q = blocks[bi].q;
+        document.getElementById('q-emoji').textContent = q.emoji || '🏮';
+        document.getElementById('q-name').textContent = q.name;
+        document.getElementById('q-sub').textContent = 'квартал ' + (bi + 1) + ' из ' + blocks.length + ' · ' + q.words.length + ' ' + plural(q.words.length, 'слово', 'слова', 'слов');
+        document.getElementById('dots').innerHTML = blocks.map((_, k) => '<i' + (k === bi ? ' class="on"' : '') + '></i>').join('');
+    }
+}
+let toastT = 0;
+function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2600); }
+
+document.getElementById('share').addEventListener('click', async () => {
+    composer.render();
+    const W = canvas.width / renderer.getPixelRatio(), H = canvas.height / renderer.getPixelRatio();
+    const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height;
+    const g = c.getContext('2d'); g.drawImage(canvas, 0, 0); g.scale(renderer.getPixelRatio(), renderer.getPixelRatio());
+    g.textBaseline = 'top'; g.shadowColor = 'rgba(0,0,0,0.8)'; g.shadowBlur = 8; g.fillStyle = '#fff'; g.font = '600 16px ' + UI;
+    g.fillText(document.getElementById('q-emoji').textContent + ' ' + document.getElementById('q-name').textContent, 18, 22);
+    g.font = '700 30px ' + UI; g.textAlign = 'right'; g.fillText(String(litCount()), W - 18, 16);
+    g.font = '500 12px ' + UI; g.fillStyle = 'rgba(255,255,255,0.75)'; g.fillText(document.getElementById('lit-l').textContent, W - 18, 50);
+    g.textAlign = 'left'; g.font = '600 13px ' + UI; g.fillStyle = 'rgba(255,255,255,0.7)'; g.fillText('animei.space · Улица слов', 18, H - 34);
+    const blob = await new Promise((res) => c.toBlob(res, 'image/png'));
+    const file = new File([blob], 'animei-street.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'Улица слов' }); return; } catch (e) { /* отменили */ } }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+});
+
+// ---- настройки ----
+const panel = document.getElementById('panel');
+document.getElementById('gear').addEventListener('click', () => panel.classList.toggle('open'));
+document.getElementById('panel-close').addEventListener('click', () => panel.classList.remove('open'));
+panel.querySelectorAll('[data-src]').forEach((b) => { b.classList.toggle('on', b.dataset.src === source); b.addEventListener('click', () => { source = b.dataset.src; saveSet({ source }); panel.querySelectorAll('[data-src]').forEach((x) => x.classList.toggle('on', x === b)); load(); }); });
+panel.querySelectorAll('[data-theme]').forEach((b) => { b.classList.toggle('on', b.dataset.theme === th.id); });
+const rainBtn = panel.querySelector('[data-rain]'); rainBtn.hidden = !th.rain; rainBtn.classList.toggle('on', opts.rain);
+rainBtn.addEventListener('click', () => { opts.rain = !opts.rain; saveSet({ rain: opts.rain }); rainBtn.classList.toggle('on', opts.rain); if (rain) rain.visible = opts.rain; });
+const reflBtn = panel.querySelector('[data-reflect]'); reflBtn.classList.toggle('on', opts.reflect);
+reflBtn.addEventListener('click', () => { opts.reflect = !opts.reflect; saveSet({ reflect: opts.reflect }); reflBtn.classList.toggle('on', opts.reflect); buildWorld(); });
+
+// ---- загрузка ----
+function load() {
+    data = source === 'real' ? D.loadReal() : D.buildDemo();
+    if (source === 'real' && !data.words.length) { toast('В этом браузере нет слов — показан встроенный набор'); data = D.buildDemo(); source = 'demo'; }
+    const go = () => {
+        data.words.forEach((w) => { w._state = D.wordState(w, data, today); w._color = colorFor(w); });
+        quarters = D.buildQuarters(data, 60);
+        blocks.forEach(disposeBlock); dynSigns.length = 0;
+        planBlocks(); buildWorld(); buildRain();
+        camera.position.set(0, 1.6, 2); yaw = 0; pitch = 0.02;
+        ensureBlocks(); updateHud(true);
+    };
+    if (source === 'real') D.loadJlpt().then((m) => { jlptMap = m || {}; go(); }); else go();
+}
+
+function resize() {
+    const w = innerWidth, h = innerHeight;
+    renderer.setSize(w, h, false); composer.setSize(w, h);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    bloom.resolution.set(w / 2, h / 2);
+}
+window.addEventListener('resize', resize);
+resize();
+buildSteam();
+
+// ---- кадр ----
+let last = performance.now(), fpsN = 0, fpsT = last, fpsV = 60, lowFrames = 0;
+const dir = new THREE.Vector3(), rightV = new THREE.Vector3();
+function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const t = now / 1000;
+    // движение
+    let f = 0, s = 0;
+    if (keys.KeyW || keys.ArrowUp) f += 1; if (keys.KeyS || keys.ArrowDown) f -= 1; if (keys.KeyA || keys.ArrowLeft) s -= 1; if (keys.KeyD || keys.ArrowRight) s += 1;
+    if (joy.active) { f += -joy.dy; s += joy.dx; }
+    if (autoWalk && !f) { f = 0.75; yaw = lerp(yaw, Math.sin(t * 0.25) * 0.08, 0.02); }
+    const speed = 2.2;
+    dir.set(-Math.sin(yaw), 0, -Math.cos(yaw)); rightV.set(Math.cos(yaw), 0, -Math.sin(yaw));
+    camera.position.addScaledVector(dir, f * speed * dt).addScaledVector(rightV, s * speed * dt);
+    camera.position.x = clamp(camera.position.x, -W2 + 0.7, W2 - 0.7);
+    camera.position.z = clamp(camera.position.z, -streetLen + 4, 3);
+    if (autoWalk && camera.position.z <= -streetLen + 4.1) { camera.position.z = 2; }
+    camera.position.y = 1.6 + (f ? Math.sin(t * 7) * 0.03 : 0);
+    camera.rotation.set(0, 0, 0, 'YXZ'); camera.rotation.y = yaw; camera.rotation.x = pitch;
+    // мигание и зажигание
+    for (let i = dynSigns.length - 1; i >= 0; i--) {
+        const sg = dynSigns[i]; let on;
+        if (sg.anim) { const k = (now - sg.anim.t0) / 1000; const seq = [0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1]; const idx = Math.floor(k / 0.07); if (idx >= seq.length) { sg.anim = null; dynSigns.splice(i, 1); setSignLit(sg, true); continue; } on = !!seq[idx]; }
+        else { const p = ((t * 0.42 + sg.seed * 0.37) % 1 + 1) % 1; const buzz = Math.sin(t * 37 + sg.seed) > -0.92; on = (p < 0.58 && buzz) || (p > 0.66 && p < 0.7) || (p > 0.76 && p < 0.79); }
+        if (sg._on !== on) { sg._on = on; setSignLit(sg, on); }
+    }
+    // дождь вокруг камеры
+    if (rain && opts.rain) {
+        const p = rain.geometry.attributes.position.array;
+        for (let i = 0; i < p.length; i += 3) { p[i + 1] -= 9 * dt; if (p[i + 1] < 0) { p[i + 1] = 12 + Math.random() * 2; p[i] = (Math.random() - 0.5) * 14; p[i + 2] = (Math.random() - 0.5) * 24; } }
+        rain.geometry.attributes.position.needsUpdate = true;
+        rain.position.set(camera.position.x, 0, camera.position.z - 9);
+    }
+    // пар у стен впереди камеры
+    steam.forEach((sp) => {
+        const u = sp.userData; u.age += dt; if (u.age > u.life) u.age = 0;
+        const k = u.age / u.life;
+        const baseZ = camera.position.z - 5 - u.vent * 4.5;
+        sp.position.set(u.side * (W2 - 0.3) - u.side * (0.3 + k * 0.9) + u.dx * k, 0.5 + k * 2.4, baseZ);
+        sp.scale.setScalar(0.5 + k * 2.2); sp.material.opacity = (1 - k) * k * 0.22;
+    });
+    const bi = ensureBlocks();
+    if (bi !== hudBlock) updateHud();
+    if (opts.bloom) composer.render(); else renderer.render(scene, camera);
+    // адаптация: если fps просел — выключаем отражения, потом bloom
+    fpsN++; if (now - fpsT > 1000) { fpsV = fpsN; fpsN = 0; fpsT = now; if (fpsV < 38 && !params.has("noadapt")) lowFrames++; else lowFrames = 0; if (lowFrames >= 3) { lowFrames = 0; if (opts.reflect) { opts.reflect = false; reflBtn.classList.remove('on'); buildWorld(); toast('Отражения выключены ради плавности'); } else if (opts.bloom) { opts.bloom = false; toast('Свечение упрощено ради плавности'); } } if (params.has('fps')) document.getElementById('fps').textContent = fpsV + ' fps'; }
+    requestAnimationFrame(frame);
+}
+load();
+requestAnimationFrame(frame);
+window.__walk = { camera, blocks, scene, get fps() { return fpsV; } };
+if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('700 20px "Noto Sans JP"')]).then(() => { blocks.forEach((b) => { if (b.built) { disposeBlock(b); } }); ensureBlocks(); }).catch(() => {});

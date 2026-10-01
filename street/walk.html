@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Прогулка — Улица слов · Animei</title>
+    <meta name="theme-color" content="#05050a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+    <link href="./street.css" rel="stylesheet">
+    <style>
+        #joy { position: absolute; width: 100px; height: 100px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.06); display: none; pointer-events: none; }
+        #joy.on { display: block; }
+        #joy-knob { position: absolute; left: 30px; top: 30px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.75); box-shadow: 0 0 14px rgba(124,140,248,0.8); }
+        #walk.on { background: linear-gradient(135deg, #8d9bff, #6a7af0); box-shadow: 0 6px 22px rgba(124,140,248,0.45); }
+        .hint { font-size: 11px; color: var(--muted); font-weight: 500; }
+        #fps { position: absolute; left: 10px; bottom: 6px; font: 11px monospace; color: #0f0; }
+        #nowebgl { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 30px; text-align: center; background: #05050a; color: #fff; font-size: 15px; }
+    </style>
+    <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+    </script>
+</head>
+<body data-theme="shinjuku">
+<!--
+  Улица слов, 3D-прогулка: Three.js (CDN), процедурная сцена, вывески — canvas-текстуры.
+  Телефон: тянуть по экрану — осмотреться, джойстик слева внизу — идти, кнопка «Прогулка» — идти самому.
+  ПК: WASD/стрелки, мышь, пробел — автопрогулка. Тап по вывеске — карточка.
+-->
+<canvas id="scene"></canvas>
+<div class="scrim top"></div><div class="scrim bottom"></div>
+<div id="joy"><div id="joy-knob"></div></div>
+<div class="hud top">
+    <div class="q">
+        <div class="name"><span id="q-emoji"></span><span id="q-name"></span></div>
+        <div class="sub" id="q-sub"></div>
+    </div>
+    <div class="count"><b id="lit-n">0</b><span id="lit-l">вывесок горит</span></div>
+</div>
+<div id="dots"></div>
+<div class="hud bottom">
+    <div class="legend">
+        <span><i style="--c:#36e2ff"></i>выучено</span>
+        <span><i class="warm"></i>учу</span>
+        <span><i class="new"></i>новое</span>
+        <span><i class="due"></i>пора повторить</span>
+        <span><i class="worn"></i>забывается</span>
+    </div>
+    <div class="hint">Тяни по экрану — осмотреться · палец слева внизу — идти · тап по вывеске — слово</div>
+    <div class="actions">
+        <button class="btn ghost" id="walk">▶ Прогулка</button>
+        <button class="btn" id="share">Поделиться</button>
+        <span class="spacer"></span>
+        <button class="btn ghost" id="gear" aria-label="Настройки">⚙</button>
+    </div>
+</div>
+<div id="panel">
+    <button id="panel-close" aria-label="Закрыть">×</button>
+    <h4>Данные</h4>
+    <div class="opts"><button class="opt" data-src="demo">Встроенный набор</button><button class="opt" data-src="real">Мои слова</button></div>
+    <h4>Улица</h4>
+    <div class="opts"><a class="opt" data-theme="shinjuku" href="./walk.html?theme=shinjuku">Синдзюку</a><a class="opt" data-theme="yokocho" href="./walk.html?theme=yokocho">Ёкотё</a></div>
+    <h4>Графика</h4>
+    <div class="opts"><button class="opt" data-rain>Дождь</button><button class="opt" data-reflect>Отражения</button></div>
+</div>
+<div id="sheet">
+    <div class="card">
+        <div class="row"><div id="s-kanji" class="jp"></div><div id="s-kana" class="jp"></div><div id="s-jlpt"></div></div>
+        <div id="s-tr"></div>
+        <div id="s-state" class="state"></div>
+        <div class="acts"><button class="btn" id="s-review">Повторить</button><button class="btn ghost" id="s-close">Закрыть</button></div>
+    </div>
+</div>
+<div id="toast"></div>
+<div id="fps"></div>
+<div id="nowebgl">Для 3D-прогулки нужен WebGL и доступ к сети (библиотека Three.js грузится с CDN). Откройте плоскую версию: shinjuku.html</div>
+<script src="./street-data.js"></script>
+<script type="module" src="./walk.js"></script>
+<script>window.addEventListener('error', function (e) { if (/three|import/i.test(String(e.message)) || !window.__walk) { setTimeout(function () { if (!window.__walk) document.getElementById('nowebgl').style.display = 'flex'; }, 4000); } });</script>
+</body>
+</html>
