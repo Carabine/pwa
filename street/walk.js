@@ -522,7 +522,7 @@ function buildWorld() {
         const body = new THREE.Mesh(new THREE.CapsuleGeometry(h * 0.16, h * 0.5, 4, 8), fig); body.position.y = h * 0.45; g.add(body);
         const head = new THREE.Mesh(new THREE.SphereGeometry(h * 0.075, 8, 8), fig); head.position.y = h * 0.88; g.add(head);
         if (th.umbrellas && rnd() < 0.8) { const um = new THREE.Mesh(new THREE.SphereGeometry(h * 0.38, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), lamb(['#1b1b24', '#22243a', '#2a1a2a', '#c8d8ff'][Math.floor(rnd() * 4)], { side: THREE.DoubleSide })); um.position.y = h * 1.05; um.scale.y = 0.35; g.add(um); }
-        g.position.set(x, 0, z); g.rotation.y = rnd() * 6.28; world.add(g); addCollider(g, null, 0.2);
+        g.position.set(x, 0, z); g.rotation.y = rnd() * 6.28; world.add(g);
     }
 }
 function texPuddlesInverse(seed) {
