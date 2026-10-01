@@ -554,7 +554,20 @@ function glossKey(text) {
 // Одно значение поглощает другое, если целиком содержит его слова:
 // «уйти» и «уйти назад» в карточке — по сути один и тот же перевод.
 function glossCovers(a, b) {
-    return ` ${a} `.includes(` ${b} `);
+    return ` ${a} `.includes(` ${b} `) || sameStem(a, b);
+}
+
+// Одно слово в разных формах — тоже один перевод: jisho даёт «eggs» и «egg»,
+// после перевода в карточку попадало «яйца; яйцо». Считаем формы одним словом,
+// если это одиночные слова с общей основой, а расходятся только 1–2 последние
+// буквы (яйца/яйцо, окно/окна, egg/eggs).
+function sameStem(a, b) {
+    if (a === b || a.includes(' ') || b.includes(' ')) return false;
+    const n = Math.min(a.length, b.length);
+    if (n < 3) return false;
+    let i = 0;
+    while (i < n && a[i] === b[i]) i++;
+    return i >= n - 1 && Math.max(a.length, b.length) - i <= 2;
 }
 
 // Короткий перевод для карточки: самые «очевидные» значения словарной статьи.
