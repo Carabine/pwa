@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.614';
+const APP_VERSION = 'v0.0.615';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -469,6 +469,24 @@ if ('serviceWorker' in navigator) {
         }
     }
 
+    // Объяснение «нет сети» — ОДИН раз на весь период без сети, а не на каждой
+    // странице: состояние страницы при переходе сбрасывается, и сообщение
+    // вылезало снова на главной, в повторении, в словах. Флаг в sessionStorage
+    // живёт между страницами вкладки; «Сеть вернулась» — только если про
+    // пропажу говорили.
+    // Флаг — отметка времени, а не «да»: сеть может вернуться между страницами
+    // (новая страница стартует «онлайн» без перехода и флаг не снимет), и тогда
+    // следующая пропажа сети прошла бы молча. Считаем, что говорили, если
+    // последняя страница без сети была не дольше 10 минут назад.
+    const TOLD_KEY = 'animei:offlineTold';
+    const TOLD_TTL = 10 * 60 * 1000;
+    const told = () => {
+        try { return Date.now() - Number(sessionStorage.getItem(TOLD_KEY) || 0) < TOLD_TTL; } catch { return false; }
+    };
+    const setTold = (v) => {
+        try { if (v) sessionStorage.setItem(TOLD_KEY, String(Date.now())); else sessionStorage.removeItem(TOLD_KEY); } catch { /* недоступен */ }
+    };
+
     let shown = false;
     function setState(offline) {
         if (offline === shown) return;
@@ -478,10 +496,15 @@ if ('serviceWorker' in navigator) {
         if (offline) {
             // Один раз объясняем, что случилось и что осталось можно: значок в
             // шапке дальше держит статус, но сам по себе он этого не расскажет.
+            const already = told();
+            setTold(true);              // продлеваем: эта страница тоже без сети
+            if (already) return;
             showSnackbar(fullText(), { duration: 3500 });
         } else {
             // Тихо подтверждаем возврат: пользователь мог ждать именно этого,
             // чтобы открыть аниме или каталог.
+            if (!told()) return;
+            setTold(false);
             showSnackbar(t('offline.back'), { duration: 2500 });
         }
     }
