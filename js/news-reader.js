@@ -241,8 +241,9 @@
                 });
                 state.ctx.saved.add(base);
                 document.querySelectorAll('.ntok--learnable[data-b="' + CSS.escape(base) + '"]').forEach((n) => n.classList.add('ntok--saved'));
-                saveBtn.textContent = C.tr('popup.saved');
-                if (typeof showSnackbar === 'function') showSnackbar(C.tr('popup.savedSnack'), { type: 'success' });
+                if (typeof markDone === 'function') markDone(saveBtn, C.tr('popup.saved'));
+                else saveBtn.textContent = C.tr('popup.saved');
+                if (typeof showSnackbarOnce === 'function') showSnackbarOnce('savedWord', C.tr('popup.savedSnack'), { type: 'success' });
                 if (typeof animeiTrack === 'function') animeiTrack('news_word_saved', { word: base });
             } catch (err) {
                 saveBtn.disabled = false;

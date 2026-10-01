@@ -28,18 +28,20 @@ async function submitAuth() {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
+    const submitBtn = document.getElementById('submit-btn');
     if (!email || !password) {
-        showSnackbar(t('auth.needFields'), { duration: 3000, type: 'error' });
+        formMessage(submitBtn, t('auth.needFields'));
         return;
     }
+    formMessage(submitBtn, '');
 
     authSubmitting = true;
-    const submitBtn = document.getElementById('submit-btn');
     if (submitBtn) submitBtn.disabled = true;
 
     const path = authMode === 'login' ? '/api/v1/auth/login' : '/api/v1/auth/register';
     try {
-        const { data } = await client.post(domain + path, { email, password }, { authorization: false });
+        // silentErrors — ошибку покажем у формы, без общего тоста сверху.
+        const { data } = await client.post(domain + path, { email, password }, { authorization: false, silentErrors: true });
         setRefreshedTokens(data);
         // Остатки ПРЕДЫДУЩЕГО аккаунта (карточки, расписание, колоды, «уже
         // знаю») чистим до того, как новая сессия начнёт синк: иначе они
@@ -50,13 +52,13 @@ async function submitAuth() {
         // Переносим слова, сохранённые до входа, в аккаунт.
         await syncGuestWordsToAccount();
         if (window.animeiTrack) animeiTrack('auth', authMode === 'login' ? 'login' : 'register');
-        showSnackbar(t('auth.success'), { duration: 2000, type: 'success' });
+        markDone(submitBtn, t('auth.success'));
         window.location.href = '../index.html';
     } catch (err) {
         // Код с сервера точнее общего «проверь почту и пароль» (занятая почта,
         // лимит попыток), но текст берём из словаря, а не с сервера.
         const msg = err?.response?.data?.code ? errorText(err) : t('auth.error');
-        showSnackbar(msg, { duration: 4000, type: 'error' });
+        formMessage(submitBtn, msg);
         // Ошибка — разблокируем форму для повторной попытки. При успехе оставляем
         // заблокированной: идёт навигация на главную.
         authSubmitting = false;

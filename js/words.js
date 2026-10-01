@@ -169,19 +169,36 @@ function clipBadgeHtml(w) {
     return `<span class="word-card__clip word-card__clip--pending" title="${esc(t('words.videoPreparing'))}">⏳</span>`;
 }
 
-async function removeWord(wordData) {
-    await deleteWord(wordData.id);
-    if (window.Decks) Decks.forgetWord(wordData.id);   // и из всех колод
-    selected.delete(wordData.id);
-    allWords = allWords.filter((w) => w.id !== wordData.id);
+// Убрать слова с экрана сразу; на сервер — когда истечёт «Отменить»
+// (deleteWordsLater в words-store.js). Отмена возвращает их на прежние места.
+function removeWordsWithUndo(ids, message) {
+    const idSet = new Set(ids);
+    const snapshot = allWords;
+    allWords = allWords.filter((w) => !idSet.has(w.id));
+    ids.forEach((id) => selected.delete(id));
     renderWords();
+    deleteWordsLater(ids, {
+        message,
+        onUndo: () => {
+            // Возвращаем, сохраняя порядок; правки за эти секунды не теряем.
+            const now = new Map(allWords.map((w) => [w.id, w]));
+            allWords = snapshot.filter((w) => idSet.has(w.id) || now.has(w.id)).map((w) => now.get(w.id) || w);
+            renderWords();
+        },
+        onDone: ({ done, failed }) => {
+            if (window.animeiTrack) animeiTrack('words_delete', String(done));
+            if (failed) {
+                showSnackbar(t('words.bulkDeleteFailed').replace('{n}', failed), { type: 'error' });
+                loadWords();
+            }
+        },
+    });
 }
 
-// Удаление одного слова — всегда с подтверждением (раньше «×» удалял мгновенно).
+// Удаление одного слова — сразу, с «Отменить» (раньше — окно «Вы уверены?»).
 function confirmRemove(wordData) {
     const name = wordData.kanji || wordData.kana || '';
-    if (!confirm(t('words.deleteConfirmOne').replace('{w}', name))) return;
-    removeWord(wordData);
+    removeWordsWithUndo([wordData.id], t('words.deletedOne').replace('{w}', name));
 }
 
 // Открыть карточку слова: правка полей + «В колоды» и «Удалить» в самой модалке
@@ -281,7 +298,7 @@ function openWordActions(anchor, wordData) {
 
 // Заморозить/вернуть слово. Список перерисовываем сразу (снежинка на строке),
 // не дожидаясь сервера: правка переживёт офлайн в ящике правок.
-async function toggleFreeze(wordData) {
+async function toggleFreeze(wordData, undoable = true) {
     if (!window.Freeze) return;
     const next = !wordData.frozen;
     wordData.frozen = next;
@@ -291,7 +308,10 @@ async function toggleFreeze(wordData) {
     if (window.animeiTrack) animeiTrack('word_freeze', next ? 'on' : 'off');
     try {
         await Freeze.setWord(wordData.id, next);
-        showSnackbar(t(next ? 'words.frozenOne' : 'words.unfrozenOne'), { duration: 2500 });
+        // «Отменить» — та же заморозка обратно, уже без своего «Отменить».
+        showSnackbar(t(next ? 'words.frozenOne' : 'words.unfrozenOne'), undoable
+            ? { action: { label: t('common.undo'), onClick: () => toggleFreeze(wordData, false) } }
+            : { duration: 2500 });
     } catch (err) {
         console.error('Не удалось изменить заморозку слова', err);
         wordData.frozen = !next;
@@ -630,56 +650,13 @@ function renderBulkBar(visibleWords) {
         showSnackbar(t(next ? 'words.frozenN' : 'words.unfrozenN').replace('{n}', done), { duration: 2500 });
         exitSelect();
     });
-    bar.querySelector('#bulk-delete').addEventListener('click', async (e) => {
+    bar.querySelector('#bulk-delete').addEventListener('click', async () => {
         const ids = [...selected];
         if (!ids.length) return;
-        if (!confirm(t('words.bulkDeleteConfirm').replace('{n}', ids.length))) return;
-
-        // Удаляем ПАЧКАМИ и сразу убираем удалённое с экрана. Раньше цикл шёл
-        // строго по одному и перерисовывал список только в самом конце: на
-        // полусотне слов это больше десяти секунд, в которые ничего не
-        // происходит — выглядело как «кнопка не работает», хотя слова уже
-        // удалялись (после перезагрузки их не было).
-        const btn = e.currentTarget;
-        btn.disabled = true;
-        let done = 0;
-        let failed = 0;
-        const tick = () => {
-            // Подписи две (широкая и узкая) — прогресс пишем в обе.
-            const label = t('words.bulkDeleting').replace('{i}', done).replace('{n}', ids.length);
-            btn.querySelectorAll('.bb-wide, .bb-narrow').forEach((el) => { el.textContent = label; });
-        };
-        tick();
-
-        const queue = [...ids];
-        const drop = (id) => {
-            allWords = allWords.filter((w) => w.id !== id);
-            selected.delete(id);
-        };
-        // Четыре параллельных удаления: сервер справляется, а ждать полминуты
-        // на большом наборе незачем. Больше не берём — это чужая база и диск.
-        const workers = Array.from({ length: 4 }, async () => {
-            for (let id = queue.shift(); id; id = queue.shift()) {
-                try {
-                    await deleteWord(id);
-                    if (window.Decks) Decks.forgetWord(id);
-                    drop(id);
-                    done++;
-                } catch (err) {
-                    console.error('Не удалось удалить слово', id, err);
-                    failed++;
-                }
-                tick();
-                // Перерисовываем не на каждое слово, а каждые четыре: список
-                // тает на глазах, но и не дёргается на каждый ответ сервера.
-                if ((done + failed) % 4 === 0) renderWords();
-            }
-        });
-        await Promise.all(workers);
-        if (window.animeiTrack) animeiTrack('words_bulk', 'delete:' + done);
-
-        showSnackbar(t('words.bulkDeleted').replace('{n}', done), { duration: 3000 });
-        if (failed) showSnackbar(t('words.bulkDeleteFailed').replace('{n}', failed), { duration: 4000, type: 'error' });
+        // Сразу и с «Отменить» — вместо окна «Удалить выбранные? Их нельзя будет
+        // восстановить». Сами удаления на сервер — пачками, в deleteWordsLater.
+        if (window.animeiTrack) animeiTrack('words_bulk', 'delete:' + ids.length);
+        removeWordsWithUndo(ids, t('words.bulkDeleted').replace('{n}', ids.length));
         exitSelect();
     });
 }

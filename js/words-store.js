@@ -266,7 +266,7 @@ async function fetchWords() {
             const { data: res } = await client.get('words');
             const words = res.data ?? [];
             try { localStorage.setItem(WORDS_CACHE_KEY, JSON.stringify(words)); } catch { /* тесно в localStorage — не страшно */ }
-            return words;
+            return pendingDeletes.size ? words.filter((w) => !pendingDeletes.has(w.id)) : words;
         } catch (err) {
             const cached = lsJson(WORDS_CACHE_KEY);
             if (Array.isArray(cached)) {
@@ -290,6 +290,75 @@ async function deleteWord(id) {
     setGuestWords(getGuestWords().filter((w) => w.id !== id));
     if (typeof deleteClip === 'function') deleteClip(id);
 }
+
+// ---------- Удаление с «Отменить» ----------
+// Как в Telegram/Gmail: слово пропадает с экрана сразу, а на сервер удаление
+// уходит, когда истёк тост с «Отменить» (или его закрыли / сменил другой).
+// Раньше перед удалением было окно «Вы уверены?» — лишний шаг на каждое
+// удаление и никакого спасения, если всё же ошибся.
+// Пока удаление «висит», слово не возвращается и из fetchWords; уход со
+// страницы досылает его сразу (fetch keepalive переживает закрытие вкладки).
+const pendingDeletes = new Set();
+
+function deleteWordsLater(ids, { message, onUndo, onDone } = {}) {
+    ids = ids.filter(Boolean);
+    if (!ids.length) return;
+    ids.forEach((id) => pendingDeletes.add(id));
+    let settled = false;
+    const commit = async () => {
+        if (settled) return;
+        settled = true;
+        const queue = [...ids];
+        let done = 0, failed = 0;
+        // Четыре параллельных удаления — как было у пакетного удаления.
+        await Promise.all(Array.from({ length: Math.min(4, queue.length) }, async () => {
+            for (let id = queue.shift(); id; id = queue.shift()) {
+                try {
+                    await deleteWord(id);
+                    if (window.Decks) Decks.forgetWord(id);
+                    done++;
+                } catch (err) {
+                    console.error('Не удалось удалить слово', id, err);
+                    failed++;
+                }
+                pendingDeletes.delete(id);
+            }
+        }));
+        if (onDone) onDone({ done, failed });
+    };
+    const undo = () => {
+        if (settled) return;
+        settled = true;
+        ids.forEach((id) => pendingDeletes.delete(id));
+        if (onUndo) onUndo();
+    };
+    showSnackbar(message || t('words.bulkDeleted').replace('{n}', ids.length), {
+        action: { label: t('common.undo'), onClick: undo },
+        onClose: (reason) => { if (reason !== 'action') commit(); },
+    });
+}
+
+// Ушли со страницы, пока висел тост: удаляем сразу, иначе слово «воскреснет».
+window.addEventListener('pagehide', () => {
+    if (!pendingDeletes.size) return;
+    const ids = [...pendingDeletes];
+    pendingDeletes.clear();
+    if (!isSignedIn()) {
+        setGuestWords(getGuestWords().filter((w) => !ids.includes(w.id)));
+    } else {
+        const token = localStorage.getItem('animei:accessToken');
+        const base = (typeof BASE_URL !== 'undefined' ? BASE_URL : '/api/v1/');
+        for (const id of ids) {
+            try {
+                fetch(base + 'words/' + encodeURIComponent(id), {
+                    method: 'DELETE', keepalive: true,
+                    headers: token ? { Authorization: 'Bearer ' + token } : {},
+                });
+            } catch { /* не вышло — слово останется, это не потеря данных */ }
+        }
+    }
+    if (window.Decks) ids.forEach((id) => { try { Decks.forgetWord(id); } catch { /* */ } });
+});
 
 async function updateWord(id, patch) {
     if (isSignedIn()) {

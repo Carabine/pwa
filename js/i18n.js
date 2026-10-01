@@ -563,6 +563,8 @@ const I18N = {
         'decks.noDeck': 'Без колоды',
         'decks.noneEmpty': 'Все слова разложены по колодам',
         'words.deleteConfirmOne': 'Удалить слово «{w}»?',
+        'words.deletedOne': 'Слово «{w}» удалено',
+        'common.undo': 'Отменить',
         'words.actions': 'Действия',
         'words.copy': 'Скопировать',
         'words.copied': 'Скопировано',

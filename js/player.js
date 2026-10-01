@@ -3416,8 +3416,9 @@ popupSave.addEventListener('click', async () => {
         updateCoverage();
         if (window.animeiTrack) window.animeiTrack('save_word', ctx.tok.base);
         rememberSessionWord(savedWord);
-        popupSave.textContent = t('popup.saved');
-        showSnackbar(t('popup.savedSnack'), { duration: 3000 });
+        // Подтверждение — на самой кнопке; куда попадёт слово — один раз.
+        markDone(popupSave, t('popup.saved'));
+        showSnackbarOnce('savedWord', t('popup.savedSnack'), { type: 'success' });
         state.activeCueIndex = -2;
     } catch (err) {
         console.error(err);

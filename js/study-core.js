@@ -1143,31 +1143,42 @@
                 // текущую не ломаем: выдёргивать карточку из-под ответа хуже.
                 onFreeze: window.Freeze ? async () => {
                     const w = current.word;
-                    const next = !w.frozen;
-                    try {
-                        await Freeze.setWord(w.id, next);
-                        w.frozen = next;
-                        showSnackbar(t(next ? 'words.frozenOne' : 'words.unfrozenOne'), { duration: 2500 });
-                    } catch (err) {
-                        console.error('Не удалось изменить заморозку слова', err);
-                        showSnackbar(t('words.freezeFailed'), { duration: 3500, type: 'error' });
-                    }
+                    const setFrozen = async (next, undoable) => {
+                        try {
+                            await Freeze.setWord(w.id, next);
+                            w.frozen = next;
+                            showSnackbar(t(next ? 'words.frozenOne' : 'words.unfrozenOne'), undoable
+                                ? { action: { label: t('common.undo'), onClick: () => setFrozen(!next, false) } }
+                                : { duration: 2500 });
+                        } catch (err) {
+                            console.error('Не удалось изменить заморозку слова', err);
+                            showSnackbar(t('words.freezeFailed'), { type: 'error' });
+                        }
+                    };
+                    setFrozen(!w.frozen, true);
                 } : null,
-                onDelete: async () => {
-                    const w = current.word;
+                // Удаление — сразу и с «Отменить» (раньше — окно «Вы уверены?»):
+                // карточка уходит из очереди, на сервер — когда истечёт тост.
+                onDelete: () => {
+                    const item = current;
+                    const w = item.word;
                     const name = w.kanji || w.kana || '';
-                    if (!confirm(t('words.deleteConfirmOne').replace('{w}', name))) return;
-                    try {
-                        await deleteWord(w.id);
-                    } catch {
-                        showSnackbar(t('study.deleteFailed'), { duration: 3500, type: 'error' });
-                        return;
-                    }
-                    if (window.Decks) Decks.forgetWord(w.id);
-                    // Выкидываем все вхождения слова из очереди и идём дальше.
+                    const removed = queue.filter((it) => it.word && it.word.id === w.id);
                     queue = queue.filter((it) => !(it.word && it.word.id === w.id));
                     total = Math.max(1, total - 1);
                     advance();
+                    deleteWordsLater([w.id], {
+                        message: t('words.deletedOne').replace('{w}', name),
+                        onUndo: () => {
+                            // Вернуть карточку: следующей после текущей.
+                            queue.unshift(item, ...removed);
+                            total++;
+                            if (!current) advance(); else renderStats();
+                        },
+                        onDone: ({ failed }) => {
+                            if (failed) showSnackbar(t('study.deleteFailed'), { type: 'error' });
+                        },
+                    });
                 },
             });
         }
@@ -2284,8 +2295,8 @@
                 addBtn.disabled = true;
                 addBtn.textContent = t('popup.saving');
                 try {
-                    const n = await addStarterWords(STARTER_CORE_COUNT);
-                    showSnackbar(t('starter.added') + ' ' + n, { duration: 3000 });
+                    // Результат и так на виду: появились карточки и счётчик «Новые».
+                    await addStarterWords(STARTER_CORE_COUNT);
                     restart();
                 } catch (err) {
                     console.error(err);
@@ -2362,8 +2373,7 @@
                     allBtn.textContent = t('popup.saving');
                     try {
                         const n = await addStarterWords(Infinity, deckCards);
-                        showSnackbar(t('starter.added') + ' ' + n, { duration: 3000 });
-                        allBtn.textContent = t('starter.addedOne');
+                        markDone(allBtn, t('starter.addedOne') + ' · ' + n);
                     } catch (err) {
                         console.error(err);
                         allBtn.disabled = false;

@@ -836,12 +836,12 @@ document.getElementById("save-confirm").addEventListener("click", async () => {
     if (window.animeiTrack) window.animeiTrack("save_word", payload.kanji);
     closeSaveModal();
     if (typeof showSnackbar === "function") {
-      showSnackbar("Word saved to dictionary", { duration: 3000, type: "success" });
+      showSnackbar(t("popup.savedSnack"), { type: "success" });
     }
   } catch (err) {
     console.error("Не удалось сохранить слово:", err);
     if (typeof showSnackbar === "function") {
-      showSnackbar("Failed to save word", { duration: 3000, type: "error" });
+      showSnackbar(t("popup.saveError"), { type: "error" });
     }
   }
 });

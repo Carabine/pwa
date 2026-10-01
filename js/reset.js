@@ -59,7 +59,7 @@
         if (sending) return;
         const email = $('reset-email').value.trim();
         if (!email) {
-            showSnackbar(tr('reset.needEmail', 'Введите почту'), { duration: 3000, type: 'error' });
+            formMessage($('ask-btn'), tr('reset.needEmail', 'Введите почту'));
             return;
         }
         sending = true;
@@ -67,13 +67,13 @@
         try {
             // lang — чтобы письмо пришло на языке интерфейса, а не всегда по-русски
             const lang = typeof getLang === 'function' ? getLang() : 'ru';
-            await client.post('auth/forgot-password', { email, lang }, { authorization: false });
+            await client.post('auth/forgot-password', { email, lang }, { authorization: false, silentErrors: true });
             if (window.animeiTrack) animeiTrack('auth', 'forgot_request');
             showSent(email);
         } catch (err) {
             const msg = err?.response?.data?.code ? errorText(err)
                 : tr('reset.failed', 'Не получилось. Попробуйте ещё раз чуть позже.');
-            showSnackbar(msg, { duration: 4000, type: 'error' });
+            formMessage($('ask-btn'), msg);
             sending = false;
             $('ask-btn').disabled = false;
         }
@@ -84,24 +84,22 @@
         if (sending) return;
         const password = $('reset-password').value;
         if (password.length < 6) {
-            showSnackbar(tr('reset.short', 'Пароль должен быть не короче 6 символов'),
-                { duration: 3000, type: 'error' });
+            formMessage($('new-btn'), tr('reset.short', 'Пароль должен быть не короче 6 символов'));
             return;
         }
         sending = true;
         $('new-btn').disabled = true;
         try {
-            await client.post('auth/reset-password', { token, password }, { authorization: false });
+            await client.post('auth/reset-password', { token, password }, { authorization: false, silentErrors: true });
             if (window.animeiTrack) animeiTrack('auth', 'forgot_done');
             setHead(tr('reset.doneTitle', 'Пароль обновлён'),
                 tr('reset.done', 'Теперь войдите с новым паролем.'));
             show({});
-            showSnackbar(tr('reset.doneTitle', 'Пароль обновлён'), { duration: 2500, type: 'success' });
             setTimeout(() => { window.location.href = './login.html'; }, 1600);
         } catch (err) {
             const msg = err?.response?.data?.code ? errorText(err)
                 : tr('reset.failed', 'Не получилось. Попробуйте ещё раз чуть позже.');
-            showSnackbar(msg, { duration: 4500, type: 'error' });
+            formMessage($('new-btn'), msg);
             sending = false;
             $('new-btn').disabled = false;
             // Ссылка мертва — форма пароля бесполезна, предлагаем запросить новую.

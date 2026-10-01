@@ -558,6 +558,8 @@ window.I18N_UK = {
         'decks.noDeck': 'Без колоди',
         'decks.noneEmpty': 'Усі слова розкладені по колодах',
         'words.deleteConfirmOne': 'Видалити слово «{w}»?',
+        'words.deletedOne': 'Слово «{w}» видалено',
+        'common.undo': 'Скасувати',
         'words.actions': 'Дії',
         'words.copy': 'Копіювати',
         'words.copied': 'Скопійовано',

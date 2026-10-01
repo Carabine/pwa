@@ -64,16 +64,58 @@
     transform: translateY(8px) scale(0.98);
 }
 
-/* На телефоне тост по центру внизу: прижатый к правому краю выглядел криво,
-   а места на полную ширину там достаточно. */
+/* Кнопка действия («Отменить») — одна, справа, текстом в акцентном цвете
+   (Material: одно действие, не «Закрыть»). Таймер вместо значка — круг,
+   который убывает, пока можно отменить. */
+.snackbar--action { align-items: center; padding-right: 6px; }
+.snackbar--action .snackbar__ico { margin-top: 0; }
+.snackbar__text { flex: 1; min-width: 0; }
+.snackbar__action {
+    flex-shrink: 0;
+    margin: -4px 0 -4px 4px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--primary);
+    font: inherit;
+    font-weight: 700;
+    letter-spacing: normal;
+    text-transform: none;
+    cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+    .snackbar__action:hover { background: color-mix(in srgb, var(--primary) 14%, transparent); }
+}
+.snackbar__timer { width: 20px; height: 20px; }
+.snackbar__timer circle { fill: none; stroke-width: 2.6; }
+.snackbar__timer-bg { stroke: var(--border); }
+.snackbar__timer-fg {
+    stroke: var(--primary);
+    stroke-dasharray: 56.55;
+    stroke-dashoffset: 0;
+    animation: snackbar-timer linear forwards;
+}
+@keyframes snackbar-timer { to { stroke-dashoffset: 56.55; } }
+@media (prefers-reduced-motion: reduce) {
+    .snackbar__timer-fg { animation: none; }
+}
+
+/* На телефоне — СВЕРХУ, под шапкой (top ставит js по низу шапки). Снизу тост
+   ложился на главные кнопки экрана: «Забыл / Помню», панель выбора слов,
+   панель читалки. Так делают Telegram/Instagram; Material тоже требует не
+   перекрывать нижние действия. Появляется сверху вниз. */
 @media (max-width: 560px) {
     #snackbar-container {
         left: 12px;
         right: 12px;
-        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        top: calc(env(safe-area-inset-top, 0px) + 64px);
+        bottom: auto;
         align-items: stretch;
         max-width: none;
     }
+    .snackbar { transform: translateY(-8px) scale(0.98); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); }
+    .snackbar.hide { transform: translateY(-8px) scale(0.98); }
 }
 
 /* ========== SCROLLBAR ========== */
@@ -511,3 +553,78 @@ a[href$="watch.html"] {
 .offline-dl__text { margin: 6px 0 0; font-size: 13px; color: var(--text-muted); }
 .offline-dl__actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .offline-dl__actions [hidden] { display: none; }
+
+/* ========== ПОДТВЕРЖДЕНИЕ НА МЕСТЕ (markDone в js/snackbar.js) ==========
+   Кнопка сама показывает, что действие прошло: зелёный текст и рамка, лёгкая
+   заливка. Без тоста — успех виден там, куда человек и так смотрит. */
+.is-done,
+.is-done:disabled,
+.btn.is-done {
+    background: color-mix(in srgb, var(--success) 14%, transparent) !important;
+    color: var(--success) !important;
+    border-color: color-mix(in srgb, var(--success) 60%, transparent) !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    cursor: default;
+}
+
+/* ========== СООБЩЕНИЕ У ФОРМЫ (formMessage в js/snackbar.js) ==========
+   Ошибка — под кнопкой отправки, пока человек не начнёт править поля. */
+.form-msg {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 10px 2px 0;
+    font-size: 13.5px;
+    line-height: 1.4;
+    text-align: left;
+}
+.form-msg::before {
+    content: '';
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    background: currentColor;
+    -webkit-mask: var(--form-msg-ico) center / contain no-repeat;
+    mask: var(--form-msg-ico) center / contain no-repeat;
+}
+.form-msg--error {
+    color: var(--danger);
+    --form-msg-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 8v5'/%3E%3Cpath d='M12 16h.01'/%3E%3C/svg%3E");
+}
+.form-msg--success {
+    color: var(--success);
+    --form-msg-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5 12.5 10 17 19 7'/%3E%3C/svg%3E");
+}
+
+/* ========== ПОДСКАЗКА У ЗНАЧКА «НЕТ СЕТИ» (offlineBar в app.js) ========== */
+.offline-tip {
+    position: fixed;
+    z-index: 9999;
+    max-width: min(270px, calc(100vw - 24px));
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.4;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+}
+.offline-tip.is-open { opacity: 1; transform: none; }
+.offline-tip::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    left: calc(var(--tip-x, 50%) - 6px);
+    width: 12px;
+    height: 12px;
+    background: var(--card);
+    border-left: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    transform: rotate(45deg);
+}

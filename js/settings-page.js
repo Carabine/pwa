@@ -143,26 +143,27 @@
             const cur = curEl.value.trim();
             const nw = newEl.value.trim();
             if (!cur || !nw) {
-                showSnackbar(t('settings.passwordFields'), { duration: 3000, type: 'error' });
+                formMessage(saveBtn, t('settings.passwordFields'));
                 return;
             }
             if (nw.length < 6) {
-                showSnackbar(t('settings.passwordShort'), { duration: 3000, type: 'error' });
+                formMessage(saveBtn, t('settings.passwordShort'));
                 return;
             }
+            formMessage(saveBtn, '');
             saveBtn.disabled = true;
             try {
-                const res = await client.post('users/password', { currentPassword: cur, newPassword: nw });
+                const res = await client.post('users/password', { currentPassword: cur, newPassword: nw }, { silentErrors: true });
                 // Смена пароля гасит все сессии на сервере — этому устройству
                 // сервер сразу выдал новую пару, сохраняем её, чтобы не выкинуло.
                 if (res?.data?.accessToken && res.data.refreshToken) setRefreshedTokens(res.data);
-                showSnackbar(t('settings.passwordChanged'), { duration: 3000, type: 'success' });
+                formMessage(saveBtn, t('settings.passwordChanged'), 'success');
                 curEl.value = '';
                 newEl.value = '';
             } catch (err) {
                 const status = err?.response?.status;
                 const msg = status === 400 ? t('settings.passwordWrong') : t('settings.passwordError');
-                showSnackbar(msg, { duration: 3500, type: 'error' });
+                formMessage(saveBtn, msg);
             } finally {
                 saveBtn.disabled = false;
             }

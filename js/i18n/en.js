@@ -558,6 +558,8 @@ window.I18N_EN = {
         'decks.noDeck': 'No deck',
         'decks.noneEmpty': 'Every word is in a deck',
         'words.deleteConfirmOne': 'Delete “{w}”?',
+        'words.deletedOne': '“{w}” deleted',
+        'common.undo': 'Undo',
         'words.actions': 'Actions',
         'words.copy': 'Copy',
         'words.copied': 'Copied',

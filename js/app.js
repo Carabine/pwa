@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.615';
+const APP_VERSION = 'v0.0.616';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -443,9 +443,7 @@ if ('serviceWorker' in navigator) {
             + '<span class="offline-chip__text"></span>';
         // Полную фразу показываем по тапу: на телефоне у значка нет подписи, и
         // это единственный способ узнать, что именно осталось работать.
-        bar.addEventListener('click', () => {
-            if (typeof showSnackbar === 'function') showSnackbar(fullText(), { duration: 3500 });
-        });
+        bar.addEventListener('click', (e) => { e.stopPropagation(); toggleTip(); });
         // Встаём в правую группу шапки, перед профилем: рядом с языком, как
         // индикатор в статус-баре. Шапки нет (редкая страница) — прячемся сверху.
         const right = document.querySelector('.header__right');
@@ -456,6 +454,39 @@ if ('serviceWorker' in navigator) {
         return bar;
     }
 
+    // Пояснение — подсказкой ПОД САМИМ значком, а не тостом: видно, к чему оно
+    // относится, и ничего важного на экране не закрывает (тост снизу ложился
+    // на «Забыл / Помню»). Сама уходит через 4 с, тап — закрыть/открыть снова.
+    let tip = null;
+    let tipTimer = null;
+    function hideTip() {
+        clearTimeout(tipTimer);
+        if (!tip) return;
+        const el = tip;
+        tip = null;
+        el.classList.remove('is-open');
+        setTimeout(() => el.remove(), 200);
+    }
+    function showTip() {
+        if (!bar || !bar.isConnected) return;
+        hideTip();
+        const r = bar.getBoundingClientRect();
+        tip = document.createElement('div');
+        tip.className = 'offline-tip';
+        tip.setAttribute('role', 'status');
+        tip.textContent = fullText();
+        tip.style.top = Math.round(r.bottom + 10) + 'px';
+        tip.style.right = Math.max(8, Math.round(window.innerWidth - r.right - 8)) + 'px';
+        tip.addEventListener('click', hideTip);
+        document.body.appendChild(tip);
+        // Хвостик — точно под центром значка (считаем от левого края подсказки).
+        tip.style.setProperty('--tip-x', Math.round(r.left + r.width / 2 - tip.getBoundingClientRect().left) + 'px');
+        requestAnimationFrame(() => { if (tip) tip.classList.add('is-open'); });
+        tipTimer = setTimeout(hideTip, 4000);
+    }
+    function toggleTip() { if (tip) hideTip(); else showTip(); }
+    document.addEventListener('click', () => hideTip());
+
     function render(offline) {
         if (offline) {
             const el = ensureBar();
@@ -464,6 +495,7 @@ if ('serviceWorker' in navigator) {
             el.title = fullText();
             el.setAttribute('aria-label', fullText());
         } else if (bar) {
+            hideTip();
             bar.remove();
             bar = null;
         }
@@ -499,7 +531,7 @@ if ('serviceWorker' in navigator) {
             const already = told();
             setTold(true);              // продлеваем: эта страница тоже без сети
             if (already) return;
-            showSnackbar(fullText(), { duration: 3500 });
+            showTip();
         } else {
             // Тихо подтверждаем возврат: пользователь мог ждать именно этого,
             // чтобы открыть аниме или каталог.
