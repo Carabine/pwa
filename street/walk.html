@@ -578,14 +578,14 @@ function buildWorld() {
     const gw = th.W + 0.2, gl = streetLen + 30;
     if (opts.reflect) {
         // низкое разрешение = мягкое, «мокрое» отражение, а не зеркало
-        const refl = new Reflector(new THREE.PlaneGeometry(gw, gl), { textureWidth: 320, textureHeight: 320, color: 0x8a8a9a, clipBias: 0.003 });
+        const refl = new Reflector(new THREE.PlaneGeometry(gw, gl), { textureWidth: 256, textureHeight: 256, color: 0x9a9aaa, clipBias: 0.003 });
         refl.rotation.x = -Math.PI / 2; refl.position.set(0, -0.005, -gl / 2 + 8); world.add(refl);
     } else {
         const g0 = new THREE.Mesh(new THREE.PlaneGeometry(gw, gl), new THREE.MeshBasicMaterial({ color: new THREE.Color(th.ground) })); g0.rotation.x = -Math.PI / 2; g0.position.set(0, -0.01, -gl / 2 + 8); world.add(g0);
     }
     const pud = texPuddles(hashStr(th.id)); pud.repeat.set(gw / 6, gl / 6);
     // мокрый асфальт: освещаемый слой с маской луж поверх отражения (лужи — прозрачные места)
-    const wetTex = texPuddlesInverse(hashStr(th.id)); wetTex.repeat.set(gw / 6, gl / 6);
+    const wetTex = texPuddlesInverse(hashStr(th.id)); wetTex.repeat.set(gw / 14, gl / 14);
     const wet = new THREE.Mesh(new THREE.PlaneGeometry(gw, gl), lamb(mix(th.ground, '#ffffff', 0.12), { transparent: true, alphaMap: wetTex, depthWrite: false }));
     wet.rotation.x = -Math.PI / 2; wet.position.set(0, 0.0, -gl / 2 + 8); world.add(wet);
     // бордюры
@@ -636,9 +636,10 @@ function buildWorld() {
 }
 function texPuddlesInverse(seed) {
     const c = document.createElement('canvas'); c.width = 512; c.height = 512; const g = c.getContext('2d');
-    g.fillStyle = 'rgb(190,190,190)'; g.fillRect(0, 0, 512, 512);
+    g.fillStyle = 'rgb(255,255,255)'; g.fillRect(0, 0, 512, 512);
     const rnd = mulberry32(seed);
-    for (let i = 0; i < 40; i++) { const x = rnd() * 512, y = rnd() * 512, r = 20 + rnd() * 70; const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgb(60,60,60)'); gr.addColorStop(0.6, 'rgb(110,110,110)'); gr.addColorStop(1, 'rgb(190,190,190)'); g.fillStyle = gr; g.save(); g.translate(x, y); g.scale(1, 0.5 + rnd() * 0.5); g.beginPath(); g.arc(0, 0, r, 0, 6.28); g.fill(); g.restore(); }
+    // редкие маленькие лужи: 5 на тайл ~14 м, диаметр 0.3–0.8 м, с чётким краем
+    for (let i = 0; i < 5; i++) { const x = rnd() * 512, y = rnd() * 512, r = 6 + rnd() * 10; const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgb(30,30,30)'); gr.addColorStop(0.75, 'rgb(40,40,40)'); gr.addColorStop(1, 'rgb(255,255,255)'); g.fillStyle = gr; g.save(); g.translate(x, y); g.scale(1, 0.5 + rnd() * 0.5); g.beginPath(); g.arc(0, 0, r, 0, 6.28); g.fill(); g.restore(); }
     const t = makeTex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
 }
 
@@ -1018,7 +1019,7 @@ function buildPoles() {
 // ---- интерьер: идзакая, слова колоды — бумажные полоски меню на стенах ----
 const room = new THREE.Group(); room.visible = false; scene.add(room);
 const inside = { on: false, block: null, strips: [], lights: [], saved: null, door: null, steam: [] };
-const ROOM = { w: 7.6, d: 11.5, h: 3.2 };
+const ROOM = { w: 7.6, d: 11.5, h: 3.2, doorX: 1.4 }; // размеры текущей комнаты, задаются генератором
 const ROOM_TYPES = ['izakaya', 'konbini', 'class', 'home'];
 const ROOM_NAMES = { izakaya: '居酒屋 · идзакая', konbini: 'コンビニ · комбини', class: '塾 · вечерняя школа', home: '部屋 · квартира' };
 function texPlaque(ch) { const c = document.createElement('canvas'); c.width = 64; c.height = 90; const g = c.getContext('2d'); g.fillStyle = '#f4ecd8'; g.fillRect(0, 0, 64, 90); g.strokeStyle = '#2a2a30'; g.lineWidth = 3; g.strokeRect(3, 3, 58, 84); g.fillStyle = '#1a1a1e'; g.font = '700 44px ' + JP; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, 32, 46); return makeTex(c); }
@@ -1120,16 +1121,15 @@ function clearRoom() {
     inside.strips = []; inside.lights = []; inside.steam = []; colliders.room.length = 0;
 }
 function roomShell(wallMat, floorMat, ceilColor, doorColor) {
-    const { w, d, h } = ROOM;
+    const { w, d, h, doorX } = ROOM;
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), floorMat); floor.rotation.x = -Math.PI / 2; room.add(floor);
     const ceil = new THREE.Mesh(new THREE.PlaneGeometry(w, d), lamb(ceilColor)); ceil.rotation.x = Math.PI / 2; ceil.position.y = h; room.add(ceil);
     const back = new THREE.Mesh(new THREE.PlaneGeometry(w, h), wallMat); back.position.set(0, h / 2, -d / 2); room.add(back);
     const left = new THREE.Mesh(new THREE.PlaneGeometry(d, h), wallMat); left.position.set(-w / 2, h / 2, 0); left.rotation.y = Math.PI / 2; room.add(left);
     const right = new THREE.Mesh(new THREE.PlaneGeometry(d, h), wallMat); right.position.set(w / 2, h / 2, 0); right.rotation.y = -Math.PI / 2; room.add(right);
     const front = new THREE.Mesh(new THREE.PlaneGeometry(w, h), wallMat); front.position.set(0, h / 2, d / 2); front.rotation.y = Math.PI; room.add(front);
-    const exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.1), new THREE.MeshBasicMaterial({ color: new THREE.Color(doorColor || th.fog) })); exitDoor.position.set(1.4, 1.05, d / 2 - 0.02); exitDoor.rotation.y = Math.PI; exitDoor.userData.exit = true; room.add(exitDoor);
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.3, 0.08), lamb('#1a1410')); frame.position.set(1.4, 1.15, d / 2 - 0.06); room.add(frame);
-    const ex2 = exitDoor.clone(); ex2.position.z = d / 2 - 0.03; room.add(ex2);
+    const exitDoor = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.1), new THREE.MeshBasicMaterial({ color: new THREE.Color(doorColor || th.fog) })); exitDoor.position.set(doorX, 1.05, d / 2 - 0.02); exitDoor.rotation.y = Math.PI; exitDoor.userData.exit = true; room.add(exitDoor);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.3, 0.08), lamb('#1a1410')); frame.position.set(doorX, 1.15, d / 2 - 0.06); room.add(frame);
 }
 function splitWords(b, type) {
     const words = b.signs.filter((s) => !s.deco);
@@ -1137,167 +1137,185 @@ function splitWords(b, type) {
     const objs = words.filter(fits).sort((x, y) => (x.state === 'new') - (y.state === 'new')).slice(0, 9);
     return { objs, rest: words.filter((s) => objs.indexOf(s) < 0) };
 }
+
+// ---- генератор комнат: сетка занятости + каталог модулей мебели + свободные стены под слова ----
+// Модуль строится в локальных координатах: задняя сторона у z = -d/2 (к стене), лицом к +z.
+class Grid {
+    constructor(w, d, cell) { this.w = w; this.d = d; this.c = cell || 0.25; this.nx = Math.ceil(w / this.c); this.nz = Math.ceil(d / this.c); this.a = new Uint8Array(this.nx * this.nz); }
+    idx(x, z) { return [clamp(Math.floor((x + this.w / 2) / this.c), 0, this.nx - 1), clamp(Math.floor((z + this.d / 2) / this.c), 0, this.nz - 1)]; }
+    free(x0, z0, x1, z1) { const [i0, j0] = this.idx(x0, z0), [i1, j1] = this.idx(x1, z1); for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) if (this.a[j * this.nx + i]) return false; return true; }
+    mark(x0, z0, x1, z1) { const [i0, j0] = this.idx(x0, z0), [i1, j1] = this.idx(x1, z1); for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) this.a[j * this.nx + i] = 1; }
+}
+const WALL_RY = { back: 0, left: Math.PI / 2, right: -Math.PI / 2, front: Math.PI };
+// пробуем поставить модуль по правилу; возвращает {x,z,ry,wall,t0,t1} или null
+function placeModule(mod, grid, rnd, used) {
+    const { w: W, d: D, doorX } = ROOM;
+    const gap = mod.gap == null ? 0.45 : mod.gap;
+    const walls = mod.walls || ['back', 'left', 'right'];
+    for (let tries = 0; tries < 60; tries++) {
+        let x, z, ry, wall = null, fw = mod.w, fd = mod.d, t0, t1;
+        if (mod.rule === 'wall' || mod.rule === 'corner') {
+            wall = walls[Math.floor(rnd() * walls.length)];
+            const along = (wall === 'back' || wall === 'front') ? W : D;
+            const len = mod.fill ? along - 0.4 : mod.w;
+            if (len > along - 0.4) continue;
+            let t = mod.rule === 'corner' ? (rnd() < 0.5 ? -along / 2 + 0.2 + len / 2 : along / 2 - 0.2 - len / 2) : (-along / 2 + 0.3 + len / 2 + rnd() * (along - 0.6 - len));
+            if (wall === 'front' && Math.abs(t - doorX) < len / 2 + 1.0) continue; // не перекрывать вход
+            ry = WALL_RY[wall];
+            if (wall === 'back') { x = t; z = -D / 2 + mod.d / 2; fw = len; fd = mod.d; }
+            else if (wall === 'front') { x = t; z = D / 2 - mod.d / 2; fw = len; fd = mod.d; }
+            else if (wall === 'left') { x = -W / 2 + mod.d / 2; z = t; fw = mod.d; fd = len; }
+            else { x = W / 2 - mod.d / 2; z = t; fw = mod.d; fd = len; }
+            t0 = t - len / 2; t1 = t + len / 2;
+            if (mod.fill) { mod._len = len; }
+        } else if (mod.rule === 'door') {
+            x = doorX + (rnd() < 0.5 ? -1 : 1) * (1.2 + rnd() * 1.2); z = D / 2 - 0.9 - rnd() * 1.2; ry = Math.PI + (rnd() - 0.5) * 0.6;
+            if (Math.abs(x) > W / 2 - 0.6) continue;
+        } else { // center
+            x = -W / 2 + 1.3 + mod.w / 2 + rnd() * Math.max(0, W - 2.6 - mod.w); z = -D / 2 + 1.5 + mod.d / 2 + rnd() * Math.max(0, D - 4.5 - mod.d); ry = mod.rot ? (Math.floor(rnd() * 4) * Math.PI / 2) : 0;
+            if (ry % Math.PI !== 0) { fw = mod.d; fd = mod.w; }
+            if (z > D / 2 - 3.2 && Math.abs(x - doorX) < 2.2) continue; // проход от двери
+        }
+        const g0 = mod.rule === 'wall' || mod.rule === 'corner' ? 0.05 : gap;
+        if (mod.high) { // висит на стене, пол не занимает — только участок стены
+            if (wall && used[wall].some((u) => t0 < u[1] && t1 > u[0])) continue;
+        } else {
+            if (!grid.free(x - fw / 2 - gap, z - fd / 2 - gap, x + fw / 2 + gap, z + fd / 2 + gap)) continue;
+            grid.mark(x - fw / 2 - g0, z - fd / 2 - g0, x + fw / 2 + g0, z + fd / 2 + g0);
+        }
+        if (wall && (mod.h >= 1.3 || mod.high)) used[wall].push([t0, t1]);
+        return { x, z, ry, wall, t0, t1 };
+    }
+    return null;
+}
+// свободные отрезки стены (над мебелью ниже 1.3 м тоже можно вешать)
+function freeWallSegments(wall, used) {
+    const { w: W, d: D, doorX } = ROOM;
+    const along = (wall === 'back' || wall === 'front') ? W : D;
+    const occ = used[wall].slice().sort((p, q) => p[0] - q[0]);
+    if (wall === 'front') occ.push([doorX - 0.8, doorX + 0.8]);
+    occ.sort((p, q) => p[0] - q[0]);
+    const segs = []; let cur = -along / 2 + 0.3;
+    occ.forEach((o) => { if (o[0] - 0.2 > cur) segs.push([cur, o[0] - 0.2]); cur = Math.max(cur, o[1] + 0.2); });
+    if (along / 2 - 0.3 > cur) segs.push([cur, along / 2 - 0.3]);
+    return segs.filter((sg) => sg[1] - sg[0] > 0.5);
+}
+function wallPoint(wall, t, y, inset) {
+    const { w: W, d: D } = ROOM; const i = inset == null ? 0.02 : inset;
+    if (wall === 'back') return { x: t, y, z: -D / 2 + i, ry: 0 };
+    if (wall === 'front') return { x: t, y, z: D / 2 - i, ry: Math.PI };
+    if (wall === 'left') return { x: -W / 2 + i, y, z: t, ry: Math.PI / 2 };
+    return { x: W / 2 - i, y, z: t, ry: -Math.PI / 2 };
+}
+// каталог модулей по типу комнаты. build(g, rnd, len) рисует в локальных координатах; spots — места под предметы (локальные)
+function catalog(type, rnd) {
+    const B = (g, sx, sy, sz, col, x, y, z, extra) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), lamb(col, extra)); m.position.set(x, y, z); g.add(m); return m; };
+    const C = (g, r1, r2, hh, col, x, y, z, seg) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, hh, seg || 10), lamb(col)); m.position.set(x, y, z); g.add(m); return m; };
+    const bottleRow = (g, x, y, z0, n, step) => { for (let i = 0; i < n; i++) C(g, 0.045, 0.055, 0.3, ['#2a5a3a', '#6a3a1a', '#d8d0b8', '#2a3a6a', '#8a2a2a', '#c8a84a'][Math.floor(rnd() * 6)], x, y, z0 + i * step, 8); };
+    const bookRow = (g, x, y0, z0, rows, n, horiz) => { for (let r = 0; r < rows; r++) for (let k = 0; k < n; k++) { const bh = 0.26 + rnd() * 0.1; const m = B(g, horiz ? 0.06 + rnd() * 0.05 : 0.22, bh, horiz ? 0.22 : 0.06 + rnd() * 0.05, ['#c84a4a', '#3a6fd9', '#d9b23a', '#2a8a5a', '#f0e8d8', '#6a3a8a'][Math.floor(rnd() * 6)], horiz ? x + k * 0.16 : x, y0 + r * 0.42 + bh / 2, horiz ? z0 : z0 + k * 0.16); } };
+    const lantern = (g, x, y, z, col) => { const ln = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), new THREE.MeshBasicMaterial({ map: texLantern({ chars: [], white: false, inten: 1, dead: -1 }, true) })); ln.position.set(x, y, z); ln.scale.set(0.8, 1.1, 0.8); g.add(ln); const hl = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: 0xff8a3a, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false })); hl.position.copy(ln.position); hl.scale.set(1.1, 1.1, 1); g.add(hl); const l = new THREE.PointLight(0xff7a3a, 2.2, 7, 1.6); l.position.set(x, y, z + 0.3); g.add(l); };
+    const window_ = (g, len) => { const win = new THREE.Mesh(new THREE.PlaneGeometry(len - 0.3, 1.3), new THREE.MeshBasicMaterial({ map: texSky() })); win.position.set(0, 1.9, 0.04); g.add(win); B(g, len - 0.1, 1.4, 0.06, '#f0ece0', 0, 1.9, 0.02); B(g, 0.05, 1.3, 0.09, '#f0ece0', 0, 1.9, 0.05); if (rnd() < 0.5) { const moon = new THREE.Mesh(new THREE.CircleGeometry(0.14, 20), new THREE.MeshBasicMaterial({ color: 0xfff6e0 })); moon.position.set(len * 0.25, 2.3, 0.05); g.add(moon); } };
+    const tv = (g, x, y, z, ry, sw) => { const scr = new THREE.Mesh(new THREE.PlaneGeometry(sw, sw * 0.56), new THREE.MeshBasicMaterial({ map: texTV() })); scr.position.set(x, y, z + 0.045); scr.rotation.y = ry || 0; g.add(scr); B(g, sw + 0.12, sw * 0.56 + 0.12, 0.06, '#111116', x, y, z); };
+    if (type === 'izakaya') return [
+        { name: 'counter', rule: 'wall', walls: ['left', 'right'], w: 7, d: 1.9, h: 1.0, fill: true, solid: true, build(g, r, len) { B(g, len, 1.0, 0.85, '#6b4a2c', 0, 0.5, -0.45); B(g, len + 0.1, 0.06, 1.0, '#8a6238', 0, 1.03, -0.45); for (let i = 0; i < Math.floor(len / 1.05); i++) { const z = 0.45, x = -len / 2 + 0.6 + i * 1.05; C(g, 0.17, 0.17, 0.08, '#3a2a1e', x, 0.62, z); C(g, 0.03, 0.03, 0.6, '#1a120c', x, 0.3, z, 6); } for (let lv = 0; lv < 3; lv++) { B(g, len - 0.6, 0.04, 0.3, '#3a2a1e', 0, 1.5 + lv * 0.45, -0.8); bottleRow(g, -len / 2 + 0.5, 1.67 + lv * 0.45, -0.8, Math.floor((len - 1) / 0.36), 0.36); } this.spots = []; for (let i = 0; i < Math.floor(len / 1.1); i++) this.spots.push({ kind: 'table', x: -len / 2 + 0.6 + i * 1.1, y: 1.06, z: -0.45 }); this.spots.push({ kind: 'seat', x: -len / 2 + 0.6, y: 0.66, z: 0.45 }); } },
+        { name: 'kitchen', rule: 'wall', walls: ['back'], w: 3.4, d: 0.7, h: 2.3, solid: true, build(g, r) { const kc = document.createElement('canvas'); kc.width = 256; kc.height = 128; const kg = kc.getContext('2d'); const kgr = kg.createLinearGradient(0, 0, 0, 128); kgr.addColorStop(0, '#ffe2b0'); kgr.addColorStop(0.35, '#b8743a'); kgr.addColorStop(1, '#2a160c'); kg.fillStyle = kgr; kg.fillRect(0, 0, 256, 128); kg.fillStyle = 'rgba(0,0,0,0.45)'; for (let i = 0; i < 9; i++) kg.fillRect(14 + i * 27, 40 + (i % 2) * 10, 12, 60); const k = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.3), new THREE.MeshBasicMaterial({ map: makeTex(kc) })); k.position.set(0, 1.55, -0.33); g.add(k); B(g, 3.4, 0.08, 0.12, '#3a2416', 0, 2.24, -0.3); B(g, 3.0, 0.9, 0.5, '#5a4a40', 0, 0.45, -0.1); for (let i = 0; i < 3; i++) C(g, 0.16, 0.14, 0.18, '#8a8a94', -0.8 + i * 0.8, 0.99, -0.1, 12); for (let i = 0; i < 8; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: 0xffffff, transparent: true, opacity: 0.12, depthWrite: false })); sp.userData = { kitchen: true, age: Math.random() * 3, life: 2.5 + Math.random() }; sp.position.set(0, 1.8, 0); g.add(sp); inside.steam.push(sp); } } },
+        { name: 'zashiki', rule: 'center', w: 2.4, d: 2.4, h: 0.5, solid: true, count: [1, 3], build(g, r) { B(g, 2.2, 0.1, 0.9, '#2a1a10', 0, 0.3, 0); B(g, 1.3, 0.06, 0.8, '#6b4a2c', 0, 0.4, 0); [[-0.5, 0.65], [0.5, 0.65], [-0.5, -0.65], [0.5, -0.65]].forEach((q) => B(g, 0.45, 0.08, 0.45, ['#4a6a9a', '#9a4a4a', '#4a8a6a'][Math.floor(r() * 3)], q[0], 0.34, q[1])); for (let k = 0; k < 3; k++) C(g, 0.04, 0.04, 0.12, '#d8d0b8', -0.4 + k * 0.3, 0.49, -0.2, 8); this.spots = [{ kind: 'table', x: -0.3, y: 0.43, z: 0.1 }, { kind: 'table', x: 0.35, y: 0.43, z: 0.15 }]; } },
+        { name: 'kegs', rule: 'door', w: 1.4, d: 0.5, h: 0.6, solid: true, build(g) { for (let i = 0; i < 3; i++) C(g, 0.2, 0.2, 0.5, '#8a8a94', -0.45 + i * 0.45, 0.25, 0, 12); } },
+        { name: 'tv', rule: 'wall', walls: ['back', 'left', 'right'], w: 1.4, d: 0.1, h: 0.8, high: true, build(g) { tv(g, 0, 2.45, 0.0, 0, 1.1); } },
+        { name: 'lanterns', rule: 'wall', walls: ['left', 'right', 'back'], w: 3, d: 0.5, h: 0.5, high: true, count: [1, 2], build(g) { lantern(g, -1.0, 2.5, 0.25); lantern(g, 1.0, 2.5, 0.25); } },
+        { name: 'beams', rule: 'none', build(g) { const { w, d, h } = ROOM; for (let i = 0; i < Math.floor(d / 2.6); i++) B(g, w, 0.2, 0.2, '#2a1a10', 0, h - 0.1, -d / 2 + 1.3 + i * 2.6); for (let i = 0; i < Math.floor(d / 1.5); i++) { const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfff1d0 })); bulb.position.set(-w / 2 + 1.3, h - 0.5, -d / 2 + 1.0 + i * 1.5); g.add(bulb); } } },
+    ];
+    if (type === 'konbini') return [
+        { name: 'fridges', rule: 'wall', walls: ['back'], w: 7, d: 0.65, h: 2.3, fill: true, solid: true, build(g, r, len) { const n = Math.floor(len / 1.22); for (let k = 0; k < n; k++) { const fx = -len / 2 + 0.61 + k * 1.22; B(g, 1.1, 2.3, 0.6, '#d8dce4', fx, 1.15, 0); const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 2.0), lamb('#9fc8e8', { transparent: true, opacity: 0.55, emissive: new THREE.Color('#9fc8e8'), emissiveIntensity: 0.35 })); glass.position.set(fx, 1.2, 0.31); g.add(glass); for (let rr = 0; rr < 4; rr++) for (let q = 0; q < 4; q++) C(g, 0.05, 0.05, 0.22, ['#2a7fd0', '#e0e0e0', '#40b060', '#e04040'][(rr + q + k) % 4], fx - 0.33 + q * 0.22, 0.45 + rr * 0.45, 0.2, 6); } } },
+        { name: 'rack', rule: 'center', w: 1.0, d: 4.2, h: 1.9, solid: true, count: [2, 4], gap: 0.6, build(g, r) { for (let lv = 0; lv < 4; lv++) { B(g, 0.9, 0.04, 4.0, '#c8cad0', 0, 0.3 + lv * 0.45, 0); for (let k = 0; k < 13; k++) { const hh = 0.18 + r() * 0.16; B(g, 0.14 + r() * 0.1, hh, 0.14 + r() * 0.1, ['#e04040', '#3a7fe0', '#f0c030', '#40b060', '#f0f0f0', '#8040c0', '#f08030'][Math.floor(r() * 7)], (r() - 0.5) * 0.55, 0.32 + lv * 0.45 + hh / 2, -1.85 + k * 0.3); } } B(g, 0.9, 1.9, 0.04, '#c8cad0', 0, 0.95, -2.0); B(g, 0.9, 1.9, 0.04, '#c8cad0', 0, 0.95, 2.0); this.spots = []; for (let k = 0; k < 3; k++) this.spots.push({ kind: 'table', x: 0, y: 1.67, z: -1.3 + k * 1.3, price: true }); } },
+        { name: 'register', rule: 'door', w: 2.2, d: 0.7, h: 1.4, solid: true, build(g) { B(g, 2.2, 0.95, 0.65, '#dfe3ea', 0, 0.475, 0); B(g, 0.4, 0.3, 0.35, '#2a2a32', 0.6, 1.1, 0); B(g, 0.6, 0.35, 0.45, '#8a8a94', -0.6, 1.12, 0); B(g, 0.5, 0.25, 0.35, '#c8a84a', -0.6, 1.42, 0, { transparent: true, opacity: 0.6 }); for (let i = 0; i < 4; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: 0xffffff, transparent: true, opacity: 0.1, depthWrite: false })); sp.userData = { kitchen: true, age: Math.random() * 3, life: 2.2 + Math.random() }; sp.position.set(-0.6, 1.6, 0); g.add(sp); inside.steam.push(sp); } this.spots = [{ kind: 'table', x: 0, y: 0.95, z: 0, price: true }]; } },
+        { name: 'magazines', rule: 'wall', walls: ['left', 'right', 'front'], w: 3.2, d: 0.5, h: 1.5, solid: true, build(g) { B(g, 3.2, 1.5, 0.3, '#c8cad0', 0, 0.75, -0.1); this.mag = []; for (let lv = 0; lv < 4; lv++) for (let k = 0; k < 12; k++) this.mag.push({ x: -1.45 + k * 0.26, y: 0.35 + lv * 0.36, z: 0.1 }); } },
+        { name: 'atm', rule: 'corner', walls: ['left', 'right', 'front'], w: 0.7, d: 0.6, h: 1.6, solid: true, build(g) { B(g, 0.7, 1.6, 0.6, '#2a3a5a', 0, 0.8, 0); const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.3), new THREE.MeshBasicMaterial({ color: new THREE.Color('#9fd8ff') })); scr.position.set(0, 1.2, 0.31); g.add(scr); } },
+        { name: 'baskets', rule: 'door', w: 0.8, d: 0.6, h: 0.6, solid: true, build(g, r) { B(g, 0.8, 0.5, 0.6, '#2a2a32', 0, 0.25, 0); for (let k = 0; k < 6; k++) B(g, 0.15, 0.1, 0.15, ['#e04040', '#f0c030', '#40b060'][k % 3], -0.25 + (k % 3) * 0.25, 0.55, -0.1 + Math.floor(k / 3) * 0.2); } },
+        { name: 'lights', rule: 'none', build(g) { const { w, d, h } = ROOM; for (let z = -d / 2 + 1.5; z < d / 2 - 1; z += 3) for (let x = -w / 2 + 1.6; x < w / 2 - 1; x += 2.4) { const l = new THREE.PointLight(0xf4f8ff, 1.3, 8, 1.2); l.position.set(x, h - 0.3, z); g.add(l); B(g, 1.2, 0.05, 0.18, '#ffffff', x, h - 0.04, z, { emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.5 }); } g.add(new THREE.AmbientLight(0xf0f6ff, 0.55)); } },
+    ];
+    if (type === 'class') return [
+        { name: 'board', rule: 'wall', walls: ['back'], w: 5.2, d: 0.12, h: 2.7, solid: false, build(g) { this.boardMesh = new THREE.Mesh(new THREE.PlaneGeometry(5.0, 2.5), lamb('#ffffff', { map: null })); this.boardMesh.position.set(0, 1.8, 0.055); this.boardMesh.userData.board = true; g.add(this.boardMesh); B(g, 5.15, 2.65, 0.06, '#5a3a22', 0, 1.8, 0.0); B(g, 5.0, 0.05, 0.12, '#4a3020', 0, 0.52, 0.1); for (let k = 0; k < 5; k++) B(g, 0.08, 0.02, 0.02, k % 2 ? '#ffffff' : '#ffd34a', -2.0 + k * 0.3, 0.56, 0.1); } },
+        { name: 'teacher', rule: 'center', w: 1.9, d: 1.4, h: 0.8, solid: true, nearBack: true, build(g) { B(g, 1.8, 0.08, 0.75, '#8a6a48', 0, 0.78, -0.2); [[-0.8, -0.3], [0.8, -0.3], [-0.8, 0.3], [0.8, 0.3]].forEach((p) => B(g, 0.05, 0.76, 0.05, '#3a3a40', p[0], 0.38, -0.2 + p[1])); B(g, 0.5, 0.9, 0.5, '#5a5a62', 0, 0.45, 0.45); this.spots = [{ kind: 'table', x: 0, y: 0.82, z: -0.2 }]; } },
+        { name: 'desks', rule: 'center', w: 3.4, d: 4.4, h: 0.8, solid: true, build(g, r) { this.spots = []; for (let rr = 0; rr < 3; rr++) for (let c = 0; c < 2; c++) { const x = -0.9 + c * 1.8, z = -1.5 + rr * 1.5; B(g, 0.95, 0.05, 0.6, '#c8a878', x, 0.72, z); B(g, 0.95, 0.12, 0.6, '#9a8060', x, 0.63, z); [[-0.42, -0.25], [0.42, -0.25], [-0.42, 0.25], [0.42, 0.25]].forEach((p) => C(g, 0.02, 0.02, 0.7, '#5a5a62', x + p[0], 0.35, z + p[1], 6)); B(g, 0.42, 0.04, 0.4, '#8a6a48', x, 0.45, z + 0.58); B(g, 0.42, 0.42, 0.04, '#8a6a48', x, 0.68, z + 0.78); [[-0.18, 0.4], [0.18, 0.4], [-0.18, 0.76], [0.18, 0.76]].forEach((p) => C(g, 0.015, 0.015, 0.45, '#5a5a62', x + p[0], 0.22, z + p[1], 5)); if (r() < 0.5) B(g, 0.25, 0.03, 0.2, ['#f4efe0', '#c84a4a', '#3a6fd9'][Math.floor(r() * 3)], x + (r() - 0.5) * 0.4, 0.76, z); this.spots.push({ kind: 'table', x, y: 0.75, z }); } } },
+        { name: 'lockers', rule: 'wall', walls: ['front', 'left', 'right'], w: 3.0, d: 0.45, h: 1.8, solid: true, build(g) { for (let k = 0; k < 6; k++) B(g, 0.45, 1.8, 0.45, k % 2 ? '#8aa0b8' : '#9ab0c8', -1.25 + k * 0.5, 0.9, 0); } },
+        { name: 'bookshelf', rule: 'wall', walls: ['left', 'right'], w: 1.6, d: 0.35, h: 2.2, solid: true, build(g, r) { B(g, 1.6, 2.2, 0.35, '#5a3a22', 0, 1.1, 0); bookRow(g, -0.7, 0.25, 0.08, 5, 9, true); this.spots = [{ kind: 'table', x: 0, y: 2.22, z: 0 }]; } },
+        { name: 'window', rule: 'wall', walls: ['left', 'right'], w: 2.1, d: 0.1, h: 0.5, high: true, count: [1, 2], build(g) { window_(g, 2.1); } },
+        { name: 'plant', rule: 'corner', walls: ['left', 'right', 'back'], w: 0.7, d: 0.7, h: 1.6, solid: true, build(g) { const t = PROP_BUILDERS['木'](lamb); t.scale.setScalar(0.9); g.add(t); } },
+        { name: 'lights', rule: 'none', build(g) { const { w, d, h } = ROOM; for (let z = -d / 2 + 1.5; z < d / 2 - 1; z += 3) for (let x = -w / 2 + 1.8; x < w / 2 - 1; x += 3) { const l = new THREE.PointLight(0xfff6e0, 1.5, 9, 1.3); l.position.set(x, h - 0.3, z); g.add(l); B(g, 1.2, 0.05, 0.16, '#fff8e8', x, h - 0.04, z, { emissive: new THREE.Color(0xfff8e8), emissiveIntensity: 0.5 }); } g.add(new THREE.AmbientLight(0xfff4e0, 0.4)); } },
+    ];
+    return [ // home
+        { name: 'kitchen', rule: 'wall', walls: ['back', 'left', 'right'], w: 3.6, d: 0.65, h: 2.0, solid: true, build(g, r) { B(g, 2.6, 0.9, 0.6, '#d8d4cc', -0.5, 0.45, 0); B(g, 2.6, 0.05, 0.62, '#8a8a94', -0.5, 0.92, 0); B(g, 0.5, 0.06, 0.4, '#a8acb4', -1.1, 0.95, 0); C(g, 0.015, 0.015, 0.3, '#a8acb4', -1.1, 1.1, -0.2, 6); B(g, 0.55, 0.06, 0.45, '#2a2a32', 0.1, 0.95, 0); [[-0.12, -0.1], [0.12, -0.1], [-0.12, 0.1], [0.12, 0.1]].forEach((p) => C(g, 0.07, 0.07, 0.02, '#1a1a20', 0.1 + p[0], 0.99, p[1], 10)); C(g, 0.13, 0.12, 0.14, '#8a8a94', 0.1, 1.07, 0, 12); B(g, 0.65, 1.6, 0.65, '#e8ecf0', 1.45, 0.8, 0.0); B(g, 0.02, 0.5, 0.04, '#8a8a94', 1.15, 1.1, 0.34); B(g, 2.0, 0.04, 0.3, '#5a3a22', -0.5, 1.9, -0.15); for (let k = 0; k < 7; k++) C(g, 0.05, 0.06, 0.16 + r() * 0.12, ['#f0e8d8', '#c8a84a', '#2a5a3a', '#8a2a2a'][k % 4], -1.4 + k * 0.28, 2.0, -0.15, 8); this.spots = [{ kind: 'table', x: -0.5, y: 0.95, z: 0.05 }]; this.notes = [{ x: 1.45, y: 1.7, z: 0.34 }, { x: 1.45, y: 1.4, z: 0.34 }, { x: 1.7, y: 1.55, z: 0.34 }]; } },
+        { name: 'kotatsu', rule: 'center', w: 2.6, d: 2.2, h: 0.45, solid: true, build(g, r) { B(g, 1.6, 0.06, 1.0, '#6a4a2c', 0, 0.38, 0); B(g, 2.0, 0.02, 1.4, '#b8402a', 0, 0.33, 0); [[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]].forEach((p) => B(g, 0.06, 0.36, 0.06, '#4a3020', p[0], 0.18, p[1])); [[0, 1.0], [0, -1.0], [1.2, 0], [-1.2, 0]].forEach((p) => B(g, 0.5, 0.1, 0.5, ['#4a6a9a', '#9a4a4a', '#4a8a6a', '#9a8a4a'][Math.floor(r() * 4)], p[0], 0.05, p[1])); for (let k = 0; k < 2; k++) C(g, 0.04, 0.035, 0.1, '#d8d0b8', -0.3 + k * 0.5, 0.46, -0.1, 8); this.spots = []; for (let k = 0; k < 4; k++) this.spots.push({ kind: 'table', x: -0.55 + k * 0.37, y: 0.41, z: k % 2 ? 0.25 : -0.25 }); } },
+        { name: 'tv', rule: 'wall', walls: ['back', 'left', 'right'], w: 1.7, d: 0.5, h: 1.4, solid: true, build(g) { B(g, 1.6, 0.5, 0.45, '#5a3a22', 0, 0.25, 0); tv(g, 0, 0.95, -0.05, 0, 1.2); this.spots = [{ kind: 'table', x: 0.6, y: 0.5, z: 0.1 }]; } },
+        { name: 'bookshelf', rule: 'wall', walls: ['left', 'right', 'back'], w: 1.6, d: 0.35, h: 2.2, solid: true, build(g, r) { B(g, 1.6, 2.2, 0.35, '#5a3a22', 0, 1.1, 0); bookRow(g, -0.7, 0.25, 0.08, 5, 9, true); this.spots = [{ kind: 'table', x: 0, y: 2.22, z: 0 }]; } },
+        { name: 'futon', rule: 'corner', walls: ['left', 'right', 'back'], w: 2.2, d: 1.2, h: 0.3, solid: false, build(g) { B(g, 2.1, 0.18, 1.1, '#e8e4d8', 0, 0.09, 0); B(g, 0.35, 0.12, 0.5, '#d0d8e8', -0.8, 0.24, 0); B(g, 1.4, 0.1, 1.1, '#6a7aa8', 0.3, 0.23, 0); this.spots = [{ kind: 'seat', x: 0.2, y: 0.28, z: 0 }]; } },
+        { name: 'closet', rule: 'wall', walls: ['left', 'right'], w: 1.0, d: 0.6, h: 1.1, solid: true, build(g) { B(g, 1.0, 1.1, 0.6, '#d8c8a8', 0, 0.55, 0); for (let k = 0; k < 3; k++) B(g, 0.9, 0.26, 0.02, '#b8a888', 0, 0.2 + k * 0.33, 0.31); this.spots = [{ kind: 'table', x: 0, y: 1.12, z: 0 }]; } },
+        { name: 'window', rule: 'wall', walls: ['front', 'left', 'right'], w: 2.3, d: 0.1, h: 0.5, high: true, build(g) { window_(g, 2.3); B(g, 0.5, 1.9, 0.08, '#c8a888', -1.35, 1.9, 0.06); B(g, 0.5, 1.9, 0.08, '#c8a888', 1.35, 1.9, 0.06); } },
+        { name: 'plant', rule: 'corner', walls: ['left', 'right', 'front'], w: 0.7, d: 0.7, h: 1.4, solid: true, build(g) { const t = PROP_BUILDERS['木'](lamb); t.scale.setScalar(0.8); g.add(t); } },
+        { name: 'lights', rule: 'none', build(g) { const { w, d, h } = ROOM; const lamp = new THREE.PointLight(0xffd9a0, 2.6, 11, 1.4); lamp.position.set(0, h - 0.6, -0.8); g.add(lamp); const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 0.4, 12, 1, true), lamb('#f0dcb8', { side: THREE.DoubleSide, emissive: new THREE.Color('#ffe0b0'), emissiveIntensity: 0.45 })); shade.position.set(0, h - 0.6, -0.8); g.add(shade); const l2 = new THREE.PointLight(0xffe8c0, 1.6, 8, 1.4); l2.position.set(-w / 2 + 1.5, h - 0.5, -d / 2 + 1.5); g.add(l2); const l3 = new THREE.PointLight(0xffd0a0, 1.2, 7, 1.4); l3.position.set(w / 2 - 1.5, 1.2, d / 2 - 2); g.add(l3); g.add(new THREE.AmbientLight(0xffe8d0, 0.4)); } },
+    ];
+}
+const ROOM_SHELLS = {
+    izakaya: () => { const wood = texWood('#5a3b22', 8); wood.repeat.set(3, 1); const woodF = texWood('#2b1b10', 10); woodF.repeat.set(4, 6); roomShell(lamb('#ffffff', { map: wood }), lamb('#ffffff', { map: woodF }), '#1a120c'); const nr = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.55), new THREE.MeshBasicMaterial({ map: texNorenPlain('#1d2a5c'), side: THREE.DoubleSide, transparent: true })); nr.position.set(ROOM.doorX, 1.85, ROOM.d / 2 - 0.1); room.add(nr); room.add(new THREE.AmbientLight(0xffe0c0, 0.45)); [[-1.5, -ROOM.d / 4], [1.5, ROOM.d / 4]].forEach((p) => { const l = new THREE.PointLight(0xffd9a0, 3.2, 12, 1.4); l.position.set(p[0], ROOM.h - 0.6, p[1]); room.add(l); }); },
+    konbini: () => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#e4e6ea'; g.fillRect(0, 0, 128, 128); g.strokeStyle = 'rgba(0,0,0,0.18)'; g.lineWidth = 2; [[1, 1], [65, 65], [65, 1], [1, 65]].forEach((p) => g.strokeRect(p[0], p[1], 62, 62)); const t = makeTex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(ROOM.w, ROOM.d); roomShell(lamb('#eef0f4'), lamb('#ffffff', { map: t }), '#f4f6fa', '#dfefff'); },
+    class: () => { roomShell(lamb('#e8e2d0'), lamb('#b9a98a'), '#f0ece0', '#f4e8c8'); },
+    home: () => { const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#9aa06a'; g.fillRect(0, 0, 256, 128); for (let y = 0; y < 128; y += 3) { g.fillStyle = 'rgba(0,0,0,' + (y % 6 ? 0.06 : 0.12) + ')'; g.fillRect(0, y, 256, 1); } g.fillStyle = '#2a2a24'; g.fillRect(0, 0, 256, 6); g.fillRect(0, 122, 256, 6); const t = makeTex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(ROOM.w / 2, ROOM.d / 2); roomShell(lamb('#e6dcc4'), lamb('#ffffff', { map: t }), '#d8ccb4', '#3a2a1a'); },
+};
 function buildRoom(b, color, type) {
     clearRoom();
     type = type || 'izakaya';
-    const { w, d, h } = ROOM;
-    const rnd = mulberry32(hashStr(b.q.name + type));
+    const rnd = mulberry32(hashStr(b.q.name + type + (b.qi || 0)) + (inside.door ? Math.round(inside.door.userData.door.z * 10) : 0));
+    // размер комнаты — свой у каждой двери
+    ROOM.w = 6.0 + Math.floor(rnd() * 4) * 0.8; ROOM.d = 8.5 + Math.floor(rnd() * 5) * 1.0; ROOM.h = 2.9 + Math.floor(rnd() * 3) * 0.2; ROOM.doorX = Math.min(1.4, ROOM.w / 2 - 1.2);
     const { objs, rest } = splitWords(b, type);
-    const spots = [];
-    const box = (sx, sy, sz, col, x, y, z, extra) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), lamb(col, extra)); m.position.set(x, y, z); room.add(m); if (sx >= 0.3 && sz >= 0.3 && y - sy / 2 < 0.8 && y + sy / 2 > 0.3) addCollider(m, colliders.room, 0.28); return m; };
-    const cyl = (r1, r2, hh, col, x, y, z, seg) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, hh, seg || 10), lamb(col)); m.position.set(x, y, z); room.add(m); if (r1 >= 0.12 && y < 1.0 && hh >= 0.4) addCollider(m, colliders.room, 0.22); return m; };
-    const light = (col, i, x, y, z, dist) => { const l = new THREE.PointLight(new THREE.Color(col), i, dist || 12, 1.4); l.position.set(x, y, z); room.add(l); return l; };
-    const nameSign = (x, y, z, ry, sw) => { const nm = new THREE.Mesh(new THREE.PlaneGeometry(sw || 2.6, (sw || 2.6) / 4), new THREE.MeshBasicMaterial({ map: texGate(b.q.name, b.q.emoji, color), transparent: true })); nm.position.set(x, y, z); nm.rotation.y = ry || 0; room.add(nm); };
-    if (type === 'izakaya') {
-        const wood = texWood('#5a3b22', 8); wood.repeat.set(3, 1); const woodF = texWood('#2b1b10', 10); woodF.repeat.set(4, 6);
-        roomShell(lamb('#ffffff', { map: wood }), lamb('#ffffff', { map: woodF }), '#1a120c');
-        const nr = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.55), new THREE.MeshBasicMaterial({ map: texNorenPlain('#1d2a5c'), side: THREE.DoubleSide, transparent: true })); nr.position.set(1.4, 1.85, d / 2 - 0.1); room.add(nr);
-        // длинная стойка слева, табуреты, полка с бутылками, кеги
-        box(0.85, 1.0, d - 3, '#6b4a2c', -w / 2 + 1.3, 0.5, -0.6); box(1.0, 0.06, d - 2.9, '#8a6238', -w / 2 + 1.3, 1.03, -0.6);
-        for (let i = 0; i < 8; i++) { cyl(0.17, 0.17, 0.08, '#3a2a1e', -w / 2 + 2.2, 0.62, -4.4 + i * 1.08); cyl(0.03, 0.03, 0.6, '#1a120c', -w / 2 + 2.2, 0.3, -4.4 + i * 1.08, 6); }
-        for (let lv = 0; lv < 3; lv++) { box(0.3, 0.04, d - 3.5, '#3a2a1e', -w / 2 + 0.2, 1.5 + lv * 0.45, -0.9); for (let i = 0; i < 20; i++) cyl(0.045, 0.055, 0.3, ['#2a5a3a', '#6a3a1a', '#d8d0b8', '#2a3a6a', '#8a2a2a', '#c8a84a'][Math.floor(rnd() * 6)], -w / 2 + 0.2, 1.67 + lv * 0.45, -4.3 + i * 0.36, 8); }
-        for (let i = 0; i < 3; i++) cyl(0.2, 0.2, 0.5, '#8a8a94', -w / 2 + 0.4 + i * 0.45, 0.25, d / 2 - 1.2, 12);
-        // кухня в глубине: проём, кастрюли, пар
-        const kc = document.createElement('canvas'); kc.width = 256; kc.height = 128; const kg = kc.getContext('2d');
-        const kgr = kg.createLinearGradient(0, 0, 0, 128); kgr.addColorStop(0, '#ffe2b0'); kgr.addColorStop(0.35, '#b8743a'); kgr.addColorStop(1, '#2a160c'); kg.fillStyle = kgr; kg.fillRect(0, 0, 256, 128);
-        kg.fillStyle = 'rgba(0,0,0,0.45)'; for (let i = 0; i < 9; i++) kg.fillRect(14 + i * 27, 40 + (i % 2) * 10, 12, 60);
-        const kitchen = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.3), new THREE.MeshBasicMaterial({ map: makeTex(kc) })); kitchen.position.set(-1.6, 1.55, -d / 2 + 0.025); room.add(kitchen);
-        box(3.4, 0.08, 0.12, '#3a2416', -1.6, 2.24, -d / 2 + 0.05);
-        box(3.0, 0.9, 0.5, '#5a4a40', -1.6, 0.45, -d / 2 + 0.3); for (let i = 0; i < 3; i++) { cyl(0.16, 0.14, 0.18, '#8a8a94', -2.4 + i * 0.8, 0.99, -d / 2 + 0.3, 12); }
-        for (let i = 0; i < 8; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: 0xffffff, transparent: true, opacity: 0.12, depthWrite: false })); sp.userData = { kitchen: true, age: Math.random() * 3, life: 2.5 + Math.random() }; sp.position.set(-1.6, 1.8, -d / 2 + 0.3); room.add(sp); inside.steam.push(sp); }
-        // дзасики: два низких стола с подушками справа
-        [[2.3, -3.2], [2.3, -0.4]].forEach((p) => { box(2.2, 0.1, 0.9, '#2a1a10', p[0], 0.3, p[1]); box(1.3, 0.06, 0.8, '#6b4a2c', p[0], 0.4, p[1]); [[-0.5, 0.65], [0.5, 0.65], [-0.5, -0.65], [0.5, -0.65]].forEach((q) => box(0.45, 0.08, 0.45, ['#4a6a9a', '#9a4a4a', '#4a8a6a'][Math.floor(rnd() * 3)], p[0] + q[0], 0.34, p[1] + q[1])); for (let k = 0; k < 3; k++) cyl(0.04, 0.04, 0.12, '#d8d0b8', p[0] - 0.4 + k * 0.3, 0.49, p[1] - 0.2, 8); });
-        // телевизор, вентилятор, балки, лампочки
-        const tv = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.62), new THREE.MeshBasicMaterial({ map: texTV() })); tv.position.set(w / 2 - 0.095, 2.45, -4.6); tv.rotation.y = -Math.PI / 2; room.add(tv); box(0.08, 0.7, 1.2, '#111116', w / 2 - 0.04, 2.45, -4.6);
-        for (let i = 0; i < 4; i++) box(w, 0.2, 0.2, '#2a1a10', 0, h - 0.1, -4.2 + i * 2.6);
-        for (let i = 0; i < 6; i++) { const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfff1d0 })); bulb.position.set(-w / 2 + 1.3, h - 0.5, -4.2 + i * 1.5); room.add(bulb); room.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-w / 2 + 1.3, h, -4.2 + i * 1.5), new THREE.Vector3(-w / 2 + 1.3, h - 0.45, -4.2 + i * 1.5)]), new THREE.LineBasicMaterial({ color: 0x000000 }))); }
-        light('#ffd9a0', 4.5, -w / 2 + 1.6, h - 0.6, -1.5, 14); light('#ffd9a0', 3, 1.5, h - 0.6, 2.5, 12); room.add(new THREE.AmbientLight(0xffe0c0, 0.35));
-        [-4.5, -1.5, 1.5].forEach((z) => { light('#ff7a3a', 2.5, w / 2 - 0.7, 2.5, z, 7); const ln = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), new THREE.MeshBasicMaterial({ map: texLantern({ chars: [], white: false, inten: 1, dead: -1 }, true) })); ln.position.set(w / 2 - 0.45, 2.5, z); ln.scale.set(0.8, 1.1, 0.8); room.add(ln); const hl = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: 0xff8a3a, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false })); hl.position.copy(ln.position); hl.scale.set(1.1, 1.1, 1); room.add(hl); });
-        // полоски меню — слова без предмета, по трём стенам
-        const strip = new THREE.PlaneGeometry(0.19, 0.74); let i = 0;
-        const put = (x, y, z, ry) => { const sg = rest[i++]; if (!sg) return; const m = new THREE.Mesh(strip, lamb('#ffffff', { map: texStrip(sg) })); m.position.set(x, y, z); m.rotation.y = ry; m.rotation.z = (hashStr(sg.text) % 7 - 3) * 0.008; m.userData.sign = sg; room.add(m); inside.strips.push(m); sg.strip = m; };
-        const places = [];
-        for (let k = 0; k < 16; k++) places.push([w / 2 - 0.02, 2.4, -d / 2 + 0.6 + k * 0.42, -Math.PI / 2]);
-        for (let k = 0; k < 9; k++) places.push([w / 2 - 0.4 - k * 0.42, 2.6, -d / 2 + 0.02, 0]);
-        for (let k = 0; k < 14; k++) places.push([-w / 2 + 0.02, 2.75, -d / 2 + 0.6 + k * 0.42, Math.PI / 2]);
-        for (let k = 0; k < 14; k++) places.push([-1.2 + k * 0.3, 2.5, d / 2 - 0.02, Math.PI]);
-        places.forEach((p) => { if (i < rest.length) put(p[0], p[1], p[2], p[3]); });
-        nameSign(-1.6, 2.7, -d / 2 + 0.03, 0, 3.0);
-        for (let k = 0; k < 8; k++) spots.push({ kind: 'table', x: -w / 2 + 1.3, y: 1.06, z: -4.6 + k * 1.1, ry: Math.PI / 2 });
-        [[2.3, -3.2], [2.3, -0.4]].forEach((p) => { spots.push({ kind: 'table', x: p[0] - 0.3, y: 0.43, z: p[1], ry: 0 }); spots.push({ kind: 'table', x: p[0] + 0.35, y: 0.43, z: p[1] + 0.15, ry: 0.5 }); });
-        spots.push({ kind: 'seat', x: -w / 2 + 2.2, y: 0.66, z: 3.16, ry: Math.PI / 2 });
-        spots.push({ kind: 'door', x: 0.5, y: 0, z: d / 2 - 0.6, ry: 0 });
-        spots.push({ kind: 'floor', x: w / 2 - 0.6, y: 0, z: 2.2, ry: -Math.PI / 2 });
-        spots.push({ kind: 'wall', x: w / 2 - 0.05, y: 0, z: 0.4, ry: -Math.PI / 2 });
-        spots.push({ kind: 'wall', x: -w / 2 + 0.05, y: 0, z: 3.0, ry: Math.PI / 2 });
-    } else if (type === 'konbini') {
-        const tile = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#e4e6ea'; g.fillRect(0, 0, 128, 128); g.strokeStyle = 'rgba(0,0,0,0.18)'; g.lineWidth = 2; [[1, 1], [65, 65], [65, 1], [1, 65]].forEach((p) => g.strokeRect(p[0], p[1], 62, 62)); const t = makeTex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(8, 12); return t; })();
-        roomShell(lamb('#eef0f4'), lamb('#ffffff', { map: tile }), '#f4f6fa', '#dfefff');
-        room.add(new THREE.AmbientLight(0xf0f6ff, 0.55));
-        for (let z = -4; z < 5; z += 3) for (let x = -2; x <= 2; x += 2) { light('#f4f8ff', 1.4, x, h - 0.3, z, 8); box(1.2, 0.05, 0.18, '#ffffff', x, h - 0.04, z, { emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.5 }); }
-        // три стеллажа с товаром + торцевые корзины
-        const rackMat = '#c8cad0';
-        [-2.2, 0, 2.2].forEach((x) => {
-            for (let lv = 0; lv < 4; lv++) { box(0.9, 0.04, 6.0, rackMat, x, 0.3 + lv * 0.45, -1.0); for (let k = 0; k < 20; k++) { const hh = 0.18 + rnd() * 0.16; box(0.14 + rnd() * 0.1, hh, 0.14 + rnd() * 0.1, ['#e04040', '#3a7fe0', '#f0c030', '#40b060', '#f0f0f0', '#8040c0', '#f08030'][Math.floor(rnd() * 7)], x + (rnd() - 0.5) * 0.55, 0.32 + lv * 0.45 + hh / 2, -3.9 + k * 0.3); } }
-            box(0.9, 1.9, 0.04, rackMat, x, 0.95, -4.0); box(0.9, 1.9, 0.04, rackMat, x, 0.95, 2.0);
-            box(0.8, 0.5, 0.6, '#2a2a32', x, 0.25, 2.4); for (let k = 0; k < 6; k++) box(0.15, 0.1, 0.15, ['#e04040', '#f0c030', '#40b060'][k % 3], x - 0.25 + (k % 3) * 0.25, 0.55, 2.3 + Math.floor(k / 3) * 0.2);
-        });
-        // холодильники вдоль задней стены
-        for (let k = 0; k < 6; k++) { const fx = -w / 2 + 0.75 + k * 1.22; box(1.1, 2.3, 0.6, '#d8dce4', fx, 1.15, -d / 2 + 0.35); const glass = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 2.0), lamb('#9fc8e8', { transparent: true, opacity: 0.55, emissive: new THREE.Color('#9fc8e8'), emissiveIntensity: 0.35 })); glass.position.set(fx, 1.2, -d / 2 + 0.66); room.add(glass); for (let r = 0; r < 4; r++) for (let q = 0; q < 4; q++) cyl(0.05, 0.05, 0.22, ['#2a7fd0', '#e0e0e0', '#40b060', '#e04040'][(r + q + k) % 4], fx - 0.33 + q * 0.22, 0.45 + r * 0.45, -d / 2 + 0.55, 6); }
-        // касса, одэн, банкомат
-        box(2.2, 0.95, 0.65, '#dfe3ea', -2.0, 0.475, d / 2 - 1.5); box(0.4, 0.3, 0.35, '#2a2a32', -1.4, 1.1, d / 2 - 1.5); box(0.6, 0.35, 0.45, '#8a8a94', -2.6, 1.12, d / 2 - 1.5); box(0.5, 0.25, 0.35, '#c8a84a', -2.6, 1.42, d / 2 - 1.5, { transparent: true, opacity: 0.6 });
-        for (let i = 0; i < 4; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: 0xffffff, transparent: true, opacity: 0.1, depthWrite: false })); sp.userData = { kitchen: true, age: Math.random() * 3, life: 2.2 + Math.random() }; sp.position.set(-2.6, 1.6, d / 2 - 1.5); room.add(sp); inside.steam.push(sp); }
-        box(0.7, 1.6, 0.6, '#2a3a5a', w / 2 - 0.5, 0.8, d / 2 - 1.2); const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.3), new THREE.MeshBasicMaterial({ color: new THREE.Color('#9fd8ff') })); scr.position.set(w / 2 - 0.86, 1.2, d / 2 - 1.2); scr.rotation.y = -Math.PI / 2; room.add(scr);
-        // журнальная стойка у витрины: обложки — слова без предмета
-        box(0.3, 1.5, 3.2, '#c8cad0', w / 2 - 0.3, 0.75, -0.2); let i = 0;
-        for (let lv = 0; lv < 4; lv++) for (let k = 0; k < 12; k++) { const sg = rest[i++]; if (!sg) break; const m = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.28), lamb('#ffffff', { map: texMagazine(sg) })); m.position.set(w / 2 - 0.46, 0.35 + lv * 0.36, -1.7 + k * 0.26); m.rotation.y = -Math.PI / 2; m.rotation.x = -0.25; m.userData.sign = sg; room.add(m); sg.strip = m; }
-        // плакаты на витрине у входа
-        for (let k = 0; i < rest.length && k < 8; k++) { const sg = rest[i++]; const m = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.56), lamb('#ffffff', { map: texWordPoster(sg) })); m.position.set(-w / 2 + 0.5 + (k % 4) * 0.5, 2.3 - Math.floor(k / 4) * 0.65, d / 2 - 0.03); m.rotation.y = Math.PI; m.userData.sign = sg; room.add(m); sg.strip = m; }
-        const win = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.6), new THREE.MeshBasicMaterial({ map: texSky() })); win.position.set(-w / 2 + 1.5, 1.9, d / 2 - 0.02); win.rotation.y = Math.PI; room.add(win);
-        nameSign(0, 2.95, -d / 2 + 0.72, 0, 3.0);
-        // товары-слова на верхних полках, с ценником
-        [-2.2, 0, 2.2].forEach((x) => { for (let k = 0; k < 4; k++) spots.push({ kind: 'table', x, y: 1.67, z: -3.6 + k * 1.3, ry: x > 0 ? -Math.PI / 2 : Math.PI / 2, price: true }); });
-        spots.push({ kind: 'table', x: -2.9, y: 0.95, z: d / 2 - 1.5, ry: 0, price: true });
-        spots.push({ kind: 'door', x: 0.5, y: 0, z: d / 2 - 0.6, ry: 0 });
-        spots.push({ kind: 'wall', x: -w / 2 + 0.05, y: 0, z: 2.5, ry: Math.PI / 2 });
-    } else if (type === 'class') {
-        roomShell(lamb('#e8e2d0'), lamb('#b9a98a'), '#f0ece0', '#f4e8c8');
-        room.add(new THREE.AmbientLight(0xfff4e0, 0.4));
-        for (let z = -3.5; z < 5; z += 3) { light('#fff6e0', 1.6, -1.5, h - 0.3, z, 9); light('#fff6e0', 1.6, 1.5, h - 0.3, z, 9); box(1.2, 0.05, 0.16, '#fff8e8', -1.5, h - 0.04, z, { emissive: new THREE.Color(0xfff8e8), emissiveIntensity: 0.5 }); box(1.2, 0.05, 0.16, '#fff8e8', 1.5, h - 0.04, z, { emissive: new THREE.Color(0xfff8e8), emissiveIntensity: 0.5 }); }
-        const bbTex = texBlackboard(rest);
-        const board = new THREE.Mesh(new THREE.PlaneGeometry(5.0, 2.5), lamb('#ffffff', { map: bbTex, emissive: new THREE.Color(0xffffff), emissiveMap: bbTex, emissiveIntensity: 0.25 })); board.position.set(-0.6, 1.8, -d / 2 + 0.05); room.add(board); board.userData.board = true;
-        box(5.15, 2.65, 0.06, '#5a3a22', -0.6, 1.8, -d / 2 + 0.0); box(5.0, 0.05, 0.12, '#4a3020', -0.6, 0.52, -d / 2 + 0.1);
-        for (let k = 0; k < 5; k++) box(0.08, 0.02, 0.02, k % 2 ? '#ffffff' : '#ffd34a', -2.6 + k * 0.3, 0.56, -d / 2 + 0.1);
-        rest.forEach((sg, i) => { if (i >= 16) return; const hit = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.5), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(-2.85 + (i % 4) * 1.15, 2.5 - Math.floor(i / 4) * 0.45, -d / 2 + 0.05); hit.userData.sign = sg; room.add(hit); });
-        // доска объявлений справа от доски: стикеры-слова, если не влезли на доску
-        box(1.5, 1.2, 0.04, '#8a6a48', 2.8, 1.9, -d / 2 + 0.02);
-        rest.slice(16).forEach((sg, i) => { if (i >= 12) return; const m = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), lamb('#ffffff', { map: texNote(sg) })); m.position.set(2.2 + (i % 4) * 0.33, 2.3 - Math.floor(i / 4) * 0.33, -d / 2 + 0.05); m.rotation.z = (hashStr(sg.text) % 9 - 4) * 0.03; m.userData.sign = sg; room.add(m); sg.strip = m; });
-        // учительский стол, 12 парт, шкафчики, книжный шкаф, окно, растение
-        box(1.8, 0.08, 0.75, '#8a6a48', -0.6, 0.78, -d / 2 + 1.5); [[-0.8, -0.3], [0.8, -0.3], [-0.8, 0.3], [0.8, 0.3]].forEach((p) => box(0.05, 0.76, 0.05, '#3a3a40', -0.6 + p[0], 0.38, -d / 2 + 1.5 + p[1]));
-        box(0.5, 0.9, 0.5, '#5a5a62', -0.6, 0.45, -d / 2 + 2.1); // стул учителя
-        for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) {
-            const x = -2.2 + c * 2.0, z = -d / 2 + 3.4 + r * 1.5;
-            box(0.95, 0.05, 0.6, '#c8a878', x, 0.72, z); box(0.95, 0.12, 0.6, '#9a8060', x, 0.63, z);
-            [[-0.42, -0.25], [0.42, -0.25], [-0.42, 0.25], [0.42, 0.25]].forEach((p) => cyl(0.02, 0.02, 0.7, '#5a5a62', x + p[0], 0.35, z + p[1], 6));
-            box(0.42, 0.04, 0.4, '#8a6a48', x, 0.45, z + 0.58); box(0.42, 0.42, 0.04, '#8a6a48', x, 0.68, z + 0.78); [[-0.18, 0.4], [0.18, 0.4], [-0.18, 0.76], [0.18, 0.76]].forEach((p) => cyl(0.015, 0.015, 0.45, '#5a5a62', x + p[0], 0.22, z + p[1], 5));
-            if (rnd() < 0.5) box(0.25, 0.03, 0.2, ['#f4efe0', '#c84a4a', '#3a6fd9'][Math.floor(rnd() * 3)], x + (rnd() - 0.5) * 0.4, 0.76, z);
-            spots.push({ kind: 'table', x, y: 0.75, z, ry: 0 });
+    ROOM_SHELLS[type]();
+    const grid = new Grid(ROOM.w, ROOM.d);
+    const used = { back: [], left: [], right: [], front: [] };
+    const spots = [], placed = [];
+    const mods = catalog(type, rnd);
+    let boardMod = null, magMod = null, noteSpots = [];
+    mods.forEach((mod) => {
+        const n = mod.count ? mod.count[0] + Math.floor(rnd() * (mod.count[1] - mod.count[0] + 1)) : 1;
+        for (let k = 0; k < n; k++) {
+            const m = Object.assign({}, mod);
+            const g = new THREE.Group();
+            let pos = { x: 0, z: 0, ry: 0 };
+            if (m.rule !== 'none') { pos = placeModule(m, grid, rnd, used); if (!pos) continue; }
+            m.build(g, rnd, m._len);
+            g.position.set(pos.x, 0, pos.z); g.rotation.y = pos.ry; room.add(g); g.updateMatrixWorld(true);
+            if (m.solid) addCollider(g, colliders.room, 0.25);
+            (m.spots || []).forEach((sp) => { const v = new THREE.Vector3(sp.x, sp.y, sp.z).applyMatrix4(g.matrixWorld); spots.push({ kind: sp.kind, x: v.x, y: v.y, z: v.z, ry: pos.ry + (sp.ry || 0), price: sp.price }); });
+            if (m.boardMesh) boardMod = m;
+            if (m.mag) { magMod = m; m._g = g; }
+            if (m.notes) m.notes.forEach((p) => { const v = new THREE.Vector3(p.x, p.y, p.z).applyMatrix4(g.matrixWorld); noteSpots.push({ x: v.x, y: v.y, z: v.z, ry: pos.ry }); });
+            placed.push(m);
         }
-        for (let k = 0; k < 8; k++) box(0.45, 1.8, 0.45, k % 2 ? '#8aa0b8' : '#9ab0c8', -w / 2 + 0.5 + k * 0.5, 0.9, d / 2 - 0.3);
-        box(0.35, 2.2, 1.6, '#5a3a22', w / 2 - 0.2, 1.1, -3.2); for (let r = 0; r < 5; r++) for (let k = 0; k < 9; k++) box(0.22, 0.28 + rnd() * 0.1, 0.06 + rnd() * 0.05, ['#c84a4a', '#3a6fd9', '#d9b23a', '#2a8a5a', '#f0e8d8'][Math.floor(rnd() * 5)], w / 2 - 0.2, 0.25 + r * 0.42, -3.9 + k * 0.16);
-        for (let k = 0; k < 2; k++) { const win = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 1.3), new THREE.MeshBasicMaterial({ map: texSky() })); win.position.set(w / 2 - 0.02, 1.9, -0.5 + k * 2.6); win.rotation.y = -Math.PI / 2; room.add(win); box(0.06, 1.4, 2.1, '#f8f8f8', w / 2 - 0.0, 1.9, -0.5 + k * 2.6); box(0.08, 1.4, 0.05, '#f8f8f8', w / 2 - 0.03, 1.9, -0.5 + k * 2.6); }
-        const tree = PROP_BUILDERS['木'](lamb); tree.position.set(w / 2 - 0.6, 0, 3.8); tree.scale.setScalar(0.9); room.add(tree);
-        spots.push({ kind: 'table', x: -0.6, y: 0.82, z: -d / 2 + 1.5, ry: 0 });
-        spots.push({ kind: 'door', x: 0.5, y: 0, z: d / 2 - 0.7, ry: 0 });
-        spots.push({ kind: 'wall', x: -w / 2 + 0.05, y: 0, z: 0.5, ry: Math.PI / 2 });
-        spots.push({ kind: 'wall', x: -w / 2 + 0.05, y: 0, z: 3.0, ry: Math.PI / 2 });
-        nameSign(-w / 2 + 0.03, 2.6, -2.5, Math.PI / 2, 2.0);
-    } else { // home: гостиная с котацу и телевизором, кухонный угол, спальный угол, стикеры
-        const tatami = (() => { const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#9aa06a'; g.fillRect(0, 0, 256, 128); for (let y = 0; y < 128; y += 3) { g.fillStyle = 'rgba(0,0,0,' + (y % 6 ? 0.06 : 0.12) + ')'; g.fillRect(0, y, 256, 1); } g.fillStyle = '#2a2a24'; g.fillRect(0, 0, 256, 6); g.fillRect(0, 122, 256, 6); const t = makeTex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4, 6); return t; })();
-        roomShell(lamb('#e6dcc4'), lamb('#ffffff', { map: tatami }), '#d8ccb4', '#3a2a1a');
-        room.add(new THREE.AmbientLight(0xffe8d0, 0.4));
-        light('#ffd9a0', 2.6, 0, h - 0.6, -0.8, 11); const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 0.4, 12, 1, true), lamb('#f0dcb8', { side: THREE.DoubleSide, emissive: new THREE.Color('#ffe0b0'), emissiveIntensity: 0.45 })); shade.position.set(0, h - 0.6, -0.8); room.add(shade);
-        light('#ffe8c0', 1.6, -2.5, h - 0.5, -4.2, 8); light('#ffd0a0', 1.2, 2.4, 1.2, 3.5, 6);
-        // котацу, подушки, телевизор на тумбе
-        box(1.6, 0.06, 1.0, '#6a4a2c', 0, 0.38, -0.8); box(2.0, 0.02, 1.4, '#b8402a', 0, 0.33, -0.8); [[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]].forEach((p) => box(0.06, 0.36, 0.06, '#4a3020', p[0], 0.18, -0.8 + p[1]));
-        [[0, 0.2], [0, -1.8], [1.2, -0.8], [-1.2, -0.8]].forEach((p) => box(0.5, 0.1, 0.5, ['#4a6a9a', '#9a4a4a', '#4a8a6a', '#9a8a4a'][Math.floor(rnd() * 4)], p[0], 0.05, p[1]));
-        for (let k = 0; k < 2; k++) cyl(0.04, 0.035, 0.1, '#d8d0b8', -0.3 + k * 0.5, 0.46, -0.9, 8);
-        box(1.6, 0.5, 0.45, '#5a3a22', 0, 0.25, -d / 2 + 0.35); const tv = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.68), new THREE.MeshBasicMaterial({ map: texTV() })); tv.position.set(0, 0.95, -d / 2 + 0.35); room.add(tv); box(1.3, 0.76, 0.06, '#111116', 0, 0.95, -d / 2 + 0.3);
-        // кухонный угол слева: столешница, мойка, плита, холодильник, полка
-        box(2.6, 0.9, 0.6, '#d8d4cc', -w / 2 + 1.4, 0.45, -d / 2 + 0.35); box(2.6, 0.05, 0.62, '#8a8a94', -w / 2 + 1.4, 0.92, -d / 2 + 0.35); box(0.5, 0.06, 0.4, '#a8acb4', -w / 2 + 0.8, 0.95, -d / 2 + 0.35); cyl(0.015, 0.015, 0.3, '#a8acb4', -w / 2 + 0.8, 1.1, -d / 2 + 0.15, 6);
-        box(0.55, 0.06, 0.45, '#2a2a32', -w / 2 + 2.0, 0.95, -d / 2 + 0.35); [[-0.12, -0.1], [0.12, -0.1], [-0.12, 0.1], [0.12, 0.1]].forEach((p) => cyl(0.07, 0.07, 0.02, '#1a1a20', -w / 2 + 2.0 + p[0], 0.99, -d / 2 + 0.35 + p[1], 10));
-        cyl(0.13, 0.12, 0.14, '#8a8a94', -w / 2 + 2.0, 1.07, -d / 2 + 0.35, 12);
-        box(0.65, 1.6, 0.65, '#e8ecf0', -w / 2 + 3.2, 0.8, -d / 2 + 0.4); box(0.02, 0.5, 0.04, '#8a8a94', -w / 2 + 2.9, 1.1, -d / 2 + 0.74);
-        box(2.0, 0.04, 0.3, '#5a3a22', -w / 2 + 1.4, 1.9, -d / 2 + 0.15); for (let k = 0; k < 7; k++) cyl(0.05, 0.06, 0.16 + rnd() * 0.12, ['#f0e8d8', '#c8a84a', '#2a5a3a', '#8a2a2a'][k % 4], -w / 2 + 0.6 + k * 0.28, 2.0, -d / 2 + 0.15, 8);
-        // спальный угол справа: футон, подушка, одеяло, шкаф-ящик, книжный шкаф
-        box(1.2, 0.18, 2.1, '#e8e4d8', w / 2 - 1.0, 0.09, -3.8); box(0.5, 0.12, 0.35, '#d0d8e8', w / 2 - 1.0, 0.24, -4.6); box(1.2, 0.1, 1.4, '#6a7aa8', w / 2 - 1.0, 0.23, -3.4);
-        box(0.6, 1.1, 1.0, '#d8c8a8', w / 2 - 0.35, 0.55, -1.6); for (let k = 0; k < 3; k++) box(0.02, 0.26, 0.9, '#b8a888', w / 2 - 0.66, 0.2 + k * 0.33, -1.6);
-        box(0.35, 2.2, 1.6, '#5a3a22', w / 2 - 0.2, 1.1, 1.2); for (let r = 0; r < 5; r++) for (let k = 0; k < 9; k++) box(0.22, 0.28 + rnd() * 0.1, 0.06 + rnd() * 0.05, ['#c84a4a', '#3a6fd9', '#d9b23a', '#2a8a5a', '#f0e8d8', '#6a3a8a'][Math.floor(rnd() * 6)], w / 2 - 0.2, 0.25 + r * 0.42, 0.5 + k * 0.16);
-        // окно на балкон с луной, шторы, растение
-        const win = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.6), new THREE.MeshBasicMaterial({ map: texSky() })); win.position.set(2.2, 1.9, d / 2 - 0.02); win.rotation.y = Math.PI; room.add(win);
-        const moon = new THREE.Mesh(new THREE.CircleGeometry(0.16, 20), new THREE.MeshBasicMaterial({ color: 0xfff6e0 })); moon.position.set(2.8, 2.3, d / 2 - 0.03); moon.rotation.y = Math.PI; room.add(moon);
-        box(2.3, 1.7, 0.06, '#f0ece0', 2.2, 1.9, d / 2 - 0.0); box(0.04, 1.6, 0.08, '#f0ece0', 2.2, 1.9, d / 2 - 0.05); box(0.5, 1.9, 0.08, '#c8a888', 1.0, 1.9, d / 2 - 0.08); box(0.5, 1.9, 0.08, '#c8a888', 3.4, 1.9, d / 2 - 0.08);
-        const plant = PROP_BUILDERS['木'](lamb); plant.position.set(-w / 2 + 0.7, 0, 3.6); plant.scale.setScalar(0.8); room.add(plant);
-        // стикеры со словами: стена у стола, холодильник, у двери
-        let i = 0; const ng = new THREE.PlaneGeometry(0.22, 0.22);
-        const put = (x, y, z, ry) => { const sg = rest[i++]; if (!sg) return; const m = new THREE.Mesh(ng, lamb('#ffffff', { map: texNote(sg) })); m.position.set(x, y, z); m.rotation.y = ry; m.rotation.z = (hashStr(sg.text) % 9 - 4) * 0.03; m.userData.sign = sg; room.add(m); sg.strip = m; };
-        for (let r = 0; r < 3; r++) for (let k = 0; k < 12; k++) put(-w / 2 + 0.02, 2.4 - r * 0.3, -2.4 + k * 0.3, Math.PI / 2);
-        for (let r = 0; r < 3; r++) for (let k = 0; k < 2; k++) put(-w / 2 + 3.07 + k * 0.26, 1.75 - r * 0.3, -d / 2 + 0.73, 0);
-        for (let r = 0; r < 2; r++) for (let k = 0; k < 6; k++) put(-1.6 + k * 0.3, 2.3 - r * 0.3, d / 2 - 0.02, Math.PI);
-        for (let k = 0; k < 4; k++) spots.push({ kind: 'table', x: -0.55 + k * 0.37, y: 0.41, z: -0.8 + (k % 2 ? 0.25 : -0.25), ry: 0 });
-        spots.push({ kind: 'table', x: -w / 2 + 1.4, y: 0.95, z: -d / 2 + 0.35, ry: 0 });
-        spots.push({ kind: 'table', x: w / 2 - 0.35, y: 1.1, z: -1.6, ry: -Math.PI / 2 });
-        spots.push({ kind: 'table', x: w / 2 - 0.2, y: 2.22, z: 1.2, ry: 0 });
-        spots.push({ kind: 'seat', x: w / 2 - 1.0, y: 0.28, z: -3.2, ry: 0.6 });
-        spots.push({ kind: 'floor', x: 1.6, y: 0, z: 2.6, ry: 0 });
-        spots.push({ kind: 'door', x: 0.5, y: 0, z: d / 2 - 0.6, ry: 0 });
-        spots.push({ kind: 'wall', x: w / 2 - 0.05, y: 0, z: 3.6, ry: -Math.PI / 2 });
-        spots.push({ kind: 'wall', x: -w / 2 + 0.05, y: 0, z: 1.2, ry: Math.PI / 2 });
-        nameSign(-1.8, 2.6, -d / 2 + 0.03, 0, 1.6);
+    });
+    // места у двери и на стенах для предметов
+    spots.push({ kind: 'door', x: ROOM.doorX - 1.0, y: 0, z: ROOM.d / 2 - 0.6, ry: 0 });
+    ['left', 'right', 'back'].forEach((wall) => freeWallSegments(wall, used).forEach((sg) => { const p = wallPoint(wall, (sg[0] + sg[1]) / 2, 0, 0.05); spots.push({ kind: 'wall', x: p.x, y: 0, z: p.z, ry: p.ry }); }));
+    // слова без предмета — на поверхности типа комнаты по свободным стенам
+    let wi = 0;
+    const surfaceOn = (wall, y, step, make) => { freeWallSegments(wall, used).forEach((sg) => { for (let t = sg[0] + step / 2; t < sg[1] - step / 2 && wi < rest.length; t += step) { const sgn = rest[wi++]; const p = wallPoint(wall, t, y, 0.02); const m = make(sgn); m.position.set(p.x, p.y, p.z); m.rotation.y = p.ry; m.rotation.z = (hashStr(sgn.text) % 7 - 3) * 0.01; m.userData.sign = sgn; room.add(m); sgn.strip = m; inside.strips.push(m); } }); };
+    if (type === 'izakaya') {
+        const geo = new THREE.PlaneGeometry(0.19, 0.74);
+        ['right', 'back', 'left', 'front'].forEach((wl) => { surfaceOn(wl, 2.4, 0.42, (sg) => new THREE.Mesh(geo, lamb('#ffffff', { map: texStrip(sg) }))); });
+        ['right', 'left'].forEach((wl) => { surfaceOn(wl, 1.55, 0.42, (sg) => new THREE.Mesh(geo, lamb('#ffffff', { map: texStrip(sg) }))); });
+    } else if (type === 'konbini') {
+        if (magMod) magMod.mag.forEach((p) => { if (wi >= rest.length) return; const sg = rest[wi++]; const m = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.28), lamb('#ffffff', { map: texMagazine(sg) })); m.position.set(p.x, p.y, p.z); m.rotation.x = -0.25; m.userData.sign = sg; magMod._g.add(m); sg.strip = m; });
+        ['front', 'left', 'right'].forEach((wl) => { surfaceOn(wl, 2.3, 0.5, (sg) => new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.56), lamb('#ffffff', { map: texWordPoster(sg) }))); surfaceOn(wl, 1.65, 0.5, (sg) => new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.56), lamb('#ffffff', { map: texWordPoster(sg) }))); });
+    } else if (type === 'class') {
+        const onBoard = rest.slice(0, 16); wi = Math.min(16, rest.length);
+        if (boardMod) { const t = texBlackboard(onBoard); boardMod.boardMesh.material.map = t; boardMod.boardMesh.material.emissive = new THREE.Color(0xffffff); boardMod.boardMesh.material.emissiveMap = t; boardMod.boardMesh.material.emissiveIntensity = 0.25; boardMod.boardMesh.material.needsUpdate = true; onBoard.forEach((sg, i) => { const hit = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.5), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(-2.25 + (i % 4) * 1.15, 2.5 - Math.floor(i / 4) * 0.45, 0.06); hit.userData.sign = sg; boardMod.boardMesh.parent.add(hit); }); }
+        ['left', 'right', 'front'].forEach((wl) => { surfaceOn(wl, 2.2, 0.33, (sg) => new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), lamb('#ffffff', { map: texNote(sg) }))); surfaceOn(wl, 1.85, 0.33, (sg) => new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), lamb('#ffffff', { map: texNote(sg) }))); });
+    } else {
+        noteSpots.forEach((p) => { if (wi >= rest.length) return; const sg = rest[wi++]; const m = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), lamb('#ffffff', { map: texNote(sg) })); m.position.set(p.x, p.y, p.z); m.rotation.y = p.ry; m.userData.sign = sg; room.add(m); sg.strip = m; });
+        ['left', 'right', 'back', 'front'].forEach((wl) => { for (let r = 0; r < 3; r++) surfaceOn(wl, 2.35 - r * 0.3, 0.3, (sg) => new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), lamb('#ffffff', { map: texNote(sg) }))); });
     }
     // предметы-слова по местам; в комбини — с ценником
     const free = spots.slice();
-    objs.forEach((sg) => { for (let i = 0; i < free.length; i++) { const sp = free[i]; if (placeObject(sg, sp)) { if (sp.price) { const tg = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.18), lamb('#ffffff', { map: texPrice(sg), side: THREE.DoubleSide })); tg.position.set(sp.x + (sp.x > 0 ? -0.46 : 0.46) * (sp.z > 4 ? 0 : 1), sp.y - 0.1, sp.z + (sp.z > 4 ? 0.35 : 0)); tg.rotation.y = sp.z > 4 ? 0 : (sp.x > 0 ? Math.PI / 2 : -Math.PI / 2); tg.userData.sign = sg; room.add(tg); } free.splice(i, 1); break; } } });
+    objs.forEach((sg) => { for (let i = 0; i < free.length; i++) { const sp = free[i]; if (placeObject(sg, sp)) { if (sp.price) { const tg = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.18), lamb('#ffffff', { map: texPrice(sg), side: THREE.DoubleSide })); const off = new THREE.Vector3(0.46, -0.1, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), sp.ry); tg.position.set(sp.x + off.x, sp.y - 0.1, sp.z + off.z); tg.rotation.y = sp.ry + Math.PI / 2; tg.userData.sign = sg; room.add(tg); } free.splice(i, 1); break; } } });
 }
 function enterRoom(door) {
     const b = blocks[blockAt(door.userData.door.z)];
@@ -1308,7 +1326,7 @@ function enterRoom(door) {
         world.visible = false; signsGroup.visible = false; if (rain) rain.visible = false; room.visible = true;
         bloom.strength = 0.22; bloom.threshold = 0.92; hemi.intensity = 0.25;
         scene.fog = new THREE.FogExp2(new THREE.Color('#3a2414'), 0.06); scene.background = new THREE.Color('#1a120c');
-        camera.position.set(0.9, 1.6, ROOM.d / 2 - 1.1); yaw = tYaw = 0.1; pitch = tPitch = 0.04; vel.set(0, 0, 0); if (gyro) gyro.base = null; audio.setScene("inside");
+        camera.position.set(ROOM.doorX - 0.5, 1.6, ROOM.d / 2 - 1.1); yaw = tYaw = 0.1; pitch = tPitch = 0.04; vel.set(0, 0, 0); if (gyro) gyro.base = null; audio.setScene("inside");
         document.getElementById('exit').hidden = false; document.getElementById('walk').hidden = true; autoWalk = false; hideHint();
         toast((ROOM_NAMES[door.userData.door.type] || '') + ' · ' + b.q.name);
     });
@@ -1592,7 +1610,7 @@ function reviewSign(s) {
     s.word._state = 'lit'; s.state = 'lit'; s.inten = 1; s.isLit = true; s.dead = -1; s.tex = {};
     s.meshes.forEach((m) => { m.rotation.z = 0; });
     if (s.strip) { const tp = inside.door && inside.door.userData.door.type; s.strip.material.map = tp === 'konbini' ? (s.strip.geometry.parameters.width > 0.3 ? texWordPoster(s) : texMagazine(s)) : (tp === 'home' || (tp === 'class') ? texNote(s) : texStrip(s)); s.strip.material.needsUpdate = true; }
-    if (inside.on && inside.door && inside.door.userData.door.type === 'class') { const bd = room.children.find((o) => o.userData.board); if (bd) { const t = texBlackboard(splitWords(inside.block, 'class').rest); bd.material.map = t; bd.material.emissiveMap = t; bd.material.needsUpdate = true; } }
+    if (inside.on && inside.door && inside.door.userData.door.type === 'class') { let bd = null; room.traverse((o) => { if (o.userData.board) bd = o; }); if (bd) { const t = texBlackboard(splitWords(inside.block, 'class').rest); bd.material.map = t; bd.material.emissiveMap = t; bd.material.needsUpdate = true; } }
     if (s.label) { s.label.material.map = texLabel(s, true); s.label.material.needsUpdate = true; }
     if (s.prop) { const b = blocks.find((x) => x.signs.indexOf(s) >= 0); if (b && b.built) { disposeBlock(b); buildBlock(b); if (dynSigns.indexOf(s) < 0) dynSigns.push(s); } }
     s.anim = { t0: performance.now() }; if (dynSigns.indexOf(s) < 0) dynSigns.push(s);
@@ -1705,7 +1723,7 @@ function frame(now) {
     if (inside.on) {
         camera.position.x = clamp(camera.position.x, -ROOM.w / 2 + 0.6, ROOM.w / 2 - 0.6);
         camera.position.z = clamp(camera.position.z, -ROOM.d / 2 + 1.0, ROOM.d / 2 - 0.5);
-        if (camera.position.z > ROOM.d / 2 - 0.7 && Math.abs(camera.position.x - 1.4) < 0.7 && f > 0 && dir.z > 0.5) exitRoom();
+        if (camera.position.z > ROOM.d / 2 - 0.7 && Math.abs(camera.position.x - ROOM.doorX) < 0.7 && f > 0 && dir.z > 0.5) exitRoom();
     } else {
         camera.position.x = clamp(camera.position.x, -W2 + 0.7, W2 - 0.7);
         camera.position.z = clamp(camera.position.z, -streetLen + 4, 3);
@@ -1740,7 +1758,7 @@ function frame(now) {
         sp.position.set(u.side * (W2 - 0.3) - u.side * (0.3 + k * 0.9) + u.dx * k, 0.5 + k * 2.4, baseZ);
         sp.scale.setScalar(0.5 + k * 2.2); sp.material.opacity = (1 - k) * k * 0.22;
     });
-    inside.steam.forEach((sp) => { const u = sp.userData; u.age += dt; if (u.age > u.life) u.age = 0; const k = u.age / u.life; sp.position.set(-1.0 + Math.sin(k * 6 + u.life) * 0.2, 1.9 + k * 1.1, -ROOM.d / 2 + 0.3 + k * 0.6); sp.scale.setScalar(0.4 + k * 1.2); sp.material.opacity = (1 - k) * k * 0.4; });
+    inside.steam.forEach((sp) => { const u = sp.userData; if (!u.base) u.base = sp.position.clone(); u.age += dt; if (u.age > u.life) u.age = 0; const k = u.age / u.life; sp.position.set(u.base.x + Math.sin(k * 6 + u.life) * 0.2, u.base.y + k * 1.1, u.base.z + k * 0.3); sp.scale.setScalar(0.4 + k * 1.2); sp.material.opacity = (1 - k) * k * 0.4; });
     blocks.forEach((b) => { if (b.built) b.signs.forEach((sg) => { if (sg.flickerLight) sg.flickerLight.intensity = 2.4 + Math.sin(t * 17 + sg.seed) * 0.5 + Math.sin(t * 31) * 0.3; }); });
     updateLabels(t); updateHover(now);
     const bi = ensureBlocks();
