@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.626';
+const APP_VERSION = 'v0.0.627';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -1421,22 +1421,12 @@ function renderAuthState() {
 
     const loginUrl = appUrl('pages/login.html');
     const settingsUrl = appUrl('pages/settings.html');
-    // «Мой прогресс» живёт в меню профиля: это разговор про себя, а не про
-    // приложение. Гостю показываем тоже — прогресс до входа считается локально.
-    const progressUrl = appUrl('pages/progress.html');
-    const progressItem = `<a href="${progressUrl}">${NAV_ICONS['nav.progress']}<span class="nav-label" data-i18n="nav.progress">My progress</span></a>`;
+    // «Мой прогресс» и «Учу: …» переехали в настройки аккаунта (вкладки
+    // #progress и #account) — в меню остались только переходы.
     // «Приложения» — JP News и Прописи живут отдельной страницей-витриной, а не
     // в боковом меню: там только путь «смотрю → собираю → повторяю».
     const appsUrl = appUrl('pages/apps.html');
     const appsItem = `<a href="${appsUrl}">${NAV_ICONS['nav.apps']}<span class="nav-label" data-i18n="nav.apps">Apps</span></a>`;
-    // «Учу: Японский ›» — изучаемый язык, первым пунктом: это про человека, а не
-    // про приложение. Только при русском/украинском интерфейсе (см. LearnLang).
-    const learnItem = learnLangVisible()
-        ? `<a href="#" id="learn-lang-item" class="profile-menu__learn">` +
-          `<span class="nav-icon nav-icon--glyph">${LearnLang.get() === 'en' ? 'A' : 'あ'}</span>` +
-          `<span class="nav-label" data-i18n="nav.learn">Learning</span>` +
-          `<span class="profile-menu__val"><span id="learn-lang-val"></span><span class="profile-menu__caret">›</span></span></a>`
-        : '';
 
     if (typeof isLoggedIn === 'function' && isLoggedIn()) {
         const email = localStorage.getItem('animei:email');
@@ -1445,16 +1435,12 @@ function renderAuthState() {
             ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])) : '';
         menu.innerHTML =
             (safeEmail ? `<span class="profile-menu__email">${safeEmail}</span>` : '') +
-            learnItem +
-            progressItem +
             appsItem +
             `<a href="${settingsUrl}#account">${NAV_ICONS['nav.account']}<span class="nav-label" data-i18n="nav.account">Account settings</span></a>` +
             `<a href="#" id="logout-btn">${NAV_ICONS['nav.logout']}<span class="nav-label" data-i18n="nav.logout">Log out</span></a>`;
     } else {
         menu.innerHTML =
             `<a href="${loginUrl}" id="login-link">${NAV_ICONS['nav.login']}<span class="nav-label" data-i18n="nav.login">Log in</span></a>` +
-            learnItem +
-            progressItem +
             appsItem +
             `<a href="${settingsUrl}">${NAV_ICONS['nav.settings']}<span class="nav-label" data-i18n="nav.settings">Settings</span></a>`;
     }

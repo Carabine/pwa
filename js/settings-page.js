@@ -45,6 +45,35 @@
         window.addEventListener('hashchange', () => showTab(fromUrl(), false));
     }
 
+    // ---- Что учим: японский / английский (переехало из шторки в меню профиля) ----
+    (function initLearn() {
+        const card = document.getElementById('learn-card');
+        const box = document.getElementById('learn-options');
+        if (!card || !box || !window.LearnLang || typeof learnLangVisible !== 'function' || !learnLangVisible()) return;
+        const cur = LearnLang.get();
+        const counts = (typeof learnLangCounts === 'function') ? learnLangCounts() : { ja: 0, en: 0 };
+        const enOk = LearnLang.englishAvailable();
+        const esc = (x) => (typeof escHtml === 'function' ? escHtml(x) : String(x));
+        const opt = (code, glyph, enabled) =>
+            `<button type="button" class="learn-sheet__opt${code === cur ? ' is-on' : ''}${enabled ? '' : ' is-soon'}" data-lang="${code}"${enabled ? '' : ' disabled'}>` +
+            `<span class="learn-sheet__glyph learn-sheet__glyph--${code}">${glyph}</span>` +
+            `<span class="learn-sheet__body"><span class="learn-sheet__name">${esc(t('learn.' + code))}</span>` +
+            `<span class="learn-sheet__desc">${esc(t('learn.' + code + '.desc'))}</span></span>` +
+            `<span class="learn-sheet__count">${enabled ? esc(tWords(counts[code])) : esc(t('learn.soon'))}</span>` +
+            `<span class="learn-sheet__radio" aria-hidden="true"></span></button>`;
+        box.innerHTML = opt('ja', 'あ', true) + opt('en', 'A', enOk);
+        card.hidden = false;
+        box.querySelectorAll('.learn-sheet__opt').forEach((b) => {
+            b.addEventListener('click', () => {
+                const code = b.dataset.lang;
+                if (code === cur) return;
+                LearnLang.set(code);
+                if (window.animeiTrack) animeiTrack('learn_lang', code);
+                window.location.reload();
+            });
+        });
+    })();
+
     // ---- Сегментированные переключатели (тема, размер субтитров) ----
     // norm — нормализация сохранённого значения перед подсветкой (легаси).
     function initSeg(id, key, onChange, norm) {

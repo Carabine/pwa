@@ -684,6 +684,7 @@ const I18N = {
         'settings.account': 'Аккаунт',
         'settings.tab.app': 'Приложение',
         'settings.tab.account': 'Аккаунт',
+        'settings.tab.progress': 'Прогресс',
         'settings.appearance': 'Оформление',
         'settings.theme': 'Тема',
         'settings.theme.dark': 'Тёмная',

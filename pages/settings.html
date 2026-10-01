@@ -92,6 +92,9 @@
             <button type="button" class="settings-tab" role="tab" id="tab-account"
                     aria-controls="panel-account" aria-selected="false" data-tab="account"
                     data-i18n="settings.tab.account">Аккаунт</button>
+            <button type="button" class="settings-tab" role="tab" id="tab-progress"
+                    aria-controls="panel-progress" aria-selected="false" data-tab="progress"
+                    data-i18n="settings.tab.progress">Прогресс</button>
         </div>
 
         <div class="settings-panel" id="panel-app" role="tabpanel" aria-labelledby="tab-app">
@@ -212,6 +215,13 @@
         </div>
 
         <div class="settings-panel" id="panel-account" role="tabpanel" aria-labelledby="tab-account" hidden>
+            <!-- ЧТО УЧИМ: изучаемый язык (раньше — шторка из меню профиля).
+                 Только при русском/украинском интерфейсе — см. learnLangVisible в app.js. -->
+            <section class="settings-card" id="learn-card" hidden>
+                <div class="settings-card__title" data-i18n="learn.title">Что учим</div>
+                <p class="settings-hint" data-i18n="learn.sub">Слова, колоды и план дня у каждого языка свои. Стрик общий.</p>
+                <div id="learn-options"></div>
+            </section>
             <!-- АККАУНТ -->
             <section class="settings-card" id="account-card">
                 <div class="settings-card__title" data-i18n="settings.account">Аккаунт</div>
@@ -223,6 +233,12 @@
                     <button type="button" class="btn btn--primary" id="save-pass" data-i18n="settings.savePassword">Обновить пароль</button>
                 </div>
             </section>
+        </div>
+
+        <!-- ПРОГРЕСС: та же разметка и скрипт, что у pages/progress.html -->
+        <div class="settings-panel" id="panel-progress" role="tabpanel" aria-labelledby="tab-progress" hidden>
+            <p class="progress__subtitle" id="prg-subtitle" data-i18n="progress.subtitle">Всё, что вы собрали и выучили</p>
+            <div id="prg-body"><div class="prg-tiles"><div class="prg-tile"><div class="prg-tile__value"><span class="skel skel-bar" style="width:2ch"></span></div><div class="prg-tile__label"><span class="skel skel-bar" style="width:7ch"></span></div></div><div class="prg-tile"><div class="prg-tile__value"><span class="skel skel-bar" style="width:2ch"></span></div><div class="prg-tile__label"><span class="skel skel-bar" style="width:7ch"></span></div></div><div class="prg-tile"><div class="prg-tile__value"><span class="skel skel-bar" style="width:2ch"></span></div><div class="prg-tile__label"><span class="skel skel-bar" style="width:7ch"></span></div></div><div class="prg-tile"><div class="prg-tile__value"><span class="skel skel-bar" style="width:2ch"></span></div><div class="prg-tile__label"><span class="skel skel-bar" style="width:7ch"></span></div></div></div><div class="prg-section"><div class="prg-section__head"><span class="prg-section__title"><span class="skel skel-bar" style="width:9ch"></span></span><span class="prg-section__note"><span class="skel skel-bar" style="width:7ch"></span></span></div><div class="prg-split skel"></div><div class="prg-legend"><span class="prg-legend__item"><i class="prg-legend__dot"></i><span class="skel skel-bar" style="width:94px"></span>&#8203;</span><span class="prg-legend__item"><i class="prg-legend__dot"></i><span class="skel skel-bar" style="width:104px"></span>&#8203;</span><span class="prg-legend__item"><i class="prg-legend__dot"></i><span class="skel skel-bar" style="width:133px"></span>&#8203;</span></div></div><div class="prg-section"><div class="prg-section__head"><span class="prg-section__title"><span class="skel skel-bar" style="width:9ch"></span></span><span class="prg-section__note"><span class="skel skel-bar" style="width:7ch"></span></span></div><div class="skel" style="height:113px"></div></div><div class="prg-section"><div class="prg-section__head"><span class="prg-section__title"><span class="skel skel-bar" style="width:9ch"></span></span><span class="prg-section__note"><span class="skel skel-bar" style="width:7ch"></span></span></div><div class="prg-bars"><span class="skel skel-fill" style="height:100%"></span></div></div><div class="prg-section"><div class="prg-section__head"><span class="prg-section__title"><span class="skel skel-bar" style="width:9ch"></span></span><span class="prg-section__note"><span class="skel skel-bar" style="width:7ch"></span></span></div><div class="prg-jlpt"><div class="prg-jlpt__head"><span class="prg-jlpt__name">N5</span><span class="prg-jlpt__count"><span class="skel skel-bar" style="width:8ch"></span></span></div><div class="prg-jlpt__track"></div></div><div class="prg-jlpt"><div class="prg-jlpt__head"><span class="prg-jlpt__name">N4</span><span class="prg-jlpt__count"><span class="skel skel-bar" style="width:8ch"></span></span></div><div class="prg-jlpt__track"></div></div><div class="prg-jlpt"><div class="prg-jlpt__head"><span class="prg-jlpt__name">N3</span><span class="prg-jlpt__count"><span class="skel skel-bar" style="width:8ch"></span></span></div><div class="prg-jlpt__track"></div></div></div><div class="prg-section"><div class="prg-section__head"><span class="prg-section__title"><span class="skel skel-bar" style="width:9ch"></span></span><span class="prg-section__note"><span class="skel skel-bar" style="width:7ch"></span></span></div><p class="prg-section__note" style="margin:0"><span class="skel skel-bar" style="width:100%"></span><span class="skel skel-bar prg-skel-line2" style="width:55%"></span></p></div></div>
         </div>
 
         <div class="settings-about" id="settings-about"></div>
@@ -246,9 +262,14 @@
 <script src="../js/axiosClient.js" defer></script>
 <script src="../js/video-store.js" defer></script>
 <script src="../js/words-store.js" defer></script>
+<script src="../js/decks-store.js" defer></script>
+<script src="../js/freeze.js" defer></script>
+<script src="../js/known-store.js" defer></script>
+<script src="../js/study-core.js" defer></script>
 <script src="../js/app.js" defer></script>
 <script src="../js/downloads.js" defer></script>
 <script src="../js/settings-page.js" defer></script>
+<script src="../js/progress.js" defer></script>
 <script src="../js/stats.js" defer></script>
 </body>
 </html>

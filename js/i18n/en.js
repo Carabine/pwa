@@ -680,6 +680,7 @@ window.I18N_EN = {
         'settings.account': 'Account',
         'settings.tab.app': 'App',
         'settings.tab.account': 'Account',
+        'settings.tab.progress': 'Progress',
         'settings.appearance': 'Appearance',
         'settings.theme': 'Theme',
         'settings.theme.dark': 'Dark',

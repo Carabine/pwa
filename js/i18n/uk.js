@@ -679,6 +679,7 @@ window.I18N_UK = {
         'settings.account': 'Акаунт',
         'settings.tab.app': 'Застосунок',
         'settings.tab.account': 'Акаунт',
+        'settings.tab.progress': 'Прогрес',
         'settings.appearance': 'Оформлення',
         'settings.theme': 'Тема',
         'settings.theme.dark': 'Темна',

@@ -128,11 +128,11 @@
        так подсветка пункта ложится в скруглённые углы ровно, без «кривизны». */
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    min-width: 196px;
+    min-width: 232px;
     z-index: 200;
     overflow: hidden;
     display: none;
-    padding: 4px;
+    padding: 6px;
 }
 
 .profile-menu.open {
@@ -142,11 +142,11 @@
 .profile-menu a {
     display: flex;
     align-items: center;
-    gap: 9px;
-    padding: 7px 10px;
+    gap: 11px;
+    padding: 10px 12px;
     border-radius: var(--radius-xs);
     color: var(--text);
-    font-size: 13px;
+    font-size: 14px;
     transition: background var(--transition);
 }
 
@@ -158,8 +158,6 @@
 
 .profile-menu a .nav-icon {
     color: var(--text-muted);
-    width: 16px;
-    height: 16px;
 }
 
 /* Пункт «Учу: Японский ›» — иконка-глиф (あ / A) и значение справа. */
@@ -257,10 +255,10 @@
 /* Почта вошедшего — заголовок меню, не кликается */
 .profile-menu__email {
     display: block;
-    padding: 6px 10px 5px;
-    margin-bottom: 3px;
+    padding: 8px 12px 6px;
+    margin-bottom: 4px;
     border-bottom: 1px solid var(--border);
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
