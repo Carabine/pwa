@@ -151,8 +151,15 @@ function explainKey(sentence, word, lang, target) {
     return (target === 'en' ? 'en' : 'ja') + '|' + (lang || 'ru') + '|' + (word || '') + '|' + (sentence || '');
 }
 
+// Сырой ответ модели вместо разбора (до v0.0.614 сервер так кэшировал
+// непарсящийся JSON): перевод начинается с «{», разбора по частям нет.
+function isBrokenExplain(x) {
+    return !x || (typeof x.translation === 'string' && /^\s*[{`]/.test(x.translation)
+        && !(Array.isArray(x.breakdown) && x.breakdown.length));
+}
+
 async function putExplain(key, explanation) {
-    if (!key || !explanation) return false;
+    if (!key || !explanation || isBrokenExplain(explanation)) return false;
     try {
         const db = await openClipDB();
         return await new Promise((resolve, reject) => {
@@ -175,7 +182,7 @@ async function getExplain(key) {
             req.onsuccess = () => resolve(req.result || null);
             req.onerror = () => reject(req.error);
         });
-        return rec ? rec.explanation : null;
+        return rec && !isBrokenExplain(rec.explanation) ? rec.explanation : null;
     } catch {
         return null;
     }
@@ -265,6 +272,24 @@ async function purgeAccountMedia() {
         return false;
     }
 }
+// Разовая чистка битых разборов (сырой JSON модели вместо разбора), успевших
+// лечь на устройство до v0.0.614: иначе докачка считала бы их скачанными.
+(function dropBrokenExplainsOnce() {
+    const FLAG = 'animei:explainsChecked';
+    try { if (localStorage.getItem(FLAG) === '614') return; } catch { return; }
+    openClipDB().then((db) => {
+        const tx = db.transaction(EXPLAIN_STORE, 'readwrite');
+        const req = tx.objectStore(EXPLAIN_STORE).openCursor();
+        req.onsuccess = () => {
+            const cur = req.result;
+            if (!cur) return;
+            if (isBrokenExplain(cur.value && cur.value.explanation)) cur.delete();
+            cur.continue();
+        };
+        tx.oncomplete = () => { try { localStorage.setItem(FLAG, '614'); } catch { /* недоступен */ } };
+    }).catch(() => { /* БД недоступна — попробуем при следующем запуске */ });
+})();
+
 (function purgeOnStart() {
     try {
         if (localStorage.getItem('animei:mediaPurge') !== '1') return;
