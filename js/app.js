@@ -1448,16 +1448,6 @@ function renderAuthState() {
     // Если на странице подключён i18n — переведём только что вставленные пункты.
     if (typeof applyI18n === 'function') applyI18n();
 
-    const learnEl = document.getElementById('learn-lang-item');
-    if (learnEl) {
-        document.getElementById('learn-lang-val').textContent = t('learn.' + LearnLang.get());
-        learnEl.addEventListener('click', (e) => {
-            e.preventDefault();
-            menu.classList.remove('open');
-            openLearnLangSheet();
-        });
-    }
-
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
