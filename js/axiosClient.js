@@ -246,7 +246,12 @@ function endSession() {
     logout();
     if (typeof renderAuthState === 'function') renderAuthState();
     if (typeof showSnackbar === 'function' && typeof t === 'function') {
-        showSnackbar(t('auth.sessionExpired'), { duration: 6000, type: 'error' });
+        // С действием: что делать дальше — одной кнопкой, а не «ищи вход сам».
+        const loginUrl = location.pathname.includes('/pages/') ? './login.html' : './pages/login.html';
+        showSnackbar(t('auth.sessionExpired'), {
+            duration: 10000, type: 'error',
+            action: { label: t('nav.login'), onClick: () => { location.href = loginUrl; } },
+        });
     }
 }
 

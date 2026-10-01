@@ -628,3 +628,12 @@ a[href$="watch.html"] {
     border-top: 1px solid var(--border);
     transform: rotate(45deg);
 }
+
+/* ========== СВОЁ ОКНО ПОДТВЕРЖДЕНИЯ (confirmDialog в js/snackbar.js) ========== */
+.confirm-dialog { max-width: 400px; }
+.confirm-dialog__title { line-height: 1.35; }
+.confirm-dialog__text { margin: 8px 0 0; color: var(--text-muted); font-size: 14px; line-height: 1.45; }
+.confirm-dialog__foot { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+.confirm-dialog__foot .btn { flex: 1 1 0; min-width: 0; }
+.form-msg--info { color: var(--text-muted); }
+.explain__retry { margin-top: 12px; }

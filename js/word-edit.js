@@ -98,13 +98,12 @@
                 });
                 const url = await setWordAudio(wordData, data);
                 if (!url) throw new Error('audio not stored');
-                await refresh();
-                showSnackbar(t('words.ttsDone'), { duration: 2500, type: 'success' });
+                await refresh();   // кнопка сменяется плеером озвучки — это и есть подтверждение
                 if (window.animeiTrack) animeiTrack('tts', 'card');
             } catch (err) {
                 console.error('Не удалось сгенерировать озвучку:', err);
                 genBtn.textContent = oldLabel;
-                showSnackbar(t('words.ttsFail'), { duration: 3500, type: 'error' });
+                formMessage(genBtn, t('words.ttsFail'));
             } finally {
                 genBtn.disabled = false;
             }
@@ -260,8 +259,7 @@
             await updateWord(wordData.id, patch);
             Object.assign(wordData, patch);   // держим кэш свежим для фильтра/перерисовки
             close();
-            if (onSaved) onSaved();
-            showSnackbar(t('words.savedSnack'), { duration: 3000, type: 'success' });
+            if (onSaved) onSaved();   // правки видны в списке/карточке — отдельный тост не нужен
         });
 
         modal.open();

@@ -235,7 +235,7 @@
             const params = { sentence, lang };
             if (word) params.word = word;
             if (target === 'en') params.target = 'en';   // английская реплика — свой промпт
-            const { data: res } = await client.get('explain', { params, timeout: 60000 });
+            const { data: res } = await client.get('explain', { params, timeout: 60000, silentErrors: true });
             const data = res.data.explanation;
             studyExplainCache.set(key, data);
             if (idbKey && typeof putExplain === 'function') putExplain(idbKey, data);
@@ -244,7 +244,19 @@
         } catch (err) {
             console.error(err);
             const limited = err.response?.data?.reason === 'limited' || err.response?.status === 429;
-            showSnackbar(limited ? t('popup.explainLimited') : t('words.explainError'), { duration: 3500, type: 'error' });
+            // Ошибку — в само окно разбора, с «Повторить», а не тостом поверх карточки.
+            modal.body.innerHTML = '';
+            const msg = document.createElement('p');
+            msg.className = 'form-msg form-msg--error';
+            msg.setAttribute('role', 'alert');
+            msg.textContent = limited ? t('popup.explainLimited') : t('words.explainError');
+            const retry = document.createElement('button');
+            retry.type = 'button';
+            retry.className = 'btn btn--ghost explain__retry';
+            retry.textContent = t('common.retry');
+            retry.addEventListener('click', () => { modal.close(); studyRunExplain(sentence, indicator, word, target); });
+            modal.body.append(msg, retry);
+            modal.open();
         } finally {
             if (indicator) { indicator._busy = false; indicator.classList.remove('is-loading'); }
             if (labelEl) labelEl.textContent = savedLabel;
@@ -2230,13 +2242,12 @@
                             await saveWord(starterWordPayload(w._card));
                             savedKanji.add(w.kanji);
                             if (window.starterSavedKanji) window.starterSavedKanji.add(w.kanji);
-                            btn.textContent = t('starter.addedOne');
-                            showSnackbar(t('popup.savedSnack'), { duration: 2500 });
+                            markDone(btn, t('starter.addedOne'));
                         } catch (err) {
                             console.error(err);
                             btn.disabled = false;
                             btn.textContent = t('starter.addOne');
-                            showSnackbar(t('popup.saveError'), { duration: 3000, type: 'error' });
+                            formMessage(btn, t(isSignedIn() ? 'popup.saveErrorNet' : 'popup.saveError'));
                         }
                     }
                 );

@@ -1101,9 +1101,12 @@ function openKnownManager() {
             // Словарь опрашиваем по одному слову — большие пачки ограничиваем.
             const LIMIT = 100;
             const words = matched.slice(0, LIMIT);
-            let msg = t('known.toDeckConfirm').replace('{n}', words.length);
-            if (matched.length > LIMIT) msg += '\n' + t('known.toDeckLimit').replace('{n}', LIMIT);
-            if (!confirm(msg)) return;
+            const ok = await confirmDialog({
+                title: t('known.toDeckConfirm').replace('{n}', words.length),
+                text: matched.length > LIMIT ? t('known.toDeckLimit').replace('{n}', LIMIT) : '',
+                ok: t('known.toDeck'),
+            });
+            if (!ok) return;
 
             deckBtn.disabled = true;
             clearBtn.disabled = true;
@@ -1126,12 +1129,20 @@ function openKnownManager() {
         });
 
         filterEl.addEventListener('input', renderList);
+        // Очистка — сразу и с «Отменить» (раньше — окно «Вы уверены?»).
         clearBtn.addEventListener('click', () => {
-            if (!confirm(t('known.clearConfirm').replace('{n}', KnownWords.count(curLearnLang())))) return;
-            KnownWords.clear(curLearnLang());
+            const lang = curLearnLang();
+            const before = KnownWords.forLang ? KnownWords.forLang(lang) : KnownWords.all();
+            if (!before.length) return;
+            KnownWords.clear(lang);
             updateKnownMenuLabel();
-            showSnackbar(t('known.cleared'), { duration: 2500 });
             renderList();
+            showSnackbar(t('known.cleared'), {
+                action: {
+                    label: t('common.undo'),
+                    onClick: () => { KnownWords.addMany(before); updateKnownMenuLabel(); renderList(); },
+                },
+            });
         });
         box.querySelector('#known-close').addEventListener('click', close);
         renderList();

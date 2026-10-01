@@ -191,19 +191,54 @@ function showSnackbarOnce(key, message, options) {
 // через 3 секунды и стоял на другом конце экрана. after — элемент, под которым
 // встаёт строка (обычно кнопка отправки). Пустой текст — убрать. Строка сама
 // уходит, как только человек начал править поля формы.
+const formMessages = new WeakMap();   // элемент-якорь → его строка сообщения
 function formMessage(after, text, type = 'error') {
     if (!after) return;
-    const id = (after.id || 'form') + '-msg';
-    let el = document.getElementById(id);
-    if (!text) { if (el) el.remove(); return; }
+    let el = formMessages.get(after);
+    if (el && !el.isConnected) el = null;
+    if (!text) { if (el) el.remove(); formMessages.delete(after); return; }
     if (!el) {
         el = document.createElement('p');
-        el.id = id;
         after.insertAdjacentElement('afterend', el);
-        const form = after.closest('form, section, .settings-card, .auth-card') || after.parentElement;
-        if (form) form.addEventListener('input', () => { const m = document.getElementById(id); if (m) m.remove(); }, { once: true });
+        formMessages.set(after, el);
+        const form = after.closest('form, section, .settings-card, .auth-card');
+        if (form) form.addEventListener('input', () => { el.remove(); formMessages.delete(after); }, { once: true });
     }
     el.className = 'form-msg form-msg--' + type;
     el.setAttribute('role', type === 'error' ? 'alert' : 'status');
     el.textContent = text;
+}
+
+// ---------- Подтверждение действия ----------
+// Своё окно вместо confirm() браузера: системное выглядело чужим (заголовок
+// «animei.space», кнопки «OK/Отмена» в стиле ОС) и на телефоне перекрывало
+// всё. Только для действий, которые не отменить «Отменить»-тостом.
+// confirmDialog({ title, text, ok, cancel, danger }) → Promise<boolean>.
+function confirmDialog({ title = '', text = '', ok = 'OK', cancel, danger = false } = {}) {
+    return new Promise((resolve) => {
+        if (typeof modalLayer !== 'function') { resolve(window.confirm([title, text].filter(Boolean).join('\n\n'))); return; }
+        const overlay = document.createElement('div');
+        overlay.className = 'deck-sheet__overlay';
+        const box = document.createElement('div');
+        box.className = 'deck-editor confirm-dialog';
+        box.setAttribute('role', 'alertdialog');
+        box.setAttribute('aria-modal', 'true');
+        const cancelLabel = cancel || (typeof t === 'function' ? t('common.cancel') : 'Отмена');
+        box.innerHTML = '<div class="deck-editor__title confirm-dialog__title"></div>'
+            + '<p class="confirm-dialog__text"></p>'
+            + '<div class="confirm-dialog__foot"><button type="button" class="btn btn--ghost confirm-dialog__no"></button>'
+            + '<button type="button" class="btn ' + (danger ? 'btn--danger' : 'btn--primary') + ' confirm-dialog__yes"></button></div>';
+        box.querySelector('.confirm-dialog__title').textContent = title;
+        const p = box.querySelector('.confirm-dialog__text');
+        if (text) p.textContent = text; else p.remove();
+        box.querySelector('.confirm-dialog__no').textContent = cancelLabel;
+        box.querySelector('.confirm-dialog__yes').textContent = ok;
+        overlay.appendChild(box);
+        let answer = false;
+        const modal = modalLayer(overlay, { afterHide: () => resolve(answer) });
+        box.querySelector('.confirm-dialog__no').addEventListener('click', () => modal.close());
+        box.querySelector('.confirm-dialog__yes').addEventListener('click', () => { answer = true; modal.close(); });
+        modal.open();
+        setTimeout(() => box.querySelector('.confirm-dialog__yes').focus(), 50);
+    });
 }

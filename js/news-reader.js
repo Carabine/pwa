@@ -248,15 +248,16 @@
             } catch (err) {
                 saveBtn.disabled = false;
                 saveBtn.textContent = '★ ' + C.tr('popup.save');
-                if (typeof showSnackbar === 'function') showSnackbar(C.tr('popup.saveError'), { type: 'error' });
+                if (typeof formMessage === 'function') formMessage(saveBtn, C.tr(typeof isSignedIn === 'function' && isSignedIn() ? 'popup.saveErrorNet' : 'popup.saveError'));
             }
         };
         knownBtn.onclick = () => {
             if (window.KnownWords) KnownWords.addMany([base]);
             state.ctx.known.add(base);
             document.querySelectorAll('.ntok--learnable[data-b="' + CSS.escape(base) + '"]').forEach((n) => n.classList.add('ntok--known'));
-            knownBtn.hidden = true;
-            if (typeof showSnackbar === 'function') showSnackbar(C.tr('popup.knownAdded'), { type: 'success' });
+            // Подтверждение — на самой кнопке.
+            if (typeof markDone === 'function') markDone(knownBtn, '✓ ' + C.tr('popup.knownDone'));
+            else knownBtn.hidden = true;
         };
 
         overlay.hidden = false;
@@ -465,7 +466,8 @@
                     b.textContent = '✓'; b.classList.add('is-on');
                 } catch (e) {
                     b.disabled = false;
-                    if (typeof showSnackbar === 'function') showSnackbar(C.tr('popup.saveError'), { type: 'error' });
+                    b.textContent = '!'; b.title = C.tr('popup.saveErrorNet');
+                    if (typeof showSnackbar === 'function') showSnackbar(C.tr('popup.saveErrorNet'), { type: 'error' });
                 }
             });
             box.appendChild(row);

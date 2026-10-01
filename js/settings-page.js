@@ -233,10 +233,12 @@
     }
 
     allBtn.addEventListener('click', async () => {
+        const actions = card.querySelector('.offline-dl__actions');
         if (!navigator.onLine || (window.ANIMEI_NET && !window.ANIMEI_NET.isOnline())) {
-            showSnackbar(t('settings.offline.noNet'), { duration: 3000, type: 'error' });
+            formMessage(actions, t('settings.offline.noNet'));
             return;
         }
+        formMessage(actions, '');
         setRunning(true);
         bar.style.width = '0%';
         progText.textContent = t('settings.offline.checking');
@@ -244,10 +246,13 @@
         let r = null;
         try { r = await D.downloadAll({ onProgress }); } catch { r = null; }
         setRunning(false);
-        if (r && r.reason === 'offline') showSnackbar(t('settings.offline.noNet'), { duration: 3000, type: 'error' });
-        else if (r && r.cancelled) showSnackbar(t('settings.offline.stopped'), { duration: 2500 });
-        else if (r && r.failed) showSnackbar(fill('settings.offline.doneFailed', { n: r.failed }), { duration: 4000 });
-        else if (r) showSnackbar(t('settings.offline.done'), { duration: 3000 });
+        // Итог — в самой карточке, рядом с кнопкой (строка состояния выше
+        // тоже обновится), а не тостом сверху страницы.
+        const actions2 = card.querySelector('.offline-dl__actions');
+        if (r && r.reason === 'offline') formMessage(actions2, t('settings.offline.noNet'));
+        else if (r && r.cancelled) formMessage(actions2, t('settings.offline.stopped'), 'info');
+        else if (r && r.failed) formMessage(actions2, fill('settings.offline.doneFailed', { n: r.failed }));
+        else if (r) formMessage(actions2, t('settings.offline.done'), 'success');
         renderStatus();
     });
     stopBtn.addEventListener('click', () => D.cancelAll());

@@ -481,8 +481,8 @@
                         this._ctx.onChange();
                         snack(t(frozen ? 'decks.frozenOn' : 'decks.frozenOff'));
                     },
-                    onDelete: () => {
-                        if (!confirm(t('decks.deleteConfirm'))) return;
+                    onDelete: async () => {
+                        if (!(await confirmDialog({ title: t('decks.deleteConfirm'), ok: t('decks.delete'), danger: true }))) return;
                         Decks.remove(id);
                         if (this._activeId === id) this._activeId = null;
                         snack(t('decks.deleted'));

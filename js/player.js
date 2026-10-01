@@ -4,8 +4,11 @@
 
 const params = new URLSearchParams(window.location.search);
 const shikimoriId = params.get('id');
-const titleRu = params.get('title') || '';
-const titleRomaji = params.get('name') || titleRu;
+// let: ссылка может прийти без названий (только ?id= — поделились, админка,
+// внешний сайт) — тогда достаём их из каталога до загрузки субтитров (см. ниже):
+// без названия /subtitles/episode отвечал 400 и субтитров не было вовсе.
+let titleRu = params.get('title') || '';
+let titleRomaji = params.get('name') || titleRu;
 
 // Разовая чистка: до фикса (v0.0.68) при каждой загрузке серии в ключ сдвига
 // субтитров писался «0», и автосинк, увидев «сдвиг уже задан», не запускался.
@@ -232,6 +235,17 @@ async function init() {
 
     loadKnownWords();
     loadFranchise();   // параллельно: другие сезоны франшизы для дропдауна
+
+    if (!titleRomaji) {
+        try {
+            const { data: r } = await client.get('catalog/by-ids', { params: { ids: shikimoriId }, silentErrors: true });
+            const a = r && r.data && r.data[0];
+            if (a) {
+                titleRomaji = a.name || a.russian || '';
+                if (!titleRu) titleRu = a.russian || titleRomaji;
+            }
+        } catch { /* без названия — как раньше */ }
+    }
 
     try {
         const { data: res } = await client.get('catalog/anime/' + shikimoriId);
@@ -1574,7 +1588,7 @@ async function loadSubtitles(episodeNumber = 1) {
         // сценарий дубляжа. Предупреждаем один раз за сессию.
         if (state.enMode === 'dub' && !sessionStorage.getItem('animei:enTextNote')) {
             try { sessionStorage.setItem('animei:enTextNote', '1'); } catch { /* приватный режим */ }
-            showSnackbar(t('player.enTextNote'), { duration: 7000 });
+            showSnackbarOnce('enTextNote', t('player.enTextNote'), { duration: 7000 });
         }
         subsStatus.classList.remove('transcript__status--searching');
         setSubsSkeleton(false);
@@ -1630,7 +1644,7 @@ async function loadSubtitles(episodeNumber = 1) {
         // а кнопка «Сейчас!» неочевидна
         if (!localStorage.getItem('animei:syncHintShown') && !state.enMode) {
             localStorage.setItem('animei:syncHintShown', '1');
-            showSnackbar(t('player.syncHint'), { duration: 6000 });
+            showSnackbarOnce('syncHint', t('player.syncHint'), { duration: 6000 });
         }
     } catch (err) {
         console.error(err);
@@ -3258,7 +3272,7 @@ async function fetchExplain(cue, word) {
     const params = { sentence: cue.text, context: cueContext(cue), lang };
     if (word) params.word = word;
     if (state.enMode) params.target = 'en';   // английская реплика — свой промпт
-    const { data: res } = await client.get('explain', { params, timeout: 60000 });
+    const { data: res } = await client.get('explain', { params, timeout: 60000, silentErrors: true });
     const data = res.data.explanation;
     explainCache.set(key, data);
     return data;
@@ -3276,6 +3290,7 @@ popupExplainBtn.addEventListener('click', async () => {
     const sentence = ctx.cue.text;
     popupExplainBtn.disabled = true;
     popupExplainLabel.textContent = t('popup.explaining');
+    formMessage(popupExplainBtn, '');
     if (window.animeiTrack) window.animeiTrack('explain', 'player');
 
     try {
@@ -3287,7 +3302,7 @@ popupExplainBtn.addEventListener('click', async () => {
         }
     } catch (err) {
         console.error(err);
-        showSnackbar(explainErrorText(err), { duration: 3500, type: 'error' });
+        formMessage(popupExplainBtn, explainErrorText(err));   // рядом с кнопкой, а не тостом
         popupExplainBtn.disabled = false;
         popupExplainLabel.textContent = t('popup.explain');
     }
@@ -3382,6 +3397,7 @@ popupSave.addEventListener('click', async () => {
     // и не совпадёт с репликой. Обычно к моменту сохранения синк уже готов —
     // тогда ожидание мгновенное.
     try { await state.syncPromise; } catch { /* автосинк не критичен */ }
+    formMessage(popupSave, '');
 
     try {
         const dict = ctx.dict;
@@ -3424,7 +3440,8 @@ popupSave.addEventListener('click', async () => {
         console.error(err);
         popupSave.disabled = false;
         popupSave.textContent = t('popup.save');
-        showSnackbar(t('popup.saveError'), { duration: 3500, type: 'error' });
+        // Причина — не обязательно «не вошёл»: вошедшему пишем про связь.
+        formMessage(popupSave, t(typeof isSignedIn === 'function' && isSignedIn() ? 'popup.saveErrorNet' : 'popup.saveError'));
     }
 });
 
