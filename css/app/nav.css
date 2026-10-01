@@ -343,9 +343,10 @@
     color: var(--primary);
 }
 
-/* Бейдж «NEW» на пункте «Прописи» — статичная метка справа от подписи (иконку
+/* Бейдж «NEW» на пункте меню — статичная метка справа от подписи (иконку
    ставит JS через iconifyLink; сам бейдж тоже добавляет он). Без анимации. */
-.sidebar .nav-new {
+.sidebar .nav-new,
+.profile-menu .nav-new {
     margin-left: -4px;         /* компенсируем gap:12px у ссылки — прижать к тексту */
     align-self: center;
     font-size: 9px;
@@ -357,22 +358,6 @@
     padding: 2px 5px;
     border-radius: 5px;
     pointer-events: none;
-}
-
-/* Заголовок группы «Приложения» (JP News, Прописи): черта + подпись капсом.
-   Подпись — .nav-label, поэтому в свёрнутой рейке гаснет вместе с остальными
-   подписями, а черта остаётся разделителем между иконками. */
-.sidebar__section {
-    margin-top: 8px;
-    padding: 12px 24px 4px;
-    border-top: 1px solid var(--border);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    white-space: nowrap;
-    overflow: hidden;
 }
 
 /* «На сайт Animei» — выход из приложения на лендинг; отделяем чертой сверху */

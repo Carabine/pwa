@@ -203,7 +203,7 @@
         'app/custom-study': 'своя учёба', 'app/beginner': 'для новичка',
         'app/settings': 'настройки', 'app/login': 'вход', 'app/feedback': 'отзыв',
         'app/stats': 'статистика', 'landing/index': 'лендинг',
-        'app/progress': 'прогресс', 'app/deck-study': 'колода', 'app/reset': 'сброс пароля',
+        'app/progress': 'прогресс', 'app/apps': 'приложения', 'app/deck-study': 'колода', 'app/reset': 'сброс пароля',
         'landing/webapp': 'лендинг · веб', 'landing/companion': 'лендинг · расширение',
         'landing/support': 'лендинг · поддержка', 'landing/privacy': 'лендинг · политика'
     };
