@@ -1,0 +1,92 @@
+[
+  {
+    "theme": "shinjuku",
+    "initial": {
+      "mode": "demo",
+      "words": 60,
+      "blocks": 3,
+      "signs": 20,
+      "width": 390
+    },
+    "learned": "learned",
+    "nextDeck": "Провожающая в последний путь",
+    "swipeDeck": "Твоё имя",
+    "png": {
+      "type": "image/png",
+      "size": 1528917
+    },
+    "real": {
+      "words": 800,
+      "blocks": 40,
+      "signs": 20,
+      "states": [
+        "learned",
+        "due",
+        "forgot",
+        "learned",
+        "new"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "theme": "yokocho",
+    "initial": {
+      "mode": "demo",
+      "words": 60,
+      "blocks": 3,
+      "signs": 20,
+      "width": 390
+    },
+    "learned": "learned",
+    "nextDeck": "Провожающая в последний путь",
+    "swipeDeck": "Твоё имя",
+    "png": {
+      "type": "image/png",
+      "size": 1458729
+    },
+    "real": {
+      "words": 800,
+      "blocks": 40,
+      "signs": 20,
+      "states": [
+        "learned",
+        "due",
+        "forgot",
+        "learned",
+        "new"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "theme": "dotonbori",
+    "initial": {
+      "mode": "demo",
+      "words": 60,
+      "blocks": 3,
+      "signs": 20,
+      "width": 390
+    },
+    "learned": "learned",
+    "nextDeck": "Провожающая в последний путь",
+    "swipeDeck": "Твоё имя",
+    "png": {
+      "type": "image/png",
+      "size": 1594784
+    },
+    "real": {
+      "words": 800,
+      "blocks": 40,
+      "signs": 20,
+      "states": [
+        "learned",
+        "due",
+        "forgot",
+        "learned",
+        "new"
+      ]
+    },
+    "errors": []
+  }
+]
