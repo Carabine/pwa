@@ -501,3 +501,13 @@ a[href$="watch.html"] {
 .dl-sheet__foot .btn { flex: 1 1 0; min-width: 0; }
 .dl-sheet__foot [hidden] { display: none; }
 
+
+/* ========== «ЗАГРУЗИТЬ ВСЁ» В НАСТРОЙКАХ (settings-page.js) ========== */
+.offline-dl__status { margin: 10px 0 0; font-size: 14px; color: var(--text); }
+.offline-dl__status.is-complete { color: var(--success); }
+.offline-dl__progress { margin-top: 12px; }
+.offline-dl__bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.offline-dl__bar > span { display: block; height: 100%; width: 0; background: var(--primary); transition: width 0.3s; }
+.offline-dl__text { margin: 6px 0 0; font-size: 13px; color: var(--text-muted); }
+.offline-dl__actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.offline-dl__actions [hidden] { display: none; }

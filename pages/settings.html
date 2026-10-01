@@ -177,6 +177,22 @@
                 <p class="settings-hint" data-i18n="settings.newPerDay.hint">Слова сверх лимита не пропадают — ждут в очереди и вводятся в следующие дни.</p>
             </section>
 
+            <!-- ОФЛАЙН: «Загрузить всё» — видео, звук и ИИ-разборы всех карточек
+                 на устройство (js/downloads.js, логика — settings-page.js). -->
+            <section class="settings-card" id="offline-card" hidden>
+                <div class="settings-card__title" data-i18n="settings.offline">Офлайн-доступ</div>
+                <p class="settings-hint" data-i18n="settings.offline.hint">Скачать на это устройство видео, звук и ИИ-разборы всех ваших карточек, чтобы повторять без сети. Разборы, которых ещё нет, досчитает ИИ. Не закрывайте страницу, пока идёт загрузка.</p>
+                <p class="offline-dl__status" id="offline-status"></p>
+                <div class="offline-dl__progress" id="offline-progress" hidden>
+                    <div class="offline-dl__bar"><span></span></div>
+                    <p class="offline-dl__text"></p>
+                </div>
+                <div class="offline-dl__actions">
+                    <button type="button" class="btn btn--primary" id="offline-all" data-i18n="settings.offline.btn">Загрузить всё</button>
+                    <button type="button" class="btn btn--ghost" id="offline-stop" data-i18n="settings.offline.stop" hidden>Остановить</button>
+                </div>
+            </section>
+
             <!-- ОБРАТНАЯ СВЯЗЬ -->
             <!-- Раньше это была отдельная страница-пункт сайдбара, хотя весь её
                  смысл — одна ссылка в Telegram. Переехала сюда, вниз настроек:
@@ -229,7 +245,10 @@
 <script src="../js/settings.js" defer></script>
 <script src="../js/i18n.js" defer></script>
 <script src="../js/axiosClient.js" defer></script>
+<script src="../js/video-store.js" defer></script>
+<script src="../js/words-store.js" defer></script>
 <script src="../js/app.js" defer></script>
+<script src="../js/downloads.js" defer></script>
 <script src="../js/settings-page.js" defer></script>
 <script src="../js/stats.js" defer></script>
 </body>

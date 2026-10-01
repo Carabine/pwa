@@ -151,9 +151,11 @@
     }
 
     // Разбор с расчётом (гость: сервер его слова не видит и сам не посчитает).
+    // Итог: 'ok' | 'skip' (уже есть/нечего разбирать) | 'limited' (лимит —
+    // подождать) | 'off' (ИИ на сервере выключен) | 'error'.
     async function computeExplain(w) {
         const x = explainItem(w);
-        if (!x || typeof client === 'undefined' || await hasExplain(x.key)) return;
+        if (!x || typeof client === 'undefined' || await hasExplain(x.key)) return 'skip';
         const task = track('explain:' + x.key, { kind: 'explain', label: wordLabel(w) });
         task.set('active');
         try {
@@ -162,8 +164,14 @@
             const { data: res } = await client.get('explain', { params, timeout: 90000, silentErrors: true });
             const ok = await putExplain(x.key, res && res.data && res.data.explanation);
             task.done(ok);
+            return ok ? 'ok' : 'error';
         } catch (err) {
+            const r = err && err.response;
+            const reason = r && r.data && r.data.reason;
             task.done(false, err && err.message);
+            if (r && (r.status === 429 || reason === 'limited')) return 'limited';
+            if (reason === 'off') return 'off';
+            return 'error';
         }
     }
 
@@ -207,6 +215,7 @@
     }
 
     const clipUrlOf = (w) => (w && (w.Video ? w.Video.url : w.video)) || '';
+    const hasVideoRange = (w) => Number(w.videoEnd) > Number(w.videoStart);
 
     async function storageTight() {
         try {
@@ -411,6 +420,143 @@
         modal.open();
     }
 
+    // ---------- «Загрузить всё» (настройки) ----------
+    // В отличие от докачки при старте — без потолков и горизонта: ВСЕ видео,
+    // звук и ИИ-разборы всех слов. Разборы, которых на сервере ещё нет,
+    // досчитываются ИИ — это явная просьба пользователя. Темп — под лимиты
+    // сервера: /explain 30 в минуту на IP, /explain/cached 20 в минуту.
+    const EXPLAIN_PACE = 2500;          // ~24 расчёта в минуту
+    const CACHED_PACE = 3500;           // ~17 пачек в минуту
+    const LIMIT_PAUSE = 60000;
+    const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    async function allWords() {
+        if (typeof fetchWords === 'function') {
+            try { return (await fetchWords()) || []; } catch { /* офлайн — по копии */ }
+        }
+        const cached = typeof lsJson === 'function' ? lsJson('animei:wordsCache') : null;
+        return Array.isArray(cached) ? cached : [];
+    }
+
+    // Что нужно и что уже есть — для строки состояния в настройках.
+    async function offlineStatus(words) {
+        words = words || await allWords();
+        const keys = typeof mediaKeys === 'function' ? await mediaKeys() : { clips: new Set(), explains: new Set() };
+        let clipsNeed = 0, clipsHave = 0, explainsNeed = 0, explainsHave = 0;
+        const guest = !signedIn();
+        for (const w of words) {
+            if (!w || !w.id) continue;
+            // У гостя клипы и так только на устройстве — считаем то, что есть.
+            // У вошедшего нужен клип каждого слова с фрагментом видео — даже если
+            // сервер его ещё режет (ссылки нет): иначе «всё на устройстве» врало бы.
+            if (guest ? keys.clips.has(String(w.id)) : (clipUrlOf(w) || hasVideoRange(w))) {
+                clipsNeed++;
+                if (keys.clips.has(String(w.id))) clipsHave++;
+            }
+            const x = explainItem(w);
+            if (x) {
+                explainsNeed++;
+                if (keys.explains.has(x.key)) explainsHave++;
+            }
+        }
+        return { words: words.length, clipsNeed, clipsHave, explainsNeed, explainsHave };
+    }
+
+    let allRun = null;
+    function downloadAll({ onProgress } = {}) {
+        if (allRun) return allRun.promise;
+        const run = { cancelled: false };
+        allRun = run;
+        const report = (p) => { if (onProgress) { try { onProgress(p); } catch { /* UI */ } } };
+        run.promise = (async () => {
+            if (!online()) return { ok: false, reason: 'offline' };
+            // Просим браузер не вытеснять хранилище при нехватке места —
+            // иначе «точно офлайн» не точно: видео могли стереть без спроса.
+            try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch { /* нет API */ }
+
+            const words = await allWords();
+            const keys = await mediaKeys();
+            const clipJobs = signedIn()
+                ? words.filter((w) => w && w.id && (clipUrlOf(w) || hasVideoRange(w)) && !keys.clips.has(String(w.id))) : [];
+            const audioJobs = words.filter((w) => w && w.id && /^https?:\/\//.test(w.audio || '') && !keys.audios.has(String(w.id)));
+            const explainJobs = words.map((w) => ({ w, x: explainItem(w) }))
+                .filter((j) => j.x && !keys.explains.has(j.x.key));
+            const total = clipJobs.length + audioJobs.length + explainJobs.length;
+            let done = 0, failed = 0;
+            const tick = (phase) => report({ phase, done, total, failed });
+            tick('start');
+
+            // 1) Видео и звук — по одному файлу.
+            for (const w of clipJobs) {
+                if (run.cancelled) break;
+                if (await storageTight()) { failed += clipJobs.length - clipJobs.indexOf(w); break; }
+                let url = clipUrlOf(w);
+                if (!url) {
+                    // Ссылки в списке нет — спросим сервер: мог уже дорезать.
+                    try {
+                        const { data: res } = await client.get(`words/${w.id}/clip`, { silentErrors: true });
+                        url = (res && res.data && res.data.url) || '';
+                        if (url && typeof rememberWordInCache === 'function') rememberWordInCache({ id: w.id, Video: { url } });
+                    } catch { /* нет — значит, нет */ }
+                }
+                const ok = url ? await cacheMediaFromUrl('clip', w.id, url, { label: wordLabel(w) }) : false;
+                done++; if (!ok) failed++;
+                tick('clips');
+            }
+            for (const w of audioJobs) {
+                if (run.cancelled) break;
+                const ok = await cacheMediaFromUrl('audio', w.id, w.audio, { label: wordLabel(w) });
+                done++; if (!ok) failed++;
+                tick('audio');
+            }
+
+            // 2) Готовые разборы — пачками, без ИИ.
+            for (let i = 0; i < explainJobs.length && !run.cancelled; i += EXPLAIN_BATCH) {
+                const batch = explainJobs.slice(i, i + EXPLAIN_BATCH);
+                const task = track('explains:all:' + i, { kind: 'explains', label: String(batch.length) });
+                task.set('active');
+                try {
+                    const { data: res } = await client.post('explain/cached', { items: batch.map((j) => j.x.item) }, { silentErrors: true, timeout: 30000 });
+                    const list = (res && res.data && res.data.explanations) || [];
+                    let got = 0;
+                    for (let k = 0; k < batch.length; k++) {
+                        if (list[k] && await putExplain(batch[k].x.key, list[k])) { batch[k].have = true; got++; done++; }
+                    }
+                    task.progress(got, batch.length);
+                    if (got) task.done(true); else task.drop();
+                } catch (err) {
+                    task.done(false, err && err.message);
+                    if (err && err.response && err.response.status === 429) await sleepMs(LIMIT_PAUSE);
+                }
+                tick('explains');
+                if (i + EXPLAIN_BATCH < explainJobs.length) await sleepMs(CACHED_PACE);
+            }
+            const rest = explainJobs.filter((j) => !j.have);
+
+            // 3) Недостающие разборы — расчёт ИИ, по одному, в темпе лимита.
+            for (let i = 0; i < rest.length; i++) {
+                if (run.cancelled) break;
+                let r = await computeExplain(rest[i].w);
+                if (r === 'limited') {
+                    tick('wait');
+                    await sleepMs(LIMIT_PAUSE);
+                    if (run.cancelled) break;
+                    r = await computeExplain(rest[i].w);
+                }
+                if (r === 'off') { failed += rest.length - i; break; }   // ИИ на сервере выключен
+                done++; if (r !== 'ok' && r !== 'skip') failed++;
+                tick('compute');
+                if (i + 1 < rest.length) await sleepMs(EXPLAIN_PACE);
+            }
+            mediaCountsStale = true;
+            const result = { ok: !run.cancelled, cancelled: run.cancelled, done, total, failed };
+            report({ phase: 'end', ...result });
+            return result;
+        })().finally(() => { if (allRun === run) allRun = null; });
+        return run.promise;
+    }
+    function cancelDownloadAll() { if (allRun) allRun.cancelled = true; }
+
     window.AnimeiDownloads = {
         track,
         open: openSheet,
@@ -419,6 +565,10 @@
         wantExplains,
         computeExplain,
         sync: syncOffline,
+        status: offlineStatus,
+        downloadAll,
+        cancelAll: cancelDownloadAll,
+        isDownloadingAll: () => !!allRun,
     };
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoResume);

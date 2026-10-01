@@ -180,3 +180,81 @@
     const hint = document.querySelector('p[data-i18n="settings.transcription.hint"]');
     if (hint) hint.style.display = 'none';
 })();
+
+// Офлайн-доступ: «Загрузить всё» — видео, звук и ИИ-разборы всех карточек на
+// устройство (AnimeiDownloads.downloadAll, js/downloads.js). Строка состояния
+// считает, что уже лежит на устройстве, — по ней видно, что офлайн «точно».
+(function () {
+    const card = document.getElementById('offline-card');
+    if (!card || !window.AnimeiDownloads || typeof mediaKeys !== 'function') return;
+    const D = window.AnimeiDownloads;
+    const statusEl = document.getElementById('offline-status');
+    const prog = document.getElementById('offline-progress');
+    const bar = prog.querySelector('.offline-dl__bar > span');
+    const progText = prog.querySelector('.offline-dl__text');
+    const allBtn = document.getElementById('offline-all');
+    const stopBtn = document.getElementById('offline-stop');
+    card.hidden = false;
+
+    const fill = (key, map) => Object.keys(map).reduce((s, k) => s.replace('{' + k + '}', map[k]), t(key));
+
+    async function renderStatus() {
+        statusEl.classList.remove('is-complete');
+        statusEl.textContent = t('settings.offline.checking');
+        let st;
+        try { st = await D.status(); } catch { st = null; }
+        if (!st) { statusEl.textContent = ''; return; }
+        if (!st.words) {
+            statusEl.textContent = t('settings.offline.empty');
+            allBtn.disabled = true;
+            return;
+        }
+        const complete = st.clipsHave >= st.clipsNeed && st.explainsHave >= st.explainsNeed;
+        statusEl.textContent = complete
+            ? t('settings.offline.all')
+            : fill('settings.offline.status', { ch: st.clipsHave, cn: st.clipsNeed, eh: st.explainsHave, en: st.explainsNeed });
+        statusEl.classList.toggle('is-complete', complete);
+        allBtn.disabled = false;
+    }
+
+    function setRunning(on) {
+        allBtn.hidden = on;
+        stopBtn.hidden = !on;
+        prog.hidden = !on;
+    }
+
+    function onProgress(p) {
+        if (p.phase === 'end') return;
+        const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
+        bar.style.width = pct + '%';
+        const phase = p.phase && p.phase !== 'start' ? ' · ' + t('settings.offline.phase.' + p.phase) : '';
+        progText.textContent = fill('settings.offline.progress', { done: p.done, total: p.total }) + phase;
+    }
+
+    allBtn.addEventListener('click', async () => {
+        if (!navigator.onLine || (window.ANIMEI_NET && !window.ANIMEI_NET.isOnline())) {
+            showSnackbar(t('settings.offline.noNet'), { duration: 3000, type: 'error' });
+            return;
+        }
+        setRunning(true);
+        bar.style.width = '0%';
+        progText.textContent = t('settings.offline.checking');
+        if (window.animeiTrack) window.animeiTrack('offline_all', 'start');
+        let r = null;
+        try { r = await D.downloadAll({ onProgress }); } catch { r = null; }
+        setRunning(false);
+        if (r && r.reason === 'offline') showSnackbar(t('settings.offline.noNet'), { duration: 3000, type: 'error' });
+        else if (r && r.cancelled) showSnackbar(t('settings.offline.stopped'), { duration: 2500 });
+        else if (r && r.failed) showSnackbar(fill('settings.offline.doneFailed', { n: r.failed }), { duration: 4000 });
+        else if (r) showSnackbar(t('settings.offline.done'), { duration: 3000 });
+        renderStatus();
+    });
+    stopBtn.addEventListener('click', () => D.cancelAll());
+
+    // Уход со страницы обрывает загрузку — предупреждаем, пока она идёт.
+    window.addEventListener('beforeunload', (e) => {
+        if (D.isDownloadingAll()) { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    renderStatus();
+})();

@@ -213,6 +213,30 @@ async function countMedia() {
     }
 }
 
+// Все ключи разом: { clips, audios, explains } — наборы. Для «Загрузить всё»
+// в настройках: проверять сотни слов по одному — сотни открытий БД.
+async function mediaKeys() {
+    const empty = { clips: new Set(), audios: new Set(), explains: new Set() };
+    try {
+        const db = await openClipDB();
+        return await new Promise((resolve) => {
+            const tx = db.transaction([CLIP_STORE, AUDIO_STORE, EXPLAIN_STORE], 'readonly');
+            const out = { ...empty };
+            const grab = (store, name) => {
+                const req = tx.objectStore(store).getAllKeys();
+                req.onsuccess = () => { out[name] = new Set(req.result.map(String)); };
+            };
+            grab(CLIP_STORE, 'clips');
+            grab(AUDIO_STORE, 'audios');
+            grab(EXPLAIN_STORE, 'explains');
+            tx.oncomplete = () => resolve(out);
+            tx.onerror = () => resolve(empty);
+        });
+    } catch {
+        return empty;
+    }
+}
+
 // Смена аккаунта: клипы, звук и разборы прошлого аккаунта с устройства убираем.
 // Гостевые (ключ local-*) не трогаем — их при входе переносит в аккаунт
 // syncGuestWordsToAccount. Выход ставит флаг animei:mediaPurge
