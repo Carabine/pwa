@@ -290,8 +290,11 @@ function texGate(name, emoji, color) {
     const c = document.createElement('canvas'); c.width = 1024; c.height = 256; const g = c.getContext('2d');
     g.fillStyle = '#0c0c15'; roundRect(g, 0, 0, 1024, 256, 20); g.fill();
     g.shadowColor = color; g.shadowBlur = 30; g.strokeStyle = color; g.lineWidth = 10; roundRect(g, 14, 14, 996, 228, 16); g.stroke();
-    g.fillStyle = '#ffffff'; g.font = '800 96px ' + UI; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowBlur = 24; g.shadowColor = color;
-    g.fillText((emoji ? emoji + '  ' : '') + name, 512, 136);
+    g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowBlur = 24; g.shadowColor = color;
+    const label = (emoji ? emoji + '  ' : '') + name;
+    let fs = 96; g.font = '800 ' + fs + 'px ' + UI;
+    while (fs > 40 && g.measureText(label).width > 930) { fs -= 4; g.font = '800 ' + fs + 'px ' + UI; }
+    g.fillText(label, 512, 136);
     return makeTex(c);
 }
 function texSky() {
