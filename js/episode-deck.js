@@ -140,6 +140,9 @@
                     if (!lvl || !levelAllows(lvl)) continue;
                     // Уже в словаре пользователя / отмечено «уже знаю» — не предлагаем.
                     if (state.knownWords.has(base) || state.knownWords.has(tok.surface)) continue;
+                    // Список известных с сервера мог прийти уже после того, как плеер
+                    // собрал state.knownWords (новое устройство/аккаунт) — сверяемся и с ним.
+                    if (window.KnownWords && (KnownWords.has(base) || KnownWords.has(tok.surface))) continue;
 
                     let e = byBase.get(base);
                     if (!e) {
