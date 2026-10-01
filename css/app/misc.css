@@ -435,3 +435,69 @@ a[href$="watch.html"] {
     .offline-chip__text { display: none; }
 }
 
+/* ========== ЗАГРУЗКИ ДЛЯ ОФЛАЙНА (js/downloads.js) ==========
+
+   Тот же значок в шапке, что «Нет сети», — рядом с ним, пока что-то качается:
+   стрелка с бегущим кольцом и число в работе. По тапу — окно со списком.
+   Число не прячем и на узком экране: без него значок непонятен. */
+.dl-chip { gap: 5px; padding: 0 9px 0 7px; }
+.dl-chip__ico { position: relative; width: 18px; height: 18px; align-items: center; justify-content: center; }
+.dl-chip__ico svg { width: 13px; height: 13px; }
+.dl-chip__count { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text); }
+.dl-chip.is-busy .dl-chip__ico::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
+    animation: dl-spin 0.9s linear infinite;
+}
+.dl-chip.is-busy .dl-chip__ico { color: var(--primary); }
+.dl-chip.is-paused .dl-chip__ico { color: var(--text-dim); }
+.dl-chip.is-done .dl-chip__ico { color: var(--success); }
+@keyframes dl-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+    .dl-chip.is-busy .dl-chip__ico::before { animation: none; border-top-color: var(--border); }
+}
+@media (max-width: 560px) {
+    .dl-chip { padding: 0 8px 0 6px; }
+}
+
+.dl-sheet { max-width: 460px; }
+.dl-sheet__body { max-height: min(60dvh, 520px); overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+.dl-sheet__sub { margin: 0 0 10px; color: var(--text-muted); font-size: 13px; line-height: 1.45; }
+.dl-sheet__counts { margin: 0 0 12px; font-size: 13px; font-weight: 600; color: var(--text); }
+.dl-sheet__note { margin: 0 0 12px; font-size: 13px; color: var(--text-muted); }
+.dl-sheet__empty { margin: 14px 0; font-size: 14px; color: var(--text-muted); }
+.dl-sheet__h {
+    margin: 14px 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+.dl-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.dl-row { display: flex; align-items: flex-start; gap: 10px; padding: 7px 2px; }
+.dl-row__mark {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    margin-top: 7px;
+    border-radius: 50%;
+    background: var(--border);
+}
+.dl-row--active .dl-row__mark,
+.dl-row--waiting .dl-row__mark { background: var(--primary); }
+.dl-row--done .dl-row__mark { background: var(--success); }
+.dl-row--error .dl-row__mark { background: var(--danger); }
+.dl-row__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dl-row__label { font-size: 15px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dl-row__meta { font-size: 12px; color: var(--text-muted); }
+.dl-row__bar { height: 3px; margin-top: 4px; border-radius: 2px; background: var(--border); overflow: hidden; }
+.dl-row__bar > span { display: block; height: 100%; background: var(--primary); transition: width 0.25s; }
+.dl-sheet__foot { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; flex-wrap: wrap; }
+.dl-sheet__foot .btn { flex: 1 1 0; min-width: 0; }
+.dl-sheet__foot [hidden] { display: none; }
+

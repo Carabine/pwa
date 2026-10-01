@@ -162,6 +162,8 @@ function explainLang() {
 // в серверный кэш разборов.
 function warmGuestExplain(word) {
     if (!word || !word.sentence || !word.kanji || typeof client === 'undefined') return;
+    // С загрузчиком (js/downloads.js) разбор ещё и ляжет на устройство — для офлайна.
+    if (window.AnimeiDownloads) { AnimeiDownloads.computeExplain(word); return; }
     const params = { sentence: word.sentence, lang: explainLang(), word: word.kanji };
     if (word.lang === 'en') params.target = 'en';
     client.get('explain', { params, timeout: 90000, silentErrors: true }).catch(() => { /* не вышло — карточка спросит сама */ });
@@ -226,22 +228,36 @@ async function warmClipToStore(word) {
     const conn = navigator.connection;
     if (conn && conn.saveData) return;
 
+    const label = word.kanji || word.kana || '';
+    // Разбор сервер начал считать при сохранении — заберём готовый, когда
+    // досчитает (js/downloads.js, пачкой и без обращения к ИИ).
+    if (window.AnimeiDownloads) AnimeiDownloads.wantExplains([word], 15000);
+
     let url = serverClipUrl(word);          // общий клип колоды — готов сразу
     if (!url && Number(word.videoEnd) > Number(word.videoStart)) {
+        // Пока сервер режет — в окне загрузок «режется на сервере…».
+        const task = window.AnimeiDownloads
+            ? AnimeiDownloads.track('clip:' + word.id, { kind: 'clip', label }) : null;
+        if (task) task.set('waiting');
         for (const delay of CLIP_WAIT_DELAYS) {
             await sleep(delay);
             try {
                 const { data: res } = await client.get(`words/${word.id}/clip`);
                 url = (res && res.data && res.data.url) || '';
-            } catch { return; }             // нет сети или слово удалили — ждать нечего
+            } catch {                       // нет сети или слово удалили — ждать нечего
+                if (task) task.done(false, 'later');
+                return;
+            }
             if (url) break;
         }
+        // Не дорезался за ~50 с — скачается докачкой при следующем запуске.
+        if (!url && task) task.done(false, 'later');
     }
     if (!url) return;
     // В кэше списка слово лежит без клипа (ответ POST /words его ещё не знал) —
     // иначе офлайн-карточка не поняла бы, что видео у неё есть.
     rememberWordInCache({ id: word.id, Video: { url } });
-    await cacheMediaFromUrl('clip', word.id, url);
+    await cacheMediaFromUrl('clip', word.id, url, { label });
 }
 
 async function fetchWords() {

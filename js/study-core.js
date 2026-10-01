@@ -43,11 +43,17 @@
     } catch { /* без URLSearchParams остаёмся на базовом виде */ }
 
     // ---- ИИ-разбор предложения на обороте карточки -------------------------
-    let studyAiAvailable = false;
+    // Доступность ИИ помним между запусками: без сети /explain/status не
+    // ответит, а кнопка «Разбор» нужна — разборы лежат на устройстве.
+    const AI_AVAILABLE_KEY = 'animei:aiAvailable';
+    let studyAiAvailable = (() => { try { return localStorage.getItem(AI_AVAILABLE_KEY) === '1'; } catch { return false; } })();
     const studyExplainCache = new Map();   // разбор по тексту предложения — на сессию
     if (typeof client !== 'undefined') {
         client.get('explain/status')
-            .then(({ data }) => { studyAiAvailable = !!data?.data?.available; })
+            .then(({ data }) => {
+                studyAiAvailable = !!data?.data?.available;
+                try { localStorage.setItem(AI_AVAILABLE_KEY, studyAiAvailable ? '1' : '0'); } catch { /* недоступен */ }
+            })
             .catch(() => {});
     }
 
@@ -210,6 +216,16 @@
         const key = target + '|' + lang + '|' + (word || '') + '|' + sentence;
         const cached = studyExplainCache.get(key);
         if (cached) { studyRenderExplain(modal.body, cached); modal.open(); return; }
+        // Офлайн-копия на устройстве (video-store.js; кладёт js/downloads.js и
+        // этот же обработчик) — открывается и без сети.
+        const idbKey = typeof explainKey === 'function' ? explainKey(sentence, word, lang, target) : '';
+        const stored = idbKey && typeof getExplain === 'function' ? await getExplain(idbKey) : null;
+        if (stored) {
+            studyExplainCache.set(key, stored);
+            studyRenderExplain(modal.body, stored);
+            modal.open();
+            return;
+        }
         if (indicator && indicator._busy) return;
         if (indicator) { indicator._busy = true; indicator.classList.add('is-loading'); }
         const labelEl = indicator && indicator.querySelector ? indicator.querySelector('.btn-label') : null;
@@ -222,6 +238,7 @@
             const { data: res } = await client.get('explain', { params, timeout: 60000 });
             const data = res.data.explanation;
             studyExplainCache.set(key, data);
+            if (idbKey && typeof putExplain === 'function') putExplain(idbKey, data);
             studyRenderExplain(modal.body, data);
             modal.open();
         } catch (err) {
@@ -926,7 +943,7 @@
                 const cSrc = videoSrcOf(cw);
                 if (cw.id && cSrc && /^https?:\/\//.test(cSrc)) {
                     getClip(cw.id)
-                        .then((blob) => blob || ensureClip(cw.id, cSrc))
+                        .then((blob) => blob || ensureClip(cw.id, cSrc, cw.kanji || cw.kana))
                         .then((blob) => {
                             if (!blob || !current || current.word.id !== cw.id) return;
                             warmClipElement(cw, blob);
@@ -1894,7 +1911,7 @@
                 // и параллельно тот же файл качался «в кэш»: один клип приезжал по
                 // два-три раза (замер: 161459d5.mp4 × 3) и делил канал сам с собой.
                 if (!ready) getClip(wid)
-                    .then((blob) => blob || ensureClip(wid, src))
+                    .then((blob) => blob || ensureClip(wid, src, w.kanji || w.kana))
                     .then((blob) => afterReveal(() => {
                     if (!current || current.word.id !== wid) return;
                     if (!els.back.classList.contains('back-side--visible')) return;
@@ -2320,6 +2337,12 @@
             // сбрасываем: сеть с прошлой сессии могла вернуться.
             clipFailed.clear();
             setTimeout(pumpClipPrefetch, 600);
+            // ИИ-разборы карточек сессии — тоже на устройство (готовые с сервера,
+            // без расчёта): тогда «Разобрать» работает и без сети.
+            if (window.AnimeiDownloads) {
+                const sessionWords = [current, ...queue].filter(Boolean).map((it) => it.word).filter(Boolean);
+                setTimeout(() => AnimeiDownloads.wantExplains(sessionWords), 1500);
+            }
         }
 
         // ===== Прогрев видео-элемента текущей карточки =====
@@ -2414,7 +2437,7 @@
             const w = item && item.word;
             const src = w && videoSrcOf(w);
             if (!w || !w.id || !src || !/^https?:\/\//.test(src)) return null;
-            return { id: w.id, src };
+            return { id: w.id, src, label: w.kanji || w.kana || '' };
         }
 
         // Живой список приоритетов: читается на каждом шаге, поэтому после
@@ -2436,10 +2459,11 @@
         // null, если не вышло) и следит, чтобы один файл не тянулся дважды:
         // карточка, которой клип нужен прямо сейчас, присоединяется к уже
         // идущей загрузке, а не запускает свою.
-        function ensureClip(id, src) {
+        function ensureClip(id, src, label) {
             const pending = clipInFlight.get(id);
             if (pending) return pending;
-            const job = cacheMediaFromUrl('clip', id, src)
+            // label — подпись в окне «Загрузки» (js/downloads.js).
+            const job = cacheMediaFromUrl('clip', id, src, { label })
                 .catch(() => {})
                 .then(() => getClip(id).catch(() => null))
                 .then((blob) => {
@@ -2469,7 +2493,7 @@
                         if (!blob) { picked = t; break; }
                     }
                     if (!picked) return;
-                    await ensureClip(picked.id, picked.src);
+                    await ensureClip(picked.id, picked.src, picked.label);
                 }
             } finally {
                 clipLanes--;

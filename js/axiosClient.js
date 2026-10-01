@@ -194,6 +194,14 @@ const ACCOUNT_SCOPED_KEYS = [
 
 function clearAccountScopedState() {
     for (const key of ACCOUNT_SCOPED_KEYS) storageRemove(key);
+    // Офлайн-копии клипов, звука и ИИ-разборов прошлого аккаунта (IndexedDB,
+    // video-store.js). Выход сразу перезагружает страницу, а на некоторых
+    // страницах video-store не подключён — поэтому флаг: чистку доделает первая
+    // же страница с video-store при старте. Гостевые local-* остаются.
+    try { localStorage.setItem('animei:mediaPurge', '1'); } catch { /* недоступен */ }
+    if (typeof purgeAccountMedia === 'function') {
+        purgeAccountMedia().then((ok) => { if (ok) storageRemove('animei:mediaPurge'); });
+    }
     // Личные ответы API мог сохранить и сервис-воркер (до v0.0.427 он кэшировал
     // всё подряд). Чистим из его кэша только запросы к API — оболочка
     // приложения (js/css/страницы) должна остаться, иначе следующий офлайн-старт
