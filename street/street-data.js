@@ -51,7 +51,16 @@ function demoSchedule(state) {
     }
 }
 
+// Словарь владельца (words-busyd.js, если подключён) — набор по умолчанию вместо встроенного.
+function buildOwner() {
+    const S = window.STREET_WORDS;
+    if (!S || !Array.isArray(S.words) || !S.words.length) return null;
+    return { words: S.words.slice(), schedule: S.schedule || {}, decks: (S.decks || []).filter((d) => d && Array.isArray(d.wordIds)), known: new Set(S.known || []), jlpt: {}, source: 'owner' };
+}
+
 function buildDemo() {
+    const owner = buildOwner();
+    if (owner) return owner;
     const words = [], schedule = {}, decks = [], jlpt = {};
     let n = 0;
     DEMO_DECKS.forEach((d, di) => {

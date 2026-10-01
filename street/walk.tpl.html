@@ -28,6 +28,18 @@
         #cross.on { display: block; }
         #cross::before, #cross::after { content: ''; position: absolute; background: #fff; box-shadow: 0 0 6px rgba(0,0,0,.9); }
         #cross::before { left: 8px; top: 0; width: 2px; height: 18px; } #cross::after { top: 8px; left: 0; width: 18px; height: 2px; }
+        #hint { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 96px); transform: translate(-50%, -24px); opacity: 0; pointer-events: none; transition: transform .25s cubic-bezier(.2,.8,.2,1), opacity .2s; min-width: 220px; max-width: 86vw; padding: 12px 16px 12px; border-radius: 18px; background: rgba(12,12,22,0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset, 0 12px 40px rgba(0,0,0,0.5), 0 0 24px color-mix(in srgb, var(--c, #7c8cf8) 35%, transparent); text-align: left; }
+        #hint.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+        #hint .hw { display: flex; align-items: baseline; gap: 10px; }
+        #h-kanji { font-size: 30px; font-weight: 700; line-height: 1.1; color: #fff; text-shadow: 0 0 14px var(--c, #7c8cf8), 0 0 30px var(--c, #7c8cf8); }
+        #h-kana { font-size: 14px; color: var(--muted); }
+        #h-jlpt { margin-left: auto; font-size: 10px; font-weight: 700; color: var(--muted); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; padding: 1px 5px; }
+        #h-tr { margin-top: 4px; font-size: 15px; font-weight: 500; }
+        #hint .hb { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+        #hint .state { margin-top: 0; }
+        #hint .btn.small { padding: 7px 12px; font-size: 12.5px; margin-left: auto; }
+        #hint .key { font: 700 11px/1 Inter, monospace; color: var(--muted); border: 1px solid rgba(255,255,255,0.25); border-radius: 5px; padding: 3px 5px; }
+        #hint.door #h-kanji { font-size: 22px; }
         #nowebgl { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 30px; text-align: center; background: #05050a; color: #fff; font-size: 15px; }
     </style>
     <script type="importmap">
@@ -84,17 +96,15 @@
     <h4>Управление</h4>
     <div class="opts"><button class="opt" data-gyro>Гироскоп</button></div>
 </div>
-<div id="sheet">
-    <div class="card">
-        <div class="row"><div id="s-kanji" class="jp"></div><div id="s-kana" class="jp"></div><div id="s-jlpt"></div></div>
-        <div id="s-tr"></div>
-        <div id="s-state" class="state"></div>
-        <div class="acts"><button class="btn" id="s-review">Повторить</button><button class="btn ghost" id="s-close">Закрыть</button></div>
-    </div>
+<div id="hint">
+    <div class="hw"><span id="h-kanji" class="jp"></span><span id="h-kana" class="jp"></span><span id="h-jlpt"></span></div>
+    <div id="h-tr"></div>
+    <div class="hb"><span id="h-state" class="state"></span><button class="btn small" id="h-review">Повторить</button><span id="h-key" class="key">R</span></div>
 </div>
 <div id="toast"></div>
 <div id="fps"></div>
 <div id="nowebgl">Для 3D-прогулки нужен WebGL и доступ к сети (библиотека Three.js грузится с CDN). Откройте плоскую версию: shinjuku.html</div>
+<script src="./words-busyd.js"></script>
 <script src="./street-data.js"></script>
 <script type="module">
 /*__WALK_JS__*/
