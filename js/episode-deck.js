@@ -126,12 +126,22 @@
     // epNumber, current }. У «этой серии» набор один, у «всего аниме» — по
     // отсканированным сериям; у каждого кандидата запоминаем серию его лучшего
     // примера (e.ep) — из неё потом режется клип.
+    // Имена персонажей тайтла (js/char-names.js) — в колоду их не предлагаем.
+    let charNames = [];
+    async function loadCharNames() {
+        charNames = window.CharNames ? await CharNames.load(shikimoriId) : [];
+    }
+
     function collectCandidates(cueSets) {
         const byBase = new Map();
         for (const set of cueSets) {
             for (const cue of set.cues) {
-                for (const tok of (cue.tokens || [])) {
+                const toks = cue.tokens || [];
+                const names = window.CharNames ? CharNames.mask(toks, charNames) : new Set();
+                for (let ti = 0; ti < toks.length; ti++) {
+                    const tok = toks[ti];
                     if (!tok.learnable || !CONTENT_POS.has(tok.pos)) continue;
+                    if (names.has(ti)) continue;
                     const base = tok.base || tok.surface;
                     if (STOPLIST.has(base)) continue;
                     // Однобуквенные обрывки каны (气/へ/め от неудачного разбора) — мимо.
@@ -410,7 +420,7 @@
         scanning = scope === 'anime';
         candidates = [];
         renderList();
-        const sets = await buildCueSets(token);
+        const [sets] = await Promise.all([buildCueSets(token), loadCharNames()]);
         if (token !== scanToken) return;
         scanning = false;
         candidates = sets ? collectCandidates(sets) : [];

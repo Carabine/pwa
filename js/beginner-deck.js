@@ -136,8 +136,13 @@ window.BeginnerDeck = (function () {
         const byBase = new Map();
         for (const set of cueSets) {
             for (const cue of set.cues) {
-                for (const tok of (cue.tokens || [])) {
+                const toks = cue.tokens || [];
+                // Имена персонажей (js/char-names.js) — не слова для колоды.
+                const names = window.CharNames ? CharNames.mask(toks, charNames) : new Set();
+                for (let ti = 0; ti < toks.length; ti++) {
+                    const tok = toks[ti];
                     if (!tok.learnable || !CONTENT_POS.has(tok.pos)) continue;
+                    if (names.has(ti)) continue;
                     const base = tok.base || tok.surface;
                     if (STOPLIST.has(base)) continue;
                     if (base.length < 2 && !KANJI.test(base)) continue;
@@ -541,11 +546,16 @@ window.BeginnerDeck = (function () {
         updateCount();
     }
 
+    let charNames = [];
     async function rebuild() {
         const token = ++scanToken;
         scanning = true;
         candidates = [];
         renderList();
+        // Имена грузим параллельно со сканом; частичные списки до их прихода
+        // могут мелькнуть с именем — финальный уже без.
+        const namesP = window.CharNames
+            ? CharNames.load(anime.shikimoriId).then((n) => { charNames = n; }) : Promise.resolve();
         if (!cueSets) {
             // Слова показываем по мере скана серий — список пополняется живьём.
             const partial = (sets) => {
@@ -559,6 +569,8 @@ window.BeginnerDeck = (function () {
             if (token !== scanToken) return;
             cueSets = sets || [];
         }
+        await namesP;
+        if (token !== scanToken) return;
         scanning = false;
         candidates = collectCandidates();
         renderList();
