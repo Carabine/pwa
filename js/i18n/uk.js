@@ -68,6 +68,8 @@ window.I18N_UK = {
         'nav.watch': 'Своє відео',
         'nav.dictionary': 'Мої слова',
         'nav.news': 'JP News',
+        'nav.apps': 'Застосунки',
+        'nav.kanji': 'Прописи',
         'news.title': 'Сьогодні',
         'news.subtitle': 'Випуск дня: японські новини під твій рівень',
         'news.stale': 'Свіжий випуск ще готується — поки що останній',

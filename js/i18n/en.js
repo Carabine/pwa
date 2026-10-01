@@ -68,6 +68,8 @@ window.I18N_EN = {
         'nav.watch': 'Your video',
         'nav.dictionary': 'My words',
         'nav.news': 'JP News',
+        'nav.apps': 'Apps',
+        'nav.kanji': 'Writing',
         'news.title': 'Today',
         'news.subtitle': 'Daily edition: Japanese news at your level',
         'news.stale': 'Today’s edition is still being prepared — showing the latest one',

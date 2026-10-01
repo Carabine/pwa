@@ -72,6 +72,8 @@ const I18N = {
         'nav.watch': 'Своё видео',
         'nav.dictionary': 'Мои слова',
         'nav.news': 'JP News',
+        'nav.apps': 'Приложения',
+        'nav.kanji': 'Прописи',
         'news.title': 'Сегодня',
         'news.subtitle': 'Выпуск дня: японские новости под твой уровень',
         'news.stale': 'Свежий выпуск ещё готовится — пока последний',
