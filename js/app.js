@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.625';
+const APP_VERSION = 'v0.0.626';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -1428,7 +1428,7 @@ function renderAuthState() {
     // «Приложения» — JP News и Прописи живут отдельной страницей-витриной, а не
     // в боковом меню: там только путь «смотрю → собираю → повторяю».
     const appsUrl = appUrl('pages/apps.html');
-    const appsItem = `<a href="${appsUrl}">${NAV_ICONS['nav.apps']}<span class="nav-label" data-i18n="nav.apps">Apps</span><span class="nav-new">NEW</span></a>`;
+    const appsItem = `<a href="${appsUrl}">${NAV_ICONS['nav.apps']}<span class="nav-label" data-i18n="nav.apps">Apps</span></a>`;
     // «Учу: Японский ›» — изучаемый язык, первым пунктом: это про человека, а не
     // про приложение. Только при русском/украинском интерфейсе (см. LearnLang).
     const learnItem = learnLangVisible()
