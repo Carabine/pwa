@@ -221,14 +221,16 @@
 
         clearHint() { this.gHint.textContent = ''; }
 
-        // Принятый штрих рисуем ЭТАЛОНОМ («прилипание»): результат выглядит
-        // ровно, а ученик видит, как штрих должен лежать. Короткая анимация
-        // прорисовки — чтобы прилипание читалось как движение, а не подмена.
-        commit(i) {
-            const d = this.strokes[i];
+        // Принятый штрих. По умолчанию рисуем ЭТАЛОНОМ («прилипание»):
+        // результат выглядит ровно, а ученик видит, как штрих должен лежать.
+        // С points (настройка «оставлять мой») — тушь остаётся его собственной,
+        // как в тетради: видно свой почерк и свои кривизны. Короткая анимация
+        // прорисовки — чтобы принятие читалось как движение, а не подмена.
+        commit(i, points) {
+            const d = points ? toPathD(points) : this.strokes[i];
             const p = el('path', { d });
             this.gInk.appendChild(p);
-            const len = Math.max(samplePath(d).len, 1);
+            const len = Math.max(points ? polyLength(points) : samplePath(this.strokes[i]).len, 1);
             p.style.strokeDasharray = String(len);
             p.style.strokeDashoffset = String(len);
             p.getBoundingClientRect();         // форсируем стиль до перехода

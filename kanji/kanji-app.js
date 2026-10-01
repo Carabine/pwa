@@ -300,6 +300,7 @@
             <div class="kj-field"><span>${esc(t('kanji.tolerance'))}</span>${seg('tolerance', [['strict', t('kanji.tolStrict')], ['normal', t('kanji.tolNormal')], ['loose', t('kanji.tolLoose')]])}</div>
             <div class="kj-field"><span>${esc(t('kanji.newPerSession'))}</span>${seg('newPerSession', [[3, '3'], [5, '5'], [10, '10']])}</div>
             <div class="kj-field"><span>${esc(t('kanji.maxPerSession'))}</span>${seg('maxPerSession', [[10, '10'], [15, '15'], [25, '25']])}</div>
+            <div class="kj-field"><span>${esc(t('kanji.snap'))}</span>${seg('snap', [['true', t('kanji.snapOn')], ['false', t('kanji.snapOff')]])}</div>
             ${tog('numbers', t('kanji.optNumbers'))}
             ${tog('speak', t('kanji.optSpeak'))}
             ${tog('vibrate', t('kanji.optVibrate'))}
@@ -308,7 +309,8 @@
             const b = e.target.closest('button');
             if (!b) return;
             const key = seg.dataset.key;
-            const v = isNaN(b.dataset.v) ? b.dataset.v : Number(b.dataset.v);
+            const raw = b.dataset.v;
+            const v = raw === 'true' ? true : raw === 'false' ? false : (isNaN(raw) ? raw : Number(raw));
             S.settings.set(key, v);
             seg.querySelectorAll('button').forEach((x) => x.classList.toggle('is-on', x === b));
         }));
@@ -534,7 +536,7 @@
         const r = C.recognize(points, q.data.s, g.idx, tol);
         if (r.ok) {
             board.clearHint();
-            board.commit(g.idx);
+            board.commit(g.idx, S.settings.get('snap') ? null : points);
             g.idx += 1;
             g.streakMiss = 0;
             buzz(8);
