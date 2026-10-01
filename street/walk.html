@@ -24,6 +24,10 @@
         #fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity .32s; }
         #fade.on { opacity: 1; }
         .vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 55%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.55) 100%); }
+        #cross { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; pointer-events: none; display: none; opacity: .8; }
+        #cross.on { display: block; }
+        #cross::before, #cross::after { content: ''; position: absolute; background: #fff; box-shadow: 0 0 6px rgba(0,0,0,.9); }
+        #cross::before { left: 8px; top: 0; width: 2px; height: 18px; } #cross::after { top: 8px; left: 0; width: 18px; height: 2px; }
         #nowebgl { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 30px; text-align: center; background: #05050a; color: #fff; font-size: 15px; }
     </style>
     <script type="importmap">
@@ -42,6 +46,7 @@
 <div class="scrim top"></div><div class="scrim bottom"></div>
 <div id="fade"></div>
 <div id="joy"><div id="joy-knob"></div></div>
+<div id="cross"></div>
 <div class="hud top">
     <div class="q">
         <div class="name"><span id="q-emoji"></span><span id="q-name"></span></div>
@@ -58,7 +63,7 @@
         <span><i class="due"></i>пора повторить</span>
         <span><i class="worn"></i>забывается</span>
     </div>
-    <div class="hint"><span class="m">Левый палец — идти, правый — осмотреться</span><span class="d">Мышь — осмотреться · WASD или колесо — идти · ←→ поворот · Shift — бег · M — звук</span> · тап по вывеске — слово, по двери — войти</div>
+    <div class="hint"><span class="m">Левый палец — идти, правый — осмотреться</span><span class="d">Клик — захватить мышь, Esc — отпустить · WASD или колесо — идти · Shift — бег · M — звук</span> · тап по вывеске — слово, по двери — войти</div>
     <div class="actions">
         <button class="btn ghost" id="walk">▶ Прогулка</button>
         <button class="btn ghost" id="exit" hidden>← На улицу</button>
@@ -1221,8 +1226,17 @@ let look = null, tapStart = null;
 const joyEl = document.getElementById('joy'), joyKnob = document.getElementById('joy-knob');
 const LOOK_K = 2.6 / Math.max(320, Math.min(innerWidth, innerHeight)); // радиан на пиксель: полный свайп ≈ 150°
 function inJoyZone(e) { const r = joyEl.getBoundingClientRect(); const cx = r.left + r.width / 2, cy = r.top + r.height / 2; return Math.hypot(e.clientX - cx, e.clientY - cy) < 95 || (e.pointerType === 'touch' && e.clientX < innerWidth * 0.4 && e.clientY > innerHeight * 0.5); }
+// ПК: клик захватывает мышь (pointer lock), поворот без зажатой кнопки, Esc отпускает; клик при захвате — по прицелу в центре
+const FINE = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+const locked = () => document.pointerLockElement === canvas;
+document.addEventListener('pointerlockchange', () => { document.getElementById('cross').classList.toggle('on', locked()); if (!locked()) lookVel.x = lookVel.y = 0; });
+document.addEventListener('mousemove', (e) => { if (!locked()) return; tYaw -= e.movementX * LOOK_K * 0.55; tPitch = clamp(tPitch - e.movementY * LOOK_K * 0.5, -1, 1); lookVel.x = lookVel.y = 0; });
 canvas.addEventListener('pointerdown', (e) => {
     audio.resume();
+    if (FINE && e.pointerType === 'mouse' && e.button === 0) {
+        if (locked()) { tap(innerWidth / 2, innerHeight / 2); return; }
+        if (!sheet.classList.contains('open')) { try { canvas.requestPointerLock(); } catch (err) { /* не поддерживается — остаётся перетаскивание */ } return; }
+    }
     if (!joy.active && inJoyZone(e)) {
         joy.active = true; joy.id = e.pointerId; joy.x0 = e.clientX; joy.y0 = e.clientY; joy.dx = joy.dy = joy.mag = 0;
         joyEl.style.left = (e.clientX - 55) + 'px'; joyEl.style.top = (e.clientY - 55) + 'px'; joyEl.style.bottom = 'auto'; joyEl.classList.add('on');
@@ -1314,6 +1328,7 @@ function openSheet(s) {
     document.getElementById('s-kanji').style.setProperty('--c', s.color);
     document.getElementById('s-review').hidden = s.state === 'lit';
     sheet.classList.add('open'); openedAt = performance.now();
+    if (document.pointerLockElement) document.exitPointerLock();
 }
 function closeSheet() { sheet.classList.remove('open'); current = null; }
 document.getElementById('s-close').addEventListener('click', closeSheet);
@@ -1369,7 +1384,7 @@ document.getElementById('share').addEventListener('click', async () => {
 
 // ---- настройки ----
 const panel = document.getElementById('panel');
-document.getElementById('gear').addEventListener('click', () => panel.classList.toggle('open'));
+document.getElementById('gear').addEventListener('click', () => { panel.classList.toggle('open'); if (document.pointerLockElement) document.exitPointerLock(); });
 document.getElementById('panel-close').addEventListener('click', () => panel.classList.remove('open'));
 panel.querySelectorAll('[data-src]').forEach((b) => { b.classList.toggle('on', b.dataset.src === source); b.addEventListener('click', () => { source = b.dataset.src; saveSet({ source }); panel.querySelectorAll('[data-src]').forEach((x) => x.classList.toggle('on', x === b)); load(); }); });
 panel.querySelectorAll('[data-theme]').forEach((b) => { b.classList.toggle('on', b.dataset.theme === th.id); });

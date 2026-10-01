@@ -24,6 +24,10 @@
         #fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity .32s; }
         #fade.on { opacity: 1; }
         .vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 55%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.55) 100%); }
+        #cross { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; pointer-events: none; display: none; opacity: .8; }
+        #cross.on { display: block; }
+        #cross::before, #cross::after { content: ''; position: absolute; background: #fff; box-shadow: 0 0 6px rgba(0,0,0,.9); }
+        #cross::before { left: 8px; top: 0; width: 2px; height: 18px; } #cross::after { top: 8px; left: 0; width: 18px; height: 2px; }
         #nowebgl { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 30px; text-align: center; background: #05050a; color: #fff; font-size: 15px; }
     </style>
     <script type="importmap">
@@ -42,6 +46,7 @@
 <div class="scrim top"></div><div class="scrim bottom"></div>
 <div id="fade"></div>
 <div id="joy"><div id="joy-knob"></div></div>
+<div id="cross"></div>
 <div class="hud top">
     <div class="q">
         <div class="name"><span id="q-emoji"></span><span id="q-name"></span></div>
@@ -58,7 +63,7 @@
         <span><i class="due"></i>пора повторить</span>
         <span><i class="worn"></i>забывается</span>
     </div>
-    <div class="hint"><span class="m">Левый палец — идти, правый — осмотреться</span><span class="d">Мышь — осмотреться · WASD или колесо — идти · ←→ поворот · Shift — бег · M — звук</span> · тап по вывеске — слово, по двери — войти</div>
+    <div class="hint"><span class="m">Левый палец — идти, правый — осмотреться</span><span class="d">Клик — захватить мышь, Esc — отпустить · WASD или колесо — идти · Shift — бег · M — звук</span> · тап по вывеске — слово, по двери — войти</div>
     <div class="actions">
         <button class="btn ghost" id="walk">▶ Прогулка</button>
         <button class="btn ghost" id="exit" hidden>← На улицу</button>

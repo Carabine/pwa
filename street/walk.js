@@ -1127,8 +1127,17 @@ let look = null, tapStart = null;
 const joyEl = document.getElementById('joy'), joyKnob = document.getElementById('joy-knob');
 const LOOK_K = 2.6 / Math.max(320, Math.min(innerWidth, innerHeight)); // радиан на пиксель: полный свайп ≈ 150°
 function inJoyZone(e) { const r = joyEl.getBoundingClientRect(); const cx = r.left + r.width / 2, cy = r.top + r.height / 2; return Math.hypot(e.clientX - cx, e.clientY - cy) < 95 || (e.pointerType === 'touch' && e.clientX < innerWidth * 0.4 && e.clientY > innerHeight * 0.5); }
+// ПК: клик захватывает мышь (pointer lock), поворот без зажатой кнопки, Esc отпускает; клик при захвате — по прицелу в центре
+const FINE = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+const locked = () => document.pointerLockElement === canvas;
+document.addEventListener('pointerlockchange', () => { document.getElementById('cross').classList.toggle('on', locked()); if (!locked()) lookVel.x = lookVel.y = 0; });
+document.addEventListener('mousemove', (e) => { if (!locked()) return; tYaw -= e.movementX * LOOK_K * 0.55; tPitch = clamp(tPitch - e.movementY * LOOK_K * 0.5, -1, 1); lookVel.x = lookVel.y = 0; });
 canvas.addEventListener('pointerdown', (e) => {
     audio.resume();
+    if (FINE && e.pointerType === 'mouse' && e.button === 0) {
+        if (locked()) { tap(innerWidth / 2, innerHeight / 2); return; }
+        if (!sheet.classList.contains('open')) { try { canvas.requestPointerLock(); } catch (err) { /* не поддерживается — остаётся перетаскивание */ } return; }
+    }
     if (!joy.active && inJoyZone(e)) {
         joy.active = true; joy.id = e.pointerId; joy.x0 = e.clientX; joy.y0 = e.clientY; joy.dx = joy.dy = joy.mag = 0;
         joyEl.style.left = (e.clientX - 55) + 'px'; joyEl.style.top = (e.clientY - 55) + 'px'; joyEl.style.bottom = 'auto'; joyEl.classList.add('on');
@@ -1220,6 +1229,7 @@ function openSheet(s) {
     document.getElementById('s-kanji').style.setProperty('--c', s.color);
     document.getElementById('s-review').hidden = s.state === 'lit';
     sheet.classList.add('open'); openedAt = performance.now();
+    if (document.pointerLockElement) document.exitPointerLock();
 }
 function closeSheet() { sheet.classList.remove('open'); current = null; }
 document.getElementById('s-close').addEventListener('click', closeSheet);
@@ -1275,7 +1285,7 @@ document.getElementById('share').addEventListener('click', async () => {
 
 // ---- настройки ----
 const panel = document.getElementById('panel');
-document.getElementById('gear').addEventListener('click', () => panel.classList.toggle('open'));
+document.getElementById('gear').addEventListener('click', () => { panel.classList.toggle('open'); if (document.pointerLockElement) document.exitPointerLock(); });
 document.getElementById('panel-close').addEventListener('click', () => panel.classList.remove('open'));
 panel.querySelectorAll('[data-src]').forEach((b) => { b.classList.toggle('on', b.dataset.src === source); b.addEventListener('click', () => { source = b.dataset.src; saveSet({ source }); panel.querySelectorAll('[data-src]').forEach((x) => x.classList.toggle('on', x === b)); load(); }); });
 panel.querySelectorAll('[data-theme]').forEach((b) => { b.classList.toggle('on', b.dataset.theme === th.id); });
