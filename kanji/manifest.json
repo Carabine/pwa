@@ -1,6 +1,6 @@
 {
-    "name": "Animei Прописи",
-    "short_name": "Прописи",
+    "name": "Animei Sumi",
+    "short_name": "Sumi",
     "description": "Learn to write kanji from your Animei decks",
     "start_url": "./",
     "scope": "./",
