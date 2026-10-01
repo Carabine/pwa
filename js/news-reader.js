@@ -51,7 +51,7 @@
             b.textContent = C.LEVEL_JA[l];
             b.title = C.tr('news.level.' + l);
             b.addEventListener('click', () => {
-                if (state.level === l) return;
+                if (state.level === l || !state.story) return;   // история ещё грузится
                 stopSpeaking();
                 state.level = l; C.setLevel(l);
                 state.active = -1; state.answers = {};
@@ -82,7 +82,15 @@
         if (s.photo) {
             media.hidden = false;
             media.innerHTML = '<img alt="" src="' + apiBase() + 'news/img/' + esc(s.id) + '">';
-        } else media.hidden = true;
+            // Заглушка остаётся под картинкой, пока та не загрузилась; потом — плавно.
+            const img = media.querySelector('img');
+            const done = () => { img.classList.add('is-loaded'); media.classList.remove('skel', 'rd-media--skel'); };
+            if (img.complete && img.naturalWidth) done();
+            else { img.addEventListener('load', done, { once: true }); img.addEventListener('error', done, { once: true }); }
+        } else {
+            media.classList.remove('skel', 'rd-media--skel');
+            media.hidden = true;
+        }
         const meta = el('rd-meta');
         const date = C.formatDate(s.date, { day: 'numeric', month: 'long' });
         meta.innerHTML = '<span>' + esc(C.categoryName(s.category)) + '</span><span>' + esc(date) + '</span>' +
@@ -494,10 +502,19 @@
 
     // ---------- Инициализация ----------
     async function init() {
+        // Уровень и фуригану рисуем сразу — они известны до загрузки истории
+        // (раньше на их месте висели точка и голое «あ»).
+        const wantLevel = new URLSearchParams(location.search).get('level');
+        if (C.LEVELS.includes(wantLevel)) state.level = wantLevel;
+        renderLevelSeg();
+        renderFuriBtn();
         try {
             await load();
         } catch (err) {
             el('rd-text').innerHTML = '<div class="news-empty">' + esc(C.tr('news.loadError')) + '</div>';
+            el('rd-media').hidden = true;
+            el('rd-meta').innerHTML = '';
+            el('rd-title').innerHTML = '';
             return;
         }
         document.title = state.story.levels[state.level].title.text + ' — Animei';

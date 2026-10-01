@@ -23,6 +23,16 @@
         return res.data;
     }
 
+    // Картинка проявляется целиком, когда загрузилась, — а не рисуется
+    // полосами на чёрном квадрате (медленная сеть, телефон).
+    function fadeInImages(root) {
+        root.querySelectorAll('.news-card__media img').forEach((img) => {
+            const done = () => img.classList.add('is-loaded');
+            if (img.complete && img.naturalWidth) done();
+            else { img.addEventListener('load', done, { once: true }); img.addEventListener('error', done, { once: true }); }
+        });
+    }
+
     function levelSeg() {
         const seg = el('news-level');
         seg.innerHTML = '';
@@ -95,6 +105,7 @@
                 '<div class="news-card__check" aria-hidden="true">✓</div>';
             list.appendChild(a);
         });
+        fadeInImages(list);
         renderProgress();
     }
 
@@ -125,6 +136,7 @@
             state.edition = await loadEdition();
         } catch (err) {
             el('news-list').innerHTML = '<div class="news-empty">' + esc(C.tr('news.loadError')) + '</div>';
+            el('news-progress').hidden = true;
             return;
         }
         renderHead();

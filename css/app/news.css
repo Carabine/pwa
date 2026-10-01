@@ -619,3 +619,28 @@ rt {
     .news-card { grid-template-columns: 72px 1fr auto; }
     .news-card__media { width: 72px; height: 72px; }
 }
+
+/* ---- Загрузка без прыжков (заглушки в news.html / news-story.html) ---- */
+.news-level__skel { display: block; height: 44px; border-radius: var(--radius-sm); }
+.news-progress__text .skel-bar { display: inline-block; height: 0.9em; vertical-align: middle; }
+.news-card__media { background: rgba(255, 255, 255, 0.055); }
+.news-card__media img,
+.rd-media img { opacity: 0; transition: opacity 0.25s var(--ease-out, ease-out); }
+.news-card__media img.is-loaded,
+.rd-media img.is-loaded { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+    .news-card__media img, .rd-media img { transition: none; }
+}
+.rd-media--skel { height: clamp(150px, 42vw, 220px); border-radius: var(--radius); }
+.rd-level__skel { display: block; width: 168px; height: 32px; border-radius: 999px; }
+.rd-furi .skel-bar { display: inline-block; height: 0.9em; vertical-align: middle; }
+.rd-title__skel { display: block; height: 0.9em; margin: 0.35em 0; }
+.rd-meta .skel-bar { display: inline-block; height: 0.9em; }
+
+/* Нижняя панель на узком экране: у «Перевода» и «Слушать» — только значки,
+   иначе «Проверить понимание» обрезалось справа («Проверить понимани…»). */
+@media (max-width: 480px) {
+    .rd-bar button { flex: 0 0 auto; min-width: 48px; padding: 11px 14px; font-size: 16px; }
+    .rd-bar .rd-bar__label { display: none; }
+    .rd-bar button.rd-bar__primary { flex: 1 1 auto; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+}

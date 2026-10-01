@@ -75,13 +75,15 @@
     <main class="reader">
         <div class="rd-top">
             <a class="rd-back" id="rd-back" href="./news.html">← <span data-i18n="news.back">К выпуску</span></a>
-            <div class="seg" id="rd-level" role="group"></div>
-            <button type="button" class="rd-furi" id="rd-furi">あ</button>
+            <div class="seg" id="rd-level" role="group"><span class="skel rd-level__skel"></span></div>
+            <button type="button" class="rd-furi" id="rd-furi"><span class="skel skel-bar" style="width:6ch"></span></button>
         </div>
 
-        <div class="rd-media" id="rd-media" hidden></div>
-        <div class="rd-meta" id="rd-meta"></div>
-        <h1 class="rd-title" id="rd-title"><span class="skel skel-bar" style="width:80%"></span></h1>
+        <!-- До загрузки — заглушки в размер настоящих блоков (картинка, рубрика,
+             заголовок в две строки): текст не прыгает вниз, когда история пришла. -->
+        <div class="rd-media rd-media--skel skel" id="rd-media"></div>
+        <div class="rd-meta" id="rd-meta"><span class="skel skel-bar" style="width:40%"></span></div>
+        <h1 class="rd-title" id="rd-title"><span class="skel skel-bar rd-title__skel" style="width:90%"></span><span class="skel skel-bar rd-title__skel" style="width:60%"></span></h1>
         <p class="rd-title-tr" id="rd-title-tr"></p>
 
         <div class="rd-text furi-all" id="rd-text">
@@ -105,8 +107,8 @@
 
     <div class="rd-bar">
         <div class="rd-bar__inner">
-            <button type="button" id="rd-tr">文 <span data-i18n="news.translate">Перевод</span></button>
-            <button type="button" id="rd-listen">▶ <span data-i18n="news.listen">Слушать</span></button>
+            <button type="button" id="rd-tr" data-i18n-aria="news.translate" aria-label="Перевод">文 <span class="rd-bar__label" data-i18n="news.translate">Перевод</span></button>
+            <button type="button" id="rd-listen" data-i18n-aria="news.listen" aria-label="Слушать">▶ <span class="rd-bar__label" data-i18n="news.listen">Слушать</span></button>
             <button type="button" id="rd-check" class="rd-bar__primary" data-i18n="news.check">Проверить понимание</button>
         </div>
     </div>
