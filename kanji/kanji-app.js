@@ -115,8 +115,6 @@
         const stats = S.srs.stats(all.items.map((i) => i.ch));
         const today = S.days.today();
         const streak = S.days.streak();
-        const decks = (window.Decks ? Decks.visible() : []).map(scopeFromDeck).filter((sc) => sc.items.length);
-
         let hero;
         if (!all.items.length) {
             hero = `<div class="kj-hero kj-hero--empty">
@@ -141,11 +139,21 @@
             </div>`;
         }
 
+        // Главная без списка колод: одна умная кнопка по всем знакам и три
+        // компактных входа (все знаки, хирагана, катакана). Колоду по-прежнему
+        // можно открыть с её страницы (кнопка «Sumi» → ?deck=id).
+        const quick = (scope) => {
+            const { s } = statLine(scope.items);
+            return `<button class="kj-quick__btn" data-scope="${esc(scope.id)}">
+                <span class="kj-quick__ico">${scope.icon}</span>
+                <span class="kj-quick__name">${esc(scope.name)}</span>
+                <span class="kj-quick__meta">${s.due ? `<b>${s.due}</b> · ` : ''}${s.total}</span>
+            </button>`;
+        };
         el.innerHTML = hero
-            + (decks.length ? `<h2 class="kj-h2">${esc(t('kanji.decks'))}</h2><div class="kj-list">${decks.map((d) => sourceRow(d)).join('')}</div>` : '')
-            + `<h2 class="kj-h2">${esc(t('kanji.more'))}</h2><div class="kj-list">`
-            + (all.items.length ? sourceRow(all) : '')
-            + sourceRow(scopeKana('hira')) + sourceRow(scopeKana('kata'))
+            + `<div class="kj-quick">`
+            + (all.items.length ? quick(all) : '')
+            + quick(scopeKana('hira')) + quick(scopeKana('kata'))
             + `</div>
             <p class="kj-note">${esc(t('kanji.deviceNote'))}</p>`;
 

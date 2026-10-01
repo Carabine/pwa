@@ -125,6 +125,38 @@ body[data-screen="session"] .kj-top { display: none; }
 .kj-hero__cta { width: 100%; font-size: 15px; padding: 13px; }
 .kj-hero__streak { text-align: center; font-size: var(--fs-caption); color: var(--text-muted); }
 
+/* Три компактных входа под сводкой: все знаки / хирагана / катакана */
+.kj-quick {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+}
+.kj-quick__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px 8px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color var(--transition);
+}
+@media (hover: hover) and (pointer: fine) {
+    .kj-quick__btn:hover { border-color: var(--primary); }
+}
+.kj-quick__ico {
+    font-family: 'Noto Sans JP', var(--font);
+    font-size: 24px;
+    line-height: 1;
+}
+.kj-quick__name { font-size: 13px; font-weight: 600; }
+.kj-quick__meta { font-size: 12px; color: var(--text-muted); }
+.kj-quick__meta b { color: var(--primary-hover); }
+
 /* ---- Список источников ----------------------------------------------- */
 .kj-list { display: flex; flex-direction: column; gap: 8px; }
 .kj-row {
