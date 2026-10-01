@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Дотомбори — Улица слов · Animei</title>
+    <meta name="theme-color" content="#05050a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+    <link href="./street.css" rel="stylesheet">
+</head>
+<body data-theme="dotonbori">
+<!--
+  Улица слов: словарь как ночной переулок. Один холст (street.js) + HUD в DOM.
+  Открывается с диска: file://…/street/dotonbori.html. Данные — встроенный набор
+  или localStorage PWA (переключатель в ⚙).
+-->
+<canvas id="scene"></canvas>
+<div class="scrim top"></div><div class="scrim bottom"></div>
+<div id="next" class="hud-next"></div>
+<div class="hud top">
+    <div class="q">
+        <div class="name"><span id="q-emoji"></span><span id="q-name"></span></div>
+        <div class="sub" id="q-sub"></div>
+    </div>
+    <div class="count"><b id="lit-n">0</b><span id="lit-l">вывесок горит</span></div>
+</div>
+<div id="dots"></div>
+<div class="hud bottom">
+    <div class="legend">
+        <span><i style="--c:#36e2ff"></i>выучено</span>
+        <span><i class="warm"></i>учу</span>
+        <span><i class="new"></i>новое</span>
+        <span><i class="due"></i>пора повторить</span>
+        <span><i class="worn"></i>забывается</span>
+    </div>
+    <div class="actions">
+        <button class="btn" id="share">Поделиться кадром</button>
+        <span class="spacer"></span>
+        <button class="btn ghost" id="gear" aria-label="Настройки">⚙</button>
+    </div>
+</div>
+<div id="panel">
+    <button id="panel-close" aria-label="Закрыть">×</button>
+    <h4>Данные</h4>
+    <div class="opts"><button class="opt" data-src="demo">Встроенный набор</button><button class="opt" data-src="real">Мои слова</button></div>
+    <h4>Улица</h4>
+    <div class="opts"><a class="opt" data-theme="shinjuku" href="./shinjuku.html">Синдзюку</a><a class="opt" data-theme="yokocho" href="./yokocho.html">Ёкотё</a><a class="opt" data-theme="dotonbori" href="./dotonbori.html">Дотомбори</a></div>
+    <h4>Погода</h4>
+    <div class="opts"><button class="opt" data-rain>Дождь</button></div>
+</div>
+<div id="sheet">
+    <div class="card">
+        <div class="row"><div id="s-kanji" class="jp"></div><div id="s-kana" class="jp"></div><div id="s-jlpt"></div></div>
+        <div id="s-tr"></div>
+        <div id="s-state" class="state"></div>
+        <div class="acts"><button class="btn" id="s-review">Повторить</button><button class="btn ghost" id="s-close">Закрыть</button></div>
+    </div>
+</div>
+<div id="toast"></div>
+<script src="./street-data.js"></script>
+<script src="./street.js"></script>
+<script src="./street-app.js"></script>
+</body>
+</html>
