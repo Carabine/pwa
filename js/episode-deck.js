@@ -84,6 +84,7 @@
     window.JlptLevels = {
         load: loadJlpt,
         level: (word) => (jlptMap && jlptMap[word]) || 0,
+        loaded: () => !!jlptMap,
     };
 
     // Приход со страницы новичка («Из любимого аниме», ?autodeck=anime):
