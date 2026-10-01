@@ -367,7 +367,7 @@ window.I18N_UK = {
         'study.again': 'Забув',
         'study.good': 'Пам’ятаю',
         'study.hint.min': '< 1 хв',
-        'study.hint.soon': 'скоро',
+        'study.hint.soon': '< 10 хв',
         'study.hint.tomorrow': 'завтра',
         'study.hint.days': 'через {n} дн',
         'study.hint.again': 'повторити ще раз',

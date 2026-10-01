@@ -371,7 +371,7 @@ const I18N = {
         'study.again': 'Забыл',
         'study.good': 'Помню',
         'study.hint.min': '< 1 мин',
-        'study.hint.soon': 'скоро',
+        'study.hint.soon': '< 10 мин',
         'study.hint.tomorrow': 'завтра',
         'study.hint.days': 'через {n} дн',
         'study.hint.again': 'повторить ещё раз',

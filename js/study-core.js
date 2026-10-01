@@ -629,10 +629,45 @@
             return [...landingItems, ...shuffle([...due, ...newItems])];
         }
 
-        // ---- Re-queue a card so it comes back later, not immediately --------
-        function reinsert(item, gap) {
-            const at = Math.min(queue.length, gap);
-            queue.splice(at, 0, item);
+        // ---- Учебные шаги: карточка возвращается по ВРЕМЕНИ, как в Anki -------
+        // Раньше «Забыл» ставил карточку в очередь через одну — слово мелькало
+        // снова почти сразу. Теперь у неё время возврата (dueAt): через минуту
+        // после «Забыл», через 10 минут после промежуточного «Помню». Созревшая
+        // карточка идёт раньше новых и повторений; пока не созрела — показываем
+        // другие. Других не осталось — показываем досрочно, ближайшую первой
+        // (как learn-ahead в Anki), а не заканчиваем сессию. notBefore — страховка
+        // на быстрые ответы: минимум столько других карточек между показами.
+        const AGAIN_DELAY = 60 * 1000;
+        const STEP_DELAY = 10 * 60 * 1000;
+        const MIN_GAP = 3;
+        let shownCount = 0;
+
+        function reinsertLater(item, delay) {
+            item.dueAt = Date.now() + delay;
+            item.notBefore = shownCount + MIN_GAP;
+            queue.push(item);
+        }
+
+        function pickNext() {
+            const now = Date.now();
+            const ready = (it) => shownCount >= it.notBefore;
+            let idx = -1;
+            // 1) созревшая учебная — самая ранняя
+            queue.forEach((it, i) => {
+                if (it.dueAt && it.dueAt <= now && ready(it) && (idx < 0 || it.dueAt < queue[idx].dueAt)) idx = i;
+            });
+            // 2) первая обычная карточка (новая или повторение)
+            if (idx < 0) idx = queue.findIndex((it) => !it.dueAt);
+            // 3) остались только учебные — досрочно; по возможности не ту, что была только что
+            if (idx < 0 && queue.length) {
+                const pool = queue.some(ready) ? queue.filter(ready) : queue;
+                const first = pool.reduce((a, b) => (b.dueAt < a.dueAt ? b : a));
+                idx = queue.indexOf(first);
+            }
+            if (idx < 0) return null;
+            const it = queue.splice(idx, 1)[0];
+            it.dueAt = 0;
+            return it;
         }
 
         // ---- Persist a graduated card's next review date -------------------
@@ -666,7 +701,7 @@
             current.failed = true;
             current.seen = true;
             current.left = steps;      // restart the learning steps
-            reinsert(current, 1);      // show again soon (after the next card)
+            reinsertLater(current, AGAIN_DELAY);   // через минуту, а не через одну карточку
             advance();
         }
 
@@ -676,7 +711,7 @@
             if (current.left <= 0) {
                 graduate(current);     // done for this session
             } else {
-                reinsert(current, 3);  // one more step, a few cards later
+                reinsertLater(current, STEP_DELAY);   // ещё один шаг — через 10 минут (досрочно, если карточки кончились)
             }
             advance();
         }
@@ -703,7 +738,8 @@
         }
 
         function advance() {
-            current = queue.shift() ?? null;
+            shownCount++;
+            current = pickNext();
             render();
         }
 

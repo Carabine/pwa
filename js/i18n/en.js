@@ -367,7 +367,7 @@ window.I18N_EN = {
         'study.again': 'Forgot',
         'study.good': 'Got it',
         'study.hint.min': '< 1 min',
-        'study.hint.soon': 'soon',
+        'study.hint.soon': '< 10 min',
         'study.hint.tomorrow': 'tomorrow',
         'study.hint.days': 'in {n} d',
         'study.hint.again': 'see it again',
