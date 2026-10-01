@@ -302,21 +302,76 @@
     }
 
     // Токены предложения с бэкенда (/analyze, MeCab) — для пословной раскладки с
-    // ромадзи над каждым словом (как в плеере аниме). Кэш на сессию.
+    // чтением над каждым словом (как в субтитрах плеера). Память сессии + копия
+    // на устройстве (animei:sentTokens): без сети /analyze не ответит, а
+    // транскрипция нужна и в метро. Копию держим компактной: [слово, чтение, часть речи].
     const sentenceTokensCache = new Map();
+    const SENT_TOKENS_KEY = 'animei:sentTokens';
+    const SENT_TOKENS_MAX = 800;
+    let sentTokensStore = null;
+    function sentTokensLoad() {
+        if (!sentTokensStore) {
+            const raw = lsJson(SENT_TOKENS_KEY, {});
+            sentTokensStore = (raw && typeof raw === 'object') ? raw : {};
+        }
+        return sentTokensStore;
+    }
+    const packTokens = (tokens) => tokens
+        .filter((tk) => tk && tk.surface && tk.surface !== 'BOS' && tk.surface !== 'EOS')
+        .map((tk) => [tk.surface,
+            (tk.feature && tk.feature.reading && tk.feature.reading !== '*') ? tk.feature.reading : (tk.kana || tk.reading || ''),
+            tk.pos || (tk.feature && tk.feature.pos) || '']);
+    const unpackTokens = (packed) => packed.map(([surface, reading, pos]) => ({ surface, reading, pos }));
+    function rememberTokens(sentence, tokens) {
+        sentenceTokensCache.set(sentence, tokens);
+        const store = sentTokensLoad();
+        delete store[sentence];             // свежие — в конец, вытесняем самые старые
+        store[sentence] = packTokens(tokens);
+        const keys = Object.keys(store);
+        for (let i = 0; i < keys.length - SENT_TOKENS_MAX; i++) delete store[keys[i]];
+        try { localStorage.setItem(SENT_TOKENS_KEY, JSON.stringify(store)); } catch { /* тесно — живём в памяти */ }
+    }
+    function cachedTokens(sentence) {
+        if (sentenceTokensCache.has(sentence)) return sentenceTokensCache.get(sentence);
+        const packed = sentTokensLoad()[sentence];
+        if (!packed) return null;
+        const tokens = unpackTokens(packed);
+        sentenceTokensCache.set(sentence, tokens);
+        return tokens;
+    }
     async function fetchSentenceTokens(sentence) {
         if (!sentence) return [];
-        if (sentenceTokensCache.has(sentence)) return sentenceTokensCache.get(sentence);
+        const have = cachedTokens(sentence);
+        if (have) return have;
         if (typeof client === 'undefined') return [];
         try {
             // merge:true — морфемы склеены в слова (行き+まし+た → 行きました), чтобы
-            // ромадзи стояла над СЛОВОМ, а не над каждым морфемом/символом.
+            // чтение стояло над СЛОВОМ, а не над каждым морфемом/символом.
             const { data: res } = await client.post('analyze', { text: [sentence], merge: true }, { timeout: 20000 });
             const tokens = res?.data?.[0] || [];
-            sentenceTokensCache.set(sentence, tokens);
+            if (tokens.length) rememberTokens(sentence, tokens);
             return tokens;
         } catch {
             return [];
+        }
+    }
+    // Разбор всех предложений сессии одним-двумя запросами (/analyze берёт до
+    // 100 строк и 20 000 знаков) — чтобы транскрипция была и без сети.
+    async function prefetchSentenceTokens(sentences) {
+        const todo = [...new Set(sentences.filter((x) => x && !cachedTokens(x)))];
+        if (!todo.length || typeof client === 'undefined') return;
+        for (let i = 0; i < todo.length;) {
+            const chunk = [];
+            let chars = 0;
+            while (i < todo.length && chunk.length < 100 && chars + todo[i].length <= 19000) {
+                chars += todo[i].length;
+                chunk.push(todo[i++]);
+            }
+            if (!chunk.length) { i++; continue; }   // одна строка длиннее лимита — пропускаем
+            try {
+                const { data: res } = await client.post('analyze', { text: chunk, merge: true }, { timeout: 30000, silentErrors: true });
+                (res?.data || []).forEach((tokens, k) => { if (tokens && tokens.length) rememberTokens(chunk[k], tokens); });
+            } catch { return; }   // нет сети — в другой раз
         }
     }
 
@@ -325,10 +380,14 @@
     // не рисуется фуригана/ромадзи. Задаём чтение вручную по поверхностной форме.
     const READING_OVERRIDES = { '喰種': 'グール' };
 
-    // Пословная раскладка предложения: над каждым словом — ромадзи его чтения.
+    // Пословная раскладка предложения: над каждым словом — его чтение, как в
+    // субтитрах плеера: ромадзи (режим по умолчанию) или кана — тогда только над
+    // словами с иероглифами, хираганой (над 「な」 писать «な» незачем).
     // Токены /analyze (MeCab): чтение лежит в feature.reading КАТАКАНОЙ
     // (kanaToRomaji сам приводит катакану к ромадзи). BOS/EOS пропускаем.
+    const toHiragana = (str) => String(str || '').replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
     function buildReadingCells(tokens) {
+        const kanaMode = transcriptionMode() === 'kana';
         return tokens
             .filter((tk) => tk && tk.surface && tk.surface !== 'BOS' && tk.surface !== 'EOS')
             .map((tk) => {
@@ -339,9 +398,14 @@
                         : (tk.kana || tk.reading || ''));
                 const cell = document.createElement('span');
                 cell.className = 'read-cell';
-                const romaji = (kana && typeof window.kanaToRomaji === 'function')
-                    ? window.kanaToRomaji(kana, { surface, pos: tk.pos || (tk.feature && tk.feature.pos) || '' })
-                    : '';
+                let romaji;
+                if (kanaMode) {
+                    romaji = /[一-龯々]/.test(surface) ? toHiragana(kana) : '';
+                } else {
+                    romaji = (kana && typeof window.kanaToRomaji === 'function')
+                        ? window.kanaToRomaji(kana, { surface, pos: tk.pos || (tk.feature && tk.feature.pos) || '' })
+                        : '';
+                }
                 // Знаки препинания / чисто-канные без чтения — строку сверху не рисуем.
                 if (romaji && romaji !== surface) {
                     const rm = document.createElement('span');
@@ -927,8 +991,7 @@
             // перекроили бы его (шрифт — полной раскладкой, ячейки — высотой
             // фразы, из-за которой ужимался клип).
             warmJapaneseFont(current.word);
-            if (transcriptionMode() === 'romaji' && !isEnWord(current.word)
-                && studyPref('studySentenceRomaji') !== false) {
+            if (!isEnWord(current.word) && studyPref('studySentenceRomaji') !== false) {
                 fetchSentenceTokens(current.word.sentence).catch(() => {});
             }
             // Пнуть докачку: карточка сменилась — теперь самый нужный клип у
@@ -2068,10 +2131,10 @@
                 els.back.appendChild(sentenceLine);
 
                 const wid = current && current.word.id;
-                const romajiMode = transcriptionMode() === 'romaji';
-                const withRomaji = romajiMode && !isEnWord(w) && studyPref('studySentenceRomaji') !== false;
-                const cachedTokens = withRomaji ? sentenceTokensCache.get(w.sentence) : null;
-                if (withRomaji && cachedTokens && cachedTokens.length) {
+                // Транскрипция фразы — в обоих режимах (ромадзи или кана над словами).
+                const withRomaji = !isEnWord(w) && studyPref('studySentenceRomaji') !== false;
+                const readyTokens = withRomaji ? cachedTokens(w.sentence) : null;
+                if (withRomaji && readyTokens && readyTokens.length) {
                     // Токены уже в кэше (их греет renderFront, пока человек
                     // смотрит на вопрос) — раскладываем СРАЗУ, до первой
                     // раскладки ответа. Тогда высота фразы окончательная с
@@ -2079,7 +2142,7 @@
                     // ужимается через секунду, когда ячейки доехали.
                     jpLine.textContent = '';
                     jpLine.classList.add('sentence--cells');
-                    buildReadingCells(cachedTokens).forEach((c) => jpLine.appendChild(c));
+                    buildReadingCells(readyTokens).forEach((c) => jpLine.appendChild(c));
                 } else if (withRomaji) {
                     // Ячейки придут с сервера асинхронно и они ВЫШЕ плоской строки.
                     // Резервируем их высоту сразу: иначе плашка подрастала через
@@ -2339,10 +2402,13 @@
             setTimeout(pumpClipPrefetch, 600);
             // ИИ-разборы карточек сессии — тоже на устройство (готовые с сервера,
             // без расчёта): тогда «Разобрать» работает и без сети.
+            const sessionWords = [current, ...queue].filter(Boolean).map((it) => it.word).filter(Boolean);
             if (window.AnimeiDownloads) {
-                const sessionWords = [current, ...queue].filter(Boolean).map((it) => it.word).filter(Boolean);
                 setTimeout(() => AnimeiDownloads.wantExplains(sessionWords), 1500);
             }
+            // Транскрипция фраз сессии — тоже на устройство (без сети /analyze молчит).
+            setTimeout(() => prefetchSentenceTokens(
+                sessionWords.filter((w) => !isEnWord(w)).map((w) => w.sentence)).catch(() => {}), 1000);
         }
 
         // ===== Прогрев видео-элемента текущей карточки =====

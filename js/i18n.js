@@ -713,7 +713,7 @@ const I18N = {
         'study.transcription.romaji': 'Ромадзи',
         'study.transcription.both': 'Обе',
         'study.transcription.none': 'Скрыть',
-        'study.sentenceRomaji': 'Ромадзи предложения',
+        'study.sentenceRomaji': 'Транскрипция предложения',
         'study.autoplayClip': 'Автозапуск клипа',
 
         'clip.length': 'Длина аудио',

@@ -709,7 +709,7 @@ window.I18N_EN = {
         'study.transcription.romaji': 'Romaji',
         'study.transcription.both': 'Both',
         'study.transcription.none': 'Hide',
-        'study.sentenceRomaji': 'Sentence romaji',
+        'study.sentenceRomaji': 'Sentence reading',
         'study.autoplayClip': 'Autoplay clip',
 
         'clip.length': 'Audio length',

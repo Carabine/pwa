@@ -708,7 +708,7 @@ window.I18N_UK = {
         'study.transcription.romaji': 'Ромадзі',
         'study.transcription.both': 'Обидві',
         'study.transcription.none': 'Сховати',
-        'study.sentenceRomaji': 'Ромадзі речення',
+        'study.sentenceRomaji': 'Транскрипція речення',
         'study.autoplayClip': 'Автозапуск кліпу',
 
         'clip.length': 'Довжина аудіо',

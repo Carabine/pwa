@@ -182,6 +182,7 @@ const ACCOUNT_SCOPED_KEYS = [
     'srs:days',                // дни занятий (стрик)
     'animei:srsOutbox',        // недосланные повторения
     'animei:wordPatchOutbox',  // недосланные правки карточек
+    'animei:sentTokens',       // транскрипция фраз карточек (study-core)
     'animei:knownWords',       // «уже знаю»
     'animei:knownOutbox',
     'animei:decks',            // колоды и их очереди синка
