@@ -269,10 +269,7 @@
 
     // ---------- Значок в шапке ----------
     const DL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><polyline points="7 10 12 15 17 10"/><path d="M5 20h14"/></svg>';
-    const DONE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5 12.5 10 17 19 7"/></svg>';
     let chip = null;
-    let doneTimer = null;
-    let wasActive = false;
 
     function ensureChip() {
         if (chip && chip.isConnected) return chip;
@@ -289,11 +286,23 @@
         return chip;
     }
 
+    // Значок — только пока что-то РЕАЛЬНО качается: появляется, если работа
+    // длится дольше SHOW_DELAY (короткие фоновые проверки — например, «нет ли
+    // готовых разборов» при каждом запуске — его не дёргают), и уходит сразу,
+    // как всё скачано, без галочки «готово».
+    const SHOW_DELAY = 800;
+    let showTimer = null;
     function renderChip() {
         const n = activeCount();
+        if (n > 0 && !(chip && chip.isConnected)) {
+            if (!showTimer) showTimer = setTimeout(() => { showTimer = null; if (activeCount()) renderChipNow(); }, SHOW_DELAY);
+            return;
+        }
+        renderChipNow();
+    }
+    function renderChipNow() {
+        const n = activeCount();
         if (n > 0) {
-            clearTimeout(doneTimer);
-            wasActive = true;
             const el = ensureChip();
             if (!el) return;
             const paused = !online();
@@ -305,15 +314,11 @@
             const label = tt('dl.title', 'Загрузки для офлайна') + ': ' + n + (paused ? ' — ' + tt('dl.state.paused', 'ждёт сеть') : '');
             el.title = label;
             el.setAttribute('aria-label', label);
-        } else if (chip && wasActive) {
-            // Всё скачалось — на пару секунд галочка, потом значок уходит.
-            wasActive = false;
-            chip.classList.remove('is-busy', 'is-paused');
-            chip.classList.add('is-done');
-            chip.querySelector('.dl-chip__ico').innerHTML = DONE_ICON;
-            chip.querySelector('.dl-chip__count').textContent = '';
-            clearTimeout(doneTimer);
-            doneTimer = setTimeout(() => { if (chip && !activeCount()) { chip.remove(); chip = null; } }, 2500);
+        } else {
+            // Всё скачано — значок уходит сразу (окно, если открыто, остаётся).
+            clearTimeout(showTimer);
+            showTimer = null;
+            if (chip) { chip.remove(); chip = null; }
         }
     }
 
@@ -487,22 +492,54 @@
             tick('start');
 
             // 1) Видео и звук — по одному файлу.
+            // Клип, которого нет на сервере (нарезка потерялась), сервер по
+            // запросу GET /words/:id/clip дорезает сам (healing) — такие
+            // откладываем и забираем в конце, дождавшись нарезки.
+            const askClip = async (w) => {
+                try {
+                    const { data: res } = await client.get(`words/${w.id}/clip`, { silentErrors: true });
+                    const url = (res && res.data && res.data.url) || '';
+                    if (url && typeof rememberWordInCache === 'function') rememberWordInCache({ id: w.id, Video: { url } });
+                    return { url, healing: !!(res && res.data && res.data.healing) };
+                } catch { return { url: '', healing: false }; }
+            };
+            const healing = [];
             for (const w of clipJobs) {
                 if (run.cancelled) break;
                 if (await storageTight()) { failed += clipJobs.length - clipJobs.indexOf(w); break; }
                 let url = clipUrlOf(w);
                 if (!url) {
-                    // Ссылки в списке нет — спросим сервер: мог уже дорезать.
-                    try {
-                        const { data: res } = await client.get(`words/${w.id}/clip`, { silentErrors: true });
-                        url = (res && res.data && res.data.url) || '';
-                        if (url && typeof rememberWordInCache === 'function') rememberWordInCache({ id: w.id, Video: { url } });
-                    } catch { /* нет — значит, нет */ }
+                    const r = await askClip(w);
+                    url = r.url;
+                    if (!url && r.healing) {
+                        healing.push(w);
+                        const task = track('clip:' + w.id, { kind: 'clip', label: wordLabel(w) });
+                        task.set('waiting');
+                        continue;
+                    }
                 }
                 const ok = url ? await cacheMediaFromUrl('clip', w.id, url, { label: wordLabel(w) }) : false;
                 done++; if (!ok) failed++;
                 tick('clips');
             }
+            // Ждём дорезку: до двух минут, опрос раз в 5 с.
+            const healUntil = Date.now() + 120000;
+            while (healing.length && !run.cancelled && Date.now() < healUntil) {
+                tick('heal');
+                await sleepMs(5000);
+                for (const w of [...healing]) {
+                    const { url } = await askClip(w);
+                    if (!url) continue;
+                    healing.splice(healing.indexOf(w), 1);
+                    const ok = await cacheMediaFromUrl('clip', w.id, url, { label: wordLabel(w) });
+                    done++; if (!ok) failed++;
+                }
+            }
+            for (const w of healing) {
+                track('clip:' + w.id, { kind: 'clip', label: wordLabel(w) }).done(false, 'later');
+                done++; failed++;
+            }
+            tick('clips');
             for (const w of audioJobs) {
                 if (run.cancelled) break;
                 const ok = await cacheMediaFromUrl('audio', w.id, w.audio, { label: wordLabel(w) });

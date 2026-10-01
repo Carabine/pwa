@@ -150,6 +150,7 @@ window.I18N_UK = {
         'settings.offline.phase.explains': 'готові розбори',
         'settings.offline.phase.compute': 'ШІ дораховує розбори',
         'settings.offline.phase.wait': 'ліміт ШІ — пауза на хвилину',
+        'settings.offline.phase.heal': 'чекаємо, поки сервер наріже відео',
         'settings.offline.done': 'Готово: усе доступно офлайн',
         'settings.offline.doneFailed': 'Готово, але {n} не завантажилося — спробуйте ще раз пізніше',
         'settings.offline.stopped': 'Завантаження зупинено',

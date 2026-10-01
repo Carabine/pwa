@@ -154,6 +154,7 @@ const I18N = {
         'settings.offline.phase.explains': 'готовые разборы',
         'settings.offline.phase.compute': 'ИИ досчитывает разборы',
         'settings.offline.phase.wait': 'лимит ИИ — пауза на минуту',
+        'settings.offline.phase.heal': 'ждём, пока сервер нарежет видео',
         'settings.offline.done': 'Готово: всё доступно офлайн',
         'settings.offline.doneFailed': 'Готово, но {n} не скачалось — попробуйте ещё раз позже',
         'settings.offline.stopped': 'Загрузка остановлена',

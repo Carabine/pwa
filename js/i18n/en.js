@@ -150,6 +150,7 @@ window.I18N_EN = {
         'settings.offline.phase.explains': 'ready breakdowns',
         'settings.offline.phase.compute': 'AI is generating breakdowns',
         'settings.offline.phase.wait': 'AI limit — pausing for a minute',
+        'settings.offline.phase.heal': 'waiting for the server to cut videos',
         'settings.offline.done': 'Done: everything is available offline',
         'settings.offline.doneFailed': 'Done, but {n} failed — try again later',
         'settings.offline.stopped': 'Download stopped',
