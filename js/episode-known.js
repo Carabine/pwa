@@ -71,13 +71,32 @@
     let filter = 'all';
     let skipped = 0;         // слов серии, отсеянных как «уже есть карточка»
 
+    // Имена персонажей (js/char-names.js) — не слова: «знаю 炭治郎» бессмысленно,
+    // а MeCab режет имена на обрывки (善逸 → 善+逸), которые засоряли список.
+    // Модалка открывается синхронно (см. openModal), поэтому грузим заранее.
+    let charNames = [];
+    if (window.CharNames) CharNames.load(shikimoriId).then((n) => { charNames = n; });
+
+    // Звуки и обрывки разбора: ハッ, ぐっ, ウウッ (на «っ»), アハハ, ハア (междометия
+    // катаканой), однобуквенная кана (う, い, ま). Междометия-слова хираганой
+    // (ありがとう, すみません, ほら) остаются — их как раз отмечают.
+    function isNoise(tok, base) {
+        if (/[っッ]$/.test(base)) return true;
+        if (base.length < 2 && !/[一-龯々]/.test(base)) return true;
+        if (tok.pos === '感動詞' && /^[ァ-ヿ]+$/.test(base)) return true;
+        return false;
+    }
+
     function collectWords() {
         const byBase = new Map();
         for (const cue of state.cues) {
-            for (const tok of (cue.tokens || [])) {
-                if (!tok.learnable) continue;
+            const toks = cue.tokens || [];
+            const names = window.CharNames ? CharNames.mask(toks, charNames) : new Set();
+            for (let ti = 0; ti < toks.length; ti++) {
+                const tok = toks[ti];
+                if (!tok.learnable || names.has(ti)) continue;
                 const base = tok.base || tok.surface;
-                if (!base) continue;
+                if (!base || isNoise(tok, base)) continue;
                 let e = byBase.get(base);
                 if (!e) {
                     e = { base, reading: '', romaji: '', count: 0, level: 0 };
