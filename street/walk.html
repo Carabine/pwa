@@ -1628,6 +1628,7 @@ window.addEventListener('keydown', (e) => { if (e.code === 'KeyR' && hover.sign)
 function plural(n, a, b, c) { const m = n % 10, h = n % 100; if (m === 1 && h !== 11) return a; if (m >= 2 && m <= 4 && (h < 10 || h >= 20)) return b; return c; }
 let hudBlock = -1;
 function updateHud(force) {
+    if (!blocks.length) return; // данные ещё грузятся (JLPT по сети)
     const bi = blockAt(camera.position.z);
     const lit = litCount();
     document.getElementById('lit-n').textContent = lit;
