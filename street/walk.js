@@ -227,7 +227,9 @@ function texTower(rnd) {
     for (let y = 6; y < 250; y += 7) for (let x = 4; x < 60; x += 6) { if (rnd() < 0.3) { g.fillStyle = rgba(['#ffe0a0', '#a0d8ff', '#ffffff'][Math.floor(rnd() * 3)], 0.35 + rnd() * 0.5); g.fillRect(x, y, 2.5, 3); } }
     return makeTex(c);
 }
-function texNorenPlain(cloth) {
+const _norens = new Map();
+function texNorenPlain(cloth) { if (_norens.has(cloth)) return _norens.get(cloth); const t = texNorenPlain0(cloth); t.userData.shareable = true; t.userData.shared = true; _norens.set(cloth, t); return t; }
+function texNorenPlain0(cloth) {
     const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d');
     g.fillStyle = cloth; g.fillRect(0, 0, 256, 128);
     const gr = g.createLinearGradient(0, 0, 0, 128); gr.addColorStop(0, 'rgba(255,220,160,0.25)'); gr.addColorStop(1, 'rgba(0,0,0,0.3)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 128);
@@ -425,17 +427,18 @@ function mergeStatic(group) {
     group.traverse((o) => {
         if (!o.isMesh || o.isSprite || o.isLine) return;
         const mt = o.material; if (!mt || Array.isArray(mt)) return;
-        if ((mt.map && !mt.userData.atlas) || mt.alphaMap || mt.emissiveMap || mt.transparent || mt.wireframe) return;
+        const shared = mt.map && (mt.userData.atlas || (mt.map.userData && mt.map.userData.shareable));
+        if ((mt.map && !shared) || mt.alphaMap || mt.emissiveMap || mt.transparent || mt.wireframe) return;
         if (!(mt.isMeshLambertMaterial || mt.isMeshBasicMaterial || mt.isMeshStandardMaterial) || mt.vertexColors) return;
         if (!o.geometry || !o.geometry.index || !o.geometry.attributes.normal || !o.geometry.attributes.uv) return;
-        if (colObjs.has(o)) return;
+        if (colObjs.has(o) && group !== world && group !== room) return; // в кварталах объект нужен, чтобы снять препятствие при сносе
         const doorMesh = !!o.userData.door && o.parent === group && mt.isMeshBasicMaterial;
         let p = o, tagged = false;
         while (p && p !== group) { const u = p.userData || {}; if (u.sign || u.door || u.exit || u.board || u.label || u.keep) { tagged = true; break; } p = p.parent; }
         if (tagged && !doorMesh) return;
         const kind = (mt.isMeshBasicMaterial ? 'b' : (mt.isMeshStandardMaterial ? 's' + mt.roughness + '/' + mt.metalness + '/' + mt.envMapIntensity : 'l')) + ':' + (mt.emissive ? mt.emissive.getHex() + '/' + mt.emissiveIntensity : 0) + ':' + mt.side + ':' + (mt.fog !== false);
-        const vc = !mt.userData.atlas; // цвет переносим в вершины: разные цвета — одна сетка
-        const ckey = (vc ? kind + '|vc' : 'atlas' + mt.uuid + kind + mt.color.getHex()) + '#' + chunkOf(o);
+        const vc = !mt.map; // цвет переносим в вершины: разные цвета — одна сетка
+        const ckey = (vc ? kind + '|vc' : 'tex' + (mt.userData.atlas ? mt.uuid : mt.map.uuid) + kind + mt.color.getHex()) + '#' + chunkOf(o);
         if (!buckets.has(ckey)) buckets.set(ckey, { mt, geos: [] });
         const g = o.geometry.clone().applyMatrix4(o.matrixWorld);
         for (const a of Object.keys(g.attributes)) if (a !== 'position' && a !== 'normal' && a !== 'uv') g.deleteAttribute(a);
@@ -564,7 +567,7 @@ function buildWorld() {
                 else if (rtype === 'home') { door.material.color.set('#3a2a1a'); const mb = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.3, 0.25), lamb('#8a8a96')); mb.position.set(side * (W2 - 0.08), 1.3, dz + 0.75); world.add(mb); const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe6b0 })); lamp.position.set(side * (W2 - 0.1), 2.3, dz); world.add(lamp); }
                 ROOMX.door(rtype, { door, side, dz, W2, world, rnd });
                 const dark = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 2.3), lamb('#0a0806')); dark.position.set(side * (W2 - 0.005), 1.15, dz); dark.rotation.y = -side * Math.PI / 2; world.add(dark);
-                if (rtype === 'izakaya') { const nr = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.55), new THREE.MeshBasicMaterial({ map: texNorenPlain(['#1d2a5c', '#4a1a1a', '#1a3a3a'][Math.floor(rnd() * 3)]), side: THREE.DoubleSide, fog: true, transparent: true })); nr.position.set(side * (W2 - 0.08), 1.85, dz); nr.rotation.y = -side * Math.PI / 2; world.add(nr); }
+                if (rtype === 'izakaya') { const nr = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.55), new THREE.MeshBasicMaterial({ map: texNorenPlain(['#1d2a5c', '#4a1a1a', '#1a3a3a'][Math.floor(rnd() * 3)]), side: THREE.DoubleSide, fog: true })); nr.position.set(side * (W2 - 0.08), 1.85, dz); nr.rotation.y = -side * Math.PI / 2; world.add(nr); }
                 const dl = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.0), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(b.shopColor), transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false }));
                 dl.rotation.x = -Math.PI / 2; dl.position.set(side * (W2 - 0.9), 0.02, dz); world.add(dl);
             }
@@ -910,14 +913,11 @@ function buildBlock(b) {
         const col = s.kind === 'lantern' ? (s.white ? '#ffd79a' : '#ff7a3a') : (s.kind === 'noren' ? '#ffc080' : s.color);
         if (s.kind === 'vsign') {
             // объёмный короб: лицо и тыл — текстура, торцы тёмные
-            const geo = new THREE.BoxGeometry(s.w, s.h, 0.1);
-            const x = s.side * (W2 - 0.12 - s.w / 2), y = (s.y0 + s.y1) / 2;
-            const edge = lamb('#0e0e14');
-            const face = new THREE.MeshBasicMaterial({ map: signTexture(s, s.isLit && s.state !== 'due'), fog: true });
-            const back = lamb('#14141b');
-            const m = new THREE.Mesh(geo, [edge, edge, edge, edge, face, back]); // с тыла — глухая панель, текст только с лица
-            m.position.set(x, y, s.z); m.userData.sign = s; g.add(m); s.meshes.push(m);
-            if (s.state === 'worn') m.rotation.z = (s.seed % 2 ? 1 : -1) * 0.04;
+            // корпус без текстуры (склеивается со всем кварталом) + лицо отдельной плоскостью: 1 вызов вместо 6 граней
+            const x = s.side * (W2 - 0.12 - s.w / 2), y = (s.y0 + s.y1) / 2, tilt = s.state === 'worn' ? (s.seed % 2 ? 1 : -1) * 0.04 : 0;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(s.w, s.h, 0.1), lamb('#0e0e14')); body.position.set(x, y, s.z); body.rotation.z = tilt; g.add(body);
+            const m = new THREE.Mesh(new THREE.PlaneGeometry(s.w, s.h), new THREE.MeshBasicMaterial({ map: signTexture(s, s.isLit && s.state !== 'due'), fog: true }));
+            m.position.set(x, y, s.z + 0.051); m.rotation.z = tilt; m.userData.sign = s; g.add(m); s.meshes.push(m);
             // кронштейны
             const br = new THREE.Mesh(new THREE.BoxGeometry(W2 - Math.abs(x) + 0.05, 0.05, 0.05), new THREE.MeshBasicMaterial({ color: 0x0a0a0e }));
             br.position.set(s.side * (W2 - (W2 - Math.abs(x)) / 2), s.y1 - 0.05, s.z); g.add(br);
@@ -1070,7 +1070,9 @@ const ROOM = { w: 7.6, d: 11.5, h: 3.2, doorX: 1.4 }; // размеры теку
 const ROOM_TYPES = ['izakaya', 'konbini', 'class', 'home'];
 const ROOM_NAMES = { izakaya: '居酒屋 · идзакая', konbini: 'コンビニ · комбини', class: '塾 · вечерняя школа', home: '部屋 · квартира' };
 ROOM_TYPES.push(...ROOMX.types); Object.assign(ROOM_NAMES, ROOMX.names);
-function texPlaque(ch) { const c = document.createElement('canvas'); c.width = 64; c.height = 90; const g = c.getContext('2d'); g.fillStyle = '#f4ecd8'; g.fillRect(0, 0, 64, 90); g.strokeStyle = '#2a2a30'; g.lineWidth = 3; g.strokeRect(3, 3, 58, 84); g.fillStyle = '#1a1a1e'; g.font = '700 44px ' + JP; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, 32, 46); return makeTex(c); }
+const _plaques = new Map();
+function texPlaque(ch) { if (_plaques.has(ch)) return _plaques.get(ch); const t = texPlaque0(ch); t.userData.shareable = true; t.userData.shared = true; _plaques.set(ch, t); return t; }
+function texPlaque0(ch) { const c = document.createElement('canvas'); c.width = 64; c.height = 90; const g = c.getContext('2d'); g.fillStyle = '#f4ecd8'; g.fillRect(0, 0, 64, 90); g.strokeStyle = '#2a2a30'; g.lineWidth = 3; g.strokeRect(3, 3, 58, 84); g.fillStyle = '#1a1a1e'; g.font = '700 44px ' + JP; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, 32, 46); return makeTex(c); }
 function texBlackboard(words) {
     const c = document.createElement('canvas'); c.width = 1024; c.height = 512; const g = c.getContext('2d');
     g.fillStyle = '#2b4a3a'; g.fillRect(0, 0, 1024, 512);

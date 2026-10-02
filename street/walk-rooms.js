@@ -294,7 +294,7 @@ const ROOMX = (() => {
         const { door: dr, side, dz, W2: w2, world: wd, rnd } = o;
         const plaque = (ch, x, y) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.7), new THREE.MeshBasicMaterial({ map: texPlaque(ch), fog: true })); p.position.set(side * (w2 - 0.02), y || 2.0, dz + (x || 0.9)); p.rotation.y = -side * Math.PI / 2; wd.add(p); };
         const strip = (col, y, h) => { const s = new THREE.Mesh(new THREE.BoxGeometry(0.1, h || 0.3, 2.4), new THREE.MeshBasicMaterial({ color: new THREE.Color(col) })); s.position.set(side * (w2 - 0.05), y, dz); wd.add(s); };
-        const noren = (col) => { const nr = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.55), new THREE.MeshBasicMaterial({ map: texNorenPlain(col), side: THREE.DoubleSide, fog: true, transparent: true })); nr.position.set(side * (w2 - 0.08), 1.85, dz); nr.rotation.y = -side * Math.PI / 2; wd.add(nr); };
+        const noren = (col) => { const nr = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.55), new THREE.MeshBasicMaterial({ map: texNorenPlain(col), side: THREE.DoubleSide, fog: true })); nr.position.set(side * (w2 - 0.08), 1.85, dz); nr.rotation.y = -side * Math.PI / 2; wd.add(nr); };
         if (rtype === 'oneroom' || rtype === 'loft') { dr.material.color.set(rtype === 'loft' ? '#2a2a30' : '#d8d4cc'); const mb = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.3, 0.25), lamb('#8a8a96')); mb.position.set(side * (w2 - 0.08), 1.3, dz + 0.75); wd.add(mb); plaque(rtype === 'loft' ? '邸' : '荘', 0.9, 2.0); }
         if (rtype === 'washitsu') { dr.material.color.set('#c8a070'); plaque('和', 0.9, 2.0); noren('#2a3a2a'); }
         if (rtype === 'ramen') { dr.material.color.set('#ffe8c8'); strip('#c8322a', 2.45, 0.35); noren('#c8322a'); plaque('麺', 0.9, 2.0); }
