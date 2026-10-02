@@ -97,7 +97,7 @@ const BOOKS = (() => {
         e.querySelector('.bt').innerHTML = '<b>Книжная полка</b><small>короткие рассказы для чтения</small>';
         const mine = lsGet();
         e.querySelector('.bb').innerHTML = '<div class="lib">'
-            + '<button class="bk-card new" data-act="new"><span class="ic">✨</span><b>Новая история из ваших слов</b><small>' + (busy ? 'Пишу историю… обычно 10–20 секунд' : 'ИИ напишет короткий рассказ с вашими словами — на ' + esc(THEME_RU[theme] || 'улице') + '') + '</small></button>'
+            + '<button class="bk-card new" data-act="new"><span class="ic">✨</span><b>Новая история из ваших слов</b><small>' + (busy ? 'Пишу историю… обычно 20–40 секунд' : 'ИИ напишет короткий рассказ с вашими словами — на ' + esc(THEME_RU[theme] || 'улице') + '') + '</small></button>'
             + mine.map((b, i) => '<button class="bk-card" data-mine="' + i + '"><span class="ic">📗</span><b>' + esc(b.title) + '</b><small>' + esc(b.titleTr || '') + (b.used && b.used.length ? ' · ваших слов: ' + b.used.length : '') + '</small></button>').join('')
             + CLASSICS.map((b, i) => '<button class="bk-card classic" data-classic="' + i + '"><span class="ic">📜</span><b>' + esc(b.title) + '</b><small>' + esc(b.titleTr) + ' · сказка</small></button>').join('')
             + '</div><div class="msg"></div>';

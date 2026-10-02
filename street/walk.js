@@ -444,7 +444,7 @@ function mergeStatic(group) {
         if (colObjs.has(o) && group !== world && group !== room) return; // в кварталах объект нужен, чтобы снять препятствие при сносе
         const doorMesh = !!o.userData.door && o.parent === group && mt.isMeshBasicMaterial;
         let p = o, tagged = false;
-        while (p && p !== group) { const u = p.userData || {}; if (u.sign || u.door || u.exit || u.board || u.label || u.keep || u.post || u.gacha || u.tv || u.paper || u.radio || u.book) { tagged = true; break; } p = p.parent; }
+        while (p && p !== group) { const u = p.userData || {}; if (u.sign || u.door || u.exit || u.board || u.label || u.keep || u.post || u.gacha || u.tv || u.paper || u.radio || u.book || u.inner || u.bed || u.use) { tagged = true; break; } p = p.parent; }
         if (tagged && !doorMesh) return;
         const kind = (mt.isMeshBasicMaterial ? 'b' : (mt.isMeshStandardMaterial ? 's' + mt.roughness + '/' + mt.metalness + '/' + mt.envMapIntensity : 'l')) + ':' + (mt.emissive ? mt.emissive.getHex() + '/' + mt.emissiveIntensity : 0) + ':' + mt.side + ':' + (mt.fog !== false);
         const vc = !mt.map; // цвет переносим в вершины: разные цвета — одна сетка
@@ -580,7 +580,7 @@ function buildWorld() {
     if (typeof FESTIVAL !== 'undefined') FESTIVAL.reset();
     // тип комнаты за дверью: с весами (квартир ~18%), без двух квартир и без одного типа подряд на стороне улицы
     const HOMES = new Set(['home', 'oneroom', 'washitsu', 'loft']);
-    const ROOM_W = { animeshop: 2, dev: 0.0001, izakaya: 3, konbini: 2, class: 1.5, home: 1, oneroom: 0.8, washitsu: 0.7, loft: 0.6, ramen: 2, cafe: 2, books: 1.5, arcade: 1.5 };
+    const ROOM_W = { animeshop: 2, dev: 0.0001, bedroom: 0.0001, izakaya: 3, konbini: 2, class: 1.5, home: 1, oneroom: 0.8, washitsu: 0.7, loft: 0.6, ramen: 2, cafe: 2, books: 1.5, arcade: 1.5 };
     let prevType = null;
     const SHOWCASE = ['animeshop', 'class', 'dev', 'arcade', 'ramen', 'izakaya', 'washitsu', 'cafe'];
     const pickRoomType = () => { const tot = ROOM_TYPES.reduce((a, t) => a + (ROOM_W[t] || 1), 0); let t = ROOM_TYPES[0]; for (let tries = 0; tries < 8; tries++) { let x = rnd() * tot; for (const c of ROOM_TYPES) { x -= ROOM_W[c] || 1; if (x <= 0) { t = c; break; } } if (t !== prevType && !(HOMES.has(t) && HOMES.has(prevType))) break; } prevType = t; return t; };
@@ -1122,7 +1122,46 @@ function buildPoles() {
 // ---- интерьер: идзакая, слова колоды — бумажные полоски меню на стенах ----
 const room = new THREE.Group(); room.visible = false; scene.add(room);
 const inside = { on: false, block: null, strips: [], lights: [], saved: null, door: null, steam: [] };
-const ROOM = { w: 7.6, d: 11.5, h: 3.2, doorX: 1.4 }; // размеры текущей комнаты, задаются генератором
+const ROOM = { w: 7.6, d: 11.5, h: 3.2, doorX: 1.4, innerX: null };
+// вторая комната за внутренней дверью: [тип, надпись, куда ведёт]
+const INNER = { home: ['bedroom', '寝室', 'спальня'], loft: ['bedroom', '寝室', 'спальня'], washitsu: ['bedroom', '寝室', 'спальня'], izakaya: ['washitsu', '座敷', 'отдельный зал'], class: ['books', '図書室', 'школьная библиотека'], animeshop: ['arcade', '２階', 'игровой этаж'] };
+function innerDoorTex(jp, ru) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 540; const g = c.getContext('2d');
+    g.fillStyle = '#c8a878'; g.fillRect(0, 0, 256, 540); g.strokeStyle = '#7a5a36'; g.lineWidth = 10; g.strokeRect(5, 5, 246, 530);
+    g.strokeStyle = 'rgba(90,60,30,0.55)'; g.lineWidth = 3; for (let y = 40; y < 520; y += 60) { g.beginPath(); g.moveTo(20, y); g.lineTo(236, y); g.stroke(); } for (let x = 70; x < 236; x += 58) { g.beginPath(); g.moveTo(x, 20); g.lineTo(x, 520); g.stroke(); }
+    g.fillStyle = '#f6efdf'; g.fillRect(38, 150, 180, 150); g.strokeStyle = '#5a3a22'; g.lineWidth = 4; g.strokeRect(38, 150, 180, 150);
+    g.fillStyle = '#1c1a20'; g.textAlign = 'center'; g.font = '900 54px ' + JP; g.fillText(jp, 128, 222, 168); g.font = '700 22px ' + UI; g.fillStyle = '#7a3a1a'; g.fillText(ru, 128, 266, 170);
+    g.fillStyle = '#5a3a22'; g.beginPath(); g.arc(216, 300, 9, 0, 7); g.fill();
+    return makeTex(c);
+}
+function buildInnerDoor(spec) {
+    const { d } = ROOM, x = ROOM.innerX;
+    const dm = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.1), new THREE.MeshBasicMaterial({ map: innerDoorTex(spec[1], spec[2]) }));
+    dm.position.set(x, 1.05, d / 2 - 0.105); dm.rotation.y = Math.PI; dm.userData.inner = spec[0]; dm.userData.innerRu = spec[2]; room.add(dm);
+    const fr = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.3, 0.08), lamb('#1a1410')); fr.position.set(x, 1.15, d / 2 - 0.06); room.add(fr);
+}
+// пройти во вторую комнату и вернуться обратно
+function enterInner(t2) {
+    if (fading || !inside.on) return;
+    const parent = inside.door, b = inside.block, spec = INNER[parent.userData.door.type] || [t2, '', ''];
+    TALK.close(); WRITE.close(); PAPER.close(); BOOKS.close();
+    fade(() => {
+        inside.door = { userData: { door: Object.assign({}, parent.userData.door, { type: t2, z: parent.userData.door.z + 0.37, parentDoor: parent }) } };
+        buildRoom(b, parent.userData.door.color, t2); LIFE.onEnter();
+        camera.position.set(ROOM.doorX - 0.5, 1.6, ROOM.d / 2 - 1.1); yaw = tYaw = 0.1; pitch = tPitch = 0; vel.set(0, 0, 0); hideHint(); document.getElementById('exit').textContent = '← Назад';
+        { const [jp, ru] = String(ROOM_NAMES[t2] || '').split(' · '); banner(spec[1] || jp || '', (spec[2] || ru || '') + ' · ' + b.q.name); }
+    });
+}
+function backToParent() {
+    const parent = inside.door.userData.door.parentDoor, b = inside.block;
+    TALK.close(); WRITE.close(); PAPER.close(); BOOKS.close();
+    fade(() => {
+        inside.door = parent; buildRoom(b, parent.userData.door.color, parent.userData.door.type); LIFE.onEnter();
+        const x = ROOM.innerX != null ? ROOM.innerX : ROOM.doorX - 0.5;
+        camera.position.set(x, 1.6, ROOM.d / 2 - 1.1); yaw = tYaw = 0; pitch = tPitch = 0; vel.set(0, 0, 0); hideHint(); document.getElementById('exit').textContent = '← На улицу';
+        { const [jp, ru] = String(ROOM_NAMES[parent.userData.door.type] || '').split(' · '); banner(jp || '', (ru || '') + ' · ' + b.q.name); }
+    });
+} // размеры текущей комнаты, задаются генератором
 const ROOM_TYPES = ['izakaya', 'konbini', 'class', 'home'];
 const ROOM_NAMES = { izakaya: '居酒屋 · идзакая', konbini: 'コンビニ · комбини', class: '塾 · вечерняя школа', home: '部屋 · квартира' };
 ROOM_TYPES.push(...ROOMX.types); Object.assign(ROOM_NAMES, ROOMX.names);
@@ -1270,6 +1309,7 @@ function placeModule(mod, grid, rnd, used) {
             if (len > along - 0.4) continue;
             let t = mod.fill ? (wall === 'back' ? 0 : -along / 2 + 0.2 + len / 2) : (mod.rule === 'corner' ? (rnd() < 0.5 ? -along / 2 + 0.2 + len / 2 : along / 2 - 0.2 - len / 2) : (-along / 2 + 0.3 + len / 2 + rnd() * (along - 0.6 - len)));
             if (wall === 'front' && Math.abs(t - doorX) < len / 2 + 1.0) continue; // не перекрывать вход
+            if (wall === 'front' && ROOM.innerX != null && Math.abs(t - ROOM.innerX) < len / 2 + 0.9) continue; // и внутреннюю дверь
             ry = WALL_RY[wall];
             if (wall === 'back') { x = t; z = -D / 2 + mod.d / 2; fw = len; fd = mod.d; }
             else if (wall === 'front') { x = t; z = D / 2 - mod.d / 2; fw = len; fd = mod.d; }
@@ -1303,6 +1343,7 @@ function freeWallSegments(wall, used) {
     const along = (wall === 'back' || wall === 'front') ? W : D;
     const occ = used[wall].slice().sort((p, q) => p[0] - q[0]);
     if (wall === 'front') occ.push([doorX - 0.8, doorX + 0.8]);
+    if (wall === 'front' && ROOM.innerX != null) occ.push([ROOM.innerX - 0.8, ROOM.innerX + 0.8]);
     occ.sort((p, q) => p[0] - q[0]);
     const segs = []; let cur = -along / 2 + 0.3;
     occ.forEach((o) => { if (o[0] - 0.2 > cur) segs.push([cur, o[0] - 0.2]); cur = Math.max(cur, o[1] + 0.2); });
@@ -1455,6 +1496,9 @@ function buildRoom(b, color, type) {
     ROOM_SHELLS[type]();
     const grid = new Grid(ROOM.w, ROOM.d);
     grid.mark(ROOM.doorX - 1.4, ROOM.d / 2 - 2.6, ROOM.doorX + 1.4, ROOM.d / 2); // зона входа всегда свободна
+    const innerSpec = !(inside.door && inside.door.userData.door.parentDoor) && INNER[type];
+    ROOM.innerX = innerSpec ? (ROOM.doorX >= 0 ? -(ROOM.w / 2 - 1.15) : ROOM.w / 2 - 1.15) : null;
+    if (innerSpec) { grid.mark(ROOM.innerX - 0.95, ROOM.d / 2 - 2.2, ROOM.innerX + 0.95, ROOM.d / 2); buildInnerDoor(innerSpec); }
     const used = { back: [], left: [], right: [], front: [] };
     const spots = [], placed = [];
     const mods = catalog(type, rnd).sort((p, q) => (q.first ? 1 : 0) - (p.first ? 1 : 0));
@@ -1501,6 +1545,7 @@ function buildRoom(b, color, type) {
     LIFE.populate(type, placed, grid, hashStr(b.q.name + type + 'life') + (inside.door ? Math.round(inside.door.userData.door.z * 10) : 0));
     placePaper(placed);
     placeBookHits(placed);
+    placeUseHits(placed, type);
     LIFE.upgradeMaterials(room, type);
     mergeStatic(room);
     // предметы-слова по местам; в комбини — с ценником
@@ -1535,8 +1580,9 @@ let fading = false;
 function enterRoom(door) {
     if (fading || inside.on) return;
     const b = blocks[blockAt(door.userData.door.z)];
+    inside.door = door; inside.block = b;
     buildRoom(b, door.userData.door.color, door.userData.door.type);
-    inside.on = true; inside.block = b; inside.door = door;
+    inside.on = true;
     inside.saved = { pos: camera.position.clone(), yaw, pitch };
     fade(() => {
         world.visible = false; signsGroup.visible = false; if (rain) rain.visible = false; room.visible = true;
@@ -1552,6 +1598,7 @@ function enterRoom(door) {
 }
 function exitRoom() {
     if (!inside.on || fading) return;
+    if (inside.door && inside.door.userData.door.parentDoor) return backToParent();
     inside.on = false;
     fade(() => {
         room.visible = false; world.visible = true; signsGroup.visible = true; if (rain) rain.visible = opts.rain; LIFE.onExit();
@@ -1995,6 +2042,9 @@ function tap(x, y) {
     if (h.tv) { buzz(10); tvNext(h.tv); return; }
     if (h.paper) { buzz(10); TALK.close(); PAPER.open(); return; }
     if (h.gacha) { if (h.dist < 3) { buzz(12); TALK.gacha(); } return; }
+    if (h.inner) { if (h.dist < 4.5) { buzz(15); enterInner(h.inner); } else toast('Подойдите ближе к двери'); return; }
+    if (h.bed) { if (h.dist < 3) { buzz(10); TALK.nap(); } return; }
+    if (h.use) { if (h.dist < 3.2) { buzz(10); TALK.use(h.use); } return; }
     if (h.book) { if (h.dist < 3.2) { buzz(10); TALK.close(); BOOKS.open(ROOM_THEME[inside.door && inside.door.userData.door.type] || 'street'); } return; }
     if (h.post) { if (h.dist < 6) { buzz(10); TALK.close(); MAIL.open(); } else toast('Подойдите ближе к почтовому ящику'); return; }
     if (h.door) { if (h.dist < 7) { buzz(15); enterRoom(h.door); } else toast('Подойди ближе к двери'); return; }
@@ -2016,13 +2066,16 @@ function pick(x, y, maxDist) {
     ray.setFromCamera(new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1), camera);
     ray.far = maxDist || 24; // вывески висят высоко на фасадах — ловим издалека
     if (inside.on) {
-        if (!roomHover.length) room.traverse((o) => { if ((o.isMesh || o.isSprite) && (o.userData.sign || o.userData.exit || o.userData.radio || o.userData.tv || o.userData.paper || o.userData.post || o.userData.gacha || o.userData.book)) roomHover.push(o); });
-        const hits = ray.intersectObjects(roomHover, false).filter((o) => o.object.userData.sign || o.object.userData.exit || o.object.userData.radio || o.object.userData.tv || o.object.userData.paper || o.object.userData.post || o.object.userData.gacha || o.object.userData.book);
+        if (!roomHover.length) room.traverse((o) => { if ((o.isMesh || o.isSprite) && (o.userData.sign || o.userData.exit || o.userData.radio || o.userData.tv || o.userData.paper || o.userData.post || o.userData.gacha || o.userData.book || o.userData.inner || o.userData.bed || o.userData.use)) roomHover.push(o); });
+        const hits = ray.intersectObjects(roomHover, false).filter((o) => o.object.userData.sign || o.object.userData.exit || o.object.userData.radio || o.object.userData.tv || o.object.userData.paper || o.object.userData.post || o.object.userData.gacha || o.object.userData.book || o.object.userData.inner || o.object.userData.bed || o.object.userData.use);
         let h = hits[0];
         // слово-предмет на полке важнее самой полки
-        if (h && h.object.userData.book) { const s2 = hits.find((o) => !o.object.userData.book); if (s2 && s2.distance - h.distance < 0.7) h = s2; }
+        if (h && (h.object.userData.book || h.object.userData.use)) { const s2 = hits.find((o) => !o.object.userData.book && !o.object.userData.use); if (s2 && s2.distance - h.distance < 0.7) h = s2; }
         if (!h) return null;
         if (h.object.userData.book) return { book: h.object.userData.book, dist: h.distance };
+        if (h.object.userData.inner) return { inner: h.object.userData.inner, innerRu: h.object.userData.innerRu, dist: h.distance };
+        if (h.object.userData.bed) return { bed: true, dist: h.distance };
+        if (h.object.userData.use) return { use: h.object.userData.use, dist: h.distance };
         if (h.object.userData.radio) return { radio: true, dist: h.distance };
         if (h.object.userData.tv) return { tv: h.object, dist: h.distance };
         if (h.object.userData.paper) return { paper: true, dist: h.distance };
@@ -2097,6 +2150,17 @@ const PAPER_SPOTS = { kotatsu: [0.62, 0.415, 0, 0.3], chabudai: [-0.05, 0.362, -
 // книжные полки: невидимая зона для прицела «📖 Почитать» (сами корешки склеены со статикой)
 const BOOK_MODS = new Set(['bookWall', 'bookIsland', 'mangaRack', 'openShelf', 'bookshelf', 'cabinet', 'devshelf', 'manga']);
 const ROOM_THEME = { class: 'school', izakaya: 'izakaya', cafe: 'cafe', home: 'home', oneroom: 'home', washitsu: 'home', loft: 'home', animeshop: 'shop', books: 'books', ramen: 'ramen', arcade: 'arcade', dev: 'dev', konbini: 'street' };
+// вещи, с которыми что-то делают: [тип комнаты, модуль] → действие
+const USE_MODS = { 'izakaya/counter': 'kanpai', 'ramen/counter': 'ramen', 'konbini/register': 'buy', 'arcade/claw': 'claw', 'oneroom/studyDesk': 'study' };
+function placeUseHits(placed, type) {
+    const box = new THREE.Box3(), c = new THREE.Vector3(), sz = new THREE.Vector3();
+    placed.forEach((m) => {
+        const kind = m._grp && USE_MODS[type + '/' + m.name]; if (!kind) return;
+        box.setFromObject(m._grp); if (box.isEmpty()) return; box.getCenter(c); box.getSize(sz);
+        const hit = new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.3, sz.x), Math.max(0.3, sz.y), Math.max(0.3, sz.z)), new THREE.MeshBasicMaterial());
+        hit.visible = false; hit.userData.use = kind; room.worldToLocal(c); hit.position.copy(c); room.add(hit);
+    });
+}
 function placeBookHits(placed) {
     const box = new THREE.Box3(), c = new THREE.Vector3(), sz = new THREE.Vector3();
     placed.forEach((m) => {

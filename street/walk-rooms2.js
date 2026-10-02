@@ -1,14 +1,15 @@
 // ===== Ещё две комнаты: «комната разработчика» (отзывы автору) и большой аниме-магазин =====
 // Дописывают ROOMX (типы, оболочки, мебель, вход с улицы). Встраивается build-walk.mjs сразу после walk-rooms.js.
 (() => {
-    const T = ['dev', 'animeshop'];
+    const T = ['dev', 'animeshop', 'bedroom'];
     ROOMX.types.push(...T);
-    Object.assign(ROOMX.names, { dev: '開発室 · комната разработчика', animeshop: 'アニメショップ · аниме-магазин' });
-    Object.assign(ROOMX.hints, { dev: 'Комната разработчика', animeshop: 'Аниме-магазин' });
-    Object.assign(ROOMX.alias, { dev: 'class', animeshop: 'konbini' });
-    Object.assign(ROOMX.surf, { dev: 'home', animeshop: 'konbini' });
+    Object.assign(ROOMX.names, { bedroom: '寝室 · спальня', dev: '開発室 · комната разработчика', animeshop: 'アニメショップ · аниме-магазин' });
+    Object.assign(ROOMX.hints, { bedroom: 'Спальня', dev: 'Комната разработчика', animeshop: 'Аниме-магазин' });
+    Object.assign(ROOMX.alias, { bedroom: 'home', dev: 'class', animeshop: 'konbini' });
+    Object.assign(ROOMX.surf, { bedroom: 'home', dev: 'home', animeshop: 'konbini' });
     Object.assign(ROOMX.size, {
         dev: () => ({ w: 6.6, d: 7.6, h: 2.8 }),
+        bedroom: (r) => ({ w: 5.8 + Math.floor(r() * 2) * 0.6, d: 6.6 + Math.floor(r() * 2) * 0.6, h: 2.6 }),
         animeshop: (r) => ({ w: 9.6 + Math.floor(r() * 2) * 0.8, d: 13 + Math.floor(r() * 2) * 1.0, h: 3.4 }),
     });
     const cv = (w, h, fn) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); return makeTex(c); };
@@ -47,6 +48,11 @@
 
     // ---------- оболочки ----------
     Object.assign(ROOMX.shells, {
+        bedroom: () => {
+            const paper = cv(128, 128, (g) => { g.fillStyle = '#efe6d8'; g.fillRect(0, 0, 128, 128); g.fillStyle = 'rgba(160,120,90,0.18)'; for (let y = 0; y < 128; y += 32) for (let x = (y / 32) % 2 ? 16 : 0; x < 128; x += 32) { g.beginPath(); g.arc(x + 8, y + 8, 3, 0, 7); g.fill(); } });
+            roomShell(lamb('#ffffff', { map: rep(paper, ROOM.w / 1.2, ROOM.h / 1.2) }), lamb('#ffffff', { map: rep(texWood('#9a7048', 7), 3, 3) }), '#f6f0e6', '#b88a5a');
+            room.add(new THREE.AmbientLight(0xffe6c8, 0.7));
+        },
         dev: () => {
             const floor = cv(256, 256, (g) => { g.fillStyle = '#5a4030'; g.fillRect(0, 0, 256, 256); for (let y = 0; y < 256; y += 32) { g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(0, y, 256, 2); for (let x = (y / 32) % 2 ? 0 : 64; x < 256; x += 128) g.fillRect(x, y, 2, 32); } for (let i = 0; i < 300; i++) { g.fillStyle = 'rgba(255,220,180,' + Math.random() * 0.05 + ')'; g.fillRect(Math.random() * 256, Math.random() * 256, 20, 1); } });
             roomShell(lamb('#2a2b36'), lamb('#ffffff', { map: rep(floor, ROOM.w / 2, ROOM.d / 2) }), '#1a1a22', '#7c6af8');
@@ -91,6 +97,35 @@
     const prevCatalog = ROOMX.catalog;
     ROOMX.catalog = (type, H) => {
         const { B, C } = H; const rnd = H.rnd; const pick = (a) => a[Math.floor(rnd() * a.length)];
+        if (type === 'bedroom') return [
+            // кровать: на неё можно прилечь
+            { name: 'bed', first: true, rule: 'wall', walls: ['back'], w: 1.8, d: 2.2, h: 1.0, solid: true, build(g) {
+                const bed = new THREE.Group(); g.add(bed);
+                B(bed, 1.6, 0.3, 2.05, '#7a5236', 0, 0.15, 0); B(bed, 1.66, 0.85, 0.08, '#6a4428', 0, 0.55, -1.02);
+                B(bed, 1.52, 0.2, 1.95, '#f4f0e8', 0, 0.4, 0.02); B(bed, 1.56, 0.12, 1.3, pick(['#7c9ad8', '#d87c9a', '#8ac88a', '#e8b86a']), 0, 0.54, 0.35);
+                [-0.38, 0.38].forEach((x) => SP(bed, 0.2, '#ffffff', x, 0.57, -0.75, 1.5, 0.45, 0.9));
+                if (rnd() < 0.6) { SP(bed, 0.13, '#f0d080', 0.45, 0.66, 0.1, 1, 0.9, 1); SP(bed, 0.08, '#f0d080', 0.45, 0.8, 0.12); }
+                bed.traverse((o) => { if (o.isMesh) o.userData.bed = true; });
+                B(g, 0.45, 0.5, 0.4, '#7a5236', 1.1, 0.25, -0.8); CY(g, 0.08, 0.12, 0.3, '#f4e8d0', 1.1, 0.65, -0.8, 14); light(g, 0xffd8a0, 0.9, 3, 1.1, 0.9, -0.6);
+                this.seats = [{ x: -0.3, z: 0.75, yaw: 0, y: 0.5, pose: 'sit', acts: ['phone', 'read'], hold: { phone: 'phone', read: 'book' }, role: 'family', p: 0.55 }];
+            } },
+            { name: 'wardrobe', rule: 'wall', walls: ['left', 'right'], w: 1.4, d: 0.65, h: 2.1, solid: true, build(g) {
+                B(g, 1.35, 2.05, 0.6, '#c8a878', 0, 1.025, -0.02); BX(g, 0.01, 1.9, 0.01, '#7a5a36', 0, 1.05, 0.285);
+                [-0.08, 0.08].forEach((x) => CY(g, 0.015, 0.015, 0.14, '#3a2a1a', x, 1.1, 0.3, 6));
+                B(g, 0.5, 0.3, 0.35, '#e8d8b8', -0.3, 2.22, 0); B(g, 0.4, 0.22, 0.3, '#a8c8e8', 0.3, 2.18, 0);
+            } },
+            { name: 'bdesk', rule: 'wall', walls: ['left', 'right', 'front'], w: 1.3, d: 1.3, h: 1.3, solid: true, build(g) {
+                const z0 = -0.3; B(g, 1.2, 0.04, 0.6, '#d8c0a0', 0, 0.74, z0); [[-0.55, -0.25], [0.55, -0.25], [-0.55, 0.25], [0.55, 0.25]].forEach((p) => BX(g, 0.04, 0.72, 0.04, '#a88a68', p[0], 0.36, z0 + p[1]));
+                B(g, 0.42, 0.02, 0.28, '#2a2a30', -0.05, 0.77, z0 + 0.05); const lid = new THREE.Group(); lid.position.set(-0.05, 0.78, z0 - 0.09); lid.rotation.x = -0.25; g.add(lid); B(lid, 0.42, 0.28, 0.015, '#2a2a30', 0, 0.14, 0); animeScreen(lid, 0.38, 0.22, 0, 0.14, 0.009);
+                CY(g, 0.05, 0.06, 0.03, '#2a2a30', 0.42, 0.77, z0 - 0.12, 10); CY(g, 0.008, 0.008, 0.35, '#2a2a30', 0.42, 0.95, z0 - 0.12, 6); SP(g, 0.07, '#f4e8c0', 0.36, 1.12, z0 - 0.05, 1, 0.7, 1); light(g, 0xffe0b0, 0.7, 2.5, 0.36, 1.1, z0);
+                B(g, 0.45, 0.06, 0.45, '#5a7aa8', 0, 0.46, z0 + 0.62); B(g, 0.45, 0.5, 0.05, '#5a7aa8', 0, 0.74, z0 + 0.85);
+                this.seats = [{ x: 0, z: z0 + 0.62, yaw: Math.PI, y: 0.49, pose: 'sit', acts: ['type'], role: 'student1r', p: 0.45 }];
+            } },
+            { name: 'bwindow', rule: 'wall', walls: ['left', 'right', 'back'], w: 1.7, d: 0.1, h: 1.5, high: true, build(g) { H.window_(g, 1.7); } },
+            { name: 'rug', rule: 'center', w: 1.8, d: 1.4, h: 0.02, solid: false, build(g) { CY(g, 0.85, 0.85, 0.012, pick(['#c86a6a', '#6a8ac8', '#c8a86a']), 0, 0.006, 0, 30).scale.z = 0.75; } },
+            { name: 'animeposters', rule: 'wall', walls: ['left', 'right', 'back'], w: 2.6, d: 0.05, h: 1.0, high: true, build(g) { for (let k = 0; k < 2; k++) plane(g, 0.5, 0.7, new THREE.MeshLambertMaterial({ map: posterTex(Math.floor(rnd() * 12) + k) }), -0.4 + k * 0.8, 1.9, 0.01); } },
+            { name: 'lights', rule: 'none', build(g) { const { h } = ROOM; light(g, 0xffe6c8, 2.0, 7, 0, h - 0.3, 0); } },
+        ];
         if (type === 'dev') return [
             // стол разработчика: три монитора с кодом, клавиатура, кофе, резиновая уточка; за столом сидит разработчик
             { name: 'devdesk', first: true, rule: 'wall', walls: ['back'], w: 2.6, d: 1.6, h: 1.6, solid: true, build(g) {

@@ -513,6 +513,39 @@ const TALK = (() => {
         const k = kanaOf(w);
         setTimeout(() => { banner('🎁 ' + jpOf(w), (k ? k + ' — ' : '') + meaning(w)); speak(k || jpOf(w)); }, 500);
     }
+    // ---- интерактивные вещи в комнатах ----
+    const USE_LABEL = { kanpai: ['🍻', 'Крикнуть «乾杯!»'], buy: ['🛒', 'Купить что-нибудь'], ramen: ['🍜', 'Заказать рамэн'], claw: ['🕹', 'Сыграть в UFO-кэтчер'], study: ['✍', 'Позаниматься за столом'] };
+    const SHOP = [['おにぎり', 'онигири', 150, '百五十円'], ['お茶', 'бутылку чая', 130, '百三十円'], ['肉まん', 'никуман', 180, '百八十円'], ['プリン', 'пудинг', 200, '二百円'], ['からあげ', 'караагэ', 250, '二百五十円']];
+    let useAt = 0;
+    function use(kind) {
+        if (performance.now() - useAt < 1500) return; useAt = performance.now(); close();
+        const room = LIFE.S.room, sayV = (c, l, d) => { if (!c) return; LIFE.say(c, l, d || 2.8, LIFE.S.t); if (typeof voiceLine === 'function') voiceLine(c, l, true); };
+        if (kind === 'kanpai') {
+            const guests = room.filter((c) => !c.cat && ['chef', 'waiter', 'cook'].indexOf(c.role) < 0);
+            guests.forEach((c, i) => setTimeout(() => LIFE.say(c, ['乾杯！', 'Будем!', 'cheers'], 2.2, LIFE.S.t), 200 + i * 140));
+            speak('かんぱい！'); audio.ding(); toast('🍻 乾杯！ — «Кампай!» · ' + (guests.length ? 'гости подняли кружки' : 'вы подняли кружку'));
+        } else if (kind === 'buy') {
+            const it = pick(SHOP), clerk = room.find((c) => c.role === 'clerk');
+            sayV(clerk, ['いらっしゃいませ！' + it[0] + '、' + it[3] + 'です。', 'Добро пожаловать! ' + it[1] + ' — ' + it[2] + ' иен.'], 3.2);
+            if (!clerk) speak(it[0] + '、' + it[3]);
+            setTimeout(() => { toast('🛒 Куплено: ' + it[0] + ' (' + it[1] + ') — ' + it[2] + ' 円'); audio.ding(); }, 1200);
+        } else if (kind === 'ramen') {
+            const chef = room.find((c) => c.role === 'ramenChef' || c.role === 'chef');
+            sayV(chef, ['へい、らっしゃい！ラーメン一丁！', 'Заходи! Один рамэн!'], 2.6); if (!chef) speak('ラーメン一丁！');
+            setTimeout(() => { sayV(chef, ['お待ち！熱いから気をつけて！', 'Готово! Осторожно, горячо!'], 2.8); audio.ding(); toast('🍜 Рамэн готов — いただきます！'); }, 3200);
+        } else if (kind === 'claw') {
+            audio.ding(); toast('🕹 Лапа опускается…');
+            setTimeout(() => { const w = Math.random() < 0.4 ? pickWord() : null; if (w) { banner('🧸 ' + jpOf(w), 'Выигрыш! Плюшевое «' + meaning(w) + '»' + (kanaOf(w) ? ' · ' + kanaOf(w) : '')); audio.ding(); speak(kanaOf(w) || jpOf(w)); } else toast(pick(['😿 Почти! Лапа соскользнула…', '😿 Мимо! Ещё разок?', '😿 Игрушка выскользнула в последний момент'])); }, 1600);
+        } else if (kind === 'study') { WRITE.open(null); }
+    }
+    // ---- кровать: прилечь на минутку ----
+    let napAt = 0;
+    function nap() {
+        if (performance.now() - napAt < 4000) return; napAt = performance.now(); close();
+        const el2 = document.getElementById('fade'); el2.classList.add('on');
+        speak('おやすみなさい');
+        setTimeout(() => { el2.classList.remove('on'); banner('おはよう！', pick(['Пять минут сна — и снова за слова', 'Бодрость восстановлена', 'Приснилось, что вы говорите по-японски'])); if (typeof audio !== 'undefined') audio.ding(); }, 1800);
+    }
     // ---- предметы: попробовать еду ----
     function taste(w) {
         const l = pick([['いただきます！…おいしい！', 'Приятного аппетита!… Вкусно!'], ['うまい！', 'Вкуснятина!'], ['ん〜、最高！', 'М-м, божественно!']]);
@@ -559,6 +592,9 @@ const TALK = (() => {
         if (h && h.tv) out.push({ icon: '📺', t: 'Переключить канал', fn: () => tvNext(h.tv) });
         if (h && h.post) out.push({ icon: '✉', t: 'Написать разработчику', fn: () => { close(); MAIL.open(); } });
         if (h && h.gacha) out.push({ icon: '🎰', t: 'Крутить гачу', fn: () => gacha() });
+        if (h && h.inner && h.dist < 4.5) out.push({ icon: '🚪', t: 'Пройти: ' + h.innerRu, fn: () => enterInner(h.inner) });
+        if (h && h.bed && h.dist < 3) out.push({ icon: '😴', t: 'Прилечь', fn: () => nap() });
+        if (h && h.use && h.dist < 3.2 && USE_LABEL[h.use]) out.push({ icon: USE_LABEL[h.use][0], t: USE_LABEL[h.use][1], fn: () => use(h.use) });
         if (h && h.book && h.dist < 3.2) out.push({ icon: '📖', t: 'Почитать книгу', fn: () => { close(); BOOKS.open(ROOM_THEME[inside.door && inside.door.userData.door.type] || 'street'); } });
         if (h && h.paper) out.push({ icon: '📰', t: 'Читать газету', fn: () => { close(); PAPER.open(); } });
         if (h && h.sign && h.sign.word && !h.sign.deco) {
@@ -608,5 +644,5 @@ const TALK = (() => {
         }
         if (e.code === 'KeyE' && actList[0] && !acts.hidden) { actList[0].fn(); lastKey = ''; }
     });
-    return { talk, order, close, pickChar, update, gacha, get open() { return !!cur; } };
+    return { talk, order, close, pickChar, update, gacha, nap, use, get open() { return !!cur; } };
 })();
