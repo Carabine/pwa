@@ -83,21 +83,22 @@ const FESTIVAL = (() => {
         const plq = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.9), new THREE.MeshBasicMaterial({ map: makeTex(c), fog: true })); plq.position.set(0, 4.7, z + 0.27); world.add(plq);
         const plb = plq.clone(); plb.rotation.y = Math.PI; plb.position.z = z - 0.27; world.add(plb);
     }
-    function build(world) {
-        const rnd = mulberry32(hashStr(th.id + 'matsuri')); stalls.length = 0;
-        torii(world, 4.2);
+    function reset() { stalls.length = 0; }
+    function build(world, bk) {
+        const rnd = mulberry32(hashStr('matsuri' + bk.z0));
+        torii(world, bk.z0 - 1.6);
         const bounds = blocks.map((b) => b.z0);
         [-1, 1].forEach((side) => {
             const dz = doors.filter((d) => d.userData.door.side === side).map((d) => d.userData.door.z);
-            let z = 1.2, k = 0;
-            while (z > -streetLen + 6) {
+            let z = bk.z0 - 2.6, k = 0;
+            while (z > bk.z1 + 2) {
                 const L = 1.8 + Math.floor(rnd() * 3) * 0.2, zc = z - L / 2;
                 const clear = !dz.some((d) => Math.abs(d - zc) < L / 2 + 1.3) && !bounds.some((b) => Math.abs(b - zc) < L / 2 + 1.6);
                 if (clear) { stall(world, side, zc, L, FOODS[Math.floor(rnd() * FOODS.length)], rnd); if (k++ % 2 === 1) nobori(world, side, z - L - 0.3, k); z -= L + 0.7; }
                 else z -= 0.8;
             }
         });
-        for (let z = 0; z > -streetLen + 4; z -= 5.5) garland(world, z, rnd);
+        for (let z = bk.z0 - 3; z > bk.z1 + 2; z -= 5.5) garland(world, z, rnd);
     }
     // ---- фейерверки: вспышка частиц далеко впереди, раз в несколько секунд ----
     function burst(t) {
@@ -121,5 +122,5 @@ const FESTIVAL = (() => {
             a.needsUpdate = true; f.pts.visible = true; f.pts.material.opacity = Math.max(0, 1 - k / 2.6);
         }
     }
-    return { build, update, stalls };
+    return { build, update, stalls, reset };
 })();

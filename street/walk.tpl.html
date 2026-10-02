@@ -18,6 +18,7 @@
         #joy::before { content: ''; position: absolute; inset: 14px; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.18); }
         @media (hover: hover) and (pointer: fine) { #joy { display: none; } }
         .hint .d { display: none; } @media (hover: hover) and (pointer: fine) { .hint .m { display: none; } .hint .d { display: inline; } }
+        #music, #gear { font-size: 19px; width: 44px; height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
         #music.on { color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 16px rgba(124,140,248,0.7); }
         #music:not(.on) { color: rgba(255,255,255,0.45); background-image: linear-gradient(135deg, transparent 46%, rgba(255,255,255,0.55) 47%, rgba(255,255,255,0.55) 53%, transparent 54%); }
         /* телефон: подсказка слова — в правом верхнем углу, название места — слева под названием квартала */
@@ -193,8 +194,6 @@
     <button id="panel-close" aria-label="Закрыть">×</button>
     <h4>Данные</h4>
     <div class="opts"><button class="opt" data-src="real">Мои слова</button><button class="opt" data-src="sample">Тестовая колода</button><button class="opt" data-src="demo">Встроенный набор</button></div>
-    <h4>Улица</h4>
-    <div class="opts"><a class="opt" data-theme="shinjuku" href="./walk.html?theme=shinjuku">Синдзюку</a><a class="opt" data-theme="yokocho" href="./walk.html?theme=yokocho">Ёкотё</a><a class="opt" data-theme="matsuri" href="./walk.html?theme=matsuri">Мацури</a><a class="opt" data-theme="sando" href="./walk.html?theme=sando">Сандо</a></div>
     <h4>Музыка</h4>
     <div class="opts"><button class="opt" data-music="city">Ночной город</button><button class="opt" data-music="snow">Снег над крышами</button><button class="opt" data-music="train">Ночной поезд</button><button class="opt" data-music="tea">Чайный дом</button><button class="opt" data-music="stars">Звёзды</button><button class="opt" data-music="harbor">Гавань</button><button class="opt" data-music="radio">Радио за стеной</button><button class="opt" data-music="calm">Тихий вечер</button><button class="opt" data-music="lane">Переулок</button><button class="opt" data-music="lofi">Lo-fi</button></div>
     <h4>Графика</h4>

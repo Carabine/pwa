@@ -50,27 +50,26 @@ const TEMPLE = (() => {
         const pl = new THREE.PointLight(0xffb060, 3, 9, 1.6); pl.position.set(0, 2.2, 2.2); g.add(pl);
         world.add(g); addCollider(g, null, 0.2);
     }
-    function build(world) {
-        const rnd = mulberry32(hashStr(th.id + 'sando'));
-        torii(world, 4.4, 1);
+    function build(world, bk, last) {
+        const rnd = mulberry32(hashStr('sando' + bk.z0));
+        torii(world, bk.z0 - 1.4, 1);
         // каменная дорожка посередине
-        for (let z = 3; z > -streetLen - 2; z -= 0.92) { const s = new THREE.Mesh(new THREE.BoxGeometry(1.5 + rnd() * 0.15, 0.06, 0.82), lamb(stone(Math.floor(rnd() * 3)))); s.position.set((rnd() - 0.5) * 0.08, 0.03, z); s.rotation.y = (rnd() - 0.5) * 0.04; world.add(s); }
+        for (let z = bk.z0 - 0.5; z > (last ? -streetLen - 2 : bk.z1 + 0.5); z -= 0.92) { const s = new THREE.Mesh(new THREE.BoxGeometry(1.5 + rnd() * 0.15, 0.06, 0.82), lamb(stone(Math.floor(rnd() * 3)))); s.position.set((rnd() - 0.5) * 0.08, 0.03, z); s.rotation.y = (rnd() - 0.5) * 0.04; world.add(s); }
         const bounds = blocks.map((b) => b.z0);
         [-1, 1].forEach((side) => {
             const dz = doors.filter((d) => d.userData.door.side === side).map((d) => d.userData.door.z);
             let k = 0;
-            for (let z = 1; z > -streetLen + 4; z -= 4.2) {
+            for (let z = bk.z0 - 3; z > bk.z1 + 2; z -= 4.2) {
                 if (dz.some((d) => Math.abs(d - z) < 1.4) || bounds.some((b) => Math.abs(b - z) < 1.6)) continue;
                 if (k++ % 3 === 2) bamboo(world, side * (W2 - 0.55), z, rnd); else toro(world, side * (W2 - 0.55), z, k);
             }
         });
-        for (let i = 1; i < blocks.length; i += 3) torii(world, blocks[i].z0 + 0.6, 0.92); // по малому тории на каждые три квартала
-        shrine(world, -streetLen + 1.5);
+        if (last) shrine(world, -streetLen + 1.5); // храм — только если улочка последняя (иначе он перегородил бы коридор)
         // листья клёна — медленно падают вокруг камеры
         const n = LOW ? 70 : 160, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), c = new THREE.Color();
         for (let i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * th.W; pos[i * 3 + 1] = Math.random() * 7; pos[i * 3 + 2] = (Math.random() - 0.5) * 30; c.set(['#e85a2a', '#f08a2a', '#c8322a', '#e8b030'][i % 4]); col.set([c.r, c.g, c.b], i * 3); }
         const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-        if (leaves) { scene.remove(leaves); leaves.geometry.dispose(); }
+        if (leaves) return; // листья одни на весь коридор, видны только в квартале-сандо
         leaves = new THREE.Points(geo, new THREE.PointsMaterial({ map: discTex, vertexColors: true, size: 0.09, transparent: true, depthWrite: false, opacity: 0.9 }));
         leaves.frustumCulled = false; scene.add(leaves);
     }
