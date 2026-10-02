@@ -1202,7 +1202,9 @@ function buildRoom(b, color, type) {
     const rnd = mulberry32(hashStr(b.q.name + type + (b.qi || 0)) + (inside.door ? Math.round(inside.door.userData.door.z * 10) : 0));
     // размер комнаты — свой у каждой двери
     ROOM.w = 7.0 + Math.floor(rnd() * 5) * 0.8; ROOM.d = 10 + Math.floor(rnd() * 6) * 1.0; ROOM.h = 3.0 + Math.floor(rnd() * 3) * 0.2; ROOM.doorX = Math.min(1.4, ROOM.w / 2 - 1.2);
-    const { objs, rest } = splitWords(b, type);
+    const { objs, rest: restAll } = splitWords(b, type);
+    // на листочках/доске/ценниках — не больше 12 слов, выборка стабильна для комнаты
+    const rest = restAll.slice().sort(() => rnd() - 0.5).slice(0, 12);
     ROOM_SHELLS[type]();
     const grid = new Grid(ROOM.w, ROOM.d);
     grid.mark(ROOM.doorX - 1.4, ROOM.d / 2 - 2.6, ROOM.doorX + 1.4, ROOM.d / 2); // зона входа всегда свободна
