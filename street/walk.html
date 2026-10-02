@@ -3453,7 +3453,14 @@ const audio = (() => {
     const VARIANTS = ['city', 'calm', 'lane', 'lofi'];
     let variant = VARIANTS.includes(settings.musicVar) ? settings.musicVar : 'city';
     const btn = document.getElementById('music');
-    let noiseBuf = null;
+    let noiseBuf = null, verb = null;
+    function getVerb(c) {
+        if (verb && verb.c === c) return verb.input;
+        const len = Math.floor(c.sampleRate * 2.6), ir = c.createBuffer(2, len, c.sampleRate);
+        for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.4); }
+        const conv = c.createConvolver(); conv.buffer = ir; const wet = c.createGain(); wet.gain.value = 0.16; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3800;
+        conv.connect(lp); lp.connect(wet); wet.connect(master); verb = { c, input: conv }; return conv;
+    }
     function getNoise(c) { if (noiseBuf) return noiseBuf; const b = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return (noiseBuf = b); }
     function loopNoise(c, type, freq, q, gain, dest) { const src = c.createBufferSource(); src.buffer = getNoise(c); src.loop = true; const f = c.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; const g = c.createGain(); g.gain.value = gain; src.connect(f); f.connect(g); g.connect(dest || master); src.start(); return { src, f, g }; }
     function env(c, g, when, a, peak, dec, sus, rel, dur) { g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(peak, when + a); g.gain.setTargetAtTime(peak * sus, when + a, dec); g.gain.setTargetAtTime(0.0001, when + dur, rel); }
@@ -3471,8 +3478,8 @@ const audio = (() => {
         o.connect(lp); lp.connect(g); g.connect(dest); o.start(when); o.stop(when + 1.5);
     }
     // колокольчик ветра: чистые гармоники (без неровных обертонов — они и звучат тревожно), долгий хвост
-    function chime(c, f, when, vel, dest) {
-        const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(vel, when + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, when + 3.2); g.connect(dest);
+    function chime(c, f, when, vel, dest, soft) {
+        const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(vel, when + (soft ? 0.012 : 0.003)); g.gain.exponentialRampToValueAtTime(0.0001, when + (soft ? 2.6 : 3.2)); g.connect(dest);
         [[1, 1], [2, 0.22], [3, 0.06]].forEach(([h, a]) => { const o = c.createOscillator(); o.frequency.value = f * h; const hg = c.createGain(); hg.gain.value = a; o.connect(hg); hg.connect(g); o.start(when); o.stop(when + 3.3); });
     }
     function musicBox(c, f, when, vel, dest) {
@@ -3541,10 +3548,30 @@ const audio = (() => {
         const softBus = c.createGain(); softBus.gain.value = 1; softBus.connect(bus);
         if (variant === 'lane' && id === 'yokocho') { const cr = loopNoise(c, 'bandpass', 4300, 14, 0.0035, softBus); const lf = c.createOscillator(); lf.type = 'square'; lf.frequency.value = 7.5; const lg = c.createGain(); lg.gain.value = 0.0035; lf.connect(lg); lg.connect(cr.g.gain); lf.start(); nodes.push(cr, { o: lf }); }
         let lanePos = 3;
+        // светлые аккорды без больших септим (они и давали тревогу): C6/9 · Am7 · F6/9 · G6 — корень, квинта и три верхних звука
+        const CITY = [
+            { low: [N.C3, N.G3], up: [N.E4, N.A4, N.D5] },
+            { low: [N.A2, N.E3], up: [N.C4, N.G4, N.E5] },
+            { low: [87.3, N.C3], up: [N.A3, N.D4, N.G4] },
+            { low: [N.G2, N.D3], up: [N.B3, N.E4, N.G4] },
+        ];
+        const cityBus = c.createGain(); cityBus.gain.value = 1; cityBus.connect(bus); const send = c.createGain(); send.gain.value = 0.7; cityBus.connect(send); klp.connect(send); send.connect(getVerb(c));
+        let chimeAt = 0;
         const playCity = (s, when) => {
-            if (Math.random() < 0.04) { const n = 1 + Math.floor(Math.random() * 3); for (let i = 0; i < n; i++) chime(c, PENTA_HI[Math.floor(Math.random() * PENTA_HI.length)], when + i * (0.12 + Math.random() * 0.2), 0.05, softBus); }
-            if (s % 128 === 8) CHORDS[0].keys.forEach((f, i) => keys(c, f, when + i * 0.03, 3, 0.7, keysBus)); // далёкий тёплый аккорд раз в полминуты
-            if (s % 128 === 72) CHORDS[2].keys.forEach((f, i) => keys(c, f, when + i * 0.03, 3, 0.6, keysBus));
+            const ci = Math.floor(s / 64) % CITY.length, ch = CITY[ci];
+            if (s % 64 === 0) {
+                // подложка: еле слышный тёплый фундамент, аккорды внахлёст, высота не скользит
+                ch.low.forEach((f, i) => voice(c, f, when + i * 0.6, 15, i ? 0.0075 : 0.0095, cityBus));
+                ch.up.forEach((f, i) => voice(c, f, when + 1 + i * 0.5, 14, 0.0038, cityBus));
+                if (Math.random() < 0.55) ch.up.forEach((f, i) => keys(c, f, when + 1.5 + i * 0.05, 3, 0.55, keysBus)); // далёкий аккорд э-пиано — не каждый раз
+            }
+            // колокольчики: из звуков текущего аккорда, на октаву выше, короткий плавный жест вверх или вниз
+            if (s > chimeAt && Math.random() < 0.05) {
+                const pool = ch.up.map((f) => f * 2).concat(ch.low.map((f) => f * 4)).sort((a, b) => a - b), n = 1 + Math.floor(Math.random() * 3);
+                let k = Math.floor(Math.random() * pool.length); const dir = Math.random() < 0.5 ? 1 : -1;
+                for (let i = 0; i < n; i++) { chime(c, pool[Math.max(0, Math.min(pool.length - 1, k))], when + i * (0.2 + Math.random() * 0.12), 0.055, cityBus, true); k += dir; }
+                chimeAt = s + 6; // не чаще, чем раз в ~1 с
+            }
         };
         const playCalm = (s, when) => {
             if (s % 64 === 0) CALM[Math.floor(s / 64) % CALM.length].forEach((f, i) => voice(c, f, when + i * 0.4, 14, 0.022, softBus)); // аккорды внахлёст, каждые ~11 с
