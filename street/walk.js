@@ -1439,82 +1439,113 @@ function buildSteam() {
 }
 
 
-// ---- звук: процедурный эмбиент на Web Audio, без файлов ----
-// Синдзюку: дождь (фильтрованный шум), гул города, медленный синт-пад. Ёкотё: сверчки, тихий гомон, щипковая пентатоника.
-// Интерьер: шипение кухни, тёплый пад, стук посуды. Всё на осцилляторах и шуме, стартует по первому тапу.
+// ---- звук: тёплый lo-fi трек на Web Audio, без файлов ----
+// Настоящая музыка, а не эмбиент: мажорные джазовые аккорды (Cmaj9 · Am9 · Dm9 · G13) на электропиано,
+// мягкие барабаны со свингом, бас, сочинённые мелодии по мажорной пентатонике. Ноты ставятся по часам
+// AudioContext с упреждением (не по setInterval — тот плавает, и ритм «расползается»).
+// Синдзюку — э-пиано и тихий дождь; Ёкотё — мелодия на кото; в комнате — тот же трек приглушённо, «из колонки».
 const audio = (() => {
-    let ctx = null, master = null, enabled = settings.music !== false, sceneId = null, nodes = [], padTimer = 0, motionGain = null;
+    let ctx = null, master = null, bus = null, tone = null, enabled = settings.music !== false, sceneId = null, nodes = [], timer = 0, motionGain = null;
     const btn = document.getElementById('music');
-    function noiseBuffer(c, sec) { const b = c.createBuffer(1, c.sampleRate * sec, c.sampleRate); const d = b.getChannelData(0); let l = 0; for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; l = (l + 0.02 * w) / 1.02; d[i] = w * 0.5 + l * 2; } return b; }
-    function noise(c, type, freq, q, gain) { const src = c.createBufferSource(); src.buffer = noiseBuffer(c, 4); src.loop = true; const f = c.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; const g = c.createGain(); g.gain.value = gain; src.connect(f); f.connect(g); g.connect(master); src.start(); return { src, f, g }; }
-    function tone(c, freq, type, gain, dest) { const o = c.createOscillator(); o.type = type; o.frequency.value = freq; const g = c.createGain(); g.gain.value = gain; o.connect(g); g.connect(dest || master); o.start(); return { o, g }; }
-    function pluck(c, freq, gain, when, decay) { const o = c.createOscillator(); o.type = 'triangle'; o.frequency.value = freq; const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(freq * 6, when); f.frequency.exponentialRampToValueAtTime(freq * 1.5, when + decay); const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(gain, when + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, when + decay); o.connect(f); f.connect(g); g.connect(master); o.start(when); o.stop(when + decay + 0.1); }
-    function stop() { nodes.forEach((n) => { try { n.src && n.src.stop(); n.o && n.o.stop(); n.stopFn && n.stopFn(); } catch (e) { /* уже остановлен */ } }); nodes = []; clearInterval(padTimer); }
-    // тёплый lo-fi: мягкие аккорды на синусах, э-пиано мелодия по пентатонике, всё через низкочастотный фильтр
-    function epiano(c, freq, gain, when, dur) {
-        const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(gain, when + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, when + dur); g.connect(master);
-        [[1, 1], [2, 0.35], [3, 0.08]].forEach((h) => { const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = freq * h[0]; const hg = c.createGain(); hg.gain.value = h[1]; o.connect(hg); hg.connect(g); o.start(when); o.stop(when + dur + 0.05); });
+    let noiseBuf = null;
+    function getNoise(c) { if (noiseBuf) return noiseBuf; const b = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return (noiseBuf = b); }
+    function loopNoise(c, type, freq, q, gain, dest) { const src = c.createBufferSource(); src.buffer = getNoise(c); src.loop = true; const f = c.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; const g = c.createGain(); g.gain.value = gain; src.connect(f); f.connect(g); g.connect(dest || master); src.start(); return { src, f, g }; }
+    function env(c, g, when, a, peak, dec, sus, rel, dur) { g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(peak, when + a); g.gain.setTargetAtTime(peak * sus, when + a, dec); g.gain.setTargetAtTime(0.0001, when + dur, rel); }
+    // электропиано: FM (несущая + модулятор 1:1, индекс быстро гаснет — мягкий «тук» в атаке, потом тёплый тон)
+    function keys(c, f, when, dur, vel, dest) {
+        const car = c.createOscillator(), mod = c.createOscillator(), mg = c.createGain(), g = c.createGain();
+        car.frequency.value = f; mod.frequency.value = f; mg.gain.setValueAtTime(f * 1.6, when); mg.gain.setTargetAtTime(f * 0.15, when, 0.12);
+        mod.connect(mg); mg.connect(car.frequency); car.connect(g); g.connect(dest);
+        env(c, g, when, 0.006, vel, 0.5, 0.35, 0.25, dur);
+        car.start(when); mod.start(when); car.stop(when + dur + 1.2); mod.stop(when + dur + 1.2);
     }
-    function koto(c, freq, gain, when, dur) {
-        const o = c.createOscillator(); o.type = 'triangle'; o.frequency.value = freq; const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(freq * 5, when); f.frequency.exponentialRampToValueAtTime(freq * 1.2, when + dur); const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(gain, when + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, when + dur); o.connect(f); f.connect(g); g.connect(master); o.start(when); o.stop(when + dur + 0.05);
+    function koto(c, f, when, vel, dest) {
+        const o = c.createOscillator(); o.type = 'triangle'; o.frequency.value = f; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(f * 6, when); lp.frequency.exponentialRampToValueAtTime(f * 1.3, when + 0.9);
+        const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(vel, when + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, when + 1.4);
+        o.connect(lp); lp.connect(g); g.connect(dest); o.start(when); o.stop(when + 1.5);
     }
-    function pad(c, cutoff, level) {
-        const out = c.createGain(); out.gain.value = level; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = cutoff; lp.Q.value = 0.3; out.connect(lp); lp.connect(master);
-        const trem = c.createOscillator(); trem.type = 'sine'; trem.frequency.value = 0.18; const tg = c.createGain(); tg.gain.value = level * 0.25; trem.connect(tg); tg.connect(out.gain); trem.start();
-        const voices = [];
-        for (let i = 0; i < 4; i++) { const o1 = c.createOscillator(); o1.type = 'sine'; const o2 = c.createOscillator(); o2.type = 'triangle'; const g1 = c.createGain(); g1.gain.value = 0.25; const g2 = c.createGain(); g2.gain.value = 0.05; o1.connect(g1); o2.connect(g2); g1.connect(out); g2.connect(out); o1.start(); o2.start(); voices.push([o1, o2]); nodes.push({ o: o1 }, { o: o2 }); }
-        nodes.push({ o: trem });
-        return { set(freqs, when) { voices.forEach((v, i) => { v[0].frequency.setTargetAtTime(freqs[i], when, 0.8); v[1].frequency.setTargetAtTime(freqs[i] * 2.002, when, 0.8); }); } };
+    function bass(c, f, when, dur, vel, dest) {
+        const o = c.createOscillator(), o2 = c.createOscillator(); o.type = 'sine'; o2.type = 'triangle'; o.frequency.value = f; o2.frequency.value = f;
+        const g2 = c.createGain(); g2.gain.value = 0.35; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; const g = c.createGain();
+        o.connect(g); o2.connect(g2); g2.connect(g); g.connect(lp); lp.connect(dest); env(c, g, when, 0.01, vel, 0.25, 0.6, 0.08, dur);
+        o.start(when); o2.start(when); o.stop(when + dur + 0.5); o2.stop(when + dur + 0.5);
     }
-    // аккорды в тёплом регистре (Гц): Fmaj7 · Am7 · Dm7 · Gsus2 — классическая lo-fi петля
-    const LOFI = [[174.6, 220, 261.6, 329.6], [220, 261.6, 329.6, 392], [146.8, 174.6, 220, 261.6], [196, 220, 293.7, 392]];
-    const PENTA = [261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3];
-    function sequencer(c, p, chords, inst, level, prob) {
-        let step = 0, ci = 0; const beat = 60 / 84 / 2;
-        return setInterval(() => {
-            if (!ctx) return; const w = c.currentTime + 0.05;
-            if (step % 16 === 0) { ci = (ci + 1) % chords.length; p.set(chords[ci], w); }
-            if (step % 2 === 0 && Math.random() < prob) inst(c, PENTA[Math.floor(Math.random() * PENTA.length)], level, w, 1.1 + Math.random() * 0.6);
-            if (step % 8 === 4 && Math.random() < 0.5) inst(c, PENTA[Math.floor(Math.random() * 4)] / 2, level * 0.8, w, 1.6);
-            step++;
-        }, beat * 1000);
+    function kick(c, when, vel, dest) { const o = c.createOscillator(), g = c.createGain(); o.frequency.setValueAtTime(110, when); o.frequency.exponentialRampToValueAtTime(42, when + 0.13); g.gain.setValueAtTime(vel, when); g.gain.exponentialRampToValueAtTime(0.0001, when + 0.38); o.connect(g); g.connect(dest); o.start(when); o.stop(when + 0.4); }
+    function snare(c, when, vel, dest) {
+        const s = c.createBufferSource(); s.buffer = getNoise(c); const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 0.7; const g = c.createGain(); g.gain.setValueAtTime(vel, when); g.gain.exponentialRampToValueAtTime(0.0001, when + 0.2); s.connect(bp); bp.connect(g); g.connect(dest); s.start(when, Math.random()); s.stop(when + 0.22);
+        const o = c.createOscillator(), og = c.createGain(); o.frequency.value = 190; og.gain.setValueAtTime(vel * 0.5, when); og.gain.exponentialRampToValueAtTime(0.0001, when + 0.09); o.connect(og); og.connect(dest); o.start(when); o.stop(when + 0.1);
     }
+    function hat(c, when, vel, dest) { const s = c.createBufferSource(); s.buffer = getNoise(c); const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7500; const g = c.createGain(); g.gain.setValueAtTime(vel, when); g.gain.exponentialRampToValueAtTime(0.0001, when + 0.045); s.connect(hp); hp.connect(g); g.connect(dest); s.start(when, Math.random()); s.stop(when + 0.05); }
+    function crackle(c, when, dest) { const s = c.createBufferSource(); s.buffer = getNoise(c); const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500; const g = c.createGain(); g.gain.setValueAtTime(0.02 + Math.random() * 0.03, when); g.gain.exponentialRampToValueAtTime(0.0001, when + 0.008); s.connect(hp); hp.connect(g); g.connect(dest); s.start(when, Math.random()); s.stop(when + 0.01); }
+
+    // ---- ноты и партии ----
+    const N = { G2: 98, A2: 110, C3: 130.8, D3: 146.8, E3: 164.8, F3: 174.6, G3: 196, A3: 220, B3: 246.9, C4: 261.6, D4: 293.7, E4: 329.6, G4: 392, A4: 440, C5: 523.3, D5: 587.3, E5: 659.3, G5: 784, A5: 880 };
+    // Cmaj9 · Am9 · Dm9 · G13 — I–vi–ii–V, тёплый мажор; голоса ведутся плавно, без скольжения высоты
+    const CHORDS = [
+        { bass: N.C3, keys: [N.E3, N.G3, N.B3, N.D4] },
+        { bass: N.A2, keys: [N.G3, N.B3, N.C4, N.E4] },
+        { bass: N.D3, keys: [N.F3, N.A3, N.C4, N.E4] },
+        { bass: N.G2, keys: [N.F3, N.A3, N.B3, N.E4] },
+    ];
+    // мелодии на два такта (шаг — шестнадцатая): [шаг, нота, длина в шагах]
+    const PHRASES = [
+        [[0, 'E5', 2], [2, 'G5', 2], [4, 'A5', 4], [8, 'G5', 2], [10, 'E5', 2], [12, 'D5', 4], [16, 'C5', 2], [18, 'D5', 2], [20, 'E5', 6], [28, 'G4', 4]],
+        [[0, 'A5', 2], [2, 'G5', 2], [4, 'E5', 2], [6, 'D5', 2], [8, 'E5', 6], [16, 'C5', 2], [18, 'E5', 2], [20, 'G5', 2], [22, 'A5', 2], [24, 'G5', 8]],
+        [[2, 'C5', 2], [4, 'D5', 2], [6, 'E5', 4], [12, 'G5', 4], [18, 'E5', 2], [20, 'D5', 2], [22, 'C5', 2], [24, 'A4', 4], [28, 'C5', 4]],
+        [[0, 'G5', 3], [3, 'E5', 3], [6, 'D5', 2], [8, 'C5', 4], [14, 'D5', 2], [16, 'E5', 4], [20, 'G5', 2], [22, 'E5', 2], [24, 'D5', 8]],
+    ];
+    const KEYS_HITS = [[0, 1, 10], [6, 0.55, 3], [10, 0.7, 5]];  // шаг, громкость, длина (комп э-пиано в такте)
+    const BASS_HITS = [[0, 1, 5], [7, 0.7, 2], [10, 0.85, 4], [14, 0.5, 2]];
+    const KICK = [0, 7, 10], KICK_B = [0, 3, 10];
+    const BPM = 84, S16 = 60 / BPM / 4, SWING = 0.18;
+
     function start(id) {
         if (!ctx || !enabled) return;
         stop(); sceneId = id;
-        const c = ctx, t0 = c.currentTime;
-        master.gain.value = 0;
-        // виниловый треск — одинаковый везде, едва слышный
-        const cr = noise(c, 'highpass', 3500, 0.5, 0.004); nodes.push(cr);
-        if (id === 'inside') {
-            nodes.push(noise(c, 'bandpass', 1500, 0.8, 0.012)); // кухня, едва
-            const p = pad(c, 650, 0.07); p.set(LOFI[0], t0);
-            padTimer = sequencer(c, p, LOFI, epiano, 0.05, 0.45);
-        } else if (id === 'yokocho') {
-            const cri = noise(c, 'bandpass', 4300, 14, 0.004); nodes.push(cri); // сверчки далеко
-            const lfo = tone(c, 7.5, 'square', 1, cri.g.gain); lfo.g.gain.value = 0.004; nodes.push(lfo);
-            nodes.push(noise(c, 'lowpass', 400, 0.5, 0.02)); // гомон за стенами
-            const p = pad(c, 550, 0.05); p.set(LOFI[1], t0);
-            padTimer = sequencer(c, p, LOFI, koto, 0.045, 0.4);
-        } else {
-            const r = noise(c, 'bandpass', 1100, 0.5, 0.022); nodes.push(r); // дождь — мягкий, далеко
-            const rl = c.createBiquadFilter(); rl.type = 'lowpass'; rl.frequency.value = 2600; r.g.disconnect(); r.g.connect(rl); rl.connect(master);
-            nodes.push(noise(c, 'lowpass', 110, 0.8, 0.03)); // гул города
-            const p = pad(c, 700, 0.075); p.set(LOFI[0], t0);
-            padTimer = sequencer(c, p, LOFI, epiano, 0.055, 0.5);
-        }
+        const c = ctx, t0 = c.currentTime + 0.1;
+        const room = id === 'inside';
+        // общая шина: мягкий lo-fi срез верхов; в комнате — сильнее, будто из колонки за стенкой
+        bus = c.createGain(); bus.gain.value = room ? 0.8 : 1; tone = c.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = room ? 1500 : 5200; tone.Q.value = 0.4; bus.connect(tone); tone.connect(master);
+        const keysBus = c.createGain(); keysBus.gain.value = 0.055; const klp = c.createBiquadFilter(); klp.type = 'lowpass'; klp.frequency.value = 2400; keysBus.connect(klp); klp.connect(bus);
+        const melBus = c.createGain(); melBus.gain.value = id === 'yokocho' ? 0.07 : 0.04; melBus.connect(bus);
+        const drumBus = c.createGain(); drumBus.gain.value = room ? 0.5 : 0.75; drumBus.connect(bus);
+        const bassBus = c.createGain(); bassBus.gain.value = 0.12; bassBus.connect(bus);
+        // фон: на Синдзюку тихий дождь, больше никакого гула
+        if (id === 'shinjuku') { const r = loopNoise(c, 'bandpass', 1300, 0.4, 0.012); const rl = c.createBiquadFilter(); rl.type = 'lowpass'; rl.frequency.value = 3200; r.g.disconnect(); r.g.connect(rl); rl.connect(master); nodes.push(r); }
+        let step = 0, next = t0;
+        const play = (s, when) => {
+            const bar = Math.floor(s / 16), st = s % 16, ch = CHORDS[bar % 4];
+            const section = bar < 4 ? 'intro' : ((bar - 4) % 16 < 8 ? 'groove' : 'melody');
+            KEYS_HITS.forEach(([k, v, len]) => { if (st === k && !(section === 'intro' && k !== 0)) ch.keys.forEach((f, i) => keys(c, f, when + i * 0.012, len * S16, v * (0.9 + Math.random() * 0.15), keysBus)); });
+            if (section !== 'intro') {
+                BASS_HITS.forEach(([k, v, len]) => { if (st === k) bass(c, k === 10 && bar % 2 ? ch.bass * 1.5 : ch.bass, when, len * S16, v, bassBus); });
+                if ((bar % 2 ? KICK_B : KICK).includes(st)) kick(c, when, 0.55, drumBus);
+                if (st === 4 || st === 12) snare(c, when, 0.13, drumBus);
+                if (st % 2 === 0) hat(c, when, st % 4 === 2 ? 0.07 : 0.035, drumBus);
+                if (st === 15 && bar % 4 === 3) hat(c, when, 0.05, drumBus);
+            }
+            if (section === 'melody') {
+                const ph = PHRASES[Math.floor((bar - 4) / 2) % PHRASES.length], ps = (bar % 2) * 16 + st;
+                ph.forEach(([k, n, len]) => { if (k === ps) { if (id === 'yokocho') koto(c, N[n], when, 0.9, melBus); else keys(c, N[n], when, len * S16, 0.9, melBus); } });
+            }
+            if (Math.random() < 0.18) crackle(c, when + Math.random() * S16, bus);
+        };
+        timer = setInterval(() => { while (next < c.currentTime + 0.15) { play(step, next + (step % 2 ? S16 * SWING : 0)); next += S16; step++; } }, 25);
         // шаги: шорох, громкость от скорости
-        const st = noise(c, 'lowpass', 900, 0.7, 0); motionGain = st.g; nodes.push(st);
-        const stepLfo = tone(c, 1.8, 'square', 1, st.g.gain); stepLfo.g.gain.value = 0; nodes.push(stepLfo); motionGain._lfo = stepLfo.g;
-        master.gain.setValueAtTime(0, t0); master.gain.linearRampToValueAtTime(0.75, t0 + 3);
+        const sn = loopNoise(c, 'lowpass', 900, 0.7, 0); motionGain = sn.g; nodes.push(sn);
+        const lfo = c.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 1.8; const lg = c.createGain(); lg.gain.value = 0; lfo.connect(lg); lg.connect(sn.g.gain); lfo.start(); nodes.push({ o: lfo }); motionGain._lfo = lg;
+        master.gain.cancelScheduledValues(t0); master.gain.setValueAtTime(0, t0); master.gain.linearRampToValueAtTime(0.85, t0 + 2.5);
     }
+    function stop() { clearInterval(timer); nodes.forEach((n) => { try { n.src && n.src.stop(); n.o && n.o.stop(); } catch (e) { /* уже остановлен */ } }); nodes = []; if (bus) { try { bus.disconnect(); } catch (e) { /* ok */ } bus = null; } }
     return {
-        resume() { if (!enabled) return; if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.connect(ctx.destination); } catch (e) { return; } start(inside.on ? 'inside' : th.id); } else if (ctx.state === 'suspended') ctx.resume(); },
+        resume() { if (!enabled) return; if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination); } catch (e) { return; } start(inside.on ? 'inside' : th.id); } else if (ctx.state === 'suspended') ctx.resume(); },
         setScene(id) { if (ctx && enabled && id !== sceneId) start(id); },
-        setMotion(k) { if (motionGain && ctx) { motionGain._lfo.gain.setTargetAtTime(Math.min(1, k) * 0.05, ctx.currentTime, 0.1); } },
-        ding() { if (!ctx || !enabled) return; const w = ctx.currentTime; [523.3, 659.3, 784, 1046.5].forEach((f, i) => epiano(ctx, f, 0.05, w + i * 0.09, 1.4)); },
+        setMotion(k) { if (motionGain && ctx) { motionGain._lfo.gain.setTargetAtTime(Math.min(1, k) * 0.04, ctx.currentTime, 0.1); } },
+        ding() { if (!ctx || !enabled || !master) return; const w = ctx.currentTime; [N.C5, N.E5, N.G5, 1046.5].forEach((f, i) => keys(ctx, f, w + i * 0.08, 0.6, 0.05, master)); },
         toggle() { enabled = !enabled; saveSet({ music: enabled }); btn.classList.toggle('on', enabled); if (!enabled) { stop(); if (ctx) ctx.suspend(); } else this.resume(); toast(enabled ? 'Звук включён' : 'Звук выключен'); },
         get enabled() { return enabled; },
+        // для записи превью: проиграть сцену в заданный узел
+        _debug: { start: (c, m, id) => { ctx = c; master = m; start(id); } },
     };
 })();
 document.getElementById('music').addEventListener('click', () => audio.toggle());
