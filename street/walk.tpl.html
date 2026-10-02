@@ -60,8 +60,10 @@
         }
         #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 14px; letter-spacing: 0.04em; pointer-events: none; z-index: 40; transition: opacity .4s; }
     </style>
-    <script type="importmap">
-    { "imports": { "three": "./vendor/three/build/three.module.min.js", "three/addons/": "./vendor/three/examples/jsm/" } }
+    <script>
+    // Three.js: на сайте — со своего сервера; с диска (file://) браузер не даёт грузить локальные модули — тогда CDN
+    (function () { var cdn = 'https://cdn.jsdelivr.net/npm/three@0.160.0/', loc = './vendor/three/', b = location.protocol === 'file:' ? cdn : loc;
+    document.write('<script type="importmap">' + JSON.stringify({ imports: { three: b + 'build/three.module.min.js', 'three/addons/': b + 'examples/jsm/' } }) + '<' + '/script>'); })();
     </script>
 </head>
 <body data-theme="shinjuku">
@@ -125,13 +127,14 @@
 <div id="nowebgl"><div class="msg"></div><div class="why"></div><a href="#" onclick="location.reload(); return false;">Попробовать ещё раз</a></div>
 <script>if (/[?&]src=sample\b/.test(location.search)) document.write('<script src="./sample-words.js"><\/script>'); else if (location.protocol === 'file:') document.write('<script src="./words-busyd.js"><\/script>');</script>
 <script src="./street-data.js"></script>
-<script type="module">
+<script type="module" onerror="window.__streetFail && window.__streetFail('Не загрузилась 3D-библиотека — похоже, проблема с сетью.', 'модули Three.js не загрузились')">
 /*__WALK_JS__*/
 </script>
 <script>(function () {
     function webgl() { try { var c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } }
     function show(msg, why) { if (window.__walk) return; var el = document.getElementById('nowebgl'); el.querySelector('.msg').textContent = msg; el.querySelector('.why').textContent = why || ''; el.style.display = 'flex'; var l = document.getElementById('loading'); if (l) l.style.display = 'none'; }
     var firstErr = '';
+    window.__streetFail = show;
     window.addEventListener('error', function (e) {
         if (window.__walk) return;
         var m = String(e.message || (e.error && e.error.message) || ''); if (!firstErr) firstErr = m;

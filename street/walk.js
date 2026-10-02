@@ -259,11 +259,14 @@ let source = SAMPLE ? 'demo' : (params.get('src') || settings.source || (locatio
 if (location.protocol !== 'file:') { const hb = document.getElementById('home'); if (hb) hb.hidden = false; }
 const opts = { rain: settings.rain !== false, reflect: false, bloom: true }; // отражения на улице выключены навсегда
 
+// телефоны и планшеты — облегчённый режим: чёткость 1×, без bloom, гуще туман (меньше кварталов строится), меньше ламп
+const LOW = params.get('q') === 'low' || (params.get('q') !== 'high' && matchMedia('(pointer: coarse)').matches);
+if (LOW) { opts.bloom = false; th.fogD *= 1.35; }
 const canvas = document.getElementById('scene');
 let renderer;
 try { renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' }); }
 catch (e) { try { renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'default', failIfMajorPerformanceCaveat: false }); } catch (e2) { throw new Error('WebGL context: ' + (e2 && e2.message || e2)); } }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ('ontouchstart' in window) ? 1.25 : 1.5));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, LOW ? 1 : 1.5));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(th.sky);
@@ -279,7 +282,7 @@ composer.addPass(bloom);
 const hemi = new THREE.HemisphereLight(new THREE.Color(th.fog), new THREE.Color(th.ground), 0.55); scene.add(hemi);
 const amb = new THREE.AmbientLight(0xffffff, 0.12); scene.add(amb);
 const neonLights = [];
-for (let i = 0; i < 4; i++) { const l = new THREE.PointLight(0xffffff, 0, 14, 1.6); l.visible = false; scene.add(l); neonLights.push(l); }
+for (let i = 0; i < (LOW ? 2 : 4); i++) { const l = new THREE.PointLight(0xffffff, 0, 14, 1.6); l.visible = false; scene.add(l); neonLights.push(l); }
 const lamb = (color, extra) => new THREE.MeshLambertMaterial(Object.assign({ color: new THREE.Color(color), fog: true }, extra || {}));
 function updateNeonLights() {
     const cz = camera.position.z, cx = camera.position.x;
@@ -393,20 +396,24 @@ const world = new THREE.Group(); scene.add(world);
 function mergeStatic(group) {
     group.updateMatrixWorld(true);
     const buckets = new Map(), remove = [];
+    const colObjs = new Set(colliders.street.map((c) => c.obj).concat(colliders.room.map((c) => c.obj)));
     group.traverse((o) => {
         if (!o.isMesh || o.isSprite || o.isLine) return;
         const mt = o.material; if (!mt || Array.isArray(mt)) return;
-        if (mt.map || mt.alphaMap || mt.emissiveMap || mt.transparent || mt.wireframe) return;
+        if ((mt.map && !mt.userData.atlas) || mt.alphaMap || mt.emissiveMap || mt.transparent || mt.wireframe) return;
         if (!(mt.isMeshLambertMaterial || mt.isMeshBasicMaterial || mt.isMeshStandardMaterial) || mt.vertexColors) return;
         if (!o.geometry || !o.geometry.index || !o.geometry.attributes.normal || !o.geometry.attributes.uv) return;
+        if (colObjs.has(o)) return;
+        const doorMesh = !!o.userData.door && o.parent === group && mt.isMeshBasicMaterial;
         let p = o, tagged = false;
         while (p && p !== group) { const u = p.userData || {}; if (u.sign || u.door || u.exit || u.board || u.label || u.keep) { tagged = true; break; } p = p.parent; }
-        if (tagged) return;
-        const key = (mt.isMeshBasicMaterial ? 'b' : (mt.isMeshStandardMaterial ? 's' + mt.roughness + '/' + mt.metalness + '/' + mt.envMapIntensity : 'l')) + mt.color.getHex() + ':' + (mt.emissive ? mt.emissive.getHex() + '/' + mt.emissiveIntensity : 0) + ':' + mt.side;
+        if (tagged && !doorMesh) return;
+        const key = (mt.userData.atlas ? 'atlas' + mt.uuid : '') + (mt.isMeshBasicMaterial ? 'b' : (mt.isMeshStandardMaterial ? 's' + mt.roughness + '/' + mt.metalness + '/' + mt.envMapIntensity : 'l')) + mt.color.getHex() + ':' + (mt.emissive ? mt.emissive.getHex() + '/' + mt.emissiveIntensity : 0) + ':' + mt.side;
         if (!buckets.has(key)) buckets.set(key, { mt, geos: [] });
         const g = o.geometry.clone().applyMatrix4(o.matrixWorld);
         for (const a of Object.keys(g.attributes)) if (a !== 'position' && a !== 'normal' && a !== 'uv') g.deleteAttribute(a);
-        buckets.get(key).geos.push(g); remove.push(o);
+        buckets.get(key).geos.push(g);
+        if (doorMesh) mt.visible = false; else remove.push(o); // дверь остаётся для касаний, но не рисуется
     });
     remove.forEach((o) => { if (o.parent) o.parent.remove(o); });
     let n = 0;
@@ -417,7 +424,41 @@ function mergeStatic(group) {
         const m = new THREE.Mesh(merged, b.mt.clone()); m.frustumCulled = false; m.userData.merged = true;
         group.add(m); n++;
     });
+    mergeLines(group);
+    if (group === world) mergeGlows(group);
     return { removed: remove.length, meshes: n };
+}
+function mergeGlows(group) {
+    group.updateMatrixWorld(true);
+    const geos = [], remove = [];
+    group.children.forEach((o) => {
+        const mt = o.material; if (!o.isMesh || !mt || Array.isArray(mt) || mt.map !== discTex || mt.blending !== THREE.AdditiveBlending || o.userData.door) return;
+        const g = o.geometry.clone().applyMatrix4(o.matrixWorld); const c = mt.color.clone().multiplyScalar(mt.opacity), n = g.attributes.position.count, col = new Float32Array(n * 3);
+        for (let i = 0; i < n; i++) { col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
+        g.setAttribute('color', new THREE.BufferAttribute(col, 3)); for (const a of Object.keys(g.attributes)) if (!['position', 'normal', 'uv', 'color'].includes(a)) g.deleteAttribute(a);
+        geos.push(g); remove.push(o);
+    });
+    if (geos.length < 2) return;
+    const merged = BufferGeometryUtils.mergeGeometries(geos, false); geos.forEach((g) => g.dispose()); if (!merged) return;
+    remove.forEach((o) => { group.remove(o); o.geometry.dispose(); o.material.dispose(); });
+    const m = new THREE.Mesh(merged, new THREE.MeshBasicMaterial({ map: discTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); m.frustumCulled = false; m.userData.merged = true; group.add(m);
+}
+// линии (провода, верёвки) одного цвета → один LineSegments: раньше каждая была отдельным вызовом отрисовки
+function mergeLines(group) {
+    group.updateMatrixWorld(true);
+    const buckets = new Map(), remove = [];
+    group.traverse((o) => {
+        if (!o.isLine || o.isLineSegments || !o.material || !o.material.isLineBasicMaterial || o.material.transparent) return;
+        const pos = o.geometry.attributes.position; if (!pos || pos.count < 2) return;
+        const key = o.material.color.getHex(); if (!buckets.has(key)) buckets.set(key, { mt: o.material, pts: [] });
+        const arr = buckets.get(key).pts, a = new THREE.Vector3(), b = new THREE.Vector3();
+        for (let i = 0; i < pos.count - 1; i++) { a.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); b.fromBufferAttribute(pos, i + 1).applyMatrix4(o.matrixWorld); arr.push(a.x, a.y, a.z, b.x, b.y, b.z); }
+        remove.push(o);
+    });
+    if (remove.length < 2) return;
+    remove.forEach((o) => { if (o.parent) o.parent.remove(o); o.geometry.dispose(); });
+    const inv = new THREE.Matrix4().copy(group.matrixWorld).invert();
+    buckets.forEach((bk) => { const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(bk.pts, 3)); geo.applyMatrix4(inv); const ls = new THREE.LineSegments(geo, bk.mt.clone()); ls.frustumCulled = false; group.add(ls); });
 }
 const signsGroup = new THREE.Group(); scene.add(signsGroup);
 const doors = []; // двери магазинов: в них можно войти
@@ -464,11 +505,11 @@ function buildWorld() {
             const geo = new THREE.BoxGeometry(depth, b.H, len);
             const faceMat = lamb('#ffffff', { map: tex, emissiveMap: tex, emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.55 });
             const sideMat = lamb(mix(b.color, '#000', 0.3));
-            const mats = [side < 0 ? faceMat : sideMat, side < 0 ? sideMat : faceMat, sideMat, sideMat, sideMat, sideMat];
-            const m = new THREE.Mesh(geo, mats);
-            m.position.set(side * (W2 + depth / 2), b.H / 2, z - len / 2);
+            const m = new THREE.Mesh(geo, sideMat);
+            m.position.set(side * (W2 + depth / 2 + 0.02), b.H / 2, z - len / 2);
             if (side < 0) { tex.repeat.x = -1; tex.offset.x = 1; }
             world.add(m);
+            const facade = new THREE.Mesh(new THREE.PlaneGeometry(len, b.H), faceMat); facade.position.set(side * W2, b.H / 2, z - len / 2); facade.rotation.y = -side * Math.PI / 2; world.add(facade);
             // навес
             const aw = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, len - 0.1), lamb(mix(b.color, '#000', 0.5)));
             aw.position.set(side * (W2 - 0.4), th.awning, z - len / 2); world.add(aw);
@@ -506,9 +547,10 @@ function buildWorld() {
             }
             if (th.vending && rnd() < 0.35 && len > 4) {
                 const vc = ['#dce9ff', '#ffe9c0', '#ffd6e4'][Math.floor(rnd() * 3)];
-                const vm = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.85, 1.0), [lamb(mix(vc, '#000', 0.7)), lamb(mix(vc, '#000', 0.7)), lamb('#111111'), lamb('#111111'), lamb(mix(vc, '#000', 0.5)), lamb(mix(vc, '#000', 0.5))]);
-                vm.material[side < 0 ? 0 : 1] = new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(vc, '#000000', 0.45)) });
+                // автомат: корпус одним материалом + светящаяся лицевая панель (раньше коробка на 6 материалов = 6 вызовов)
+                const vm = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.85, 1.0), lamb(mix(vc, '#000', 0.7)));
                 vm.position.set(side * (W2 - 0.38), 0.925, z - len / 2); world.add(vm); addCollider(vm);
+                const vf = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.85), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(vc, '#000000', 0.45)) })); vf.position.set(side * (W2 - 0.38) - side * 0.378, 0.925, z - len / 2); vf.rotation.y = -side * Math.PI / 2; world.add(vf);
             }
             decorateBuilding(side, b, z, len, rnd);
             if (th.id === 'yokocho' && rnd() < 0.7) { // ящики
@@ -757,7 +799,7 @@ function buildProp(sign, group) {
     const gp = new THREE.Vector3(ga[0], ga[1], ga[2]).applyAxisAngle(new THREE.Vector3(0, 1, 0), g.rotation.y).add(g.position);
     if (g.userData.glowColor) { const hl = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: new THREE.Color(gc), transparent: true, opacity: 0.5 * sign.inten, blending: THREE.AdditiveBlending, depthWrite: false })); hl.position.copy(gp); hl.scale.set(1.6, 1.6, 1); group.add(hl); sign.glow.push(hl); }
     const gg = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.8), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(gc), transparent: true, opacity: (g.userData.glowColor ? 0.18 : 0.08) * sign.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
-    gg.rotation.x = -Math.PI / 2; gg.position.set(x, 0.015, z); group.add(gg); sign.glow.push(gg);
+    gg.rotation.x = -Math.PI / 2; gg.position.set(x, 0.015, z); if (!LOW) { group.add(gg); sign.glow.push(gg); }
     if (g.userData.light && sign.isLit) { const pl = new THREE.PointLight(new THREE.Color(gc), 3, 6, 1.6); pl.position.copy(gp); group.add(pl); sign.glow.push(pl); if (g.userData.flicker) sign.flickerLight = pl; }
     sign.prop = g;
 }
@@ -851,7 +893,7 @@ function buildBlock(b) {
             const wg = new THREE.Mesh(new THREE.PlaneGeometry(s.h * 1.6, s.h * 1.6), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(col), transparent: true, opacity: 0.35 * s.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
             wg.position.set(s.side * (W2 - 0.02), y, s.z); wg.rotation.y = -s.side * Math.PI / 2; g.add(wg); s.glow.push(wg);
             const gg = new THREE.Mesh(new THREE.PlaneGeometry(s.w * 3.5, s.h * 1.2), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(col), transparent: true, opacity: 0.22 * s.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
-            gg.rotation.x = -Math.PI / 2; gg.position.set(x, 0.015, s.z); g.add(gg); s.glow.push(gg);
+            gg.rotation.x = -Math.PI / 2; gg.position.set(x, 0.015, s.z); if (!LOW) { g.add(gg); s.glow.push(gg); }
         } else if (s.kind === 'lantern') {
             const geo = new THREE.SphereGeometry(s.r, 16, 12);
             const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: signTexture(s, s.isLit && s.state !== 'due'), fog: true }));
@@ -863,18 +905,19 @@ function buildBlock(b) {
             const hl = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: new THREE.Color(col), transparent: true, opacity: 0.5 * s.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
             hl.position.set(x, s.y, s.z); hl.scale.set(s.r * 6, s.r * 6, 1); g.add(hl); s.glow.push(hl);
             const gg = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.6), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(col), transparent: true, opacity: 0.15 * s.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
-            gg.rotation.x = -Math.PI / 2; gg.position.set(x, 0.015, s.z); g.add(gg); s.glow.push(gg);
+            gg.rotation.x = -Math.PI / 2; gg.position.set(x, 0.015, s.z); if (!LOW) { g.add(gg); s.glow.push(gg); }
         } else { // фасадные: норэн, короб
             const geo = new THREE.PlaneGeometry(s.len, s.hh);
             const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: signTexture(s, s.isLit && s.state !== 'due'), fog: true, side: THREE.DoubleSide }));
             m.position.set(s.side * (W2 - 0.06), s.y0 + s.hh / 2, s.z - s.len / 2); m.rotation.y = -s.side * Math.PI / 2; m.userData.sign = s; g.add(m); s.meshes.push(m);
             if (s.kind === 'noren') { const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), new THREE.MeshBasicMaterial({ color: s.isLit ? 0xffe6b0 : 0x3a3024 })); lamp.position.set(s.side * (W2 - 0.15), s.y0 + s.hh + 0.25, s.z - s.len / 2); g.add(lamp); }
             const gg = new THREE.Mesh(new THREE.PlaneGeometry(s.len * 1.3, 2.2), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(col), transparent: true, opacity: 0.2 * s.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
-            gg.rotation.x = -Math.PI / 2; gg.position.set(s.side * (W2 - 0.9), 0.015, s.z - s.len / 2); g.add(gg); s.glow.push(gg);
+            gg.rotation.x = -Math.PI / 2; gg.position.set(s.side * (W2 - 0.9), 0.015, s.z - s.len / 2); if (!LOW) { g.add(gg); s.glow.push(gg); }
         }
         if (s.state === 'due') dynSigns.push(s);
         if (!s.isLit || s.state === 'due') s.glow.forEach((x) => { x.visible = false; });
     });
+    mergeStatic(g);
 }
 function disposeBlock(b) {
     if (!b.built) return;
@@ -896,6 +939,14 @@ function ensureBlocks() {
 
 
 // ---- детали окружения: то, что делает улицу обжитой ----
+// атлас: n картинок одним холстом; плоскость получает UV своей ячейки, материал общий → mergeStatic сливает
+function makeAtlas(n, cw, ch, draw, extra) {
+    const cols = 8, rows = Math.ceil(n / cols), c = document.createElement('canvas'); c.width = cols * cw; c.height = rows * ch; const g = c.getContext('2d');
+    for (let i = 0; i < n; i++) { const t = draw(); g.drawImage(t.image, (i % cols) * cw, Math.floor(i / cols) * ch, cw, ch); t.dispose(); }
+    const tex = makeTex(c); const mat = lamb('#ffffff', Object.assign({ map: tex }, extra || {})); mat.userData.atlas = true;
+    return { n, mat, plane(w, h, rnd) { const i = Math.floor(rnd() * n), u0 = (i % cols) / cols, u1 = u0 + 1 / cols, vt = 1 - Math.floor(i / cols) / rows, vb = vt - 1 / rows; const geo = new THREE.PlaneGeometry(w, h); const uv = geo.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setXY(k, u0 + uv.getX(k) * (u1 - u0), vb + uv.getY(k) * (vt - vb)); return new THREE.Mesh(geo, mat); } };
+}
+let posterAtlas = null, boardAtlas = null;
 function texPoster(rnd) {
     const c = document.createElement('canvas'); c.width = 64; c.height = 90; const g = c.getContext('2d');
     const base = ['#e8e0d0', '#f0d8c0', '#d8e8f0', '#f4e4a0', '#e0c8e8'][Math.floor(rnd() * 5)];
@@ -921,13 +972,14 @@ function decorateBuilding(side, b, z, len, rnd) {
     // плакаты у входа
     // плакаты — по сетке вдоль фасада, каждый на своей глубине и не у двери, иначе плоскости дрожат друг на друге
     const np = Math.min(1 + Math.floor(rnd() * 3), Math.floor((len - 2.4) / 0.7));
-    for (let i = 0; i < np; i++) { const p = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.64), lamb('#ffffff', { map: texPoster(rnd) })); p.position.set(inward(0.015 + i * 0.006), 1.55 + (i % 2) * 0.4 + rnd() * 0.1, z - 0.5 - i * 0.7 - rnd() * 0.15); p.rotation.y = -side * Math.PI / 2; p.rotation.z = (rnd() - 0.5) * 0.06; world.add(p); }
+    if (!posterAtlas) { const ar = mulberry32(hashStr(th.id) + 5); posterAtlas = makeAtlas(32, 64, 90, () => texPoster(ar)); }
+    for (let i = 0; i < np; i++) { const p = posterAtlas.plane(0.45, 0.64, rnd); p.position.set(inward(0.015 + i * 0.006), 1.55 + (i % 2) * 0.4 + rnd() * 0.1, z - 0.5 - i * 0.7 - rnd() * 0.15); p.rotation.y = -side * Math.PI / 2; p.rotation.z = (rnd() - 0.5) * 0.06; world.add(p); }
     // балконы и бельё (верхние этажи)
     if (b.floors > 2 && rnd() < (th.id === 'yokocho' ? 0.3 : 0.55)) {
         const fl = 1 + Math.floor(rnd() * (b.floors - 1));
         const bw = Math.min(len - 0.6, 1.6 + rnd() * 2.2), bz = z - 0.3 - rnd() * Math.max(0.1, len - bw - 0.6) - bw / 2;
         const slab = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.1, bw), lamb(mix(b.color, '#ffffff', 0.06))); slab.position.set(inward(0.45), fl * th.floorH + 0.05, bz); world.add(slab);
-        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.9, bw), lamb('#2a2a30', { transparent: true, opacity: 0.85 })); rail.position.set(inward(0.88), fl * th.floorH + 0.55, bz); world.add(rail);
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.9, bw), lamb('#2a2a30')); rail.position.set(inward(0.88), fl * th.floorH + 0.55, bz); world.add(rail);
         for (let k = 0; k < Math.floor(bw / 0.25); k++) { const bar = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.9, 0.02), lamb('#3a3a44')); bar.position.set(inward(0.88), fl * th.floorH + 0.55, bz - bw / 2 + 0.12 + k * 0.25); world.add(bar); }
         const planter = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.22, 0.5), lamb('#4a3020')); planter.position.set(inward(0.75), fl * th.floorH + 1.05, bz + bw / 2 - 0.4); world.add(planter);
         const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), lamb('#2f6a3a')); leaf.position.set(inward(0.75), fl * th.floorH + 1.3, bz + bw / 2 - 0.4); world.add(leaf);
@@ -943,7 +995,8 @@ function decorateBuilding(side, b, z, len, rnd) {
         const dz = z - len + 1.5 + 0.9;
         const bd = new THREE.Group();
         // А-образная стойка: две створки наклонены и сходятся сверху, не пересекаясь
-        [1, -1].forEach((k) => { const pl = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.78), lamb('#ffffff', { map: texBoard(rnd), side: THREE.DoubleSide })); pl.position.set(0, 0.4, k * 0.12); pl.rotation.x = -k * 0.3; bd.add(pl); });
+        if (!boardAtlas) { const ar = mulberry32(hashStr(th.id) + 6); boardAtlas = makeAtlas(24, 64, 96, () => texBoard(ar), { side: THREE.DoubleSide }); }
+        [1, -1].forEach((k) => { const pl = boardAtlas.plane(0.5, 0.78, rnd); pl.position.set(0, 0.4, k * 0.12); pl.rotation.x = -k * 0.3; bd.add(pl); });
         const hinge = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.03, 0.03), lamb('#2a2a30')); hinge.position.set(0, 0.78, 0); bd.add(hinge);
         [-0.23, 0.23].forEach((x) => { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.3), lamb('#2a2a30')); leg.position.set(x, 0.015, 0); bd.add(leg); });
         bd.position.set(inward(0.75), 0, dz); bd.rotation.y = -side * Math.PI / 2 + (rnd() - 0.5) * 0.4; world.add(bd); addCollider(bd, null, 0.2);
@@ -1367,7 +1420,7 @@ let rain = null;
 function buildRain() {
     if (rain) { scene.remove(rain); rain.geometry.dispose(); rain = null; }
     if (!th.rain) return;
-    const n = 1400, pos = new Float32Array(n * 3);
+    const n = LOW ? 600 : 1400, pos = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * 14; pos[i * 3 + 1] = Math.random() * 14; pos[i * 3 + 2] = (Math.random() - 0.5) * 24; }
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     rain = new THREE.Points(geo, new THREE.PointsMaterial({ map: streakTex, size: 0.16, transparent: true, opacity: 0.4, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true }));

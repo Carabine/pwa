@@ -6,8 +6,9 @@ const LIFE = (() => {
     const V3 = THREE.Vector3;
     const _v = new V3(), _v2 = new V3(), _o = new THREE.Object3D();
     _o.rotation.order = 'YXZ'; // сначала наклон, потом поворот по азимуту
-    const charMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0, side: THREE.DoubleSide, envMapIntensity: 0.7 });
-    const heldMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, metalness: 0.05, envMapIntensity: 1 });
+    const charMat = LOW ? new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }) : new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0, side: THREE.DoubleSide, envMapIntensity: 0.7 });
+    const heldMat = LOW ? new THREE.MeshLambertMaterial({ vertexColors: true }) : new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.3, metalness: 0.05, envMapIntensity: 1 });
+    const faceMatOf = (map) => LOW ? new THREE.MeshLambertMaterial({ map, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }) : new THREE.MeshStandardMaterial({ map, transparent: true, depthWrite: false, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
     const smooth = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
     const env4 = (x, a, b, c, d) => (x < a || x > d ? 0 : x < b ? smooth((x - a) / (b - a)) : x < c ? 1 : 1 - smooth((x - c) / (d - c)));
     const angTo = (a, b, step) => { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return Math.abs(d) <= step ? b : a + Math.sign(d) * step; };
@@ -254,7 +255,7 @@ const LIFE = (() => {
         Object.keys(P).forEach((n) => { const m = P[n].mesh(); if (m) J[n].add(m); });
         // лицо
         const sp = { fem, eye: tint(o.eye), brow: shade(hair, -0.25), lash: o.lash || '#1a1014', mouth: o.mouth, blush: !!o.blush, old: !!o.old };
-        const faceMat = new THREE.MeshStandardMaterial({ map: faceTex(sp, 'open'), transparent: true, depthWrite: false, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+        const faceMat = faceMatOf(faceTex(sp, 'open'));
         const face = new THREE.Mesh(headGeo(R * 1.004, FACE.ps, FACE.pl, FACE.ts, FACE.tl, 20, 16), faceMat);
         face.position.set(0, HC, 0); face.renderOrder = 2; J.head.add(face);
 
@@ -663,7 +664,7 @@ const LIFE = (() => {
             });
             motes('#fff2d8');
         } else if (ROOMX.types.indexOf(type) >= 0) {
-            const cap = 10;
+            const cap = LOW ? 6 : 10;
             placed.forEach((m) => { const g = m._grp; if (!g) return;
                 (m.stations || []).forEach((st) => { if (S.room.length >= cap || rnd() > (st.p == null ? 0.6 : st.p)) return; const o = { holdR: st.act === 'drum' ? 'bachi' : st.hold, holdL: st.act === 'drum' ? 'bachi' : null, apron: st.apron, hachimaki: st.hachimaki, short: st.short, top: st.top, outfit: st.outfit, fem: st.fem }; const p = W(g, st.x, 0, st.z); if (Math.abs(p.x) > ROOM.w / 2 - 0.35 || Math.abs(p.z) > ROOM.d / 2 - 0.35) return; add(o, p, yawOf(g, st.yaw), { act: st.act, role: st.role }); });
                 (m.seats || []).forEach((se) => { if (S.room.length >= cap || rnd() > (se.p == null ? 0.6 : se.p)) return; const act = pick(se.acts); const o = { seated: true, holdR: se.hold && se.hold[act], fem: se.fem, old: se.old, outfit: se.outfit, hairStyle: se.old ? (se.fem ? 'bun' : 'bald') : null, hair: se.old ? '#c8c8d0' : null };
@@ -692,6 +693,7 @@ const LIFE = (() => {
 
     // ---------- материалы комнаты: с бликами и отражениями вместо «пластилина» ----------
     function upgradeMaterials(group, type) {
+        if (LOW) return; // на телефоне — простые материалы (дешевле на пиксель)
         const floorR = { izakaya: 0.48, konbini: 0.24, class: 0.42, home: 0.82 }[type] || 0.6;
         const hsl = {};
         group.traverse((o) => {
@@ -713,6 +715,7 @@ const LIFE = (() => {
         });
     }
     function captureEnv() {
+        if (LOW) return;
         scene.environment = null; if (S.envRT) { S.envRT.dispose(); S.envRT = null; }
         try {
             neonLights.forEach((l) => { l.visible = false; });
@@ -894,7 +897,7 @@ const LIFE = (() => {
                 if (!attached(ch.root)) { if (ch._seen || t - (ch._born || (ch._born = t)) > 3) S.loose.splice(i, 1); continue; }
                 ch._seen = true;
                 ch.root.getWorldPosition(_v); const d = _v.distanceTo(camera.position);
-                if (d > 16) continue;
+                if (d > (LOW ? 9 : 16)) continue;
                 if (d < 3.2 && !ch.waved && !ch.gest) { ch.waved = true; ch.gest = { kind: ch.o.armPose === 'up' ? 'nod' : 'wave', t0: t, t1: t + 2.2 }; }
                 if (d > 6) ch.waved = false;
                 pose(ch, t, dt);
