@@ -63,8 +63,13 @@ function buildOwner() {
     const knownList = (S.known || []).map((k) => (typeof k === 'string' ? { kanji: k } : k)).filter((k) => k && k.kanji);
     knownList.forEach((k) => { if (!have.has(k.kanji)) { have.add(k.kanji); extra.push({ id: 'known:' + k.kanji, kanji: k.kanji, kana: k.kana || '', translation: k.translation || '', createdAt: '2000-01-01T00:00:00.000Z', known: true }); } });
     const decks = (S.decks || []).filter((d) => d && Array.isArray(d.wordIds));
+    let schedule = S.schedule || {};
+    if (S.snapshotDay) {
+        const shift = Math.round((Date.parse(todayKey()) - Date.parse(S.snapshotDay)) / 864e5);
+        if (shift) { schedule = {}; Object.keys(S.schedule || {}).forEach((k) => { const s = S.schedule[k]; schedule[k] = Object.assign({}, s, s.due ? { due: dayKey(new Date(Date.parse(s.due) + shift * 864e5)) } : {}); }); }
+    }
     if (extra.length) decks.push({ id: 'known-deck', name: 'Уже знаю', emoji: '✓', wordIds: extra.map((w) => w.id) });
-    return { words: words.concat(extra), schedule: S.schedule || {}, decks, known: new Set(knownList.map((k) => k.kanji)), jlpt: {}, source: 'owner' };
+    return { words: words.concat(extra), schedule, decks, known: new Set(knownList.map((k) => k.kanji)), jlpt: {}, source: 'owner' };
 }
 
 function buildDemo() {

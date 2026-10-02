@@ -253,7 +253,9 @@ const SET_KEY = 'animei:street';
 function lsSet() { try { return JSON.parse(localStorage.getItem(SET_KEY) || '{}') || {}; } catch (e) { return {}; } }
 function saveSet(p) { try { localStorage.setItem(SET_KEY, JSON.stringify(Object.assign(lsSet(), p))); } catch (e) { /* приватный режим */ } }
 const settings = lsSet();
-let source = params.get('src') || settings.source || (location.protocol === 'file:' ? 'demo' : 'real');
+// ?src=sample — тестовая колода по ссылке (не запоминается); иначе выбор из настроек, на сайте по умолчанию — свои слова
+const SAMPLE = params.get('src') === 'sample' && !!window.STREET_WORDS;
+let source = SAMPLE ? 'demo' : (params.get('src') || settings.source || (location.protocol === 'file:' ? 'demo' : 'real'));
 if (location.protocol !== 'file:') { const hb = document.getElementById('home'); if (hb) hb.hidden = false; }
 const opts = { rain: settings.rain !== false, reflect: false, bloom: true }; // отражения на улице выключены навсегда
 
@@ -1676,9 +1678,20 @@ document.getElementById('share').addEventListener('click', async () => {
 const panel = document.getElementById('panel');
 document.getElementById('gear').addEventListener('click', () => { panel.classList.toggle('open'); if (document.pointerLockElement) document.exitPointerLock(); });
 document.getElementById('panel-close').addEventListener('click', () => panel.classList.remove('open'));
-panel.querySelectorAll('[data-src]').forEach((b) => { b.classList.toggle('on', b.dataset.src === source); b.addEventListener('click', () => { source = b.dataset.src; saveSet({ source }); panel.querySelectorAll('[data-src]').forEach((x) => x.classList.toggle('on', x === b)); load(); }); });
+panel.querySelectorAll('[data-src]').forEach((b) => {
+    b.classList.toggle('on', SAMPLE ? b.dataset.src === 'sample' : b.dataset.src === source);
+    b.addEventListener('click', () => {
+        const want = b.dataset.src, u = new URL(location.href);
+        if (want === 'sample') { u.searchParams.set('src', 'sample'); location.href = u.toString(); return; }
+        saveSet({ source: want });
+        if (SAMPLE || (want === 'demo' && window.STREET_WORDS && location.protocol !== 'file:')) { u.searchParams.delete('src'); location.href = u.toString(); return; }
+        source = want; panel.querySelectorAll('[data-src]').forEach((x) => x.classList.toggle('on', x === b)); load();
+    });
+});
+// смена улицы сохраняет тестовую колоду в адресе
+if (SAMPLE) panel.querySelectorAll('a[data-theme]').forEach((a) => { const u = new URL(a.href, location.href); u.searchParams.set('src', 'sample'); a.href = u.toString(); });
 panel.querySelectorAll('[data-theme]').forEach((b) => { b.classList.toggle('on', b.dataset.theme === th.id); });
-if (window.STREET_WORDS && window.STREET_WORDS.words) panel.querySelector('[data-src="demo"]').textContent = 'Мой словарь (выгрузка)';
+if (window.STREET_WORDS && window.STREET_WORDS.words && !SAMPLE && location.protocol === 'file:') panel.querySelector('[data-src="demo"]').textContent = 'Мой словарь (выгрузка)';
 const rainBtn = panel.querySelector('[data-rain]'); rainBtn.hidden = !th.rain; rainBtn.classList.toggle('on', opts.rain);
 rainBtn.addEventListener('click', () => { opts.rain = !opts.rain; saveSet({ rain: opts.rain }); rainBtn.classList.toggle('on', opts.rain); if (rain) rain.visible = opts.rain; });
 const reflBtn = { classList: { remove() {}, toggle() {} } }; // кнопки отражений больше нет
