@@ -905,8 +905,9 @@ function decorateBuilding(side, b, z, len, rnd) {
     // карнизы между этажами — объём фасада
     for (let fl = 1; fl < b.floors; fl++) { const ledge = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, len - 0.05), lamb(mix(b.color, '#ffffff', 0.08))); ledge.position.set(inward(0.09), fl * th.floorH, z - len / 2); world.add(ledge); }
     // плакаты у входа
-    const np = 1 + Math.floor(rnd() * 3);
-    for (let i = 0; i < np; i++) { const p = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.64), lamb('#ffffff', { map: texPoster(rnd) })); p.position.set(inward(0.015), 1.5 + rnd() * 0.7, z - 0.4 - rnd() * (len - 0.9)); p.rotation.y = -side * Math.PI / 2; p.rotation.z = (rnd() - 0.5) * 0.06; world.add(p); }
+    // плакаты — по сетке вдоль фасада, каждый на своей глубине и не у двери, иначе плоскости дрожат друг на друге
+    const np = Math.min(1 + Math.floor(rnd() * 3), Math.floor((len - 2.4) / 0.7));
+    for (let i = 0; i < np; i++) { const p = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.64), lamb('#ffffff', { map: texPoster(rnd) })); p.position.set(inward(0.015 + i * 0.006), 1.55 + (i % 2) * 0.4 + rnd() * 0.1, z - 0.5 - i * 0.7 - rnd() * 0.15); p.rotation.y = -side * Math.PI / 2; p.rotation.z = (rnd() - 0.5) * 0.06; world.add(p); }
     // балконы и бельё (верхние этажи)
     if (b.floors > 2 && rnd() < (th.id === 'yokocho' ? 0.3 : 0.55)) {
         const fl = 1 + Math.floor(rnd() * (b.floors - 1));
@@ -922,7 +923,7 @@ function decorateBuilding(side, b, z, len, rnd) {
         }
     }
     // газовый счётчик/щиток и водосток
-    const meter = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.3, 0.25), lamb('#9a9aa4')); meter.position.set(inward(0.1), 0.9 + rnd() * 0.6, z - len + 0.5); world.add(meter);
+    const meter = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.3, 0.25), lamb('#9a9aa4')); meter.position.set(inward(0.1), 0.9 + rnd() * 0.6, z - len + 2.3); world.add(meter);
     // стойка-меню у двери и хлам у стены
     if (b.shop && !b.shutter) {
         const dz = z - len + 1.5 + 0.9;
