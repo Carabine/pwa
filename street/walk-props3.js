@@ -211,5 +211,7 @@
         PROP_META[w] = { where: e.where, spot: e.spot, inside: e.inside, face: e.arch === 'place' ? 'player' : (e.arch === 'person' || e.arch === 'quad' || e.arch === 'bird' ? 'street' : undefined) };
     });
     ['店', '学校', '駅', '警察', '旗', '鐘', '病院'].forEach((w) => { if (PROP_META[w]) PROP_META[w].face = 'player'; });
+    Object.keys(T).forEach((w) => { if (T[w].arch === 'place' && PROP_META[w]) PROP_META[w].noLabel = true; });
+    ['店', '学校', '駅', '警察', '病院'].forEach((w) => { if (PROP_META[w]) PROP_META[w].noLabel = true; });
     ['猫', '犬', '熊', '牛', '馬', '豚', '鶏', '兎', '雪'].forEach((w) => { if (PROP_META[w]) PROP_META[w].face = 'street'; });
 })();

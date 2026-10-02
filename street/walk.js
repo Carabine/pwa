@@ -737,7 +737,7 @@ function buildProp(sign, group) {
     group.add(g);
     sign.meshes = []; sign.glow = [];
     const bb = new THREE.Box3().setFromObject(g);
-    attachLabel(sign, group, x, bb.max.y + 0.42, z);
+    if (!(propMeta(sign.text) || {}).noLabel) attachLabel(sign, group, x, bb.max.y + 0.42, z); // у табличек слово уже на самой вывеске
     // свечение, если слово горит
     const gc = g.userData.glowColor || sign.color;
     const ga = g.userData.glowAt || [0, Math.max(0.4, bb.max.y * 0.6), 0];
