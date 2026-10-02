@@ -98,7 +98,7 @@
         <span><i class="due"></i>пора повторить</span>
         <span><i class="worn"></i>забывается</span>
     </div>
-    <div class="hint"><span class="m">Левый палец — идти, правый — осмотреться</span><span class="d">Клик — захватить мышь, Esc — отпустить · WASD или колесо — идти · Shift — бег · M — звук</span> · тап по вывеске — слово, по двери — войти</div>
+    <div class="hint"><span class="m">Левый палец — идти, правый — осмотреться</span><span class="d">Клик — захватить мышь, Esc — отпустить · WASD или колесо — идти · Shift — бег · M — звук</span></div>
     <div class="actions">
         <a class="btn ghost" id="home" href="../pages/apps.html" aria-label="Выйти в приложения" hidden>✕</a>
         <button class="btn ghost" id="exit" hidden>← На улицу</button>
@@ -3783,17 +3783,16 @@ function updateHover(now) {
     let pt = null;
     if (locked()) pt = [innerWidth / 2, innerHeight / 2]; else if (FINE && hover.lastMouse) pt = hover.lastMouse;
     else if (GAZE) {
-        const h = pick(innerWidth / 2, innerHeight / 2, 7), key = h && (h.sign || h.door) || null;
+        const h = pick(innerWidth / 2, innerHeight / 2, 7), key = h && h.sign || null; // двери не подписываем
         document.getElementById('cross').classList.toggle('hit', !!key);
         if (key !== hover.gazeKey) { hover.gazeKey = key; hover.gazeT = now; }
-        if (key && now - hover.gazeT > 280) { if (h.sign) showHint(h.sign, false); else showDoorHint(h.door); }
+        if (key && now - hover.gazeT > 280) showHint(h.sign, false);
         else if (!key && (!hover.sticky || now > hover.sticky)) hideHint();
         return;
     }
     if (pt) {
         const h = pick(pt[0], pt[1]);
         if (h && h.sign) showHint(h.sign, false);
-        else if (h && h.door) showDoorHint(h.door);
         else if (!hover.sticky || now > hover.sticky) hideHint();
     } else if (hover.sticky && now > hover.sticky) hideHint();
 }
