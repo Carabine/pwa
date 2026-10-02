@@ -1481,15 +1481,15 @@ function buildSteam() {
 // AudioContext с упреждением (не по setInterval — тот плавает, и ритм «расползается»).
 // Синдзюку — э-пиано и тихий дождь; Ёкотё — мелодия на кото; в комнате — тот же трек приглушённо, «из колонки».
 const audio = (() => {
-    let ctx = null, master = null, bus = null, tone = null, enabled = settings.music !== false, sceneId = null, nodes = [], timer = 0, motionGain = null;
+    let ctx = null, master = null, bus = null, tone = null, enabled = settings.music2 !== false, sceneId = null, nodes = [], timer = 0, motionGain = null;
     const VARIANTS = ['city', 'snow', 'train', 'tea', 'stars', 'harbor', 'radio', 'calm', 'lane', 'lofi'];
     let variant = VARIANTS.includes(settings.musicVar) ? settings.musicVar : 'radio'; // по умолчанию — «Радио за стеной» (выбор пользователя)
     const btn = document.getElementById('music');
     let noiseBuf = null, verb = null;
     function getVerb(c) {
         if (verb && verb.c === c) return verb.input;
-        const len = Math.floor(c.sampleRate * 2.6), ir = c.createBuffer(2, len, c.sampleRate);
-        for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.4); }
+        const chans = LOW ? 1 : 2, len = Math.floor(c.sampleRate * (LOW ? 1.3 : 2.6)), ir = c.createBuffer(chans, len, c.sampleRate);
+        for (let ch = 0; ch < chans; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.4); }
         const conv = c.createConvolver(); conv.buffer = ir; const wet = c.createGain(); wet.gain.value = 0.16; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3800;
         conv.connect(lp); lp.connect(wet); wet.connect(master); verb = { c, input: conv }; return conv;
     }
@@ -1594,7 +1594,7 @@ const audio = (() => {
             { low: [87.3, N.C3], up: [N.A3, N.D4, N.G4] },
             { low: [N.G2, N.D3], up: [N.B3, N.E4, N.G4] },
         ];
-        const cityBus = c.createGain(); cityBus.gain.value = 1; cityBus.connect(bus); const send = c.createGain(); send.gain.value = 0.7; cityBus.connect(send); klp.connect(send); send.connect(getVerb(c));
+        const cityBus = c.createGain(); cityBus.gain.value = 1; cityBus.connect(bus); if (!['radio', 'lofi', 'calm', 'lane'].includes(variant)) { const send = c.createGain(); send.gain.value = 0.7; cityBus.connect(send); klp.connect(send); send.connect(getVerb(c)); }
         let chimeAt = 0;
         const playCity = (s, when) => {
             const ci = Math.floor(s / 64) % CITY.length, ch = CITY[ci];
@@ -1678,13 +1678,14 @@ const audio = (() => {
         if (variant === 'radio') { tone.frequency.value = 850; drumBus.gain.value = 0.4; bus.gain.value = 0.28; }
         const play = { city: playCity, snow: playSnow, train: playTrain, tea: playTea, stars: playStars, harbor: playHarbor, radio: playLofi, calm: playCalm, lane: playLane, lofi: playLofi }[variant] || playCity;
         if (variant === 'lane') melBus.gain.value = 0.15;
-        timer = setInterval(() => { while (next < c.currentTime + 0.15) { play(step, next + (step % 2 ? S16 * SWING : 0)); next += S16; step++; } }, 25);
+        timer = setInterval(() => { if (next < c.currentTime) next = c.currentTime + 0.05; while (next < c.currentTime + (LOW ? 0.6 : 0.25)) { play(step, next + (step % 2 ? S16 * SWING : 0)); next += S16; step++; } }, 25);
         // шагов нет — пользователь попросил убрать звук ходьбы
         master.gain.cancelScheduledValues(t0); master.gain.setValueAtTime(0, t0); master.gain.linearRampToValueAtTime(0.85, t0 + 2.5);
     }
     function stop() { clearInterval(timer); nodes.forEach((n) => { try { n.src && n.src.stop(); n.o && n.o.stop(); } catch (e) { /* уже остановлен */ } }); nodes = []; if (bus) { try { bus.disconnect(); } catch (e) { /* ok */ } bus = null; } }
     return {
-        resume() { if (!enabled) return; if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination); } catch (e) { return; } start(inside.on ? 'inside' : th.id); } else if (ctx.state === 'suspended') ctx.resume(); },
+        resume() { if (!enabled) return; if (!ctx) { try { const AC = window.AudioContext || window.webkitAudioContext; try { ctx = new AC({ latencyHint: 'playback' }); } catch (e) { ctx = new AC(); } master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination); ctx.onstatechange = () => { if (ctx.state === 'running' && enabled) start(sceneId || (inside.on ? 'inside' : th.id)); }; } catch (e) { return; } start(inside.on ? 'inside' : th.id); }
+            if (ctx.state !== 'running') { try { ctx.resume(); } catch (e) { /* нет жеста — ждём следующего */ } } },
         setScene(id) { if (ctx && enabled && id !== sceneId) start(id); },
         get variant() { return variant; },
         stationIndex() { return VARIANTS.indexOf(variant); },
@@ -1693,12 +1694,14 @@ const audio = (() => {
             if (ctx && master) { const w = ctx.currentTime; const s = ctx.createBufferSource(); s.buffer = getNoise(ctx); const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.setValueAtTime(900, w); bp.frequency.exponentialRampToValueAtTime(2600, w + 0.35); bp.Q.value = 2; const g = ctx.createGain(); g.gain.setValueAtTime(0.05, w); g.gain.exponentialRampToValueAtTime(0.0001, w + 0.4); s.connect(bp); bp.connect(g); g.connect(ctx.destination); s.start(w, Math.random()); s.stop(w + 0.42); }
             this.setVariant(v); return v;
         },
-        setVariant(v) { if (!VARIANTS.includes(v)) return; variant = v; saveSet({ musicVar: v }); if (!enabled) { enabled = true; saveSet({ music: true }); btn.classList.add('on'); } if (ctx) start(sceneId || (inside.on ? 'inside' : th.id)); else this.resume(); },
+        setVariant(v) { if (!VARIANTS.includes(v)) return; variant = v; saveSet({ musicVar: v }); if (!enabled) { enabled = true; saveSet({ music2: true }); btn.classList.add('on'); } if (ctx) start(sceneId || (inside.on ? 'inside' : th.id)); else this.resume(); },
         setMotion(k) { if (motionGain && ctx) { motionGain._lfo.gain.setTargetAtTime(Math.min(1, k) * 0.04, ctx.currentTime, 0.1); } },
         ding() { if (!ctx || !enabled || !master) return; const w = ctx.currentTime; [N.C5, N.E5, N.G5, 1046.5].forEach((f, i) => keys(ctx, f, w + i * 0.08, 0.6, 0.05, master)); },
-        toggle() { enabled = !enabled; saveSet({ music: enabled }); btn.classList.toggle('on', enabled); if (!enabled) { stop(); if (ctx) ctx.suspend(); } else this.resume(); toast(enabled ? 'Звук включён' : 'Звук выключен'); },
+        toggle() { enabled = !enabled; saveSet({ music2: enabled }); btn.classList.toggle('on', enabled); if (!enabled) { stop(); if (ctx) ctx.suspend(); } else this.resume(); toast(enabled ? 'Звук включён' : 'Звук выключен'); },
         get enabled() { return enabled; },
         get state() { return ctx ? ctx.state : 'none'; },
+        // уровень на выходе (для проверок): RMS за 50 мс
+        _level() { if (!ctx || !master) return 0; if (!this._an) { this._an = ctx.createAnalyser(); this._an.fftSize = 2048; master.connect(this._an); } const d = new Float32Array(2048); this._an.getFloatTimeDomainData(d); let q = 0; for (let i = 0; i < d.length; i++) q += d[i] * d[i]; return +(20 * Math.log10(Math.sqrt(q / d.length) + 1e-9)).toFixed(1); },
         // для записи превью: проиграть сцену в заданный узел
         _debug: { start: (c, m, id, v) => { ctx = c; master = m; if (v) variant = v; start(id); } },
     };
