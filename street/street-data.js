@@ -55,7 +55,14 @@ function demoSchedule(state) {
 function buildOwner() {
     const S = window.STREET_WORDS;
     if (!S || !Array.isArray(S.words) || !S.words.length) return null;
-    return { words: S.words.slice(), schedule: S.schedule || {}, decks: (S.decks || []).filter((d) => d && Array.isArray(d.wordIds)), known: new Set(S.known || []), jlpt: {}, source: 'owner' };
+    const words = S.words.slice();
+    const have = new Set(words.map((w) => w.kanji));
+    // «Уже знаю» — без карточки, перевода и расписания, но это тоже словарь: горят как выученные
+    const extra = [];
+    (S.known || []).forEach((k, i) => { if (!have.has(k)) { have.add(k); extra.push({ id: 'known:' + k, kanji: k, kana: '', translation: '', createdAt: '2000-01-01T00:00:00.000Z', known: true }); } });
+    const decks = (S.decks || []).filter((d) => d && Array.isArray(d.wordIds));
+    if (extra.length) decks.push({ id: 'known-deck', name: 'Уже знаю', emoji: '✓', wordIds: extra.map((w) => w.id) });
+    return { words: words.concat(extra), schedule: S.schedule || {}, decks, known: new Set(S.known || []), jlpt: {}, source: 'owner' };
 }
 
 function buildDemo() {
