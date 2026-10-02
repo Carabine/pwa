@@ -25,8 +25,6 @@
             html body #hint { left: auto; right: calc(env(safe-area-inset-right, 0px) + 12px); top: calc(env(safe-area-inset-top, 0px) + 12px); transform: translate(0, -10px); min-width: 0; max-width: min(300px, 58vw); padding: 9px 12px; border-radius: 14px; }
             html body #hint.on { transform: translate(0, 0); }
             html body #h-kanji { font-size: 24px; }
-            #toast { left: calc(env(safe-area-inset-left, 0px) + 18px); top: calc(env(safe-area-inset-top, 0px) + 86px); transform: translate(0, -8px); max-width: 52vw; }
-            #toast.show { transform: translate(0, 0); }
         }
         #walk.on { background: linear-gradient(135deg, #8d9bff, #6a7af0); box-shadow: 0 6px 22px rgba(124,140,248,0.45); }
         .hint { font-size: 11px; color: var(--muted); font-weight: 500; }
@@ -72,16 +70,32 @@
             .hud.top .name { font-size: 16px; }
             #joy { bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); left: calc(env(safe-area-inset-left, 0px) + 22px); }
         }
-        /* меню действий справа: что можно сделать с тем, что рядом */
-        #acts { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 16px); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 25; }
+        /* действия — подсказкой чуть ниже центра экрана, как в играх: коротко, без подписей */
+        #acts { position: absolute; left: 50%; top: 61%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 25; pointer-events: none; }
         #acts[hidden] { display: none; }
-        #acts button { display: flex; align-items: center; gap: 12px; min-width: 196px; padding: 11px 14px; border: 0; border-radius: 16px; background: rgba(12,12,22,0.84); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font: 600 15px/1.2 Inter, system-ui, sans-serif; text-align: left; box-shadow: 0 0 0 1px rgba(255,255,255,0.16) inset, 0 8px 24px rgba(0,0,0,0.45); animation: actIn .22s cubic-bezier(.2,.8,.2,1); cursor: pointer; }
-        #acts button.main { background: rgba(250,248,242,0.95); color: #15151c; box-shadow: 0 8px 26px rgba(0,0,0,0.5); }
-        #acts .ic { font-size: 22px; line-height: 1; }
-        #acts small { display: block; font-weight: 500; font-size: 12px; opacity: .6; margin-top: 2px; }
-        #acts kbd { margin-left: auto; font: 700 11px/1 Inter, monospace; border: 1px solid currentColor; opacity: .55; border-radius: 5px; padding: 3px 6px; }
+        #acts button { pointer-events: auto; display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px 7px 9px; border: 0; border-radius: 999px; background: rgba(255,255,255,0.16); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font: 600 14px/1 Inter, system-ui, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,0.6); box-shadow: 0 0 0 1px rgba(255,255,255,0.28) inset; animation: actIn .2s ease-out; cursor: pointer; white-space: nowrap; }
+        #acts button.main { background: rgba(255,250,240,0.92); color: #1a1a22; text-shadow: none; box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
+        #acts .ic { font-size: 16px; line-height: 1; }
+        #acts kbd { font: 700 11px/1 Inter, monospace; background: #1a1a22; color: #fff; border-radius: 6px; padding: 4px 6px; }
         #acts button:active { transform: translateY(1px); }
-        @keyframes actIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+        @keyframes actIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        /* заставка места: вверху по центру, текстом без плашки */
+        #place { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 10px); transform: translate(-50%, -6px); text-align: center; pointer-events: none; z-index: 20; opacity: 0; transition: opacity .6s ease, transform .6s ease; padding: 6px 40px 14px; background: radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.45), rgba(0,0,0,0) 70%); }
+        #place.show { opacity: 1; transform: translate(-50%, 0); }
+        #place .jp { font: 700 28px/1.15 "Noto Sans JP", sans-serif; letter-spacing: .18em; color: #fff4e2; text-shadow: 0 2px 14px rgba(0,0,0,0.75); }
+        #place .ru { margin-top: 4px; font: 600 11px/1.3 Inter, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,236,210,0.85); text-shadow: 0 1px 6px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        #place .ru::before, #place .ru::after { content: ''; width: 26px; height: 1px; background: rgba(255,236,210,0.5); }
+        /* уведомления — светлой капсулой вверху по центру */
+        html body #toast { left: 50%; right: auto; top: calc(env(safe-area-inset-top, 0px) + 74px); transform: translate(-50%, -8px); max-width: min(520px, 86vw); background: rgba(255,250,242,0.94); color: #1a1a22; font: 600 13px/1.35 Inter, sans-serif; padding: 9px 16px; border-radius: 999px; box-shadow: 0 8px 26px rgba(0,0,0,0.35); text-align: center; }
+        html body #toast.show { transform: translate(-50%, 0); }
+        /* легенда — компактно вверху справа; подсказка управления гаснет; кнопки внизу меньше */
+        html body .hud.bottom .legend { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 16px); right: calc(env(safe-area-inset-right, 0px) + 16px); max-width: 44vw; justify-content: flex-end; gap: 4px 10px; font-size: 10.5px; opacity: .85; }
+        html body .hud.bottom .legend i { width: 7px; height: 7px; }
+        .hud.bottom .hint { font-size: 11.5px; opacity: .75; transition: opacity 1.2s; }
+        .hud.bottom .hint.gone { opacity: 0; }
+        html body .hud.bottom .btn { padding: 9px 15px; font-size: 13px; }
+        html body .hud.bottom .btn.ghost { padding: 9px 12px; }
+        @media (pointer: coarse) { html body #hint { top: calc(env(safe-area-inset-top, 0px) + 44px); } html body .hud.bottom .legend { font-size: 9.5px; gap: 3px 8px; } #place .jp { font-size: 22px; } }
         /* окно диалога сбоку: шапка, лента реплик, задание, варианты */
         #talk { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 16px); top: calc(env(safe-area-inset-top, 0px) + 16px); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); width: min(400px, 38vw); z-index: 30; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transform: translateX(24px); transition: opacity .2s, transform .25s cubic-bezier(.2,.8,.2,1); background: rgba(12,12,22,0.93); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 20px; box-shadow: 0 0 0 1px rgba(255,255,255,0.12) inset, 0 16px 44px rgba(0,0,0,0.6); color: #fff; overflow: hidden; }
         #talk.on { opacity: 1; transform: none; pointer-events: auto; }
@@ -196,6 +210,7 @@
 <div id="toast"></div>
 <div id="fps"></div>
 <div id="loading">Зажигаем вывески…</div>
+<div id="place"><div class="jp"></div><div class="ru"></div></div>
 <div id="rotate"><div class="ph"></div><div class="t">Коснитесь — улица развернётся во весь экран</div><div class="sub">Гулять удобнее, держа телефон горизонтально</div><button type="button" id="rotate-skip">Остаться вертикально</button></div>
 <div id="nowebgl"><div class="msg"></div><div class="why"></div><a href="#" onclick="location.reload(); return false;">Попробовать ещё раз</a></div>
 <script>if (/[?&]src=sample\b/.test(location.search)) document.write('<script src="./sample-words.js"><\/script>'); else if (location.protocol === 'file:') document.write('<script src="./words-busyd.js"><\/script>');</script>

@@ -25,8 +25,6 @@
             html body #hint { left: auto; right: calc(env(safe-area-inset-right, 0px) + 12px); top: calc(env(safe-area-inset-top, 0px) + 12px); transform: translate(0, -10px); min-width: 0; max-width: min(300px, 58vw); padding: 9px 12px; border-radius: 14px; }
             html body #hint.on { transform: translate(0, 0); }
             html body #h-kanji { font-size: 24px; }
-            #toast { left: calc(env(safe-area-inset-left, 0px) + 18px); top: calc(env(safe-area-inset-top, 0px) + 86px); transform: translate(0, -8px); max-width: 52vw; }
-            #toast.show { transform: translate(0, 0); }
         }
         #walk.on { background: linear-gradient(135deg, #8d9bff, #6a7af0); box-shadow: 0 6px 22px rgba(124,140,248,0.45); }
         .hint { font-size: 11px; color: var(--muted); font-weight: 500; }
@@ -72,16 +70,32 @@
             .hud.top .name { font-size: 16px; }
             #joy { bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); left: calc(env(safe-area-inset-left, 0px) + 22px); }
         }
-        /* меню действий справа: что можно сделать с тем, что рядом */
-        #acts { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 16px); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 25; }
+        /* действия — подсказкой чуть ниже центра экрана, как в играх: коротко, без подписей */
+        #acts { position: absolute; left: 50%; top: 61%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 25; pointer-events: none; }
         #acts[hidden] { display: none; }
-        #acts button { display: flex; align-items: center; gap: 12px; min-width: 196px; padding: 11px 14px; border: 0; border-radius: 16px; background: rgba(12,12,22,0.84); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font: 600 15px/1.2 Inter, system-ui, sans-serif; text-align: left; box-shadow: 0 0 0 1px rgba(255,255,255,0.16) inset, 0 8px 24px rgba(0,0,0,0.45); animation: actIn .22s cubic-bezier(.2,.8,.2,1); cursor: pointer; }
-        #acts button.main { background: rgba(250,248,242,0.95); color: #15151c; box-shadow: 0 8px 26px rgba(0,0,0,0.5); }
-        #acts .ic { font-size: 22px; line-height: 1; }
-        #acts small { display: block; font-weight: 500; font-size: 12px; opacity: .6; margin-top: 2px; }
-        #acts kbd { margin-left: auto; font: 700 11px/1 Inter, monospace; border: 1px solid currentColor; opacity: .55; border-radius: 5px; padding: 3px 6px; }
+        #acts button { pointer-events: auto; display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px 7px 9px; border: 0; border-radius: 999px; background: rgba(255,255,255,0.16); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font: 600 14px/1 Inter, system-ui, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,0.6); box-shadow: 0 0 0 1px rgba(255,255,255,0.28) inset; animation: actIn .2s ease-out; cursor: pointer; white-space: nowrap; }
+        #acts button.main { background: rgba(255,250,240,0.92); color: #1a1a22; text-shadow: none; box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
+        #acts .ic { font-size: 16px; line-height: 1; }
+        #acts kbd { font: 700 11px/1 Inter, monospace; background: #1a1a22; color: #fff; border-radius: 6px; padding: 4px 6px; }
         #acts button:active { transform: translateY(1px); }
-        @keyframes actIn { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+        @keyframes actIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        /* заставка места: вверху по центру, текстом без плашки */
+        #place { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 10px); transform: translate(-50%, -6px); text-align: center; pointer-events: none; z-index: 20; opacity: 0; transition: opacity .6s ease, transform .6s ease; padding: 6px 40px 14px; background: radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.45), rgba(0,0,0,0) 70%); }
+        #place.show { opacity: 1; transform: translate(-50%, 0); }
+        #place .jp { font: 700 28px/1.15 "Noto Sans JP", sans-serif; letter-spacing: .18em; color: #fff4e2; text-shadow: 0 2px 14px rgba(0,0,0,0.75); }
+        #place .ru { margin-top: 4px; font: 600 11px/1.3 Inter, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,236,210,0.85); text-shadow: 0 1px 6px rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        #place .ru::before, #place .ru::after { content: ''; width: 26px; height: 1px; background: rgba(255,236,210,0.5); }
+        /* уведомления — светлой капсулой вверху по центру */
+        html body #toast { left: 50%; right: auto; top: calc(env(safe-area-inset-top, 0px) + 74px); transform: translate(-50%, -8px); max-width: min(520px, 86vw); background: rgba(255,250,242,0.94); color: #1a1a22; font: 600 13px/1.35 Inter, sans-serif; padding: 9px 16px; border-radius: 999px; box-shadow: 0 8px 26px rgba(0,0,0,0.35); text-align: center; }
+        html body #toast.show { transform: translate(-50%, 0); }
+        /* легенда — компактно вверху справа; подсказка управления гаснет; кнопки внизу меньше */
+        html body .hud.bottom .legend { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 16px); right: calc(env(safe-area-inset-right, 0px) + 16px); max-width: 44vw; justify-content: flex-end; gap: 4px 10px; font-size: 10.5px; opacity: .85; }
+        html body .hud.bottom .legend i { width: 7px; height: 7px; }
+        .hud.bottom .hint { font-size: 11.5px; opacity: .75; transition: opacity 1.2s; }
+        .hud.bottom .hint.gone { opacity: 0; }
+        html body .hud.bottom .btn { padding: 9px 15px; font-size: 13px; }
+        html body .hud.bottom .btn.ghost { padding: 9px 12px; }
+        @media (pointer: coarse) { html body #hint { top: calc(env(safe-area-inset-top, 0px) + 44px); } html body .hud.bottom .legend { font-size: 9.5px; gap: 3px 8px; } #place .jp { font-size: 22px; } }
         /* окно диалога сбоку: шапка, лента реплик, задание, варианты */
         #talk { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 16px); top: calc(env(safe-area-inset-top, 0px) + 16px); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); width: min(400px, 38vw); z-index: 30; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transform: translateX(24px); transition: opacity .2s, transform .25s cubic-bezier(.2,.8,.2,1); background: rgba(12,12,22,0.93); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 20px; box-shadow: 0 0 0 1px rgba(255,255,255,0.12) inset, 0 16px 44px rgba(0,0,0,0.6); color: #fff; overflow: hidden; }
         #talk.on { opacity: 1; transform: none; pointer-events: auto; }
@@ -196,6 +210,7 @@
 <div id="toast"></div>
 <div id="fps"></div>
 <div id="loading">Зажигаем вывески…</div>
+<div id="place"><div class="jp"></div><div class="ru"></div></div>
 <div id="rotate"><div class="ph"></div><div class="t">Коснитесь — улица развернётся во весь экран</div><div class="sub">Гулять удобнее, держа телефон горизонтально</div><button type="button" id="rotate-skip">Остаться вертикально</button></div>
 <div id="nowebgl"><div class="msg"></div><div class="why"></div><a href="#" onclick="location.reload(); return false;">Попробовать ещё раз</a></div>
 <script>if (/[?&]src=sample\b/.test(location.search)) document.write('<script src="./sample-words.js"><\/script>'); else if (location.protocol === 'file:') document.write('<script src="./words-busyd.js"><\/script>');</script>
@@ -2453,20 +2468,67 @@ const TEMPLE = (() => {
 // Встраивается build-walk.mjs (общая область видимости с walk.js: data, camera, inside, LIFE, audio, toast…).
 const TALK = (() => {
     const ROLE_NAME = { chef: 'Повар', ramenChef: 'Повар', cook: 'Хозяйка', vendor: 'Продавец', waiter: 'Официантка', barista: 'Бариста', clerk: 'Продавец', bookClerk: 'Продавец', teacher: 'Учитель', student: 'Ученик', student1r: 'Студент', family: 'Хозяин', elder: 'Бабушка', couple: 'Сосед', bar: 'Гость', party: 'Гость', ramenGuest: 'Гость', cafeGuest: 'Гость', shopper: 'Покупатель', reader: 'Читатель', gamer: 'Игрок', drummer: 'Игрок', worker: 'Сосед', sleeper: 'Ученик' };
-    const GREET_OPTS = [['こんばんは！', 'Добрый вечер!'], ['はじめまして。', 'Приятно познакомиться.']];
-    // [вопрос/реплика персонажа, ответы: [мой ответ jp, ru, его ответ jp, ru]]
-    const SMALL = {
-        food: [['お腹すいてる？', 'Проголодался?'], [['はい、ぺこぺこです！', 'Да, ужасно голоден!', 'じゃあ、たくさん食べてね！', 'Тогда ешь побольше!'], ['いいえ、大丈夫です。', 'Нет, спасибо.', 'そっか。また来てね！', 'Ну ладно. Заходи ещё!']]],
-        serve: [['ご注文はお決まりですか？', 'Готовы заказать?'], [['水をください。', 'Воды, пожалуйста.', 'はい、少々お待ちください。', 'Минутку, пожалуйста.'], ['もう少し考えます。', 'Я ещё подумаю.', 'ごゆっくりどうぞ。', 'Не торопитесь.']]],
-        teach: [['宿題はやりましたか？', 'Домашнее задание сделал?'], [['はい、やりました！', 'Да, сделал!', 'えらいですね！', 'Молодец!'], ['すみません、まだです…', 'Простите, ещё нет…', '明日までにね。', 'К завтрашнему дню, хорошо?']]],
-        study: [['テスト、難しかったね。', 'Контрольная была трудная, да?'], [['うん、とても難しかった。', 'Ага, очень.', '一緒に勉強しよう！', 'Давай заниматься вместе!'], ['簡単だったよ！', 'Было легко!', 'すごい！', 'Круто!']]],
-        home: [['お茶、飲む？', 'Чаю выпьешь?'], [['はい、いただきます。', 'Да, с удовольствием.', 'どうぞ、熱いよ。', 'Держи, горячий.'], ['今日はいいです。', 'Сегодня не надо.', 'そう、残念。', 'Жаль.']]],
-        guest: [['いい夜ですね。', 'Хороший вечер, правда?'], [['そうですね！', 'И правда!', 'ここ、よく来るんですか？', 'Часто сюда заходите?'], ['ちょっと寒いです。', 'Немного холодно.', '温かい物を飲もう！', 'Выпьем чего-нибудь тёплого!']]],
-        play: [['一緒にやる？', 'Сыграем вместе?'], [['うん、やろう！', 'Давай!', 'よし、負けないよ！', 'Отлично, не проиграю!'], ['見てるだけです。', 'Я только посмотрю.', 'じゃあ、応援してね！', 'Тогда болей за меня!']]],
-        sleep: [['ぐー…', 'Хррр…'], [['起きてください！', 'Проснись!', '…はっ！寝てないよ！', '…А? Я не сплю!']]],
+    const ROLE_GROUP = { chef: 'food', ramenChef: 'food', cook: 'food', vendor: 'food', waiter: 'serve', barista: 'serve', clerk: 'serve', bookClerk: 'serve', teacher: 'teach', student: 'study', student1r: 'study', family: 'home', elder: 'home', couple: 'home', gamer: 'play', drummer: 'play', sleeper: 'sleep' };
+    const STAFF = new Set(['food', 'serve']), FRIEND = new Set(['study', 'play']);
+    // темы по группам: реплика персонажа и ответы [мой jp, ru, его ответ [jp, ru]]
+    const TOPICS = {
+        food: [
+            [['今日は何にする？おすすめは焼き鳥だよ。', 'Что сегодня будешь? Советую якитори.'], [['じゃあ、それをください！', 'Тогда его, пожалуйста!', ['はいよ！ちょっと待っててね。', 'Сейчас! Подожди немного.']], ['辛いのはありますか？', 'А есть что-нибудь острое?', ['あるよ！激辛ラーメン、挑戦する？', 'Есть! Очень острый рамэн — рискнёшь?']], ['見ているだけです。', 'Я просто смотрю.', ['どうぞ、ゆっくり見ていってね。', 'Смотри сколько хочешь.']]]],
+            [['ここで働いて、もう十年になるんだ。', 'Я работаю тут уже десять лет.'], [['すごいですね！', 'Ничего себе!', ['ありがとう。毎日楽しいよ。', 'Спасибо. Каждый день в радость.']], ['大変じゃないですか？', 'А не тяжело?', ['夏は暑いけど、お客さんの笑顔が好きでね。', 'Летом жарко, но я люблю улыбки гостей.']]]],
+            [['日本の料理で何が一番好き？', 'Какое японское блюдо тебе нравится больше всего?'], [['ラーメンです！', 'Рамэн!', ['いいね！味噌？それとも醤油？', 'Отлично! Мисо или сёю?']], ['お寿司です。', 'Суши.', ['魚屋の大将が喜ぶよ。', 'Хозяин рыбной лавки обрадуется.']], ['まだ分かりません。', 'Пока не знаю.', ['じゃあ、全部食べてみなきゃ！', 'Значит, надо попробовать всё!']]]],
+            [['今夜は冷えるね。温かいスープはどう？', 'Холодно сегодня. Тёплого супа?'], [['いただきます！', 'С удовольствием!', ['熱いから気をつけてね。', 'Горячий, осторожно.']], ['お腹いっぱいです。', 'Я сыт.', ['そっか。また今度おいで。', 'Понятно. Приходи в другой раз.']]]],
+            [['お祭り、楽しんでる？', 'Как тебе фестиваль?'], [['はい、とても！', 'Очень нравится!', ['もうすぐ花火だよ！', 'Скоро фейерверк!']], ['人が多いですね。', 'Народу много.', ['年に一度だからね！', 'Раз в году ведь!']]]],
+        ],
+        serve: [
+            [['ご注文はお決まりですか？', 'Готовы заказать?'], [['お水をください。', 'Воды, пожалуйста.', ['かしこまりました。', 'Сию минуту.']], ['おすすめは何ですか？', 'Что посоветуете?', ['今日はケーキセットが人気ですよ。', 'Сегодня популярен сет с тортом.']], ['もう少し考えます。', 'Ещё подумаю.', ['ごゆっくりどうぞ。', 'Не торопитесь.']]]],
+            [['日本は初めてですか？', 'Вы впервые в Японии?'], [['はい、初めてです！', 'Да, впервые!', ['ようこそ！楽しんでくださいね。', 'Добро пожаловать! Отдыхайте.']], ['いいえ、三回目です。', 'Нет, уже третий раз.', ['日本がお好きなんですね！', 'Значит, вам нравится Япония!']]]],
+            [['今日はお仕事帰りですか？', 'Вы с работы?'], [['はい、疲れました…', 'Да, устал…', ['お疲れ様です。ゆっくりしていってください。', 'Вы хорошо потрудились. Отдохните.']], ['いいえ、散歩中です。', 'Нет, гуляю.', ['いい夜ですもんね。', 'Вечер и правда чудесный.']]]],
+            [['袋はご利用ですか？', 'Пакет нужен?'], [['はい、お願いします。', 'Да, пожалуйста.', ['三円になります。', 'С вас три иены.']], ['いいえ、大丈夫です。', 'Нет, не надо.', ['ご協力ありがとうございます。', 'Спасибо, что бережёте природу.']]]],
+        ],
+        teach: [
+            [['宿題はやりましたか？', 'Домашнее задание сделали?'], [['はい、やりました！', 'Да, сделал!', ['えらいですね！', 'Молодец!']], ['すみません、忘れました…', 'Простите, забыл…', ['明日は持ってきてくださいね。', 'Завтра принесите, хорошо?']], ['難しかったです。', 'Было трудно.', ['どこが分からなかった？一緒に見ましょう。', 'Что было непонятно? Давайте разберём.']]]],
+            [['漢字の勉強、進んでいますか？', 'Как продвигаются кандзи?'], [['毎日少しずつです。', 'Понемногу каждый день.', ['それが一番の近道です。', 'Это самый короткий путь.']], ['全然だめです…', 'Совсем плохо…', ['大丈夫。焦らないで。', 'Ничего. Не торопитесь.']]]],
+            [['日本語で一番難しいのは何ですか？', 'Что самое трудное в японском?'], [['敬語です。', 'Вежливая речь.', ['日本人にも難しいですよ。', 'Даже японцам трудно.']], ['漢字です。', 'Кандзи.', ['覚えるほど楽しくなりますよ。', 'Чем больше учишь, тем интереснее.']], ['聞き取りです。', 'Аудирование.', ['アニメはいい練習になりますね。', 'Аниме — отличная тренировка.']]]],
+        ],
+        study: [
+            [['明日のテスト、勉強した？', 'К завтрашнему тесту готовился?'], [['少しだけ…', 'Чуть-чуть…', ['私も！一緒にやろう！', 'Я тоже! Давай вместе!']], ['うん、完璧！', 'Да, всё выучил!', ['すごい！教えて！', 'Круто! Научи!']], ['テストがあるの！？', 'Есть тест?!', ['あるよ！しっかりして！', 'Есть! Соберись!']]]],
+            [['放課後、何するの？', 'Что делаешь после уроков?'], [['アニメを見る！', 'Смотрю аниме!', ['何見てるの？私も好き！', 'Что смотришь? Я тоже люблю!']], ['ゲームセンターに行く。', 'Иду в игровой зал.', ['いいな、私も行きたい！', 'Везёт, я тоже хочу!']], ['バイトだよ。', 'Подработка.', ['大変だね、頑張って！', 'Тяжело, держись!']]]],
+            [['お腹すいた…コンビニ行かない？', 'Есть хочу… Сходим в комбини?'], [['行こう行こう！', 'Пошли!', ['おにぎり買おう！', 'Купим онигири!']], ['今ダイエット中…', 'Я на диете…', ['えー、一個だけ！', 'Ну-у, одну штучку!']]]],
+        ],
+        home: [
+            [['お茶、飲む？', 'Чаю выпьешь?'], [['はい、いただきます。', 'Да, спасибо.', ['熱いから気をつけてね。', 'Горячий, осторожно.']], ['冷たいのがいいです。', 'Лучше холодного.', ['麦茶があるよ。', 'Есть ячменный чай.']]]],
+            [['今日はどこへ行ってきたの？', 'Где сегодня был?'], [['お祭りに行きました！', 'На фестивале!', ['いいね！花火は見た？', 'Здорово! Фейерверк видел?']], ['神社に行きました。', 'В храме.', ['何をお願いしたの？', 'О чём загадал желание?']], ['ずっと家にいました。', 'Весь день дома.', ['たまにはそれもいいね。', 'Иногда и так хорошо.']]]],
+            [['この町、昔はもっと静かだったのよ。', 'Раньше этот город был тише.'], [['へえ、そうなんですか。', 'Вот как?', ['駅ができてから、にぎやかになったの。', 'Когда построили станцию, стало оживлённо.']], ['今の方が好きです。', 'Мне больше нравится сейчас.', ['ふふ、若い人はみんなそう言うね。', 'Хе-хе, молодые всегда так говорят.']]]],
+            [['ご飯、食べていく？', 'Поужинаешь с нами?'], [['いいんですか？', 'А можно?', ['もちろん！たくさん作ったから。', 'Конечно! Я много наготовила.']], ['今日は帰ります。', 'Сегодня пойду домой.', ['そう。気をつけてね。', 'Хорошо. Будь осторожен.']]]],
+        ],
+        guest: [
+            [['いい夜ですね。', 'Хороший вечер, правда?'], [['そうですね。', 'И правда.', ['こういう夜は一杯飲みたくなるね。', 'В такой вечер хочется выпить.']], ['ちょっと寒いです。', 'Холодновато.', ['温かいものでも飲もうよ。', 'Давай выпьем чего-нибудь тёплого.']]]],
+            [['ここ、よく来るんですか？', 'Часто сюда заходите?'], [['初めてです。', 'Впервые.', ['いい所でしょう？ここのおでんは最高だよ。', 'Хорошее место, правда? Одэн тут лучший.']], ['たまに来ます。', 'Иногда.', ['じゃあ、また会えるね。', 'Значит, ещё увидимся.']]]],
+            [['どこから来たんですか？', 'Откуда вы?'], [['ロシアから来ました。', 'Из России.', ['遠いですね！日本語、上手！', 'Далеко! Хорошо говорите по-японски!']], ['ウクライナから来ました。', 'Из Украины.', ['遠いところからようこそ！', 'Добро пожаловать издалека!']], ['秘密です。', 'Секрет.', ['ははは、ミステリアスだね。', 'Ха-ха, загадочно.']]]],
+            [['最近、何かいいアニメ見た？', 'Смотрел что-нибудь хорошее из аниме?'], [['フリーレンを見ています。', 'Смотрю «Фрирен».', ['いいね！あれは泣けるよ。', 'Отлично! Там можно и поплакать.']], ['進撃の巨人が好きです。', 'Люблю «Атаку титанов».', ['あの最終回、どう思った？', 'А как тебе финал?']], ['あまり見ません。', 'Почти не смотрю.', ['もったいない！今度おすすめ教えるよ。', 'Зря! Посоветую тебе что-нибудь.']]]],
+        ],
+        play: [
+            [['一緒にやる？', 'Сыграем вместе?'], [['うん、やろう！', 'Давай!', ['よし、負けないよ！', 'Отлично, не проиграю!']], ['見てるだけでいいよ。', 'Я лучше посмотрю.', ['じゃあ、応援してね！', 'Тогда болей за меня!']]]],
+            [['あと少しでハイスコアなんだ！', 'Ещё чуть-чуть до рекорда!'], [['頑張って！', 'Удачи!', ['ありがとう！集中、集中…', 'Спасибо! Сосредоточься…']], ['コツを教えて！', 'Научи приёму!', ['リズムを体で覚えるんだよ。', 'Запоминай ритм телом.']]]],
+        ],
+        sleep: [
+            [['ぐー…', 'Хррр…'], [['起きてください！', 'Проснись!', ['…はっ！寝てないよ！', '…А? Я не сплю!']], ['しーっ、静かに。', 'Тсс, тихо.', ['…むにゃむにゃ…', '…мням-мням…']]]],
+        ],
     };
-    const ROLE_SMALL = { chef: 'food', ramenChef: 'food', cook: 'food', vendor: 'food', waiter: 'serve', barista: 'serve', clerk: 'serve', bookClerk: 'serve', teacher: 'teach', student: 'study', student1r: 'study', family: 'home', elder: 'home', couple: 'home', gamer: 'play', drummer: 'play', sleeper: 'sleep' };
-
+    const REACT = [['へえ、そうなんだ。', 'Вот как.'], ['いいですね！', 'Здорово!'], ['なるほど。', 'Понятно.'], ['本当ですか？', 'Правда?'], ['面白い！', 'Интересно!'], ['わかります。', 'Понимаю.'], ['それはいい！', 'Это здорово!']];
+    // вопрос про слово — разными словами
+    const QUIZ_ASK = [
+        (w) => ['「' + w + '」って、どういう意味だっけ？', 'Слушай, а что значит «' + w + '»?'],
+        (w) => ['日本語の勉強してるんだよね？「' + w + '」は分かる？', 'Ты ведь учишь японский? «' + w + '» знаешь?'],
+        (w) => ['さっき「' + w + '」って聞いたんだけど、何のこと？', 'Только что слышал «' + w + '» — это о чём?'],
+        (w) => ['クイズ！「' + w + '」の意味は？', 'Викторина! Что значит «' + w + '»?'],
+        (w) => ['友だちが「' + w + '」って言ってたけど、意味が分からなくて…', 'Друг сказал «' + w + '», а я не понял…'],
+    ];
+    const QUIZ_OK = [['そうそう！', 'Точно!'], ['さすが！', 'Как и ожидалось!'], ['よく知ってるね！', 'Хорошо знаешь!'], ['正解！', 'Верно!'], ['ありがとう、すっきりした！', 'Спасибо, теперь всё ясно!']];
+    const QUIZ_BAD = [['惜しい！', 'Почти!'], ['うーん、ちょっと違うかな。', 'Хм, не совсем.'], ['あれ？違うと思うよ。', 'Хм, кажется, нет.']];
+    const BYE_ME = [['じゃあ、またね！', 'Ну, пока!'], ['そろそろ行きます。', 'Мне пора.'], ['ありがとうございました！', 'Спасибо!']];
+    const BYE_THEM = [['またね！', 'Пока!'], ['気をつけてね！', 'Береги себя!'], ['また来てね！', 'Заходи ещё!'], ['じゃあね〜', 'Давай!']];
+    const BYE_STAFF = [['ありがとうございました！', 'Спасибо, что зашли!'], ['またお越しくださいませ！', 'Ждём вас снова!'], ['まいどあり！', 'Спасибо за покупку!']];
     let el = null, cur = null, score = { ok: 0, all: 0 };
     // ---- окно диалога сбоку: шапка (кто), лента реплик, задание, варианты ответа ----
     function ui() {
@@ -2490,11 +2552,20 @@ const TALK = (() => {
     const jpOf = (w) => w.kanji || w.kana;
     const meaning = (w) => String(w.translation || '').split(/[;,(]/)[0].trim();
     function pool() { return ((typeof data !== 'undefined' && data && data.words) || []).filter((w) => jpOf(w) && meaning(w)); }
-    // слово для вопроса: сначала то, что пора повторить или забывается, потом то, что учишь
+    // слово для вопроса: случайно из нескольких подходящих (а не всегда одно и то же «пора повторить»),
+    // уже спрошенные за последние 15 минут не повторяем
+    const asked = new Map();
+    const pick = (a) => a[Math.floor(Math.random() * a.length)];
+    const sample = (a, n) => shuffle(a.slice()).slice(0, n);
     function pickWord(pref) {
         const P = pool(); if (P.length < 4) return null;
-        const rank = (w) => ({ due: 0, worn: 0, warm: 1, new: 2, lit: 3 }[w._state] ?? 2) + Math.random() * 1.6 - (pref && pref(w) ? 1.2 : 0);
-        return P.slice().sort((a, b) => rank(a) - rank(b))[0];
+        const now = Date.now(), fresh = P.filter((w) => !asked.has(jpOf(w)) || now - asked.get(jpOf(w)) > 15 * 60e3);
+        const src = fresh.length >= 4 ? fresh : P;
+        const tiers = [src.filter((w) => w._state === 'due' || w._state === 'worn'), src.filter((w) => w._state === 'warm'), src.filter((w) => w._state === 'new'), src];
+        const r = Math.random(), order = r < 0.45 ? [0, 1, 2, 3] : r < 0.7 ? [1, 0, 2, 3] : r < 0.9 ? [2, 1, 0, 3] : [3];
+        let cand = src; for (const i of order) if (tiers[i].length) { cand = tiers[i]; break; }
+        if (pref) { const pp = src.filter(pref); if (pp.length && Math.random() < 0.6) cand = pp; }
+        const w = pick(cand); asked.set(jpOf(w), now); return w;
     }
     function distractors(w, n, key) {
         const P = pool().filter((x) => x !== w && key(x) !== key(w)), out = [], seen = new Set([key(w)]);
@@ -2545,24 +2616,58 @@ const TALK = (() => {
             const ok = x === w; b.classList.add(ok ? 'good' : 'bad');
             if (!ok) [...el.querySelectorAll('.op')].forEach((bb) => { if (bb.querySelector('b').textContent === meaning(w)) bb.classList.add('good'); });
             if (ok) audio.ding();
-            setTimeout(() => show(ok ? ['そうそう！よく知ってるね！', 'Точно! Хорошо знаешь!'] : ['ちがうよ。', 'Не-а. «' + jpOf(w) + '»' + (w.kana && w.kana !== jpOf(w) ? ' (' + w.kana + ')' : '') + ' — это «' + meaning(w) + '».'], [{ jp: 'なるほど！', ru: 'Понятно!', go: after }]), 650);
+            const kana = w.kana && w.kana !== jpOf(w) ? ' (' + w.kana + ')' : '';
+            const line = ok ? pick(QUIZ_OK) : (() => { const b0 = pick(QUIZ_BAD); return [b0[0], b0[1] + ' «' + jpOf(w) + '»' + kana + ' — это «' + meaning(w) + '».']; })();
+            const next = ok ? sample([['えへへ。', 'Хе-хе.'], ['まあね！', 'Ну да!'], ['勉強してるからね。', 'Я же учусь.']], 2) : sample([['なるほど！', 'Понятно!'], ['覚えておきます。', 'Запомню.'], ['あ、そっか！', 'А, точно!']], 2);
+            setTimeout(() => show(line, next.map(([j, r]) => ({ jp: j, ru: r, go: after }))), 650);
         } }));
         show(ask, opts, '<span class="big">' + esc(jpOf(w)) + '</span>' + (w.kana && w.kana !== jpOf(w) ? '<span class="kana">' + esc(w.kana) + '</span>' : '') + '<span class="q">Что это значит?</span>');
     }
-    // ---- беседа с персонажем ----
+    // ---- беседа: приветствие (по времени суток и роли) → тема → реакция → иногда вопрос про слово → прощание ----
+    const met = new Map(), usedTopics = new Map();
+    function greetLines(group, meet, ch) {
+        const h = new Date().getHours(), staff = STAFF.has(group), friend = FRIEND.has(group);
+        const base = h < 11 ? ['おはようございます', 'Доброе утро'] : h < 18 ? ['こんにちは', 'Добрый день'] : ['こんばんは', 'Добрый вечер'];
+        let say;
+        if (meet > 0) say = staff ? ['あ、またいらっしゃいましたね！', 'О, вы снова к нам!'] : pick([['あ、また会ったね！', 'О, снова ты!'], ['おっ、また来たの？', 'О, опять ты здесь?']]);
+        else if (staff && ch.greet && ch.greet[0]) say = [ch.greet[0], ch.greet[1]];
+        else if (friend) say = pick([['やあ！元気？', 'Привет! Как дела?'], ['おっ、どうしたの？', 'О, ты чего?']]);
+        else say = [base[0] + '！', base[1] + '!'];
+        let me;
+        if (friend) me = [['元気だよ！', 'Отлично!'], ['まあまあかな。', 'Так себе.'], ['ちょっと眠い…', 'Сонный немного…']];
+        else me = [[base[0] + '。', base[1] + '.'], meet ? ['お久しぶりです。', 'Давно не виделись.'] : ['はじめまして。', 'Приятно познакомиться.'], ['どうも。', 'Здравствуйте.']];
+        return { say, me };
+    }
     function talk(ch) {
         if (!ch) return;
-        if (ch.cat) { LIFE.say(ch, Math.random() < 0.5 ? ['にゃー', 'Мяу'] : ['ゴロゴロ…', 'Мррр…'], 1.8, LIFE.S.t, inside.on ? null : scene); return; }
-        const role = ch.role || (ch.wordText ? 'word' : 'guest');
-        begin({ kind: 'talk', ch, inside: inside.on, icon: ch.wordText ? '❓' : '💬', name: ch.wordText ? ch.wordText : (ROLE_NAME[role] || 'Прохожий'), sub: ch.wordText ? 'человек-слово' : 'разговор' });
-        const bye = () => show(['またね！', 'Ещё увидимся!'], [{ jp: 'じゃあ、またね！', ru: 'Ну, пока!', go: () => end(['気をつけてね！', 'Береги себя!']) }]);
-        if (ch.wordText) { const w = pool().find((x) => jpOf(x) === ch.wordText) || null; if (w) return quiz(w, ['私は誰でしょう？', 'Угадай, кто я?'], bye); }
-        const small = SMALL[ROLE_SMALL[role] || 'guest'];
-        const greet = (ch.greet && ch.greet[0]) ? [ch.greet[0], ch.greet[1]] : ['こんばんは！', 'Добрый вечер!'];
-        const w = role === 'sleeper' ? null : pickWord();
-        const toSmall = () => show(small[0], small[1].map((r) => ({ jp: r[0], ru: r[1], go: () => show([r[2], r[3]], [{ jp: role === 'sleeper' ? 'すみません！' : 'ところで…', ru: role === 'sleeper' ? 'Извини!' : 'Кстати…', go: () => (w ? quiz(w, ['ところで、「' + jpOf(w) + '」ってどういう意味？', 'Кстати, что значит «' + jpOf(w) + '»?'], bye) : bye()) }]) })));
-        if (role === 'sleeper') return toSmall();
-        show(greet, GREET_OPTS.map(([j, r]) => ({ jp: j, ru: r, go: toSmall })));
+        if (ch.cat) { LIFE.say(ch, pick([['にゃー', 'Мяу'], ['ゴロゴロ…', 'Мррр…'], ['ふにゃ？', 'Мя?']]), 1.8, LIFE.S.t, inside.on ? null : scene); return; }
+        const role = ch.role || 'guest', group = ch.wordText ? 'word' : (ROLE_GROUP[role] || 'guest');
+        const meet = met.get(ch) || 0; met.set(ch, meet + 1);
+        begin({ kind: 'talk', ch, inside: inside.on, icon: ch.wordText ? '❓' : '💬', name: ch.wordText ? ch.wordText : (ROLE_NAME[role] || 'Прохожий'), sub: ch.wordText ? 'человек-слово' : (meet ? 'снова встретились' : 'разговор') });
+        const staff = STAFF.has(group);
+        const finish = () => end(staff ? pick(BYE_STAFF) : pick(BYE_THEM));
+        const farewell = (canMore) => {
+            const say = staff ? ['他に何かありますか？', 'Что-нибудь ещё?'] : pick([['今日は話せて楽しかった！', 'Было приятно поболтать!'], ['あ、もうこんな時間！', 'Ой, уже столько времени!'], ['また話そうね。', 'Поболтаем ещё как-нибудь.']]);
+            const opts = sample(BYE_ME, 2).map(([j, r]) => ({ jp: j, ru: r, go: finish }));
+            if (canMore) opts.unshift({ jp: staff ? 'あと一つ、いいですか？' : 'もう少し話そう！', ru: staff ? 'Можно ещё вопрос?' : 'Давай ещё поболтаем!', go: () => topic(false) });
+            show(say, opts);
+        };
+        const afterTopic = (first) => {
+            const w = group === 'sleep' ? null : pickWord();
+            if (w && Math.random() < (first ? 0.6 : 0.8)) return quiz(w, pick(QUIZ_ASK)(jpOf(w)), () => farewell(first));
+            farewell(first);
+        };
+        const topic = (first) => {
+            const list = TOPICS[group] || TOPICS.guest, used = usedTopics.get(ch) || new Set(); usedTopics.set(ch, used);
+            let idx = list.map((_, i) => i).filter((i) => !used.has(i)); if (!idx.length) { used.clear(); idx = list.map((_, i) => i); }
+            const i = pick(idx); used.add(i); const [say, answers] = list[i];
+            if (group === 'sleep') return show(say, answers.map(([j, r, rep]) => ({ jp: j, ru: r, go: () => end(rep) })));
+            show(say, sample(answers, Math.min(3, answers.length)).map(([j, r, rep]) => ({ jp: j, ru: r, go: () => show(rep, sample(REACT, 2).map(([rj, rr]) => ({ jp: rj, ru: rr, go: () => afterTopic(first) }))) })));
+        };
+        if (ch.wordText) { const w = pool().find((x) => jpOf(x) === ch.wordText) || null; if (w) return quiz(w, pick([['私は誰でしょう？', 'Угадай, кто я?'], ['私の名前、知ってる？', 'Знаешь, как меня зовут?']]), () => farewell(false)); }
+        if (group === 'sleep') return topic(true);
+        const g = greetLines(group, meet, ch);
+        show(g.say, sample(g.me, 2).map(([j, r]) => ({ jp: j, ru: r, go: () => topic(true) })));
     }
     // ---- заказ у ятай ----
     const FOODISH = (w) => { const m = propMeta(jpOf(w)); return !!m && (m.where.indexOf('izakaya') >= 0 || m.where.indexOf('konbini') >= 0); };
@@ -2574,10 +2679,13 @@ const TALK = (() => {
             const opts = shuffle([w].concat(distractors(w, 3, jpOf))).map((x) => ({ jp: jpOf(x), go: (b) => {
                 const ok = x === w; score.all++; if (ok) score.ok++; head();
                 b.classList.add(ok ? 'good' : 'bad'); if (ok) audio.ding(); else [...el.querySelectorAll('.op')].forEach((bb) => { if (bb.querySelector('b').textContent === jpOf(w)) bb.classList.add('good'); });
-                const next = [{ jp: 'もう一つください！', ru: 'Ещё одну, пожалуйста!', go: () => round(false) }, { jp: 'ありがとう！', ru: 'Спасибо!', go: () => end(['まいどあり！', 'Спасибо за покупку!']) }];
-                setTimeout(() => show(ok ? ['はい、「' + jpOf(w) + '」ですね！どうぞ！', 'Да, «' + jpOf(w) + '»! Держите!'] : ['えっ？「' + jpOf(x) + '」？うちにはないよ…', 'А? «' + jpOf(x) + '»? Такого нет… Ты хотел «' + jpOf(w) + '»' + (w.kana && w.kana !== jpOf(w) ? ' (' + w.kana + ')' : '') + '.'], next), 600);
+                const next = [{ jp: pick(['もう一つください！', 'あと一つお願いします！']), ru: 'Ещё одну, пожалуйста!', go: () => round(false) }, { jp: pick(['ありがとう！', 'それで全部です。']), ru: 'Спасибо, это всё!', go: () => end(pick(BYE_STAFF)) }];
+                const k = w.kana && w.kana !== jpOf(w) ? ' (' + w.kana + ')' : '';
+                const okL = pick([['はい、「' + jpOf(w) + '」ですね！どうぞ！', 'Да, «' + jpOf(w) + '»! Держите!'], ['まいど！「' + jpOf(w) + '」ひとつ！', 'Благодарю! Один «' + jpOf(w) + '»!'], ['「' + jpOf(w) + '」ね、ちょっと待ってて！', '«' + jpOf(w) + '», минутку!']]);
+                const badL = pick([['えっ？「' + jpOf(x) + '」？うちにはないよ…', 'А? «' + jpOf(x) + '»? Такого у нас нет…'], ['「' + jpOf(x) + '」？それはちょっと…', '«' + jpOf(x) + '»? Это вряд ли…'], ['うーん、「' + jpOf(x) + '」は売ってないなあ。', 'Хм, «' + jpOf(x) + '» не продаём.']]);
+                setTimeout(() => show(ok ? okL : [badL[0], badL[1] + ' Ты хотел «' + jpOf(w) + '»' + k + '.'], next), 600);
             } }));
-            show(first ? ['いらっしゃい！何にしますか？', 'Добро пожаловать! Что будете?'] : ['はい、次は？', 'Так, что ещё?'], opts, '<span class="q">Скажи продавцу, что хочешь:</span><span class="want">«' + esc(meaning(w)) + '»</span>');
+            show(first ? pick([['いらっしゃい！何にしますか？', 'Добро пожаловать! Что будете?'], ['へい、らっしゃい！何にする？', 'Заходи! Что возьмёшь?'], ['いらっしゃいませ！ご注文は？', 'Добро пожаловать! Ваш заказ?']]) : pick([['はい、次は？', 'Так, что ещё?'], ['ほかには？', 'Что-нибудь ещё?'], ['もう一つ？何にする？', 'Ещё одну? Что именно?']]), opts, '<span class="q">Скажи продавцу, что хочешь:</span><span class="want">«' + esc(meaning(w)) + '»</span>');
         };
         round(true);
     }
@@ -2603,7 +2711,7 @@ const TALK = (() => {
         // лоток с продавцом
         if (!inside.on && th.festival && FESTIVAL.stalls) {
             let best = null, bd = 1.9; FESTIVAL.stalls.forEach((s) => { if (!s.ch) return; const d = flat(s.front, cam); if (d < bd) { bd = d; best = s; } });
-            if (best) { out.push({ icon: '🍢', t: 'Заказать', s: best.food, fn: () => order(best) }, { icon: '💬', t: 'Поговорить', s: 'с продавцом', fn: () => talk(best.ch) }); return out; }
+            if (best) { out.push({ icon: '🍢', t: 'Заказать', fn: () => order(best) }, { icon: '💬', t: 'Поговорить', fn: () => talk(best.ch) }); return out; }
         }
         // ближайший человек перед глазами
         let ch = null, cd = inside.on ? 3.6 : 3.4;
@@ -2625,7 +2733,7 @@ const TALK = (() => {
         acts.innerHTML = ''; acts.hidden = !list.length;
         list.forEach((a, i) => {
             const b = document.createElement('button'); b.className = i ? '' : 'main';
-            b.innerHTML = '<span class="ic">' + a.icon + '</span><span class="lb">' + esc(a.t) + (a.s ? '<small>' + esc(a.s) + '</small>' : '') + '</span>' + (FINE && !i ? '<kbd>E</kbd>' : '');
+            b.innerHTML = (FINE && !i ? '<kbd>E</kbd>' : '') + '<span class="ic">' + a.icon + '</span><span class="lb">' + esc(a.t) + '</span>';
             b.addEventListener('click', () => { buzz(10); a.fn(); lastKey = ''; });
             acts.appendChild(b);
         });
@@ -3906,7 +4014,7 @@ function buildRoom(b, color, type) {
     // предметы-слова по местам; в комбини — с ценником
     const free = spots.slice();
     objs.forEach((sg) => { for (let i = 0; i < free.length; i++) { const sp = free[i]; if (placeObject(sg, sp)) { if (sp.price) { const tg = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.18), lamb('#ffffff', { map: texPrice(sg), side: THREE.DoubleSide })); const off = new THREE.Vector3(0.46, -0.1, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), sp.ry); tg.position.set(sp.x + off.x, sp.y - 0.1, sp.z + off.z); tg.rotation.y = sp.ry + Math.PI / 2; tg.userData.sign = sg; room.add(tg); } free.splice(i, 1); break; } } });
-    placeRadio(free);
+    radio.g = null; if (RADIO_ROOMS.has(type)) placeRadio(free);
     LIFE.upgradeMaterials(room, type);
 }
 // ретро-радиоприёмник: тап переключает станцию (вариант музыки); мигающая лампочка — без текстовых подсказок
@@ -3928,6 +4036,7 @@ function placeRadio(free) {
     radio.g = g; radio.led = led; radio.needle = needle; roomHover = [];
 }
 const radio = { g: null, led: null, needle: null };
+const RADIO_ROOMS = new Set(['home', 'oneroom', 'washitsu', 'loft', 'izakaya', 'ramen', 'cafe']); // в комбини, классе, книжном и игровом зале радио нет
 function radioNext() { const v = audio.nextStation(); toast('📻 ' + (STATION_NAMES[v] || v)); document.querySelectorAll('#panel [data-music]').forEach((x) => x.classList.toggle('on', x.dataset.music === v)); if (radio.needle) radio.needle.position.x = 0.04 + (audio.stationIndex() / 9) * 0.1; }
 const STATION_NAMES = { city: 'Ночной город', snow: 'Снег над крышами', train: 'Ночной поезд', tea: 'Чайный дом', stars: 'Звёзды', harbor: 'Гавань', radio: 'Радио за стеной', calm: 'Тихий вечер', lane: 'Переулок', lofi: 'Lo-fi' };
 let fading = false;
@@ -3946,7 +4055,7 @@ function enterRoom(door) {
         // если спавн всё же внутри мебели — отступаем к двери
         for (let tries = 0; tries < 6; tries++) { const c = camera.position; if (!colliders.room.some((b) => c.x > b.x0 && c.x < b.x1 && c.z > b.z0 && c.z < b.z1)) break; camera.position.z += 0.25; camera.position.x += (tries % 2 ? 0.3 : -0.3); } pitch = tPitch = 0.04; vel.set(0, 0, 0); if (gyro) gyro.base = null; audio.setScene("inside");
         document.getElementById('exit').hidden = false; autoWalk = false; hideHint();
-        toast((ROOM_NAMES[door.userData.door.type] || '') + ' · ' + b.q.name);
+        { const [jp, ru] = String(ROOM_NAMES[door.userData.door.type] || '').split(' · '); banner(jp || '', (ru || '') + ' · ' + b.q.name); }
     });
 }
 function exitRoom() {
@@ -3957,7 +4066,7 @@ function exitRoom() {
         bloom.strength = 0.7; bloom.threshold = 0.7; hemi.intensity = 0.55;
         scene.fog = new THREE.FogExp2(new THREE.Color(th.fog), th.fogD); scene.background = new THREE.Color(th.sky);
         const d = inside.door.userData.door;
-        camera.position.set(d.side * (W2 - 1.3), 1.6, d.z); yaw = tYaw = d.side > 0 ? Math.PI / 2 : -Math.PI / 2; pitch = tPitch = 0; vel.set(0, 0, 0); inside.lastExit = performance.now(); if (gyro) gyro.base = null; audio.setScene(th.id);
+        camera.position.set(d.side * (W2 - 1.3), 1.6, d.z); yaw = tYaw = d.side > 0 ? Math.PI / 2 : -Math.PI / 2; pitch = tPitch = 0; vel.set(0, 0, 0); inside.lastExit = performance.now(); { const tj = THEME_JP[th.id] || ['', '']; banner(tj[0], d && inside.block ? inside.block.q.name : tj[1]); } if (gyro) gyro.base = null; audio.setScene(th.id);
         document.getElementById('exit').hidden = true; hideHint();
     });
 }
@@ -4468,6 +4577,10 @@ function updateHud(force) {
     }
 }
 let toastT = 0;
+// заставка места: крупное японское название и подпись — вверху по центру, без плашки
+let bannerT = 0;
+const THEME_JP = { shinjuku: ['新宿', 'Синдзюку'], yokocho: ['横丁', 'Ёкотё'], matsuri: ['お祭り', 'Мацури'], sando: ['参道', 'Сандо'] };
+function banner(jp, ru) { const el = document.getElementById('place'); if (!el) return; el.querySelector('.jp').textContent = jp; el.querySelector('.ru').textContent = ru; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); clearTimeout(bannerT); bannerT = setTimeout(() => el.classList.remove('show'), 3200); }
 function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2600); }
 
 document.getElementById('share').addEventListener('click', async () => {
@@ -4523,6 +4636,7 @@ function load() {
         planBlocks(); buildWorld(); buildRain();
         camera.position.set(0, 1.6, 2); yaw = tYaw = 0; pitch = tPitch = 0.02; vel.set(0, 0, 0);
         ensureBlocks(); updateHud(true);
+        { const tj = THEME_JP[th.id] || ['', '']; const bi = blockAt(camera.position.z); banner(tj[0], tj[1] + (blocks[bi] ? ' · ' + blocks[bi].q.name : '')); }
     };
     const run = () => fontReady.then((ok) => { if (!ok) builtBeforeFont = true; go(); });
     if (source === 'real' || data.source === 'owner') Promise.all([D.loadJlpt(), fontReady]).then(([m]) => { jlptMap = m || {}; run(); }); else run();
@@ -4638,6 +4752,7 @@ requestAnimationFrame(frame);
     addEventListener('resize', sync); sync();
 })();
 { const ld = document.getElementById('loading'); if (ld) { ld.style.opacity = '0'; setTimeout(() => ld.remove(), 500); } const nw = document.getElementById('nowebgl'); if (nw) nw.style.display = 'none'; }
+setTimeout(() => { const h = document.querySelector('.hud.bottom .hint'); if (h) h.classList.add('gone'); }, 12000);
 window.__walk = { camera, blocks, scene, doors, colliders, renderer, tap, enter: (i) => enterRoom(doors[i || 0]), exit: exitRoom, pick: (x, y) => pick(x, y, 40), get fps() { return fpsV; }, get inside() { return inside.on; }, audio, LIFE, FESTIVAL, TALK, ROOM, PROP_BUILDERS, lamb, room, view: (x, z, yw, pt) => { camera.position.x = x; camera.position.z = z; yaw = tYaw = yw; pitch = tPitch = pt || 0; vel.set(0, 0, 0); lookVel.x = lookVel.y = 0; } };
 // шрифт опоздал к первой постройке — перерисовываем кварталы один раз
 if (document.fonts && document.fonts.load) document.fonts.load('700 20px "Noto Sans JP"').then(() => { if (!builtBeforeFont) return; builtBeforeFont = false; blocks.forEach((b) => { if (b.built) { disposeBlock(b); } }); ensureBlocks(); }).catch(() => {});

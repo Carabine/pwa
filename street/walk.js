@@ -1413,7 +1413,7 @@ function buildRoom(b, color, type) {
     // предметы-слова по местам; в комбини — с ценником
     const free = spots.slice();
     objs.forEach((sg) => { for (let i = 0; i < free.length; i++) { const sp = free[i]; if (placeObject(sg, sp)) { if (sp.price) { const tg = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.18), lamb('#ffffff', { map: texPrice(sg), side: THREE.DoubleSide })); const off = new THREE.Vector3(0.46, -0.1, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), sp.ry); tg.position.set(sp.x + off.x, sp.y - 0.1, sp.z + off.z); tg.rotation.y = sp.ry + Math.PI / 2; tg.userData.sign = sg; room.add(tg); } free.splice(i, 1); break; } } });
-    placeRadio(free);
+    radio.g = null; if (RADIO_ROOMS.has(type)) placeRadio(free);
     LIFE.upgradeMaterials(room, type);
 }
 // ретро-радиоприёмник: тап переключает станцию (вариант музыки); мигающая лампочка — без текстовых подсказок
@@ -1435,6 +1435,7 @@ function placeRadio(free) {
     radio.g = g; radio.led = led; radio.needle = needle; roomHover = [];
 }
 const radio = { g: null, led: null, needle: null };
+const RADIO_ROOMS = new Set(['home', 'oneroom', 'washitsu', 'loft', 'izakaya', 'ramen', 'cafe']); // в комбини, классе, книжном и игровом зале радио нет
 function radioNext() { const v = audio.nextStation(); toast('📻 ' + (STATION_NAMES[v] || v)); document.querySelectorAll('#panel [data-music]').forEach((x) => x.classList.toggle('on', x.dataset.music === v)); if (radio.needle) radio.needle.position.x = 0.04 + (audio.stationIndex() / 9) * 0.1; }
 const STATION_NAMES = { city: 'Ночной город', snow: 'Снег над крышами', train: 'Ночной поезд', tea: 'Чайный дом', stars: 'Звёзды', harbor: 'Гавань', radio: 'Радио за стеной', calm: 'Тихий вечер', lane: 'Переулок', lofi: 'Lo-fi' };
 let fading = false;
@@ -1453,7 +1454,7 @@ function enterRoom(door) {
         // если спавн всё же внутри мебели — отступаем к двери
         for (let tries = 0; tries < 6; tries++) { const c = camera.position; if (!colliders.room.some((b) => c.x > b.x0 && c.x < b.x1 && c.z > b.z0 && c.z < b.z1)) break; camera.position.z += 0.25; camera.position.x += (tries % 2 ? 0.3 : -0.3); } pitch = tPitch = 0.04; vel.set(0, 0, 0); if (gyro) gyro.base = null; audio.setScene("inside");
         document.getElementById('exit').hidden = false; autoWalk = false; hideHint();
-        toast((ROOM_NAMES[door.userData.door.type] || '') + ' · ' + b.q.name);
+        { const [jp, ru] = String(ROOM_NAMES[door.userData.door.type] || '').split(' · '); banner(jp || '', (ru || '') + ' · ' + b.q.name); }
     });
 }
 function exitRoom() {
@@ -1464,7 +1465,7 @@ function exitRoom() {
         bloom.strength = 0.7; bloom.threshold = 0.7; hemi.intensity = 0.55;
         scene.fog = new THREE.FogExp2(new THREE.Color(th.fog), th.fogD); scene.background = new THREE.Color(th.sky);
         const d = inside.door.userData.door;
-        camera.position.set(d.side * (W2 - 1.3), 1.6, d.z); yaw = tYaw = d.side > 0 ? Math.PI / 2 : -Math.PI / 2; pitch = tPitch = 0; vel.set(0, 0, 0); inside.lastExit = performance.now(); if (gyro) gyro.base = null; audio.setScene(th.id);
+        camera.position.set(d.side * (W2 - 1.3), 1.6, d.z); yaw = tYaw = d.side > 0 ? Math.PI / 2 : -Math.PI / 2; pitch = tPitch = 0; vel.set(0, 0, 0); inside.lastExit = performance.now(); { const tj = THEME_JP[th.id] || ['', '']; banner(tj[0], d && inside.block ? inside.block.q.name : tj[1]); } if (gyro) gyro.base = null; audio.setScene(th.id);
         document.getElementById('exit').hidden = true; hideHint();
     });
 }
@@ -1975,6 +1976,10 @@ function updateHud(force) {
     }
 }
 let toastT = 0;
+// заставка места: крупное японское название и подпись — вверху по центру, без плашки
+let bannerT = 0;
+const THEME_JP = { shinjuku: ['新宿', 'Синдзюку'], yokocho: ['横丁', 'Ёкотё'], matsuri: ['お祭り', 'Мацури'], sando: ['参道', 'Сандо'] };
+function banner(jp, ru) { const el = document.getElementById('place'); if (!el) return; el.querySelector('.jp').textContent = jp; el.querySelector('.ru').textContent = ru; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); clearTimeout(bannerT); bannerT = setTimeout(() => el.classList.remove('show'), 3200); }
 function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2600); }
 
 document.getElementById('share').addEventListener('click', async () => {
@@ -2030,6 +2035,7 @@ function load() {
         planBlocks(); buildWorld(); buildRain();
         camera.position.set(0, 1.6, 2); yaw = tYaw = 0; pitch = tPitch = 0.02; vel.set(0, 0, 0);
         ensureBlocks(); updateHud(true);
+        { const tj = THEME_JP[th.id] || ['', '']; const bi = blockAt(camera.position.z); banner(tj[0], tj[1] + (blocks[bi] ? ' · ' + blocks[bi].q.name : '')); }
     };
     const run = () => fontReady.then((ok) => { if (!ok) builtBeforeFont = true; go(); });
     if (source === 'real' || data.source === 'owner') Promise.all([D.loadJlpt(), fontReady]).then(([m]) => { jlptMap = m || {}; run(); }); else run();
@@ -2145,6 +2151,7 @@ requestAnimationFrame(frame);
     addEventListener('resize', sync); sync();
 })();
 { const ld = document.getElementById('loading'); if (ld) { ld.style.opacity = '0'; setTimeout(() => ld.remove(), 500); } const nw = document.getElementById('nowebgl'); if (nw) nw.style.display = 'none'; }
+setTimeout(() => { const h = document.querySelector('.hud.bottom .hint'); if (h) h.classList.add('gone'); }, 12000);
 window.__walk = { camera, blocks, scene, doors, colliders, renderer, tap, enter: (i) => enterRoom(doors[i || 0]), exit: exitRoom, pick: (x, y) => pick(x, y, 40), get fps() { return fpsV; }, get inside() { return inside.on; }, audio, LIFE, FESTIVAL, TALK, ROOM, PROP_BUILDERS, lamb, room, view: (x, z, yw, pt) => { camera.position.x = x; camera.position.z = z; yaw = tYaw = yw; pitch = tPitch = pt || 0; vel.set(0, 0, 0); lookVel.x = lookVel.y = 0; } };
 // шрифт опоздал к первой постройке — перерисовываем кварталы один раз
 if (document.fonts && document.fonts.load) document.fonts.load('700 20px "Noto Sans JP"').then(() => { if (!builtBeforeFont) return; builtBeforeFont = false; blocks.forEach((b) => { if (b.built) { disposeBlock(b); } }); ensureBlocks(); }).catch(() => {});
