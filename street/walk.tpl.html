@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Прогулка — Улица слов · Animei</title>
+    <title>Улица слов · Animei</title>
     <meta name="theme-color" content="#05050a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,7 +64,6 @@
         <div class="name"><span id="q-emoji"></span><span id="q-name"></span></div>
         <div class="sub" id="q-sub"></div>
     </div>
-    <div class="count"><b id="lit-n">0</b><span id="lit-l">вывесок горит</span></div>
 </div>
 <div id="dots"></div>
 <div class="hud bottom">
@@ -77,7 +76,7 @@
     </div>
     <div class="hint"><span class="m">Левый палец — идти, правый — осмотреться</span><span class="d">Клик — захватить мышь, Esc — отпустить · WASD или колесо — идти · Shift — бег · M — звук</span> · тап по вывеске — слово, по двери — войти</div>
     <div class="actions">
-        <button class="btn ghost" id="walk">▶ Прогулка</button>
+        <a class="btn ghost" id="home" href="../pages/apps.html" aria-label="Выйти в приложения" hidden>✕</a>
         <button class="btn ghost" id="exit" hidden>← На улицу</button>
         <button class="btn" id="share">Поделиться</button>
         <span class="spacer"></span>
@@ -103,8 +102,8 @@
 </div>
 <div id="toast"></div>
 <div id="fps"></div>
-<div id="nowebgl">Для 3D-прогулки нужен WebGL и доступ к сети (библиотека Three.js грузится с CDN). Откройте плоскую версию: shinjuku.html</div>
-<script src="./words-busyd.js"></script>
+<div id="nowebgl">Для «Улицы слов» нужен WebGL и доступ к сети (библиотека Three.js грузится с CDN). Попробуйте открыть страницу в другом браузере.</div>
+<script>if (location.protocol === 'file:') document.write('<script src="./words-busyd.js"><\/script>');</script>
 <script src="./street-data.js"></script>
 <script type="module">
 /*__WALK_JS__*/

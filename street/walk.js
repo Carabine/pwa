@@ -253,7 +253,8 @@ const SET_KEY = 'animei:street';
 function lsSet() { try { return JSON.parse(localStorage.getItem(SET_KEY) || '{}') || {}; } catch (e) { return {}; } }
 function saveSet(p) { try { localStorage.setItem(SET_KEY, JSON.stringify(Object.assign(lsSet(), p))); } catch (e) { /* приватный режим */ } }
 const settings = lsSet();
-let source = params.get('src') || settings.source || 'demo';
+let source = params.get('src') || settings.source || (location.protocol === 'file:' ? 'demo' : 'real');
+if (location.protocol !== 'file:') { const hb = document.getElementById('home'); if (hb) hb.hidden = false; }
 const opts = { rain: settings.rain !== false, reflect: false, bloom: true }; // отражения на улице выключены навсегда
 
 const canvas = document.getElementById('scene');
@@ -1337,7 +1338,7 @@ function enterRoom(door) {
         camera.position.set(ROOM.doorX - 0.5, 1.6, ROOM.d / 2 - 1.1); yaw = tYaw = 0.1;
         // если спавн всё же внутри мебели — отступаем к двери
         for (let tries = 0; tries < 6; tries++) { const c = camera.position; if (!colliders.room.some((b) => c.x > b.x0 && c.x < b.x1 && c.z > b.z0 && c.z < b.z1)) break; camera.position.z += 0.25; camera.position.x += (tries % 2 ? 0.3 : -0.3); } pitch = tPitch = 0.04; vel.set(0, 0, 0); if (gyro) gyro.base = null; audio.setScene("inside");
-        document.getElementById('exit').hidden = false; document.getElementById('walk').hidden = true; autoWalk = false; hideHint();
+        document.getElementById('exit').hidden = false; autoWalk = false; hideHint();
         toast((ROOM_NAMES[door.userData.door.type] || '') + ' · ' + b.q.name);
     });
 }
@@ -1350,7 +1351,7 @@ function exitRoom() {
         scene.fog = new THREE.FogExp2(new THREE.Color(th.fog), th.fogD); scene.background = new THREE.Color(th.sky);
         const d = inside.door.userData.door;
         camera.position.set(d.side * (W2 - 1.3), 1.6, d.z); yaw = tYaw = d.side > 0 ? Math.PI / 2 : -Math.PI / 2; pitch = tPitch = 0; vel.set(0, 0, 0); inside.lastExit = performance.now(); if (gyro) gyro.base = null; audio.setScene(th.id);
-        document.getElementById('exit').hidden = true; document.getElementById('walk').hidden = false; hideHint();
+        document.getElementById('exit').hidden = true; hideHint();
     });
 }
 let fadeT = 0;
@@ -1525,8 +1526,7 @@ canvas.addEventListener('wheel', (e) => { e.preventDefault(); wheelImpulse = cla
 const keys = {};
 window.addEventListener('keydown', (e) => { audio.resume(); keys[e.code] = true; if (e.code === 'Escape') { hideHint(); panel.classList.remove('open'); } if (e.code === 'Space') { e.preventDefault(); toggleWalk(); } if (e.code === 'KeyM') audio.toggle(); });
 window.addEventListener('keyup', (e) => { keys[e.code] = false; });
-function toggleWalk() { autoWalk = !autoWalk; document.getElementById('walk').classList.toggle('on', autoWalk); }
-document.getElementById('walk').addEventListener('click', toggleWalk);
+function toggleWalk() { autoWalk = !autoWalk; }
 // гироскоп: телефон как окно в улицу (на iOS нужно разрешение по тапу)
 async function toggleGyro(btn) {
     if (gyro) { window.removeEventListener('deviceorientation', gyro.fn); gyro = null; btn.classList.remove('on'); saveSet({ gyro: false }); return; }
@@ -1643,8 +1643,7 @@ function updateHud(force) {
     if (!blocks.length) return; // данные ещё грузятся (JLPT по сети)
     const bi = blockAt(camera.position.z);
     const lit = litCount();
-    document.getElementById('lit-n').textContent = lit;
-    document.getElementById('lit-l').textContent = plural(lit, 'вывеска горит', 'вывески горят', 'вывесок горит');
+
     if (bi !== hudBlock || force) {
         hudBlock = bi; const q = blocks[bi].q;
         document.getElementById('q-emoji').textContent = '';
@@ -1665,7 +1664,7 @@ document.getElementById('share').addEventListener('click', async () => {
     g.textBaseline = 'top'; g.shadowColor = 'rgba(0,0,0,0.8)'; g.shadowBlur = 8; g.fillStyle = '#fff'; g.font = '600 16px ' + UI;
     g.fillText(document.getElementById('q-emoji').textContent + ' ' + document.getElementById('q-name').textContent, 18, 22);
     g.font = '700 30px ' + UI; g.textAlign = 'right'; g.fillText(String(litCount()), W - 18, 16);
-    g.font = '500 12px ' + UI; g.fillStyle = 'rgba(255,255,255,0.75)'; g.fillText(document.getElementById('lit-l').textContent, W - 18, 50);
+    g.font = '500 12px ' + UI; g.fillStyle = 'rgba(255,255,255,0.75)'; g.fillText(plural(litCount(), 'вывеска горит', 'вывески горят', 'вывесок горит'), W - 18, 50);
     g.textAlign = 'left'; g.font = '600 13px ' + UI; g.fillStyle = 'rgba(255,255,255,0.7)'; g.fillText('animei.space · Улица слов', 18, H - 34);
     const blob = await new Promise((res) => c.toBlob(res, 'image/png'));
     const file = new File([blob], 'animei-street.png', { type: 'image/png' });
