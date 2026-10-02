@@ -14,6 +14,7 @@
         #joy { position: absolute; left: 22px; bottom: calc(env(safe-area-inset-bottom, 0px) + 196px); width: 110px; height: 110px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.28); background: rgba(10,10,20,0.3); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); pointer-events: none; opacity: .55; transition: opacity .2s; }
         #joy.on { opacity: 1; border-color: rgba(255,255,255,0.5); }
         #joy-knob { position: absolute; left: 33px; top: 33px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.8); box-shadow: 0 0 16px rgba(124,140,248,0.9); transition: transform .05s; }
+        #joy.run #joy-knob { background: #ffb35a; box-shadow: 0 0 18px rgba(255,150,60,0.95); }
         #joy::before { content: ''; position: absolute; inset: 14px; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.18); }
         @media (hover: hover) and (pointer: fine) { #joy { display: none; } }
         .hint .d { display: none; } @media (hover: hover) and (pointer: fine) { .hint .m { display: none; } .hint .d { display: inline; } }
@@ -98,7 +99,7 @@
         <span><i class="due"></i>пора повторить</span>
         <span><i class="worn"></i>забывается</span>
     </div>
-    <div class="hint"><span class="m">Левый палец — идти, правый — осмотреться</span><span class="d">Клик — захватить мышь, Esc — отпустить · WASD или колесо — идти · Shift — бег · M — звук</span></div>
+    <div class="hint"><span class="m">Левый палец — идти (дальше края — бег), правый — осмотреться</span><span class="d">Клик — захватить мышь, Esc — отпустить · WASD или колесо — идти · Shift — бег · M — звук</span></div>
     <div class="actions">
         <a class="btn ghost" id="home" href="../pages/apps.html" aria-label="Выйти в приложения" hidden>✕</a>
         <button class="btn ghost" id="exit" hidden>← На улицу</button>

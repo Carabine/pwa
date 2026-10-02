@@ -1677,7 +1677,7 @@ let yaw = 0, pitch = 0, tYaw = 0, tPitch = 0;
 const lookVel = { x: 0, y: 0 };
 const vel = new THREE.Vector3();
 let autoWalk = false, wheelImpulse = 0, gyro = null;
-const joy = { active: false, id: null, x0: 0, y0: 0, dx: 0, dy: 0, mag: 0 };
+const joy = { active: false, id: null, x0: 0, y0: 0, dx: 0, dy: 0, mag: 0, run: false };
 let look = null, tapStart = null;
 const joyEl = document.getElementById('joy'), joyKnob = document.getElementById('joy-knob');
 const LOOK_K = 2.6 / Math.max(320, Math.min(innerWidth, innerHeight)); // радиан на пиксель: полный свайп ≈ 150°
@@ -1710,6 +1710,8 @@ window.addEventListener('pointermove', (e) => {
         const mm = Math.max(0, (Math.min(m, 1) - 0.14) / 0.86); // мёртвая зона
         joy.dx = m > 0 ? dx / Math.min(m, 1) * mm : 0; joy.dy = m > 0 ? dy / Math.min(m, 1) * mm : 0; joy.mag = mm;
         joyKnob.style.transform = 'translate(' + (dx * 34) + 'px, ' + (dy * 34) + 'px)';
+        // бег на телефоне: палец увели дальше края джойстика
+        const run = m > 1.45; if (run !== joy.run) { joy.run = run; joyEl.classList.toggle('run', run); if (run) buzz(8); }
         return;
     }
     if (look && e.pointerId === look.id) {
@@ -1722,7 +1724,7 @@ window.addEventListener('pointermove', (e) => {
     }
 });
 function endPointer(e) {
-    if (joy.active && e.pointerId === joy.id) { joy.active = false; joy.dx = joy.dy = joy.mag = 0; joyKnob.style.transform = ''; joyEl.classList.remove('on'); joyEl.style.left = ''; joyEl.style.top = ''; joyEl.style.bottom = ''; return; }
+    if (joy.active && e.pointerId === joy.id) { joy.active = false; joy.dx = joy.dy = joy.mag = 0; joy.run = false; joyEl.classList.remove('run'); joyKnob.style.transform = ''; joyEl.classList.remove('on'); joyEl.style.left = ''; joyEl.style.top = ''; joyEl.style.bottom = ''; return; }
     if (look && e.pointerId === look.id) {
         if (!look.moved && tapStart && performance.now() - tapStart.t < 900) { tap(e.clientX, e.clientY); lookVel.x = lookVel.y = 0; }
         else if (performance.now() - look.lt > 80) { lookVel.x = lookVel.y = 0; } // палец замер перед отпусканием — без инерции
@@ -1775,7 +1777,7 @@ let hoverDirty = true, hoverList = [], roomHover = [];
 function rebuildHover() { hoverList = []; signsGroup.traverse((o) => { if ((o.isMesh || o.isSprite) && o.userData.sign) hoverList.push(o); }); hoverList = hoverList.concat(doors); hoverDirty = false; }
 function pick(x, y, maxDist) {
     ray.setFromCamera(new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1), camera);
-    ray.far = maxDist || 14;
+    ray.far = maxDist || 24; // вывески висят высоко на фасадах — ловим издалека
     if (inside.on) {
         if (!roomHover.length) room.traverse((o) => { if ((o.isMesh || o.isSprite) && (o.userData.sign || o.userData.exit)) roomHover.push(o); });
         const h = ray.intersectObjects(roomHover, false).find((o) => o.object.userData.sign || o.object.userData.exit);
@@ -1824,7 +1826,7 @@ function updateHover(now) {
     let pt = null;
     if (locked()) pt = [innerWidth / 2, innerHeight / 2]; else if (FINE && hover.lastMouse) pt = hover.lastMouse;
     else if (GAZE) {
-        const h = pick(innerWidth / 2, innerHeight / 2, 7), key = h && h.sign || null; // двери не подписываем
+        const h = pick(innerWidth / 2, innerHeight / 2, 22), key = h && h.sign || null; // двери не подписываем; вывески — издалека
         document.getElementById('cross').classList.toggle('hit', !!key);
         if (key !== hover.gazeKey) { hover.gazeKey = key; hover.gazeT = now; }
         if (key && now - hover.gazeT > 280) showHint(h.sign, false);
@@ -1955,7 +1957,7 @@ function frame(now) {
     if (wheelImpulse) { f += wheelImpulse; wheelImpulse *= Math.exp(-dt * 6); if (Math.abs(wheelImpulse) < 0.02) wheelImpulse = 0; }
     if (autoWalk && !f && !joy.active) { f = 0.6; tYaw = lerp(tYaw, Math.sin(t * 0.22) * 0.1, 0.015); }
     const mag = Math.hypot(f, s); if (mag > 1) { f /= mag; s /= mag; }
-    const speed = (keys.ShiftLeft || keys.ShiftRight ? 3.8 : 2.1) * (inside.on ? 0.75 : 1);
+    const speed = (keys.ShiftLeft || keys.ShiftRight || joy.run ? 3.8 : 2.1) * (inside.on ? 0.75 : 1);
     dir.set(-Math.sin(yaw), 0, -Math.cos(yaw)); rightV.set(Math.cos(yaw), 0, -Math.sin(yaw));
     const want = dir.clone().multiplyScalar(f * speed).addScaledVector(rightV, s * speed);
     vel.lerp(want, 1 - Math.exp(-dt * (mag ? 9 : 7)));
