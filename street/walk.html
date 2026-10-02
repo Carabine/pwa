@@ -3826,6 +3826,7 @@ if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('700
         if (!webgl()) show('Этот браузер не даёт доступ к 3D-графике (WebGL).', 'Включите аппаратное ускорение в настройках браузера или откройте страницу в Chrome.');
         else if (/WebGL|context/i.test(m)) show('Не удалось включить 3D-графику на этом устройстве.', m);
         else if (/import|module|fetch|three/i.test(m)) show('Не загрузилась 3D-библиотека — похоже, проблема с сетью.', m);
+        else setTimeout(function () { if (!window.__walk) show('Улица не запустилась из-за ошибки.', m); }, 2000);
     });
     // долго нет старта — объясняем, что именно не так
     setTimeout(function () { if (!window.__walk) show(webgl() ? (firstErr ? 'Улица не запустилась.' : 'Улица всё ещё загружается…') : 'Этот браузер не даёт доступ к 3D-графике (WebGL).', firstErr || (webgl() ? 'Проверьте сеть и попробуйте ещё раз.' : 'Включите аппаратное ускорение в настройках браузера или откройте страницу в Chrome.')); }, 30000);

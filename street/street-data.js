@@ -97,12 +97,14 @@ function lsJson(key, fallback) {
     try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch (e) { return fallback; }
 }
 
+// массив из значения: приложение хранит часть данных обёрткой { version, decks/words: [...] }
+function listOf(v, key) { return Array.isArray(v) ? v : (v && Array.isArray(v[key]) ? v[key] : []); }
 function loadReal() {
-    const words = (lsJson('words', []) || []).filter((w) => w && w.id && (w.kanji || w.kana));
-    const schedule = lsJson('srs:schedule:v2', {}) || {};
-    const decks = (lsJson('animei:decks', []) || []).filter((d) => d && Array.isArray(d.wordIds));
-    const kn = lsJson('animei:knownWords', null);
-    const known = new Set(kn && Array.isArray(kn.words) ? kn.words : []);
+    const words = listOf(lsJson('words', []), 'words').filter((w) => w && w.id && (w.kanji || w.kana));
+    const sch = lsJson('srs:schedule:v2', {});
+    const schedule = sch && typeof sch === 'object' && !Array.isArray(sch) ? sch : {};
+    const decks = listOf(lsJson('animei:decks', null), 'decks').filter((d) => d && Array.isArray(d.wordIds));
+    const known = new Set(listOf(lsJson('animei:knownWords', null), 'words').filter((k) => typeof k === 'string'));
     return { words, schedule, decks, known, jlpt: {}, source: 'real' };
 }
 
