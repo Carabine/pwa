@@ -713,7 +713,7 @@ function placeStreetProp(sign, b) {
     if (pick) { used.add(pick); const d = pick.userData.door; sign.side = d.side; sign.z = d.z + (mt.spot === 'wall' ? 1.6 : (used.size % 2 ? 1.05 : -1.05)); sign.nearDoor = d; }
     if (!pick && mt.spot === 'floor' && sign.text === '車') { sign.side = sign.side || 1; sign.z = b.z0 - 4 - (used.size) * 6; }
     // место занято декором, прохожим или другим предметом — сдвигаем вдоль улицы
-    const half = BIG_PROPS.has(sign.text) ? 2.2 : 0.6;
+    const half = BIG_PROPS.has(sign.text) ? 2.2 : 0.8;
     const x = sign.side * (W2 - (BIG_PROPS.has(sign.text) ? 1.45 : 0.7));
     const busy = (z) => { const x0 = x - half, x1 = x + half, z0 = z - half, z1 = z + half; const hit = (c) => !(x1 <= c.x0 || x0 >= c.x1 || z1 <= c.z0 || z0 >= c.z1); return colliders.street.some(hit) || blockers.some(hit); };
     if (busy(sign.z)) { const z0 = sign.z; let found = false; for (let d = 0.8; d <= 8 && !found; d += 0.8) for (const dir of [-1, 1]) { const z = z0 + dir * d; if (z <= b.z0 - 1 && z >= b.z1 + 1 && !busy(z)) { sign.z = z; found = true; break; } } }
@@ -727,7 +727,10 @@ function buildProp(sign, group) {
     g.position.set(x, 0, z);
     if (sign.text === '猫' || sign.text === '卵') { const crate = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.32, 0.5), lamb('#8a6a3a')); crate.position.set(x, 0.16, z); group.add(crate); g.position.y = 0.32; }
     if (!g.userData.wall) { group.updateMatrixWorld(true); addCollider(g, null, g.userData.big ? 0.3 : 0.2); }
+    const face = (propMeta(sign.text) || {}).face;
     if (g.userData.wall) { g.position.x = sign.side * (W2 - 0.12); g.rotation.y = -sign.side * Math.PI / 2; }
+    else if (face === 'player') g.rotation.y = 0; // табличка смотрит на идущего по улице
+    else if (face === 'street') g.rotation.y = sign.side > 0 ? -Math.PI / 2 : Math.PI / 2; // люди и звери — лицом к улице
     else g.rotation.y += sign.side > 0 ? Math.PI : 0;
     if (sign.state === 'worn') g.rotation.z = (sign.seed % 2 ? 1 : -1) * 0.12;
     g.traverse((o) => { if (o.isMesh) o.userData.sign = sign; });
@@ -1164,7 +1167,7 @@ function catalog(type, rnd) {
     const poster = (g, x, y, z) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.64), lamb('#ffffff', { map: texPoster(rnd) })); p.position.set(x, y, z); p.rotation.z = (rnd() - 0.5) * 0.06; g.add(p); };
     const acUnit = (g, x, y, z) => { B(g, 0.9, 0.3, 0.22, '#e8ecf0', x, y, z); B(g, 0.8, 0.04, 0.2, '#c8ccd4', x, y - 0.12, z + 0.02); for (let i = 0; i < 8; i++) B(g, 0.08, 0.02, 0.01, '#b8bcc4', x - 0.35 + i * 0.1, y - 0.1, z + 0.12); };
     const COMMON = [
-        { name: 'display', rule: 'wall', walls: ['left', 'right', 'back'], w: 1.8, d: 0.45, h: 1.9, solid: true, count: [1, 2], build(g) { B(g, 1.8, 1.9, 0.4, '#4a3a2e', 0, 0.95, -0.02); this.spots = []; for (let lv = 0; lv < 4; lv++) { B(g, 1.7, 0.03, 0.36, '#8a6a48', 0, 0.35 + lv * 0.45, 0); for (let k = 0; k < 4; k++) this.spots.push({ kind: 'table', x: -0.6 + k * 0.4, y: 0.37 + lv * 0.45, z: 0.05 }); } } },
+        { name: 'display', rule: 'wall', walls: ['left', 'right', 'back'], w: 1.8, d: 0.5, h: 1.9, solid: true, count: [1, 2], build(g) { B(g, 1.8, 1.9, 0.04, '#4a3a2e', 0, 0.95, -0.22); B(g, 0.04, 1.9, 0.48, '#4a3a2e', -0.88, 0.95, 0); B(g, 0.04, 1.9, 0.48, '#4a3a2e', 0.88, 0.95, 0); B(g, 1.8, 0.04, 0.48, '#4a3a2e', 0, 1.88, 0); this.spots = []; for (let lv = 0; lv < 4; lv++) { B(g, 1.72, 0.03, 0.44, '#8a6a48', 0, 0.3 + lv * 0.45, 0); for (let k = 0; k < 4; k++) this.spots.push({ kind: 'table', x: -0.6 + k * 0.4, y: 0.32 + lv * 0.45, z: 0.06 }); } } },
         { name: 'posters', rule: 'wall', walls: ['left', 'right', 'front', 'back'], w: 1.3, d: 0.06, h: 0.8, high: true, count: [1, 3], build(g) { poster(g, -0.35, 1.8 + rnd() * 0.5, 0.02); poster(g, 0.3, 1.7 + rnd() * 0.5, 0.02); } },
         { name: 'ac', rule: 'wall', walls: ['left', 'right', 'back'], w: 1.0, d: 0.3, h: 0.5, high: true, count: [1, 2], build(g) { acUnit(g, 0, ROOM.h - 0.45, 0.12); } },
         { name: 'skirting', rule: 'none', build(g) { const { w, d } = ROOM; B(g, w, 0.1, 0.03, '#2a2016', 0, 0.05, -d / 2 + 0.015); B(g, w, 0.1, 0.03, '#2a2016', 0, 0.05, d / 2 - 0.015); B(g, 0.03, 0.1, d, '#2a2016', -w / 2 + 0.015, 0.05, 0); B(g, 0.03, 0.1, d, '#2a2016', w / 2 - 0.015, 0.05, 0); } },
@@ -1266,7 +1269,7 @@ function buildRoom(b, color, type) {
             if (m.rule !== 'none') { pos = placeModule(m, grid, rnd, used); if (!pos) continue; }
             m.build(g, rnd, m._len);
             g.position.set(pos.x, 0, pos.z); g.rotation.y = pos.ry; room.add(g); g.updateMatrixWorld(true);
-            if (m.solid) addCollider(g, colliders.room, 0.25);
+            g.userData.mod = m.name; if (m.solid) addCollider(g, colliders.room, 0.25);
             (m.spots || []).forEach((sp) => { const v = new THREE.Vector3(sp.x, sp.y, sp.z).applyMatrix4(g.matrixWorld); spots.push({ kind: sp.kind, x: v.x, y: v.y, z: v.z, ry: pos.ry + (sp.ry || 0), price: sp.price }); });
             if (m.boardMesh) boardMod = m;
             if (m.mag) { magMod = m; m._g = g; }
@@ -1300,7 +1303,9 @@ function buildRoom(b, color, type) {
     const free = spots.slice();
     objs.forEach((sg) => { for (let i = 0; i < free.length; i++) { const sp = free[i]; if (placeObject(sg, sp)) { if (sp.price) { const tg = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.18), lamb('#ffffff', { map: texPrice(sg), side: THREE.DoubleSide })); const off = new THREE.Vector3(0.46, -0.1, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), sp.ry); tg.position.set(sp.x + off.x, sp.y - 0.1, sp.z + off.z); tg.rotation.y = sp.ry + Math.PI / 2; tg.userData.sign = sg; room.add(tg); } free.splice(i, 1); break; } } });
 }
+let fading = false;
 function enterRoom(door) {
+    if (fading || inside.on) return;
     const b = blocks[blockAt(door.userData.door.z)];
     buildRoom(b, door.userData.door.color, door.userData.door.type);
     inside.on = true; inside.block = b; inside.door = door;
@@ -1309,13 +1314,15 @@ function enterRoom(door) {
         world.visible = false; signsGroup.visible = false; if (rain) rain.visible = false; room.visible = true;
         bloom.strength = 0.22; bloom.threshold = 0.92; hemi.intensity = 0.25;
         scene.fog = new THREE.FogExp2(new THREE.Color('#3a2414'), 0.06); scene.background = new THREE.Color('#1a120c');
-        camera.position.set(ROOM.doorX - 0.5, 1.6, ROOM.d / 2 - 1.1); yaw = tYaw = 0.1; pitch = tPitch = 0.04; vel.set(0, 0, 0); if (gyro) gyro.base = null; audio.setScene("inside");
+        camera.position.set(ROOM.doorX - 0.5, 1.6, ROOM.d / 2 - 1.1); yaw = tYaw = 0.1;
+        // если спавн всё же внутри мебели — отступаем к двери
+        for (let tries = 0; tries < 6; tries++) { const c = camera.position; if (!colliders.room.some((b) => c.x > b.x0 && c.x < b.x1 && c.z > b.z0 && c.z < b.z1)) break; camera.position.z += 0.25; camera.position.x += (tries % 2 ? 0.3 : -0.3); } pitch = tPitch = 0.04; vel.set(0, 0, 0); if (gyro) gyro.base = null; audio.setScene("inside");
         document.getElementById('exit').hidden = false; document.getElementById('walk').hidden = true; autoWalk = false; hideHint();
         toast((ROOM_NAMES[door.userData.door.type] || '') + ' · ' + b.q.name);
     });
 }
 function exitRoom() {
-    if (!inside.on) return;
+    if (!inside.on || fading) return;
     inside.on = false;
     fade(() => {
         room.visible = false; world.visible = true; signsGroup.visible = true; if (rain) rain.visible = opts.rain;
@@ -1327,7 +1334,7 @@ function exitRoom() {
     });
 }
 let fadeT = 0;
-function fade(mid) { const el = document.getElementById('fade'); el.classList.add('on'); clearTimeout(fadeT); fadeT = setTimeout(() => { mid(); setTimeout(() => el.classList.remove('on'), 60); }, 320); }
+function fade(mid) { const el = document.getElementById('fade'); fading = true; el.classList.add('on'); clearTimeout(fadeT); fadeT = setTimeout(() => { mid(); setTimeout(() => { el.classList.remove('on'); fading = false; }, 60); }, 320); }
 document.getElementById('exit').addEventListener('click', exitRoom);
 
 // ---- дождь и пар ----

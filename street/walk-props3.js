@@ -37,7 +37,46 @@
         wear: (m, t, p) => { const g = new THREE.Group(); const col = p.col || pick(t, PAL); if (p.kind === 'tie') { box(g, m, 0.04, 0.02, 0.2, col, 0, 0.01, 0); cone(g, m, 0.03, 0.05, col, 0, 0.01, 0.12).rotation.x = Math.PI / 2; } else if (p.kind === 'socks') [-0.04, 0.04].forEach((x) => { box(g, m, 0.05, 0.03, 0.12, col, x, 0.015, 0); box(g, m, 0.05, 0.08, 0.04, col, x, 0.04, -0.05); }); else if (p.kind === 'scarf') { tor(g, m, 0.06, 0.02, col, 0, 0.02, 0, Math.PI / 2); box(g, m, 0.04, 0.02, 0.15, col, 0.03, 0.02, 0.1); } else if (p.kind === 'watch') { tor(g, m, 0.04, 0.01, '#2a2a30', 0, 0.015, 0, Math.PI / 2); cyl(g, m, 0.025, 0.025, 0.012, '#f4f4f4', 0, 0.02, 0, 14); } else if (p.kind === 'cap') { sph(g, m, 0.08, col, 0, 0.04, 0, 1, 0.6, 1); box(g, m, 0.12, 0.01, 0.08, col, 0, 0.02, 0.09); } else if (p.kind === 'umbrella') { cone(g, m, 0.12, 0.08, col, 0, 0.55, 0, 8); cyl(g, m, 0.006, 0.006, 0.55, '#5a4a3a', 0, 0.27, 0, 5); tor(g, m, 0.03, 0.006, '#5a4a3a', -0.03, 0.02, 0, 0, Math.PI); } return small(g); },
         furn: (m, t, p) => { const g = new THREE.Group(); const col = p.col || '#8a6a48'; if (p.kind === 'sofa') { box(g, m, 1.6, 0.4, 0.8, col, 0, 0.2, 0); box(g, m, 1.6, 0.5, 0.2, col, 0, 0.65, -0.3); box(g, m, 0.2, 0.5, 0.8, col, -0.7, 0.45, 0); box(g, m, 0.2, 0.5, 0.8, col, 0.7, 0.45, 0); } else if (p.kind === 'shelf') { box(g, m, 0.9, 1.8, 0.35, col, 0, 0.9, 0); for (let i = 0; i < 4; i++) box(g, m, 0.8, 0.03, 0.3, '#c8a878', 0, 0.3 + i * 0.42, 0.02); } else if (p.kind === 'bed') { box(g, m, 1.2, 0.3, 2.0, col, 0, 0.15, 0); box(g, m, 1.15, 0.15, 1.9, '#e8e4d8', 0, 0.37, 0); box(g, m, 1.1, 0.08, 1.2, '#6a7aa8', 0, 0.48, 0.3); box(g, m, 0.5, 0.1, 0.35, '#f4f4f8', 0, 0.5, -0.7); box(g, m, 1.2, 0.5, 0.06, col, 0, 0.55, -1.0); } else if (p.kind === 'table') { box(g, m, 1.2, 0.05, 0.8, '#c8a878', 0, 0.72, 0); [[-0.5, -0.3], [0.5, -0.3], [-0.5, 0.3], [0.5, 0.3]].forEach((q) => cyl(g, m, 0.03, 0.03, 0.7, col, q[0], 0.35, q[1], 8)); } else if (p.kind === 'drawer') { box(g, m, 0.9, 1.0, 0.45, col, 0, 0.5, 0); for (let i = 0; i < 3; i++) { box(g, m, 0.8, 0.26, 0.02, '#a88060', 0, 0.2 + i * 0.3, 0.23); sph(g, m, 0.015, '#c8a84a', 0, 0.2 + i * 0.3, 0.245); } } else if (p.kind === 'door') { box(g, m, 0.9, 2.0, 0.06, col, 0, 1.0, 0); sph(g, m, 0.03, '#c8a84a', 0.35, 1.0, 0.05); g.userData.wall = true; } else if (p.kind === 'window') { box(g, m, 1.2, 1.0, 0.06, '#f0ece0', 0, 1.6, 0); const w = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.9), new THREE.MeshBasicMaterial({ map: texSky() })); w.position.set(0, 1.6, 0.035); g.add(w); box(g, m, 0.04, 0.9, 0.08, '#f0ece0', 0, 1.6, 0.04); g.userData.wall = true; } else if (p.kind === 'curtain') { box(g, m, 1.3, 0.03, 0.03, '#8a8a94', 0, 2.3, 0.05); for (let i = 0; i < 2; i++) box(g, m, 0.5, 1.6, 0.03, p.col || '#8a3a4a', -0.35 + i * 0.7, 1.5, 0.05); g.userData.wall = true; } else if (p.kind === 'tatami') { box(g, m, 1.8, 0.04, 0.9, '#9aa06a', 0, 0.02, 0); box(g, m, 1.8, 0.045, 0.04, '#2a2a24', 0, 0.02, -0.45); box(g, m, 1.8, 0.045, 0.04, '#2a2a24', 0, 0.02, 0.45); } else if (p.kind === 'lamp') { cyl(g, m, 0.12, 0.14, 0.03, '#2a2a30', 0, 0.015, 0, 14); cyl(g, m, 0.02, 0.02, 1.4, '#2a2a30', 0, 0.7, 0, 6); cone(g, m, 0.2, 0.25, '#f0dcb8', 0, 1.5, 0, 14); const l = new THREE.PointLight(0xffe0b0, 1.5, 4, 1.5); l.position.set(0, 1.4, 0); g.add(l); g.userData.glowColor = '#ffe0b0'; g.userData.glowAt = [0, 1.45, 0]; } return g; },
         place: (m, t, p) => { const g = new THREE.Group(); box(g, m, 0.06, 2.3, 0.06, '#2a2a30', 0, 1.15, 0); box(g, m, 0.9, 0.42, 0.06, '#1a1a20', 0, 2.3, 0); label(g, t, p.bg || '#1a1a20', p.ink || '#ffffff', 0.84, 0.36, 0, 2.3, 0.035); if (p.lit !== false) { g.userData.glowColor = p.ink || '#ffffff'; g.userData.glowAt = [0, 2.3, 0.1]; } return g; },
-        person: (m, t, p) => { const g = new THREE.Group(); const h = p.h || 1.65, cl = p.col || pick(t, ['#4a6ab8', '#8a3a4a', '#2a2a32', '#4aa050', '#f0f0f0']); const body = new THREE.Mesh(new THREE.CapsuleGeometry(h * 0.14, h * 0.45, 4, 10), m(cl)); body.position.y = h * 0.5; g.add(body); sph(g, m, h * 0.075, p.skin || '#f0d0b0', 0, h * 0.86, 0); sph(g, m, h * 0.08, p.hair || '#2a1a10', 0, h * 0.89, -0.01, 1, 0.7, 1); [-1, 1].forEach((k) => { cyl(g, m, h * 0.03, h * 0.03, h * 0.38, cl, k * h * 0.17, h * 0.55, 0, 6); cyl(g, m, h * 0.04, h * 0.04, h * 0.42, p.pants || '#2a2a32', k * h * 0.06, h * 0.22, 0, 6); }); if (p.hat) { cyl(g, m, h * 0.09, h * 0.09, h * 0.05, p.hat, 0, h * 0.96, 0, 12); cyl(g, m, h * 0.13, h * 0.13, h * 0.01, p.hat, 0, h * 0.94, 0, 14); } if (p.bag) box(g, m, 0.25, 0.3, 0.1, '#5a3a22', h * 0.2, h * 0.4, 0); if (p.book) box(g, m, 0.18, 0.04, 0.24, '#c84a4a', -h * 0.2, h * 0.45, 0.1); if (p.coat) box(g, m, h * 0.34, h * 0.5, h * 0.3, '#f4f4f8', 0, h * 0.5, 0); if (p.stick) cyl(g, m, 0.012, 0.012, h * 0.6, '#5a3a22', h * 0.22, h * 0.3, 0.05, 6); if (p.sword) box(g, m, 0.03, 0.9, 0.012, '#d8dce4', -h * 0.22, h * 0.55, 0); if (p.small) g.scale.setScalar(0.7); g.rotation.y = 0.3; return g; },
+        person: (m, t, p) => {
+            // пропорции 7 голов: голова, шея, торс с одеждой, руки-капсулы, ноги, обувь; одежда по профессии
+            const g = new THREE.Group(); const h = p.h || 1.68, sc = h / 1.68;
+            const skin = p.skin || pick(t + 's', ['#f0d0b0', '#e8c4a0', '#d8b090', '#f4dcc4']);
+            const hair = p.hair || pick(t + 'h', ['#1a1a1e', '#2a1a10', '#4a2a14', '#6a4a2a', '#c8c8d0']);
+            const top = p.col || pick(t, ['#4a6ab8', '#c84a4a', '#f0f0f0', '#2a2a32', '#f0c8d0', '#4aa050', '#e0a030']);
+            const pants = p.pants || pick(t + 'p', ['#2a2a32', '#3a4a6a', '#5a4a3a', '#1a1a24']);
+            const cap = (r, len, col, x, y, z, rx, rz) => { const o = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 4, 10), m(col)); o.position.set(x, y, z); if (rx) o.rotation.x = rx; if (rz) o.rotation.z = rz; g.add(o); return o; };
+            const outfit = p.outfit || 'casual';
+            // ноги и обувь
+            [-1, 1].forEach((k) => { cap(0.07 * sc, 0.6 * sc, outfit === 'dress' || outfit === 'kimono' ? skin : pants, k * 0.1 * sc, 0.45 * sc, 0); box(g, m, 0.12 * sc, 0.07 * sc, 0.26 * sc, p.shoes || '#2a1e16', k * 0.1 * sc, 0.035 * sc, 0.05 * sc); });
+            // торс
+            if (outfit === 'dress' || outfit === 'kimono') { const sk = cone(g, m, 0.26 * sc, 0.85 * sc, top, 0, 0.6 * sc, 0, 14); sk.scale.z = 0.7; }
+            box(g, m, 0.36 * sc, 0.52 * sc, 0.22 * sc, top, 0, 1.08 * sc, 0);
+            if (outfit === 'suit' || outfit === 'police' || outfit === 'uniform') { box(g, m, 0.38 * sc, 0.5 * sc, 0.24 * sc, p.jacket || (outfit === 'police' ? '#1a2a5a' : '#2a2a32'), 0, 1.07 * sc, 0); box(g, m, 0.1 * sc, 0.3 * sc, 0.02 * sc, '#f4f4f4', 0, 1.15 * sc, 0.125 * sc); box(g, m, 0.04 * sc, 0.26 * sc, 0.015 * sc, p.tie || '#8a2a2a', 0, 1.1 * sc, 0.135 * sc); }
+            if (outfit === 'coat') { box(g, m, 0.4 * sc, 0.75 * sc, 0.26 * sc, '#f4f4f8', 0, 0.98 * sc, 0); box(g, m, 0.02 * sc, 0.7 * sc, 0.01 * sc, '#d8d8e0', 0, 0.98 * sc, 0.135 * sc); }
+            if (outfit === 'chef') { box(g, m, 0.38 * sc, 0.55 * sc, 0.24 * sc, '#f4f4f8', 0, 1.07 * sc, 0); box(g, m, 0.3 * sc, 0.35 * sc, 0.02 * sc, '#2a2a32', 0, 0.7 * sc, 0.12 * sc); }
+            // шея и голова
+            cyl(g, m, 0.05 * sc, 0.05 * sc, 0.08 * sc, skin, 0, 1.37 * sc, 0, 8);
+            sph(g, m, 0.12 * sc, skin, 0, 1.5 * sc, 0, 1, 1.1, 1);
+            sph(g, m, 0.125 * sc, hair, 0, 1.55 * sc, -0.015 * sc, 1, p.long ? 1.1 : 0.75, 1); if (p.long) box(g, m, 0.22 * sc, 0.35 * sc, 0.08 * sc, hair, 0, 1.3 * sc, -0.1 * sc);
+            [-1, 1].forEach((k) => { sph(g, m, 0.013 * sc, '#1a1a1e', k * 0.045 * sc, 1.52 * sc, 0.11 * sc); }); box(g, m, 0.05 * sc, 0.01 * sc, 0.01 * sc, '#b07060', 0, 1.45 * sc, 0.118 * sc);
+            // руки
+            const armR = p.arm === 'up' ? -2.4 : 0.15, armL = p.arm === 'wave' ? 2.6 : -0.15;
+            cap(0.05 * sc, 0.5 * sc, top, 0.24 * sc, 1.05 * sc, 0, 0, armL); cap(0.05 * sc, 0.5 * sc, top, -0.24 * sc, 1.05 * sc, 0, 0, armR);
+            sph(g, m, 0.05 * sc, skin, 0.27 * sc, 0.76 * sc, 0.02); sph(g, m, 0.05 * sc, skin, p.arm === 'up' ? -0.5 * sc : -0.27 * sc, p.arm === 'up' ? 1.4 * sc : 0.76 * sc, 0.02);
+            // головные уборы и атрибуты
+            if (p.hat) { cyl(g, m, 0.1 * sc, 0.1 * sc, 0.08 * sc, p.hat, 0, 1.66 * sc, 0, 12); cyl(g, m, 0.15 * sc, 0.15 * sc, 0.012 * sc, p.hat, 0, 1.62 * sc, 0, 14); }
+            if (outfit === 'police') { cyl(g, m, 0.12 * sc, 0.12 * sc, 0.07 * sc, '#1a2a5a', 0, 1.66 * sc, 0, 12); box(g, m, 0.22 * sc, 0.01 * sc, 0.1 * sc, '#1a1a1e', 0, 1.63 * sc, 0.1 * sc); sph(g, m, 0.02 * sc, '#f0d060', 0, 1.68 * sc, 0.12 * sc); }
+            if (outfit === 'chef') cyl(g, m, 0.11 * sc, 0.13 * sc, 0.2 * sc, '#f4f4f8', 0, 1.72 * sc, 0, 12);
+            if (p.cap) { sph(g, m, 0.13 * sc, p.cap, 0, 1.55 * sc, 0, 1, 0.65, 1); box(g, m, 0.18 * sc, 0.012 * sc, 0.12 * sc, p.cap, 0, 1.56 * sc, 0.14 * sc); }
+            if (p.bag) { box(g, m, 0.3 * sc, 0.32 * sc, 0.12 * sc, '#5a3a22', 0.36 * sc, 0.72 * sc, 0.02); box(g, m, 0.02 * sc, 0.4 * sc, 0.02 * sc, '#3a2a1a', 0.3 * sc, 0.95 * sc, 0.02); }
+            if (p.book) box(g, m, 0.18 * sc, 0.05 * sc, 0.24 * sc, '#c84a4a', -0.3 * sc, 0.9 * sc, 0.1 * sc);
+            if (p.stick) cyl(g, m, 0.012, 0.012, 0.9 * sc, '#5a3a22', 0.32 * sc, 0.45 * sc, 0.1, 6);
+            if (p.sword) { box(g, m, 0.025, 0.95 * sc, 0.012, '#d8dce4', -0.3 * sc, 0.6 * sc, 0.05); box(g, m, 0.08, 0.03, 0.03, '#c8a84a', -0.3 * sc, 1.08 * sc, 0.05); }
+            if (p.phone) { box(g, m, 0.07 * sc, 0.13 * sc, 0.01, '#1a1a1e', -0.52 * sc, 1.42 * sc, 0.05); }
+            if (p.glasses) { tor(g, m, 0.03 * sc, 0.004, '#2a2a36', -0.045 * sc, 1.52 * sc, 0.12 * sc, 0); tor(g, m, 0.03 * sc, 0.004, '#2a2a36', 0.045 * sc, 1.52 * sc, 0.12 * sc, 0); }
+            if (p.small) g.scale.setScalar(0.62);
+            return g;
+        },
         nature: (m, t, p) => { const g = new THREE.Group(); if (p.kind === 'cloud') { [[0, 0, 0.14], [0.14, -0.02, 0.1], [-0.13, -0.03, 0.1], [0.05, 0.08, 0.1]].forEach((q) => sph(g, m, q[2], '#f4f6ff', q[0], 2.2 + q[1], 0)); g.userData.hang = true; g.userData.wall = true; } else if (p.kind === 'ice') { box(g, m, 0.2, 0.18, 0.18, '#cfe8ff', 0, 0.09, 0, 0.3).material.transparent = true; } else if (p.kind === 'sand') { sph(g, m, 0.3, '#d8c8a0', 0, 0, 0, 1, 0.3, 1); cyl(g, m, 0.01, 0.01, 0.3, '#c84a4a', 0.1, 0.15, 0, 5); box(g, m, 0.12, 0.08, 0.01, '#c84a4a', 0.16, 0.26, 0); } else if (p.kind === 'soil') { sph(g, m, 0.3, '#5a3a22', 0, 0, 0, 1, 0.35, 1); for (let i = 0; i < 5; i++) cone(g, m, 0.01, 0.1, '#4aa050', (i - 2) * 0.1, 0.12, (i % 2) * 0.1); } else if (p.kind === 'wave') { for (let i = 0; i < 3; i++) tor(g, m, 0.15, 0.03, '#3a7fd0', (i - 1) * 0.25, 0.08, 0, Math.PI / 2, Math.PI); box(g, m, 0.9, 0.02, 0.4, '#2a5a9a', 0, 0.01, 0); } else if (p.kind === 'chime') { cyl(g, m, 0.05, 0.06, 0.08, '#cfe8ff', 0, 2.1, 0, 12); box(g, m, 0.1, 0.14, 0.004, '#f4ecd8', 0, 1.9, 0); g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 2.14, 0), new THREE.Vector3(0, 2.4, 0)]), new THREE.LineBasicMaterial({ color: 0x000000 }))); g.userData.hang = true; g.userData.wall = true; } else if (p.kind === 'star') { for (let i = 0; i < 5; i++) { const s = new THREE.Mesh(new THREE.OctahedronGeometry(0.03), glow('#ffd34a')); s.position.set((i - 2) * 0.12, 2.2 + (i % 2) * 0.15, 0); g.add(s); } g.userData.glowColor = '#ffd34a'; g.userData.glowAt = [0, 2.25, 0]; g.userData.wall = true; } return p.kind === 'cloud' || p.kind === 'chime' || p.kind === 'star' ? g : small(g); },
         paper: (m, t, p) => { const g = new THREE.Group(); box(g, m, 0.15, 0.004, 0.1, p.col || '#f4ecd8', 0, 0.002, 0); label(g, p.text || t, p.col || '#f4ecd8', p.ink || '#1a1a1e', 0.14, 0.09, 0, 0.005, 0).rotation.x = -Math.PI / 2; g.rotation.y = 0.3; return small(g); },
     };
@@ -136,17 +175,26 @@
     def('ランプ 電灯 スタンド 照明', 'furn', { kind: 'lamp' }, ['home', 'izakaya', 'class'], 'floor');
     def('銀行 郵便局 図書館 映画館 公園 会社 工場 教会 寺 お寺 神社 ホテル 空港 市場 花屋 八百屋 薬局 食堂 美容院 床屋 パン屋 肉屋 魚屋 本屋 デパート スーパー 博物館 美術館 動物園 遊園地 温泉 旅館 港 橋 道 交差点 広場 役所 大使館 事務所 教室 体育館 プール', 'place', {}, ['street'], 'floor');
     def('トイレ お手洗い 便所 風呂 お風呂 台所 キッチン 寝室 居間 廊下 階段 屋上 地下 倉庫 事務室', 'place', { bg: '#1a3a5a', ink: '#9fd8ff' }, ['street', 'home', 'izakaya', 'konbini', 'class'], 'wall');
-    def('人 ひと 男 男性 男の人 大人 彼 友達 友人 恋人 客 お客さん', 'person', {}, ['street', 'izakaya', 'konbini'], 'door', 'floor');
-    def('女 女性 女の人 彼女 母 お母さん 妻 奥さん 姉 お姉さん 娘', 'person', { col: '#d06090', hair: '#3a2a1a' }, ['street', 'home', 'konbini'], 'door', 'floor');
-    def('子供 子ども こども 赤ちゃん 少年 少女 弟 妹 息子 孫', 'person', { col: '#f0c030', small: true }, ['street', 'home', 'class'], 'door', 'floor');
-    def('父 お父さん 夫 兄 お兄さん 祖父 おじいさん 叔父 おじさん', 'person', { col: '#2a2a32', hat: '#1a1a1e' }, ['street', 'home', 'izakaya'], 'door', 'floor');
-    def('祖母 おばあさん 叔母 おばさん', 'person', { col: '#8a6a9a', hair: '#c8c8d0', stick: true }, ['street', 'home'], 'door', 'floor');
-    def('先生 教師 教授', 'person', { col: '#4a6ab8', book: true }, ['class', 'street'], 'floor');
-    def('学生 生徒 大学生 高校生 中学生 小学生', 'person', { col: '#2a2a32', bag: true, small: true }, ['class', 'street', 'konbini'], 'floor');
-    def('医者 看護師 看護婦', 'person', { col: '#f4f4f8', coat: true }, ['street'], 'door');
-    def('警察官 警官 巡査', 'person', { col: '#1a2a5a', hat: '#1a2a5a' }, ['street'], 'door');
-    def('店員 コック 料理人 主人 店主 社長 会社員 サラリーマン 運転手 歌手 俳優 選手 作家 画家 兵士 侍 忍者 王 王様 姫 魔女 勇者 英雄', 'person', {}, ['street', 'izakaya', 'konbini'], 'door', 'floor');
-    def('侍 さむらい 武士 剣士', 'person', { col: '#2a2a32', sword: true }, ['street', 'izakaya'], 'door', 'floor');
+    def('人 ひと 男 男性 男の人 大人 彼 友達 友人 恋人 客 お客さん', 'person', { phone: true }, ['street', 'izakaya', 'konbini'], 'door', 'floor');
+    def('女 女性 女の人 彼女 姉 お姉さん 娘', 'person', { outfit: 'dress', col: '#d06090', long: true, bag: true }, ['street', 'home', 'konbini'], 'door', 'floor');
+    def('母 お母さん 妻 奥さん', 'person', { outfit: 'dress', col: '#8a5a9a', long: true }, ['street', 'home', 'konbini'], 'door', 'floor');
+    def('子供 子ども こども 赤ちゃん 少年 弟 息子 孫', 'person', { col: '#f0c030', small: true, cap: '#c84a4a' }, ['street', 'home', 'class'], 'door', 'floor');
+    def('少女 妹', 'person', { outfit: 'dress', col: '#f0c8d0', small: true, long: true }, ['street', 'home', 'class'], 'door', 'floor');
+    def('父 お父さん 夫 叔父 おじさん', 'person', { outfit: 'suit', col: '#f4f4f4' }, ['street', 'home', 'izakaya'], 'door', 'floor');
+    def('兄 お兄さん', 'person', { col: '#4a6ab8', cap: '#2a2a32' }, ['street', 'home', 'izakaya'], 'door', 'floor');
+    def('祖父 おじいさん 老人', 'person', { col: '#5a4a3a', hair: '#d8d8e0', stick: true, hat: '#3a2a1a' }, ['street', 'home', 'izakaya'], 'door', 'floor');
+    def('祖母 おばあさん 叔母 おばさん', 'person', { outfit: 'kimono', col: '#8a6a9a', hair: '#c8c8d0', stick: true }, ['street', 'home'], 'door', 'floor');
+    def('先生 教師 教授', 'person', { outfit: 'suit', col: '#f4f4f4', jacket: '#4a4a5a', book: true, glasses: true }, ['class', 'street'], 'floor');
+    def('学生 生徒 大学生 高校生 中学生', 'person', { outfit: 'uniform', col: '#f4f4f4', jacket: '#2a2a3a', tie: '#8a2a2a', bag: true }, ['class', 'street', 'konbini'], 'floor');
+    def('小学生', 'person', { outfit: 'uniform', col: '#f4f4f4', jacket: '#2a2a3a', bag: true, small: true, cap: '#f0c030' }, ['class', 'street'], 'floor');
+    def('医者', 'person', { outfit: 'coat', col: '#9fd8ff', glasses: true }, ['street'], 'door');
+    def('看護師 看護婦', 'person', { outfit: 'coat', col: '#f0c8d0', long: true }, ['street'], 'door');
+    def('警察官 警官 巡査', 'person', { outfit: 'police', col: '#9fb8ff' }, ['street'], 'door');
+    def('店員 主人 店主 運転手', 'person', { cap: '#2a7fe0', col: '#2f7fe0' }, ['street', 'izakaya', 'konbini'], 'door', 'floor');
+    def('コック 料理人', 'person', { outfit: 'chef' }, ['izakaya', 'street'], 'floor', 'floor');
+    def('社長 会社員 サラリーマン 作家 俳優', 'person', { outfit: 'suit', col: '#f4f4f4', bag: true }, ['street', 'izakaya', 'konbini'], 'door', 'floor');
+    def('歌手 画家 選手 兵士 忍者 王 王様 姫 魔女 勇者 英雄', 'person', { arm: 'wave' }, ['street', 'izakaya'], 'door', 'floor');
+    def('侍 さむらい 武士 剣士', 'person', { outfit: 'kimono', col: '#2a2a32', sword: true, hair: '#1a1a1e' }, ['street', 'izakaya'], 'door', 'floor');
     def('雲 くも', 'nature', { kind: 'cloud' }, ['street', 'home', 'class'], 'wall');
     def('氷 こおり', 'nature', { kind: 'ice' }, ['izakaya', 'konbini', 'home'], 'table');
     def('砂 すな 浜 海岸 砂浜', 'nature', { kind: 'sand' }, ['street', 'home'], 'door', 'floor');
@@ -160,6 +208,8 @@
         const e = T[w];
         if (PROP_BUILDERS[w]) return;
         PROP_BUILDERS[w] = (m, col) => A[e.arch](m, w, e.p);
-        PROP_META[w] = { where: e.where, spot: e.spot, inside: e.inside };
+        PROP_META[w] = { where: e.where, spot: e.spot, inside: e.inside, face: e.arch === 'place' ? 'player' : (e.arch === 'person' || e.arch === 'quad' || e.arch === 'bird' ? 'street' : undefined) };
     });
+    ['店', '学校', '駅', '警察', '旗', '鐘', '病院'].forEach((w) => { if (PROP_META[w]) PROP_META[w].face = 'player'; });
+    ['猫', '犬', '熊', '牛', '馬', '豚', '鶏', '兎', '雪'].forEach((w) => { if (PROP_META[w]) PROP_META[w].face = 'street'; });
 })();
