@@ -21,10 +21,16 @@ window.__street = street; // для харнеса скриншотов
 
 let data = null, quarters = [], qi = 0, today = D.todayKey();
 
+const deckHue = {};
 function colorFor(word, jlptMap) {
     const lvl = (data.jlpt[word.kanji] != null ? data.jlpt[word.kanji] : (jlptMap[word.kanji] || 0)) | 0;
     word._jlpt = lvl;
-    return theme.palette[lvl] || theme.palette[0];
+    if (lvl) return theme.palette[lvl];
+    // без уровня — цвет по колоде
+    const d = data.decks.find((x) => x.wordIds.indexOf(word.id) >= 0); const key = d ? d.name : (word.known ? 'known' : 'none');
+    if (!(key in deckHue)) deckHue[key] = Object.keys(deckHue).length;
+    const cols = [theme.palette[0], theme.palette[2], theme.palette[3], theme.palette[4], theme.palette[5], theme.palette[1]];
+    return cols[deckHue[key] % cols.length];
 }
 
 function prepare(jlptMap) {
@@ -40,7 +46,7 @@ function load() {
         toast('В этом браузере нет слов — показан встроенный набор');
         data = D.buildDemo(); source = 'demo';
     }
-    if (source === 'real') D.loadJlpt().then(prepare); else prepare({});
+    if (source === 'real' || data.source === 'owner') D.loadJlpt().then(prepare); else prepare({});
 }
 
 function litCount() { return data.words.filter((w) => w._state === 'lit' || w._state === 'warm' || w._state === 'worn').length; }

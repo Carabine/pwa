@@ -138,8 +138,15 @@ function buildQuarters(data, capacity) {
         push(d.name || 'Колода', d.emoji || '', ws);
     });
     push('Без колоды', '🌙', data.words.filter((w) => !used.has(w.id)));
-    if (!quarters.length) quarters.push({ name: 'Пустая улица', emoji: '🌙', words: [] });
-    return quarters;
+    // крошечные колоды (серия с 2–5 словами) сливаются с соседями, чтобы квартал не был огрызком
+    const MIN = 8, merged = [];
+    quarters.forEach((q) => {
+        const last = merged[merged.length - 1];
+        if (last && (last.words.length < MIN || q.words.length < MIN) && last.words.length + q.words.length <= capacity) { last.words = last.words.concat(q.words); last.name = last.name + ' + ' + q.name; }
+        else merged.push({ name: q.name, emoji: q.emoji, words: q.words.slice() });
+    });
+    if (!merged.length) merged.push({ name: 'Пустая улица', emoji: '🌙', words: [] });
+    return merged;
 }
 
 window.StreetData = { buildDemo, loadReal, loadJlpt, buildQuarters, wordState, todayKey, lsJson };

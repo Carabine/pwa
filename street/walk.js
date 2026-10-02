@@ -296,7 +296,9 @@ const W2 = th.W / 2;
 
 // ---- данные ----
 let data, quarters = [], today = D.todayKey(), jlptMap = {};
-function colorFor(w) { const lvl = (data.jlpt[w.kanji] != null ? data.jlpt[w.kanji] : (jlptMap[w.kanji] || 0)) | 0; w._jlpt = lvl; return th.palette[lvl] || th.palette[0]; }
+// цвет: по JLPT; без уровня — по колоде, чтобы улица не была одноцветной
+const deckHue = {};
+function colorFor(w) { const lvl = (data.jlpt[w.kanji] != null ? data.jlpt[w.kanji] : (jlptMap[w.kanji] || 0)) | 0; w._jlpt = lvl; if (lvl) return th.palette[lvl]; const d = data.decks.find((x) => x.wordIds.indexOf(w.id) >= 0); const key = d ? d.name : (w.known ? 'known' : 'none'); if (!(key in deckHue)) deckHue[key] = Object.keys(deckHue).length; const cols = [th.palette[0], th.palette[2], th.palette[3], th.palette[4], th.palette[5], th.palette[1]]; return cols[deckHue[key] % cols.length]; }
 function litCount() { return data.words.filter((w) => w._state === 'lit' || w._state === 'warm' || w._state === 'worn').length; }
 
 // ---- раскладка кварталов вдоль улицы ----
@@ -1573,7 +1575,7 @@ function load() {
         camera.position.set(0, 1.6, 2); yaw = tYaw = 0; pitch = tPitch = 0.02; vel.set(0, 0, 0);
         ensureBlocks(); updateHud(true);
     };
-    if (source === 'real') D.loadJlpt().then((m) => { jlptMap = m || {}; go(); }); else go();
+    if (source === 'real' || data.source === 'owner') D.loadJlpt().then((m) => { jlptMap = m || {}; go(); }); else go();
 }
 
 function resize() {
