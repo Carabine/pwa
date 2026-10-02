@@ -3651,9 +3651,7 @@ const audio = (() => {
         const play = { city: playCity, snow: playSnow, train: playTrain, tea: playTea, stars: playStars, harbor: playHarbor, radio: playLofi, calm: playCalm, lane: playLane, lofi: playLofi }[variant] || playCity;
         if (variant === 'lane') melBus.gain.value = 0.15;
         timer = setInterval(() => { while (next < c.currentTime + 0.15) { play(step, next + (step % 2 ? S16 * SWING : 0)); next += S16; step++; } }, 25);
-        // шаги: шорох, громкость от скорости
-        const sn = loopNoise(c, 'lowpass', 900, 0.7, 0); motionGain = sn.g; nodes.push(sn);
-        const lfo = c.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 1.8; const lg = c.createGain(); lg.gain.value = 0; lfo.connect(lg); lg.connect(sn.g.gain); lfo.start(); nodes.push({ o: lfo }); motionGain._lfo = lg;
+        // шагов нет — пользователь попросил убрать звук ходьбы
         master.gain.cancelScheduledValues(t0); master.gain.setValueAtTime(0, t0); master.gain.linearRampToValueAtTime(0.85, t0 + 2.5);
     }
     function stop() { clearInterval(timer); nodes.forEach((n) => { try { n.src && n.src.stop(); n.o && n.o.stop(); } catch (e) { /* уже остановлен */ } }); nodes = []; if (bus) { try { bus.disconnect(); } catch (e) { /* ok */ } bus = null; } }
