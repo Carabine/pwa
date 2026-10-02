@@ -387,7 +387,7 @@ const lamb = (color, extra) => new THREE.MeshLambertMaterial(Object.assign({ col
 function updateNeonLights() {
     const cz = camera.position.z, cx = camera.position.x;
     const cands = [];
-    blocks.forEach((b) => { if (!b.built) return; b.signs.forEach((s) => { if (!s.isLit || s.deco && !th.lanterns) return; const dz = s.z - cz; if (Math.abs(dz) > 13) return; cands.push({ s, d: Math.abs(dz) + Math.abs(s.side * (W2 - 0.6) - cx) * 0.5 }); }); });
+    blocks.forEach((b) => { if (!b.built) return; b.signs.forEach((s) => { if (!s.isLit || s.deco && !th.lanterns) return; if (s.isProp && !(s.prop && s.prop.userData.light)) return; // предметы светят только если это светильник const dz = s.z - cz; if (Math.abs(dz) > 13) return; cands.push({ s, d: Math.abs(dz) + Math.abs(s.side * (W2 - 0.6) - cx) * 0.5 }); }); });
     cands.sort((a, b) => a.d - b.d);
     neonLights.forEach((l, i) => {
         const c = cands[i];
@@ -1277,10 +1277,9 @@ function buildProp(sign, group) {
     // свечение, если слово горит
     const gc = g.userData.glowColor || sign.color;
     const ga = g.userData.glowAt || [0, Math.max(0.4, bb.max.y * 0.6), 0];
-    const hl = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: new THREE.Color(gc), transparent: true, opacity: (g.userData.glowColor ? 0.5 : 0.22) * sign.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
     const gp = new THREE.Vector3(ga[0], ga[1], ga[2]).applyAxisAngle(new THREE.Vector3(0, 1, 0), g.rotation.y).add(g.position);
-    hl.position.copy(gp); hl.scale.set(g.userData.glowColor ? 1.6 : 1.2, g.userData.glowColor ? 1.6 : 1.2, 1); group.add(hl); sign.glow.push(hl);
-    const gg = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.8), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(gc), transparent: true, opacity: 0.18 * sign.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
+    if (g.userData.glowColor) { const hl = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: new THREE.Color(gc), transparent: true, opacity: 0.5 * sign.inten, blending: THREE.AdditiveBlending, depthWrite: false })); hl.position.copy(gp); hl.scale.set(1.6, 1.6, 1); group.add(hl); sign.glow.push(hl); }
+    const gg = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.8), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(gc), transparent: true, opacity: (g.userData.glowColor ? 0.18 : 0.08) * sign.inten, blending: THREE.AdditiveBlending, depthWrite: false }));
     gg.rotation.x = -Math.PI / 2; gg.position.set(x, 0.015, z); group.add(gg); sign.glow.push(gg);
     if (g.userData.light && sign.isLit) { const pl = new THREE.PointLight(new THREE.Color(gc), 3, 6, 1.6); pl.position.copy(gp); group.add(pl); sign.glow.push(pl); if (g.userData.flicker) sign.flickerLight = pl; }
     sign.prop = g;
