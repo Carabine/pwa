@@ -73,6 +73,8 @@ const TALK = (() => {
         el.innerHTML = '<div class="th"><div class="av"></div><div class="tt"><div class="nm"></div><div class="rl"></div></div><button class="tx" aria-label="Закрыть">×</button></div><div class="log"></div><div class="task"></div><div class="opts"></div>';
         document.body.appendChild(el);
         el.querySelector('.tx').addEventListener('click', () => close());
+        // лента всегда держится у последней реплики: и когда добавилась реплика, и когда варианты ответа или фуригана поменяли высоту окна
+        { const log = el.querySelector('.log'), pin = () => { log.scrollTop = log.scrollHeight; }; if (window.ResizeObserver) new ResizeObserver(pin).observe(log); if (window.MutationObserver) new MutationObserver(() => requestAnimationFrame(pin)).observe(log, { childList: true, subtree: true, characterData: true }); }
         ['pointerdown', 'touchstart', 'wheel'].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation(), { passive: true }));
         return el;
     }
