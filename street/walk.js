@@ -527,7 +527,34 @@ function resolveCollisions(list) {
     }
 }
 const dynSigns = []; // мигающие и зажигающиеся
-let skyMesh = null, skyTheme = '';
+let skyMesh = null, skyTheme = '', endGateZ = -1e9, endShown = 0;
+// сколько ещё выучить до следующего «открытия» (каждые 25 слов)
+const nextUnlock = () => { const lit = data && data.words ? litCount() : 0; return { lit, need: Math.max(1, Math.ceil((lit + 1) / 25) * 25 - lit) }; };
+const plural3 = (n, a, b, c) => { const m = n % 10, h = n % 100; return (m === 1 && h !== 11) ? a : (m >= 2 && m <= 4 && (h < 12 || h > 14)) ? b : c; };
+// конец коридора: опущенная решётка с табличкой — дальше пока закрыто
+function buildEndGate() {
+    if (!blocks.length) return;
+    const last = blocks[blocks.length - 1]; useTheme(last.th);
+    const z = last.z1 - 1.2; endGateZ = z;
+    const W = th.W - 0.1;
+    const shutter = document.createElement('canvas'); shutter.width = 256; shutter.height = 256; const g = shutter.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#3a3a44'); gr.addColorStop(1, '#22222a'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+    for (let y = 0; y < 256; y += 10) { g.fillStyle = 'rgba(255,255,255,0.07)'; g.fillRect(0, y, 256, 2); g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(0, y + 7, 256, 3); }
+    const st = new THREE.Mesh(new THREE.PlaneGeometry(W, 4.2), new THREE.MeshLambertMaterial({ map: makeTex(shutter) })); st.position.set(0, 2.1, z); world.add(st);
+    const box = new THREE.Mesh(new THREE.BoxGeometry(W + 0.2, 0.5, 0.5), lamb('#1a1a20')); box.position.set(0, 4.45, z); world.add(box);
+    // табличка: что нужно, чтобы пройти дальше
+    const { lit, need } = nextUnlock();
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 400; const cg = c.getContext('2d');
+    cg.fillStyle = '#1c1814'; cg.fillRect(0, 0, 1024, 400); cg.strokeStyle = '#c8a050'; cg.lineWidth = 10; cg.strokeRect(14, 14, 996, 372);
+    cg.fillStyle = '#ffb35a'; cg.textAlign = 'center'; cg.font = '900 92px ' + JP; cg.fillText('この先、準備中', 512, 128);
+    cg.fillStyle = '#f4ecd8'; cg.font = '700 46px ' + UI; cg.fillText('Дальше пока закрыто', 512, 210);
+    cg.font = '500 38px ' + UI; cg.fillText('Выучите ещё ' + need + ' ' + plural3(need, 'слово', 'слова', 'слов'), 512, 290);
+    cg.fillText('— и откроется новый квартал', 512, 342);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.02), new THREE.MeshBasicMaterial({ map: makeTex(c), fog: true, color: new THREE.Color(0.82, 0.82, 0.82) })); // приглушена, чтобы свечение не выжигало текст sign.position.set(0, 2.0, z + 0.06); world.add(sign);
+    [-1, 1].forEach((k) => { const cone = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.55, 12), lamb('#e8601a')); cone.position.set(k * 1.6, 0.27, z + 0.7); world.add(cone); });
+    const lamp = new THREE.PointLight(0xffd8a0, 2.2, 7, 1.6); lamp.position.set(0, 3.6, z + 1.5); world.add(lamp);
+    colliders.street.push({ x0: -20, x1: 20, z0: z - 1, z1: z + 0.45, obj: null });
+}
 const skyTexCache = {};
 function buildWorld() {
     doors.length = 0; colliders.street.length = 0; blockers.length = 0; hoverDirty = true;
@@ -650,8 +677,8 @@ function buildWorld() {
         [-1, 1].forEach((side) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.25, 4.2, 0.25), post); p.position.set(side * (W2 - 0.35), 2.1, z); world.add(p); addCollider(p, null, 0.2); });
         const beam = new THREE.Mesh(new THREE.BoxGeometry(th.W - 0.4, 0.25, 0.25), post); beam.position.set(0, 4.2, z); world.add(beam);
         const tube = new THREE.Mesh(new THREE.BoxGeometry(th.W - 0.4, 0.06, 0.06), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(col, '#ffffff', 0.4)) })); tube.position.set(0, 4.05, z + 0.14); world.add(tube);
-        const name = next ? next.q.name : 'Начало';
-        const gt = texGate(next ? name : '↻ ' + name, '', col);
+        const name = next ? next.q.name : 'Конец улицы';
+        const gt = texGate(name, '', col);
         const gw = Math.min(th.W - 0.8, 4.4);
         const sign = new THREE.Mesh(new THREE.PlaneGeometry(gw, gw / 4), new THREE.MeshBasicMaterial({ map: gt, transparent: true }));
         sign.position.set(0, 3.4, z); world.add(sign);
@@ -668,7 +695,8 @@ function buildWorld() {
         if (th.umbrellas && rnd() < 0.8) { const um = new THREE.Mesh(new THREE.SphereGeometry(h * 0.38, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), lamb(['#1b1b24', '#22243a', '#2a1a2a', '#c8d8ff'][Math.floor(rnd() * 4)], { side: THREE.DoubleSide })); um.position.y = h * 1.05; um.scale.y = 0.35; g.add(um); }
         g.position.set(x, 0, z); g.rotation.y = rnd() * 6.28; world.add(g); blockers.push({ x0: x - 0.4, x1: x + 0.4, z0: z - 0.4, z1: z + 0.4 });
     }
-    BL.forEach((bk, bi) => withTheme(bk.th, () => { if (th.festival) FESTIVAL.build(world, bk); if (th.temple) TEMPLE.build(world, bk, bi === BL.length - 1); }));
+    BL.forEach((bk, bi) => withTheme(bk.th, () => { if (th.festival) FESTIVAL.build(world, bk); if (th.temple) TEMPLE.build(world, bk, false); }));
+    buildEndGate();
     useTheme(BL[0].th);
     mergeStatic(world);
 }
@@ -2055,7 +2083,7 @@ function load() {
         blocks.forEach(disposeBlock); dynSigns.length = 0;
         planBlocks(); buildWorld(); buildRain();
         camera.position.set(0, 1.6, 2); yaw = tYaw = 0; pitch = tPitch = 0.02; vel.set(0, 0, 0);
-        ensureBlocks(); updateHud(true);
+        ensureBlocks(); updateHud(true); document.body.classList.remove('loading');
         { const tj = THEME_JP[th.id] || ['', '']; const bi = blockAt(camera.position.z); banner(tj[0], tj[1] + (blocks[bi] ? ' · ' + blocks[bi].q.name : '')); }
     };
     const run = () => fontReady.then((ok) => { if (!ok) builtBeforeFont = true; go(); });
@@ -2141,6 +2169,7 @@ function frame(now) {
     // туман и фон плавно переходят к теме квартала
     if (!inside.on && scene.fog && scene.fog.isFogExp2) { const k = 1 - Math.exp(-dt * 1.4); _fogC.set(th.fog); scene.fog.color.lerp(_fogC, k); scene.fog.density += (th.fogD - scene.fog.density) * k; _fogC.set(th.sky); if (scene.background && scene.background.isColor) scene.background.lerp(_fogC, k); hemi.color.lerp(_fogC.set(th.fog), k); }
     if (rain) rain.visible = opts.rain && !!th.rain && !inside.on;
+    if (!inside.on && camera.position.z < endGateZ + 5 && performance.now() - endShown > 15000) { endShown = performance.now(); const { need } = nextUnlock(); banner('この先、準備中', 'Выучите ещё ' + need + ' ' + plural3(need, 'слово', 'слова', 'слов') + ' — откроется новый квартал'); }
     if (th.festival) FESTIVAL.update(t, dt);
     if (th.temple) TEMPLE.update(t, dt);
     TALK.update();

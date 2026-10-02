@@ -72,14 +72,14 @@
             #joy { bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); left: calc(env(safe-area-inset-left, 0px) + 22px); }
         }
         /* действия — подсказкой чуть ниже центра экрана, как в играх: коротко, без подписей */
-        #acts { position: absolute; left: 50%; top: 61%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 25; pointer-events: none; }
+        #acts { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 14px); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: flex-end; gap: 6px; z-index: 25; pointer-events: none; }
         #acts[hidden] { display: none; }
         #acts button { pointer-events: auto; display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px 7px 9px; border: 0; border-radius: 999px; background: rgba(255,255,255,0.16); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font: 600 14px/1 Inter, system-ui, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,0.6); box-shadow: 0 0 0 1px rgba(255,255,255,0.28) inset; animation: actIn .2s ease-out; cursor: pointer; white-space: nowrap; }
         #acts button.main { background: rgba(255,250,240,0.92); color: #1a1a22; text-shadow: none; box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
         #acts .ic { font-size: 16px; line-height: 1; }
         #acts kbd { font: 700 11px/1 Inter, monospace; background: #1a1a22; color: #fff; border-radius: 6px; padding: 4px 6px; }
         #acts button:active { transform: translateY(1px); }
-        @keyframes actIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        @keyframes actIn { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
         /* заставка места: вверху по центру, текстом без плашки */
         #place { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 10px); transform: translate(-50%, -6px); text-align: center; pointer-events: none; z-index: 20; opacity: 0; transition: opacity .6s ease, transform .6s ease; padding: 6px 40px 14px; background: radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.45), rgba(0,0,0,0) 70%); }
         #place.show { opacity: 1; transform: translate(-50%, 0); }
@@ -144,6 +144,8 @@
         @media (pointer: coarse) and (orientation: portrait) {
             #talk { left: 8px; right: 8px; top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); width: auto; height: 62vh; transform: translateY(24px); }
         }
+        /* пока улица загружается — никаких подсказок и кнопок (не спойлерим управление) */
+        body.loading .hud, body.loading #joy, body.loading #dots, body.loading #acts, body.loading #rotate { visibility: hidden; }
         #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 14px; letter-spacing: 0.04em; pointer-events: none; z-index: 40; transition: opacity .4s; }
     </style>
     <script>
@@ -152,7 +154,7 @@
     document.write('<script type="importmap">' + JSON.stringify({ imports: { three: b + 'build/three.module.min.js', 'three/addons/': b + 'examples/jsm/' } }) + '<' + '/script>'); })();
     </script>
 </head>
-<body data-theme="shinjuku">
+<body class="loading" data-theme="shinjuku">
 <!--
   Улица слов, 3D-прогулка: Three.js (CDN), процедурная сцена, вывески — canvas-текстуры.
   Код модуля встроен в страницу: внешний type=module с file:// Chrome не грузит (CORS).

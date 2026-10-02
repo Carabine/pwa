@@ -72,14 +72,14 @@
             #joy { bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); left: calc(env(safe-area-inset-left, 0px) + 22px); }
         }
         /* действия — подсказкой чуть ниже центра экрана, как в играх: коротко, без подписей */
-        #acts { position: absolute; left: 50%; top: 61%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 25; pointer-events: none; }
+        #acts { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 14px); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: flex-end; gap: 6px; z-index: 25; pointer-events: none; }
         #acts[hidden] { display: none; }
         #acts button { pointer-events: auto; display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px 7px 9px; border: 0; border-radius: 999px; background: rgba(255,255,255,0.16); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font: 600 14px/1 Inter, system-ui, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,0.6); box-shadow: 0 0 0 1px rgba(255,255,255,0.28) inset; animation: actIn .2s ease-out; cursor: pointer; white-space: nowrap; }
         #acts button.main { background: rgba(255,250,240,0.92); color: #1a1a22; text-shadow: none; box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
         #acts .ic { font-size: 16px; line-height: 1; }
         #acts kbd { font: 700 11px/1 Inter, monospace; background: #1a1a22; color: #fff; border-radius: 6px; padding: 4px 6px; }
         #acts button:active { transform: translateY(1px); }
-        @keyframes actIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        @keyframes actIn { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
         /* заставка места: вверху по центру, текстом без плашки */
         #place { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 10px); transform: translate(-50%, -6px); text-align: center; pointer-events: none; z-index: 20; opacity: 0; transition: opacity .6s ease, transform .6s ease; padding: 6px 40px 14px; background: radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0.45), rgba(0,0,0,0) 70%); }
         #place.show { opacity: 1; transform: translate(-50%, 0); }
@@ -144,6 +144,8 @@
         @media (pointer: coarse) and (orientation: portrait) {
             #talk { left: 8px; right: 8px; top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); width: auto; height: 62vh; transform: translateY(24px); }
         }
+        /* пока улица загружается — никаких подсказок и кнопок (не спойлерим управление) */
+        body.loading .hud, body.loading #joy, body.loading #dots, body.loading #acts, body.loading #rotate { visibility: hidden; }
         #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 14px; letter-spacing: 0.04em; pointer-events: none; z-index: 40; transition: opacity .4s; }
     </style>
     <script>
@@ -152,7 +154,7 @@
     document.write('<script type="importmap">' + JSON.stringify({ imports: { three: b + 'build/three.module.min.js', 'three/addons/': b + 'examples/jsm/' } }) + '<' + '/script>'); })();
     </script>
 </head>
-<body data-theme="shinjuku">
+<body class="loading" data-theme="shinjuku">
 <!--
   Улица слов, 3D-прогулка: Three.js (CDN), процедурная сцена, вывески — canvas-текстуры.
   Код модуля встроен в страницу: внешний type=module с file:// Chrome не грузит (CORS).
@@ -744,7 +746,34 @@ function resolveCollisions(list) {
     }
 }
 const dynSigns = []; // мигающие и зажигающиеся
-let skyMesh = null, skyTheme = '';
+let skyMesh = null, skyTheme = '', endGateZ = -1e9, endShown = 0;
+// сколько ещё выучить до следующего «открытия» (каждые 25 слов)
+const nextUnlock = () => { const lit = data && data.words ? litCount() : 0; return { lit, need: Math.max(1, Math.ceil((lit + 1) / 25) * 25 - lit) }; };
+const plural3 = (n, a, b, c) => { const m = n % 10, h = n % 100; return (m === 1 && h !== 11) ? a : (m >= 2 && m <= 4 && (h < 12 || h > 14)) ? b : c; };
+// конец коридора: опущенная решётка с табличкой — дальше пока закрыто
+function buildEndGate() {
+    if (!blocks.length) return;
+    const last = blocks[blocks.length - 1]; useTheme(last.th);
+    const z = last.z1 - 1.2; endGateZ = z;
+    const W = th.W - 0.1;
+    const shutter = document.createElement('canvas'); shutter.width = 256; shutter.height = 256; const g = shutter.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#3a3a44'); gr.addColorStop(1, '#22222a'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+    for (let y = 0; y < 256; y += 10) { g.fillStyle = 'rgba(255,255,255,0.07)'; g.fillRect(0, y, 256, 2); g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(0, y + 7, 256, 3); }
+    const st = new THREE.Mesh(new THREE.PlaneGeometry(W, 4.2), new THREE.MeshLambertMaterial({ map: makeTex(shutter) })); st.position.set(0, 2.1, z); world.add(st);
+    const box = new THREE.Mesh(new THREE.BoxGeometry(W + 0.2, 0.5, 0.5), lamb('#1a1a20')); box.position.set(0, 4.45, z); world.add(box);
+    // табличка: что нужно, чтобы пройти дальше
+    const { lit, need } = nextUnlock();
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 400; const cg = c.getContext('2d');
+    cg.fillStyle = '#1c1814'; cg.fillRect(0, 0, 1024, 400); cg.strokeStyle = '#c8a050'; cg.lineWidth = 10; cg.strokeRect(14, 14, 996, 372);
+    cg.fillStyle = '#ffb35a'; cg.textAlign = 'center'; cg.font = '900 92px ' + JP; cg.fillText('この先、準備中', 512, 128);
+    cg.fillStyle = '#f4ecd8'; cg.font = '700 46px ' + UI; cg.fillText('Дальше пока закрыто', 512, 210);
+    cg.font = '500 38px ' + UI; cg.fillText('Выучите ещё ' + need + ' ' + plural3(need, 'слово', 'слова', 'слов'), 512, 290);
+    cg.fillText('— и откроется новый квартал', 512, 342);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.02), new THREE.MeshBasicMaterial({ map: makeTex(c), fog: true, color: new THREE.Color(0.82, 0.82, 0.82) })); // приглушена, чтобы свечение не выжигало текст sign.position.set(0, 2.0, z + 0.06); world.add(sign);
+    [-1, 1].forEach((k) => { const cone = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.55, 12), lamb('#e8601a')); cone.position.set(k * 1.6, 0.27, z + 0.7); world.add(cone); });
+    const lamp = new THREE.PointLight(0xffd8a0, 2.2, 7, 1.6); lamp.position.set(0, 3.6, z + 1.5); world.add(lamp);
+    colliders.street.push({ x0: -20, x1: 20, z0: z - 1, z1: z + 0.45, obj: null });
+}
 const skyTexCache = {};
 function buildWorld() {
     doors.length = 0; colliders.street.length = 0; blockers.length = 0; hoverDirty = true;
@@ -867,8 +896,8 @@ function buildWorld() {
         [-1, 1].forEach((side) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.25, 4.2, 0.25), post); p.position.set(side * (W2 - 0.35), 2.1, z); world.add(p); addCollider(p, null, 0.2); });
         const beam = new THREE.Mesh(new THREE.BoxGeometry(th.W - 0.4, 0.25, 0.25), post); beam.position.set(0, 4.2, z); world.add(beam);
         const tube = new THREE.Mesh(new THREE.BoxGeometry(th.W - 0.4, 0.06, 0.06), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(col, '#ffffff', 0.4)) })); tube.position.set(0, 4.05, z + 0.14); world.add(tube);
-        const name = next ? next.q.name : 'Начало';
-        const gt = texGate(next ? name : '↻ ' + name, '', col);
+        const name = next ? next.q.name : 'Конец улицы';
+        const gt = texGate(name, '', col);
         const gw = Math.min(th.W - 0.8, 4.4);
         const sign = new THREE.Mesh(new THREE.PlaneGeometry(gw, gw / 4), new THREE.MeshBasicMaterial({ map: gt, transparent: true }));
         sign.position.set(0, 3.4, z); world.add(sign);
@@ -885,7 +914,8 @@ function buildWorld() {
         if (th.umbrellas && rnd() < 0.8) { const um = new THREE.Mesh(new THREE.SphereGeometry(h * 0.38, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), lamb(['#1b1b24', '#22243a', '#2a1a2a', '#c8d8ff'][Math.floor(rnd() * 4)], { side: THREE.DoubleSide })); um.position.y = h * 1.05; um.scale.y = 0.35; g.add(um); }
         g.position.set(x, 0, z); g.rotation.y = rnd() * 6.28; world.add(g); blockers.push({ x0: x - 0.4, x1: x + 0.4, z0: z - 0.4, z1: z + 0.4 });
     }
-    BL.forEach((bk, bi) => withTheme(bk.th, () => { if (th.festival) FESTIVAL.build(world, bk); if (th.temple) TEMPLE.build(world, bk, bi === BL.length - 1); }));
+    BL.forEach((bk, bi) => withTheme(bk.th, () => { if (th.festival) FESTIVAL.build(world, bk); if (th.temple) TEMPLE.build(world, bk, false); }));
+    buildEndGate();
     useTheme(BL[0].th);
     mergeStatic(world);
 }
@@ -2599,6 +2629,7 @@ const TALK = (() => {
     }
     // ---- шаг: реплика персонажа в ленту, задание, варианты ответа ----
     function show(line, opts, task) {
+        if (!cur) return;
         const e = ui(); e.classList.add('on'); acts.hidden = true; head();
         msg('c', line[0], line[1]);
         e.querySelector('.task').innerHTML = task || ''; e.querySelector('.task').hidden = !task;
@@ -2606,7 +2637,7 @@ const TALK = (() => {
         opts.forEach((o, i) => {
             const b = document.createElement('button'); b.className = 'op';
             b.innerHTML = (FINE ? '<kbd>' + (i + 1) + '</kbd>' : '') + '<span><b>' + esc(o.jp) + '</b>' + (o.ru ? '<small>' + esc(o.ru) + '</small>' : '') + '</span>';
-            b.addEventListener('click', () => { if (box.dataset.busy) return; box.dataset.busy = '1'; buzz(8); if (o.say !== false) msg('p', o.jp, o.ru); o.go(b); });
+            b.addEventListener('click', () => { if (box.dataset.busy || !cur) return; box.dataset.busy = '1'; buzz(8); if (o.say !== false) msg('p', o.jp, o.ru); o.go(b); });
             box.appendChild(b);
         });
         delete box.dataset.busy;
@@ -2635,6 +2666,89 @@ const TALK = (() => {
         } }));
         show(ask, opts, '<span class="big">' + esc(jpOf(w)) + '</span>' + (w.kana && w.kana !== jpOf(w) ? '<span class="kana">' + esc(w.kana) + '</span>' : '') + '<span class="q">Что это значит?</span>');
     }
+    // ---- интересные факты о Японии с пропущенным словом: угадай слово по смыслу ----
+    // w — ответ (ищем в словаре по написанию или чтению), q — фраза с ＿＿ (jp, ru), more — продолжение истории
+    const FACTS = [
+        { w: ['猫', 'ねこ'], q: ['和歌山の貴志駅では、「たま」という＿＿が駅長でした。', 'На станции Киси в Вакаяме начальником станции был(а) ＿＿ по имени Тама.'], more: ['たまのおかげで、たくさんの人が駅に来ました。', 'Благодаря Таме на станцию стали приезжать толпы туристов.'] },
+        { w: ['犬', 'いぬ'], q: ['渋谷駅の前には、ハチ公という＿＿の像があります。', 'У станции Сибуя стоит памятник ＿＿ по кличке Хатико.'], more: ['ハチ公は、亡くなった飼い主を十年も駅で待ち続けました。', 'Хатико почти десять лет ждал на станции умершего хозяина.'] },
+        { w: ['桜', 'さくら'], q: ['日本の学校は四月に始まります。その頃、＿＿が咲きます。', 'В Японии учебный год начинается в апреле — как раз когда цветёт ＿＿.'], more: ['＿＿の下でお弁当を食べることを「花見」と言います。', 'Пикник под цветущими деревьями называется «ханами».'] },
+        { w: ['雨', 'あめ'], q: ['六月から七月は「梅雨」で、＿＿がたくさん降ります。', 'С июня по июль — сезон «цую», и много льёт ＿＿.'], more: ['「梅雨」は、梅の実が熟す頃の雨という意味です。', '«Цую» буквально — «сливовые дожди»: в это время зреют сливы умэ.'] },
+        { w: ['傘', 'かさ'], q: ['日本のコンビニでは、透明なビニール＿＿がよく売られています。', 'В японских комбини почти всегда продаются прозрачные пластиковые ＿＿.'], more: ['急に雨が降っても、すぐに買えて便利です。', 'Внезапный дождь — не проблема: купить можно в любом магазине у дома.'] },
+        { w: ['山', 'やま'], q: ['日本で一番高い＿＿は富士山で、三千七百七十六メートルです。', 'Самая высокая ＿＿ Японии — Фудзи, 3776 метров.'], more: ['夏の二か月だけ、頂上まで登ることができます。', 'Подняться на вершину официально можно только летом, примерно два месяца.'] },
+        { w: ['寿司', 'すし'], q: ['回転＿＿では、お皿がベルトの上で回っています。', 'В кайтэн-＿＿ тарелки ездят по конвейеру.'], more: ['お皿の色で値段が分かるお店が多いです。', 'Во многих таких ресторанах цена видна по цвету тарелки.'] },
+        { w: ['箸', 'はし'], q: ['日本では、＿＿をご飯に立ててはいけません。', 'В Японии нельзя втыкать ＿＿ вертикально в рис.'], more: ['お葬式の習慣を思い出させるからです。', 'Так делают на похоронах, поэтому за столом это плохая примета.'] },
+        { w: ['靴', 'くつ'], q: ['日本の家に入る時は、玄関で＿＿を脱ぎます。', 'Входя в японский дом, ＿＿ снимают в прихожей-гэнкане.'], more: ['トイレには、トイレ用のスリッパがある家も多いです。', 'Во многих домах для туалета есть отдельные тапочки.'] },
+        { w: ['水', 'みず'], q: ['日本のレストランでは、席に座るとすぐ＿＿が無料で出てきます。', 'В японских ресторанах, едва вы сели, бесплатно приносят ＿＿.'], more: ['お茶が出てくるお店もあります。チップはいりません。', 'Иногда приносят чай. А чаевые в Японии оставлять не принято.'] },
+        { w: ['月', 'つき'], q: ['日本では、＿＿の模様が、うさぎがお餅をついているように見えると言います。', 'В Японии говорят, что пятна на ＿＿ похожи на зайца, который толчёт моти.'], more: ['秋の「お月見」には、お団子を飾ります。', 'Осенью любуются луной и ставят на подоконник рисовые шарики данго.'] },
+        { w: ['金', 'お金', 'かね', 'おかね'], q: ['お正月に、子どもは「お年玉」という＿＿をもらいます。', 'На Новый год дети получают «отосидаму» — это ＿＿ в конвертике.'], more: ['小さな封筒に入れて渡すのが習慣です。', 'Их кладут в маленькие красивые конверты потибукуро.'] },
+        { w: ['駅', 'えき'], q: ['新宿＿＿は、世界で一番利用者が多い駅です。', 'Синдзюку — самая загруженная ＿＿ в мире.'], more: ['一日に三百万人以上が使うと言われています。', 'Говорят, через неё проходит больше трёх миллионов человек в день.'] },
+        { w: ['学校', 'がっこう'], q: ['日本の＿＿では、生徒が自分で教室を掃除します。', 'В японской ＿＿ ученики сами убирают классы.'], more: ['給食も、生徒が当番で配ります。', 'И обед в классе тоже раздают дежурные ученики.'] },
+        { w: ['先生', 'せんせい'], q: ['日本では、医者も政治家も「＿＿」と呼ばれます。', 'В Японии и врачей, и политиков называют «＿＿».'], more: ['先に生まれた人、つまり経験のある人という意味です。', 'Слово буквально значит «рождённый раньше», то есть опытный человек.'] },
+        { w: ['魚', 'さかな'], q: ['東京の豊洲市場では、毎朝マグロなどの＿＿が売られています。', 'На токийском рынке Тоёсу каждое утро торгуют тунцом и другой ＿＿.'], more: ['マグロのせりは朝五時ごろに始まります。', 'Аукцион тунца начинается около пяти утра.'] },
+        { w: ['祭り', '祭', 'まつり', 'お祭り'], q: ['夏の＿＿では、浴衣を着て花火を見ます。', 'На летнем ＿＿ надевают юкату и смотрят фейерверк.'], more: ['屋台で、たこ焼きやかき氷を買うのも楽しみです。', 'А ещё покупают такояки и колотый лёд какигори у лотков ятай.'] },
+        { w: ['火', 'ひ'], q: ['昔の江戸は木の家が多かったので、＿＿事がよくありました。', 'В старом Эдо дома были деревянные, и часто случались ＿＿ (пожары).'], more: ['「火事と喧嘩は江戸の華」という言葉があります。', 'Даже была поговорка: «Пожары и драки — цветы Эдо».'] },
+        { w: ['雪', 'ゆき'], q: ['札幌の雪まつりでは、＿＿で大きな像を作ります。', 'На фестивале в Саппоро огромные статуи делают из ＿＿.'], more: ['毎年二月に開かれ、二百万人以上が見に来ます。', 'Он проходит каждый февраль, и приезжает больше двух миллионов человек.'] },
+        { w: ['本', 'ほん'], q: ['日本の漫画の＿＿は、右から左へ読みます。', 'Японские ＿＿ с мангой читают справа налево.'], more: ['縦書きの文章は、上から下へ読みます。', 'А вертикальный текст читается сверху вниз.'] },
+        { w: ['車', 'くるま'], q: ['日本では、＿＿は道の左側を走ります。', 'В Японии ＿＿ ездят по левой стороне дороги.'], more: ['イギリスと同じですね。', 'Как в Великобритании.'] },
+        { w: ['米', 'こめ'], q: ['日本酒は＿＿から作られます。', 'Японское саке делают из ＿＿.'], more: ['「ご飯」という言葉は、もともと炊いたお米のことです。', 'А слово «гохан» изначально и значит «варёный рис».'] },
+        { w: ['名前', 'なまえ'], q: ['日本では、＿＿を言う時、名字が先に来ます。', 'В Японии, называя ＿＿, первой говорят фамилию.'], more: ['ですから「山田太郎」の名字は山田です。', 'Так что у «Ямада Таро» фамилия — Ямада.'] },
+        { w: ['子供', '子ども', 'こども'], q: ['五月五日は「＿＿の日」です。', '5 мая в Японии — День ＿＿.'], more: ['こいのぼりという鯉の形の旗を空に上げます。', 'В небо поднимают флаги-карпы коинобори.'] },
+        { w: ['鳥', 'とり'], q: ['日本の国の＿＿は、キジです。', 'Национальная ＿＿ Японии — фазан кидзи.'], more: ['一万円札の裏にも鳳凰という鳥が描かれていました。', 'А на старой купюре в 10 000 иен был нарисован феникс.'] },
+        { w: ['星', 'ほし'], q: ['七夕は、＿＿のお祭りです。', 'Танабата — это праздник ＿＿.'], more: ['短冊に願いを書いて、笹に飾ります。', 'Желания пишут на полосках бумаги и вешают на бамбук.'] },
+        { w: ['鬼', 'おに'], q: ['節分には「＿＿は外！福は内！」と言って豆をまきます。', 'На Сэцубун разбрасывают бобы с криком: «＿＿ — вон! Счастье — в дом!»'], more: ['自分の年の数だけ豆を食べると、健康になると言われます。', 'Считается, что надо съесть столько бобов, сколько тебе лет.'] },
+        { w: ['桃', 'もも'], q: ['「＿＿太郎」は、＿＿から生まれた男の子の話です。', '«Момотаро» — сказка о мальчике, родившемся из ＿＿.'], more: ['犬と猿とキジと一緒に、鬼を退治しに行きます。', 'Вместе с собакой, обезьяной и фазаном он идёт побеждать демонов.'] },
+        { w: ['亀', 'かめ'], q: ['浦島太郎は、＿＿を助けて竜宮城へ行きました。', 'Урасима Таро спас ＿＿ и попал в подводный дворец.'], more: ['帰ってきたら、三百年もたっていました。', 'А когда вернулся домой, прошло триста лет.'] },
+        { w: ['牛', 'うし'], q: ['神戸＿＿は、世界中で有名な和牛です。', 'Кобэ — знаменитая на весь мир мраморная говядина от ＿＿.'], more: ['本物の神戸ビーフには、証明書があります。', 'У настоящей говядины Кобэ есть сертификат с номером.'] },
+        { w: ['卵', 'たまご'], q: ['日本では、生の＿＿をご飯にかけて食べます。', 'В Японии сырое ＿＿ едят, вылив его на рис.'], more: ['「卵かけご飯」と言って、醤油をかけるとおいしいです。', 'Это «тамаго-какэ-гохан», и с соевым соусом очень вкусно.'] },
+        { w: ['部屋', 'へや'], q: ['日本では、＿＿の広さを畳の数で言います。', 'В Японии размер ＿＿ меряют числом татами.'], more: ['「六畳」は、畳六枚分の広さです。', '«Шесть дзё» — это площадь шести татами, около 10 м².'] },
+        { w: ['茶', 'お茶', 'ちゃ', 'おちゃ'], q: ['日本では、緑の＿＿をよく飲みます。', 'В Японии пьют много зелёного ＿＿.'], more: ['自動販売機では、温かいお茶も冷たいお茶も買えます。', 'В автоматах продаётся и горячий, и холодный чай.'] },
+        { w: ['電車', 'でんしゃ'], q: ['日本の＿＿はとても時間に正確です。', 'Японские ＿＿ очень пунктуальны.'], more: ['数分遅れると、駅で「遅延証明書」がもらえます。', 'Если поезд опоздал на несколько минут, на станции дают справку об опоздании.'] },
+        { w: ['海', 'うみ'], q: ['日本は島国なので、どの町からも＿＿はそれほど遠くありません。', 'Япония — островная страна, и из любого города до ＿＿ не так уж далеко.'], more: ['日本には、島が一万四千以上あります。', 'А островов в Японии больше четырнадцати тысяч.'] },
+        { w: ['夏', 'なつ'], q: ['日本の＿＿はとても暑くて、湿気が多いです。', 'Японское ＿＿ очень жаркое и влажное.'], more: ['夏には、風鈴の音で涼しさを感じます。', 'Летом прохладу «слушают» — по звону колокольчиков фурин.'] },
+    ];
+    // факт про слово из словаря (если такого нет — любой: слово будет новым)
+    function pickFact() {
+        const P = pool(), byJp = new Map(); P.forEach((w) => { byJp.set(w.kanji, w); if (w.kana) byJp.set(w.kana, w); });
+        const mine = FACTS.map((f) => ({ f, w: f.w.map((x) => byJp.get(x)).find(Boolean) })).filter((x) => x.w && !askedFacts.has(x.f));
+        const pickF = mine.length ? pick(mine) : (() => { const rest = FACTS.filter((f) => !askedFacts.has(f)); const f = pick(rest.length ? rest : FACTS); return { f, w: null }; })();
+        askedFacts.add(pickF.f); if (askedFacts.size > FACTS.length - 3) askedFacts.clear();
+        return pickF;
+    }
+    const askedFacts = new Set();
+    function factQuiz(after) {
+        const { f, w } = pickFact();
+        const ans = w ? jpOf(w) : f.w[0], kana = w ? w.kana : f.w.find((x) => /^[ぁ-ん]+$/.test(x)) || '';
+        const others = distractors(w || { kanji: ans, kana, translation: '—' }, 3, jpOf).map(jpOf).filter((x) => x !== ans).slice(0, 3);
+        const fill = (s) => s.split('＿＿').join(ans);
+        const opts = shuffle([ans].concat(others)).map((x) => ({ jp: x, go: (b) => {
+            const ok = x === ans; b.classList.add(ok ? 'good' : 'bad'); if (ok) audio.ding(); else [...el.querySelectorAll('.op')].forEach((bb) => { if (bb.querySelector('b').textContent === ans) bb.classList.add('good'); });
+            const react = ok ? pick(QUIZ_OK) : pick(QUIZ_BAD);
+            setTimeout(() => show([react[0] + ' ' + fill(f.q[0]), (ok ? react[1] : react[1] + ' Правильно: «' + ans + '»' + (kana && kana !== ans ? ' (' + kana + ')' : '') + '.')], [{ jp: 'それで？', ru: 'И что дальше?', go: () => show([fill(f.more[0]), fill(f.more[1])], sample([['へえ、知らなかった！', 'Ого, не знал!'], ['面白いですね！', 'Интересно!'], ['もっと知りたい！', 'Хочу знать больше!']], 2).map(([j, r]) => ({ jp: j, ru: r, go: after }))) }]), 650);
+        } }));
+        show(f.q, opts, '<span class="q">Какое слово пропущено?</span>');
+    }
+    // ---- характеры: имя, черта, своя манера речи (приветствие, представление, присказка, прощание) ----
+    const NAMES = [['健太', 'けんた', 'Кэнта', 0], ['さくら', 'さくら', 'Сакура', 1], ['大輔', 'だいすけ', 'Дайсукэ', 0], ['美咲', 'みさき', 'Мисаки', 1], ['翔', 'しょう', 'Сё', 0], ['陽菜', 'ひな', 'Хина', 1], ['蓮', 'れん', 'Рэн', 0], ['葵', 'あおい', 'Аой', 1], ['拓海', 'たくみ', 'Такуми', 0], ['結衣', 'ゆい', 'Юи', 1], ['悠真', 'ゆうま', 'Юма', 0], ['花子', 'はなこ', 'Ханако', 1], ['一郎', 'いちろう', 'Итиро', 0], ['千代', 'ちよ', 'Тиё', 1]];
+    const PERSONAS = {
+        genki: { ru: 'весельчак', greet: [['やっほー！', 'Йо-хо!'], ['おっ、来た来た！', 'О, пришёл!']], intro: (n) => ['私は' + n + '！よろしくね！', 'Я ' + n + '! Будем знакомы!'], quirk: [['あはは、楽しいね！', 'Ха-ха, весело же!'], ['今日は最高の日だ！', 'Сегодня лучший день!']], bye: [['またねー！', 'Пока-пока!'], ['じゃあね、バイバーイ！', 'Давай, бай-бай!']] },
+        shy: { ru: 'стеснительный', greet: [['あ、あの…こんばんは…', 'Э-это… добрый вечер…'], ['…え？わ、私に話してる？', '…А? Это вы мне?']], intro: (n) => ['…' + n + 'です。よ、よろしく…', '…Я ' + n + '. О-очень приятно…'], quirk: [['…（顔が赤くなる）', '…(краснеет)'], ['す、すみません、緊張して…', 'И-извините, я волнуюсь…']], bye: [['ま、また…', 'Д-до встречи…'], ['…話せて、うれしかったです。', '…Я рад(а), что мы поговорили.']] },
+        grumpy: { ru: 'ворчливый старик', old: true, greet: [['なんじゃ、若いの。', 'Чего тебе, молодой?'], ['ふん、また観光客か。', 'Хм, опять турист.']], intro: (n) => ['わしは' + n + 'じゃ。この町に七十年住んでおる。', 'Я ' + n + '. Семьдесят лет живу в этом городе.'], quirk: [['最近の若いもんは…', 'Ох уж эта нынешняя молодёжь…'], ['昔はのう、もっと静かじゃった。', 'Раньше-то здесь было тише.']], bye: [['気をつけて帰るんじゃぞ。', 'Смотри, доберись осторожно.'], ['…まあ、また来てもよいぞ。', '…Ну, заходи ещё, так уж и быть.']] },
+        otaku: { ru: 'отаку', greet: [['あっ、もしかしてアニメ好き？', 'О, ты случаем не любишь аниме?'], ['ちょうど新しいフィギュアを買ったところ！', 'Я как раз купил(а) новую фигурку!']], intro: (n) => [n + 'です！推しはフリーレン！', 'Я ' + n + '! Мой фаворит — Фрирен!'], quirk: [['尊い…！', 'Это так прекрасно…!'], ['今期のアニメ、全部見てるよ。', 'Смотрю все аниме этого сезона.']], bye: [['推しの話、また今度ね！', 'Про любимых героев — в следующий раз!'], ['じゃあ、今夜も徹夜でアニメだ！', 'Ну, сегодня опять всю ночь аниме!']] },
+        smart: { ru: 'всезнайка', facts: 0.9, greet: [['やあ。知ってる？面白い話があるんだ。', 'Привет. Знаешь? Есть интересная история.'], ['こんばんは。今日も何か学んだ？', 'Добрый вечер. Узнал сегодня что-нибудь новое?']], intro: (n) => [n + 'です。本を読むのが好きなんです。', 'Я ' + n + '. Люблю читать.'], quirk: [['ちなみに…', 'Кстати говоря…'], ['それには理由があるんですよ。', 'На это, между прочим, есть причина.']], bye: [['知識は力なり、ですね。', 'Знание — сила, правда?'], ['また何か教えてあげますよ。', 'Расскажу тебе ещё что-нибудь.']] },
+        foodie: { ru: 'обжора', greet: [['お腹すいたなあ…', 'Ох, как есть хочется…'], ['いい匂い！何か食べた？', 'Как вкусно пахнет! Ты что-нибудь ел?']], intro: (n) => [n + 'だよ。趣味は食べ歩き！', 'Я ' + n + '. Моё хобби — гастро-прогулки!'], quirk: [['それより、何か食べない？', 'Слушай, а давай что-нибудь съедим?'], ['あそこのたこ焼き、最高なんだよ！', 'Там такие такояки — пальчики оближешь!']], bye: [['今度、一緒に何か食べに行こう！', 'Давай как-нибудь вместе поедим!'], ['じゃあ、ラーメン食べてくる！', 'Всё, я за рамэном!']] },
+        cool: { ru: 'немногословный', greet: [['…よう。', '…Йо.'], ['…何か用？', '…Что-то нужно?']], intro: (n) => ['…' + n + '。', '…' + n + '.'], quirk: [['…ふっ。', '…Хм.'], ['…別に。', '…Да так.']], bye: [['…じゃあな。', '…Бывай.'], ['…またな。', '…Ещё увидимся.']] },
+        polite: { ru: 'очень вежливый', greet: [['いらっしゃいませ。ようこそお越しくださいました。', 'Добро пожаловать. Рады, что вы пришли.'], ['こんばんは。お待ちしておりました。', 'Добрый вечер. Мы вас ждали.']], intro: (n) => ['私、' + n + 'と申します。何なりとお申し付けください。', 'Меня зовут ' + n + '. Обращайтесь по любому вопросу.'], quirk: [['恐れ入ります。', 'Покорно благодарю.'], ['お役に立てて光栄です。', 'Рад(а) быть полезным.']], bye: [['どうぞお気をつけてお帰りくださいませ。', 'Пожалуйста, будьте осторожны по дороге.'], ['またのお越しを心よりお待ちしております。', 'Всем сердцем ждём вас снова.']] },
+    };
+    const PERSONA_BY_GROUP = { food: ['genki', 'foodie', 'polite', 'grumpy'], serve: ['polite', 'genki', 'shy'], teach: ['smart', 'polite', 'grumpy'], study: ['genki', 'shy', 'otaku', 'foodie', 'cool'], home: ['grumpy', 'smart', 'foodie', 'genki'], guest: ['genki', 'shy', 'otaku', 'smart', 'foodie', 'cool', 'grumpy'], play: ['otaku', 'genki', 'cool'], sleep: ['shy'] };
+    function persona(ch, group) {
+        if (ch._persona) return ch._persona;
+        const seed = hashStr(String(ch.seed || Math.random()));
+        const list = PERSONA_BY_GROUP[group] || PERSONA_BY_GROUP.guest;
+        let key = list[seed % list.length];
+        if (PERSONAS[key].old && !(ch.o && (ch.o.old || ch.o.hairStyle === 'bald'))) key = list.find((k) => !PERSONAS[k].old) || 'genki'; // ворчит только тот, кто постарше
+        const fem = !!(ch.o && ch.o.fem), names = NAMES.filter((n) => n[3] === (fem ? 1 : 0)), nm = names[(seed >>> 3) % names.length];
+        return (ch._persona = Object.assign({ key, name: nm[0], kana: nm[1], ruName: nm[2] }, PERSONAS[key]));
+    }
     // ---- беседа: приветствие (по времени суток и роли) → тема → реакция → иногда вопрос про слово → прощание ----
     const met = new Map(), usedTopics = new Map();
     function greetLines(group, meet, ch) {
@@ -2653,11 +2767,13 @@ const TALK = (() => {
     function talk(ch) {
         if (!ch) return;
         if (ch.cat) { LIFE.say(ch, pick([['にゃー', 'Мяу'], ['ゴロゴロ…', 'Мррр…'], ['ふにゃ？', 'Мя?']]), 1.8, LIFE.S.t, inside.on ? null : scene); return; }
-        const role = ch.role || 'guest', group = ch.wordText ? 'word' : (ROLE_GROUP[role] || 'guest');
+        const role = ch.role || 'guest', group = ROLE_GROUP[role] || 'guest';
+        const P = group === 'sleep' ? null : persona(ch, group);
+        const myWord = ch.wordText ? pool().find((x) => jpOf(x) === ch.wordText) || { kanji: ch.wordText, translation: '' } : null;
         const meet = met.get(ch) || 0; met.set(ch, meet + 1);
-        begin({ kind: 'talk', ch, inside: inside.on, icon: ch.wordText ? '❓' : '💬', name: ch.wordText ? ch.wordText : (ROLE_NAME[role] || 'Прохожий'), sub: ch.wordText ? 'человек-слово' : (meet ? 'снова встретились' : 'разговор') });
+        begin({ kind: 'talk', ch, inside: inside.on, icon: '💬', name: P ? P.ruName + ' · ' + P.name : (ROLE_NAME[role] || 'Прохожий'), sub: (myWord ? 'прохожий' : (ROLE_NAME[role] || 'прохожий')) + (P ? ' · ' + P.ru : '') + (meet ? ' · снова встретились' : '') });
         const staff = STAFF.has(group);
-        const finish = () => end(staff ? pick(BYE_STAFF) : pick(BYE_THEM));
+        const finish = () => end(P && Math.random() < 0.75 ? pick(P.bye) : (staff ? pick(BYE_STAFF) : pick(BYE_THEM)));
         const farewell = (canMore) => {
             const say = staff ? ['他に何かありますか？', 'Что-нибудь ещё?'] : pick([['今日は話せて楽しかった！', 'Было приятно поболтать!'], ['あ、もうこんな時間！', 'Ой, уже столько времени!'], ['また話そうね。', 'Поболтаем ещё как-нибудь.']]);
             const opts = sample(BYE_ME, 2).map(([j, r]) => ({ jp: j, ru: r, go: finish }));
@@ -2665,7 +2781,10 @@ const TALK = (() => {
             show(say, opts);
         };
         const afterTopic = (first) => {
-            const w = group === 'sleep' ? null : pickWord();
+            if (group === 'sleep') return farewell(first);
+            // чаще — интересный факт с пропущенным словом (учитель и старшие рассказывают охотнее), иначе — «что значит слово?»
+            if (pool().length >= 4 && Math.random() < (P && P.facts ? P.facts : (group === 'teach' || group === 'home' ? 0.75 : 0.55))) return factQuiz(() => farewell(first));
+            const w = pickWord();
             if (w && Math.random() < (first ? 0.6 : 0.8)) return quiz(w, pick(QUIZ_ASK)(jpOf(w)), () => farewell(first));
             farewell(first);
         };
@@ -2674,12 +2793,15 @@ const TALK = (() => {
             let idx = list.map((_, i) => i).filter((i) => !used.has(i)); if (!idx.length) { used.clear(); idx = list.map((_, i) => i); }
             const i = pick(idx); used.add(i); const [say, answers] = list[i];
             if (group === 'sleep') return show(say, answers.map(([j, r, rep]) => ({ jp: j, ru: r, go: () => end(rep) })));
-            show(say, sample(answers, Math.min(3, answers.length)).map(([j, r, rep]) => ({ jp: j, ru: r, go: () => show(rep, sample(REACT, 2).map(([rj, rr]) => ({ jp: rj, ru: rr, go: () => afterTopic(first) }))) })));
+            show(say, sample(answers, Math.min(3, answers.length)).map(([j, r, rep]) => ({ jp: j, ru: r, go: () => show(rep, sample(REACT, 2).map(([rj, rr]) => ({ jp: rj, ru: rr, go: () => (P && Math.random() < 0.45 ? show(pick(P.quirk), sample(REACT, 2).map(([qj, qr]) => ({ jp: qj, ru: qr, go: () => afterTopic(first) }))) : afterTopic(first)) }))) })));
         };
-        if (ch.wordText) { const w = pool().find((x) => jpOf(x) === ch.wordText) || null; if (w) return quiz(w, pick([['私は誰でしょう？', 'Угадай, кто я?'], ['私の名前、知ってる？', 'Знаешь, как меня зовут?']]), () => farewell(false)); }
         if (group === 'sleep') return topic(true);
         const g = greetLines(group, meet, ch);
-        show(g.say, sample(g.me, 2).map(([j, r]) => ({ jp: j, ru: r, go: () => topic(true) })));
+        const say = P && !meet ? pick(P.greet) : g.say;
+        // при первой встрече человек представляется — у каждого по-своему
+        const introLine = () => { const l = P.intro(P.name); if (!myWord) return l; const m = meaning(myWord); return [l[0] + '私は' + jpOf(myWord) + 'です。', l[1] + (m ? ' Я — ' + m + ' (' + jpOf(myWord) + ').' : '')]; };
+        const intro = () => (P && !meet ? show(introLine(), [['よろしくお願いします！', 'Очень приятно!'], ['こちらこそ、よろしく！', 'Взаимно!']].map(([j, r]) => ({ jp: j, ru: r, go: () => topic(true) }))) : topic(true));
+        show(say, sample(g.me, 2).map(([j, r]) => ({ jp: j, ru: r, go: intro })));
     }
     // ---- заказ у ятай ----
     const FOODISH = (w) => { const m = propMeta(jpOf(w)); return !!m && (m.where.indexOf('izakaya') >= 0 || m.where.indexOf('konbini') >= 0); };
@@ -2717,27 +2839,19 @@ const TALK = (() => {
     let actList = [], lastKey = '', frameN = 0;
     const flat = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
     const _d = new THREE.Vector3(), _w = new THREE.Vector3();
+    // действия — только для того, на что наведён взгляд: центр экрана (телефон, прицел на ПК) или курсор мыши
     function nearby() {
-        const cam = camera.position, out = [];
-        camera.getWorldDirection(_d); _d.y = 0; _d.normalize();
-        // лоток с продавцом
-        if (!inside.on && th.festival && FESTIVAL.stalls) {
-            let best = null, bd = 1.9; FESTIVAL.stalls.forEach((s) => { if (!s.ch) return; const d = flat(s.front, cam); if (d < bd) { bd = d; best = s; } });
-            if (best) { out.push({ icon: '🍢', t: 'Заказать', fn: () => order(best) }, { icon: '💬', t: 'Поговорить', fn: () => talk(best.ch) }); return out; }
+        const out = [], pt = (typeof locked === 'function' && locked()) || !FINE ? [innerWidth / 2, innerHeight / 2] : (hover.lastMouse || null);
+        if (!pt) return out;
+        const hc = pickChar(pt[0], pt[1]);
+        if (hc && hc.dist < (inside.on ? 3.8 : 3.6)) {
+            const ch = hc.ch, stall = !inside.on && FESTIVAL.stalls ? FESTIVAL.stalls.find((s) => s.ch === ch) : null;
+            if (stall) out.push({ icon: '🍢', t: 'Заказать', fn: () => order(stall) }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
+            else if (ch.cat) out.push({ icon: '🐾', t: 'Погладить кота', fn: () => talk(ch) });
+            else out.push({ icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
+            return out;
         }
-        // ближайший человек перед глазами
-        let ch = null, cd = inside.on ? 3.6 : 3.4;
-        (inside.on ? LIFE.S.room : LIFE.S.loose).forEach((c) => {
-            if (!c.root.visible || !c.root.parent) return; c.root.getWorldPosition(_w); const d = flat(_w, cam); if (d > cd || d < 0.2) return;
-            const dot = ((_w.x - cam.x) * _d.x + (_w.z - cam.z) * _d.z) / d; if (dot < 0.55) return; cd = d; ch = c;
-        });
-        if (ch) {
-            if (ch.cat) out.push({ icon: '🐾', t: 'Погладить кота', fn: () => talk(ch) });
-            else if (ch.wordText) out.push({ icon: '❓', t: 'Кто это?', s: ch.wordText, fn: () => talk(ch) });
-            else out.push({ icon: '💬', t: 'Поговорить', s: ROLE_NAME[ch.role] || 'прохожий', fn: () => talk(ch) });
-        }
-        // радио в комнате
-        if (inside.on && typeof radio !== 'undefined' && radio.g && radio.g.parent) { radio.g.getWorldPosition(_w); if (flat(_w, cam) < 2.4) out.push({ icon: '📻', t: 'Сменить станцию', fn: () => radioNext() }); }
+        if (inside.on) { const h = pick(pt[0], pt[1], 2.6); if (h && h.radio) out.push({ icon: '📻', t: 'Сменить станцию', fn: () => radioNext() }); }
         return out;
     }
     function renderActs(list) {
@@ -4655,7 +4769,7 @@ function load() {
         blocks.forEach(disposeBlock); dynSigns.length = 0;
         planBlocks(); buildWorld(); buildRain();
         camera.position.set(0, 1.6, 2); yaw = tYaw = 0; pitch = tPitch = 0.02; vel.set(0, 0, 0);
-        ensureBlocks(); updateHud(true);
+        ensureBlocks(); updateHud(true); document.body.classList.remove('loading');
         { const tj = THEME_JP[th.id] || ['', '']; const bi = blockAt(camera.position.z); banner(tj[0], tj[1] + (blocks[bi] ? ' · ' + blocks[bi].q.name : '')); }
     };
     const run = () => fontReady.then((ok) => { if (!ok) builtBeforeFont = true; go(); });
@@ -4741,6 +4855,7 @@ function frame(now) {
     // туман и фон плавно переходят к теме квартала
     if (!inside.on && scene.fog && scene.fog.isFogExp2) { const k = 1 - Math.exp(-dt * 1.4); _fogC.set(th.fog); scene.fog.color.lerp(_fogC, k); scene.fog.density += (th.fogD - scene.fog.density) * k; _fogC.set(th.sky); if (scene.background && scene.background.isColor) scene.background.lerp(_fogC, k); hemi.color.lerp(_fogC.set(th.fog), k); }
     if (rain) rain.visible = opts.rain && !!th.rain && !inside.on;
+    if (!inside.on && camera.position.z < endGateZ + 5 && performance.now() - endShown > 15000) { endShown = performance.now(); const { need } = nextUnlock(); banner('この先、準備中', 'Выучите ещё ' + need + ' ' + plural3(need, 'слово', 'слова', 'слов') + ' — откроется новый квартал'); }
     if (th.festival) FESTIVAL.update(t, dt);
     if (th.temple) TEMPLE.update(t, dt);
     TALK.update();
