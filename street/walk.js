@@ -658,6 +658,7 @@ const PROP_BUILDERS = {
     '鍵': (m, col) => { const g = new THREE.Group(); const board = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.42, 0.03), m('#5a3a22')); board.position.y = 1.6; g.add(board); const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.38), new THREE.MeshBasicMaterial({ map: texKanjiLabel('鍵', '#3a2a1a', '#d8b84a'), transparent: true, opacity: 0.0 })); plate.position.set(0, 1.6, 0.016); g.add(plate); for (let i = 0; i < 6; i++) { const x = -0.17 + (i % 3) * 0.17, y = 1.72 - Math.floor(i / 3) * 0.2; const hook = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.004, 5, 10, Math.PI), m('#d8b84a')); hook.position.set(x, y + 0.05, 0.02); g.add(hook); if (i === 4) continue; const k = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 6, 14), m('#d8b84a')); k.position.set(x, y, 0.025); g.add(k); const sh = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.1, 0.006), m('#d8b84a')); sh.position.set(x, y - 0.08, 0.025); g.add(sh); const bit = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, 0.006), m('#d8b84a')); bit.position.set(x + 0.012, y - 0.12, 0.025); g.add(bit); } g.userData.wall = true; return g; },
 };
 PROP_BUILDERS['花畑'] = PROP_BUILDERS['花'];
+/*__PROPS_EXTRA__*/
 function propMeta(text) { return PROP_META[text] || null; }
 function propFor(text) { return PROP_BUILDERS[text] || null; }
 // предмет встаёт рядом с дверью своего квартала (зонты у входа, бочки у идзакаи, кот на ящиках), если дверей нет — у стены
