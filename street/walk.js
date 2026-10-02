@@ -444,7 +444,7 @@ function mergeStatic(group) {
         if (colObjs.has(o) && group !== world && group !== room) return; // в кварталах объект нужен, чтобы снять препятствие при сносе
         const doorMesh = !!o.userData.door && o.parent === group && mt.isMeshBasicMaterial;
         let p = o, tagged = false;
-        while (p && p !== group) { const u = p.userData || {}; if (u.sign || u.door || u.exit || u.board || u.label || u.keep) { tagged = true; break; } p = p.parent; }
+        while (p && p !== group) { const u = p.userData || {}; if (u.sign || u.door || u.exit || u.board || u.label || u.keep || u.post || u.gacha || u.tv || u.paper || u.radio) { tagged = true; break; } p = p.parent; }
         if (tagged && !doorMesh) return;
         const kind = (mt.isMeshBasicMaterial ? 'b' : (mt.isMeshStandardMaterial ? 's' + mt.roughness + '/' + mt.metalness + '/' + mt.envMapIntensity : 'l')) + ':' + (mt.emissive ? mt.emissive.getHex() + '/' + mt.emissiveIntensity : 0) + ':' + mt.side + ':' + (mt.fog !== false);
         const vc = !mt.map; // цвет переносим в вершины: разные цвета — одна сетка
@@ -580,8 +580,9 @@ function buildWorld() {
     if (typeof FESTIVAL !== 'undefined') FESTIVAL.reset();
     // тип комнаты за дверью: с весами (квартир ~18%), без двух квартир и без одного типа подряд на стороне улицы
     const HOMES = new Set(['home', 'oneroom', 'washitsu', 'loft']);
-    const ROOM_W = { izakaya: 3, konbini: 2, class: 1.5, home: 1, oneroom: 0.8, washitsu: 0.7, loft: 0.6, ramen: 2, cafe: 2, books: 1.5, arcade: 1.5 };
+    const ROOM_W = { animeshop: 2, dev: 0.0001, izakaya: 3, konbini: 2, class: 1.5, home: 1, oneroom: 0.8, washitsu: 0.7, loft: 0.6, ramen: 2, cafe: 2, books: 1.5, arcade: 1.5 };
     let prevType = null;
+    const SHOWCASE = ['animeshop', 'class', 'dev', 'arcade', 'ramen', 'izakaya', 'washitsu', 'cafe'];
     const pickRoomType = () => { const tot = ROOM_TYPES.reduce((a, t) => a + (ROOM_W[t] || 1), 0); let t = ROOM_TYPES[0]; for (let tries = 0; tries < 8; tries++) { let x = rnd() * tot; for (const c of ROOM_TYPES) { x -= ROOM_W[c] || 1; if (x <= 0) { t = c; break; } } if (t !== prevType && !(HOMES.has(t) && HOMES.has(prevType))) break; } prevType = t; return t; };
     [-1, 1].forEach((side) => {
         prevType = null;
@@ -617,7 +618,7 @@ function buildWorld() {
             if (b.shop && !b.shutter) {
                 const dz = z - len + 1.1 + 0.4;
                 const door = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 2.1), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(b.shopColor, '#ffffff', 0.35)), fog: true }));
-                const rtype = pickRoomType();
+                const rtype = SHOWCASE.length ? SHOWCASE.shift() : pickRoomType();
                 door.position.set(side * (W2 - 0.01), 1.05, dz); door.rotation.y = -side * Math.PI / 2; door.userData.door = { side, z: dz, color: b.shopColor, type: rtype, w2: W2 }; world.add(door); doors.push(door);
                 if (rtype === 'konbini') { door.material.color.set('#e8f4ff'); const strip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.35, 2.4), new THREE.MeshBasicMaterial({ color: new THREE.Color('#2f7fe0') })); strip.position.set(side * (W2 - 0.05), 2.45, dz); world.add(strip); const strip2 = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.12, 2.4), new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff8a2a') })); strip2.position.set(side * (W2 - 0.05), 2.2, dz); world.add(strip2); }
                 else if (rtype === 'class') { const plq = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.7), new THREE.MeshBasicMaterial({ map: texPlaque('塾'), fog: true })); plq.position.set(side * (W2 - 0.02), 2.0, dz + 0.9); plq.rotation.y = -side * Math.PI / 2; world.add(plq); door.material.color.set('#fff0d0'); }
@@ -703,7 +704,6 @@ function buildWorld() {
     // тёмные силуэты прохожих убраны (по просьбе): улицу оживляют люди-слова и продавцы
     BL.forEach((bk, bi) => withTheme(bk.th, () => { if (th.festival) FESTIVAL.build(world, bk); if (th.temple) TEMPLE.build(world, bk, false); }));
     buildEndGate();
-    buildPostBox();
     useTheme(BL[0].th);
     mergeStatic(world);
 }
@@ -1993,6 +1993,7 @@ function tap(x, y) {
     if (h.radio) { buzz(12); radioNext(); return; }
     if (h.tv) { buzz(10); tvNext(h.tv); return; }
     if (h.paper) { buzz(10); TALK.close(); PAPER.open(); return; }
+    if (h.gacha) { if (h.dist < 3) { buzz(12); TALK.gacha(); } return; }
     if (h.post) { if (h.dist < 6) { buzz(10); TALK.close(); MAIL.open(); } else toast('Подойдите ближе к почтовому ящику'); return; }
     if (h.door) { if (h.dist < 7) { buzz(15); enterRoom(h.door); } else toast('Подойди ближе к двери'); return; }
     buzz(10); showHint(h.sign, true);
@@ -2013,12 +2014,14 @@ function pick(x, y, maxDist) {
     ray.setFromCamera(new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1), camera);
     ray.far = maxDist || 24; // вывески висят высоко на фасадах — ловим издалека
     if (inside.on) {
-        if (!roomHover.length) room.traverse((o) => { if ((o.isMesh || o.isSprite) && (o.userData.sign || o.userData.exit || o.userData.radio || o.userData.tv || o.userData.paper)) roomHover.push(o); });
-        const h = ray.intersectObjects(roomHover, false).find((o) => o.object.userData.sign || o.object.userData.exit || o.object.userData.radio || o.object.userData.tv || o.object.userData.paper);
+        if (!roomHover.length) room.traverse((o) => { if ((o.isMesh || o.isSprite) && (o.userData.sign || o.userData.exit || o.userData.radio || o.userData.tv || o.userData.paper || o.userData.post || o.userData.gacha)) roomHover.push(o); });
+        const h = ray.intersectObjects(roomHover, false).find((o) => o.object.userData.sign || o.object.userData.exit || o.object.userData.radio || o.object.userData.tv || o.object.userData.paper || o.object.userData.post || o.object.userData.gacha);
         if (!h) return null;
         if (h.object.userData.radio) return { radio: true, dist: h.distance };
         if (h.object.userData.tv) return { tv: h.object, dist: h.distance };
         if (h.object.userData.paper) return { paper: true, dist: h.distance };
+        if (h.object.userData.post) return { post: true, dist: h.distance };
+        if (h.object.userData.gacha) return { gacha: true, dist: h.distance };
         return h.object.userData.exit ? { exit: true, dist: h.distance } : { sign: h.object.userData.sign, dist: h.distance };
     }
     if (hoverDirty) rebuildHover();

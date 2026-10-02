@@ -2,8 +2,8 @@
 // Справа — меню действий для того, что рядом (поговорить, заказать у ятай, сменить станцию); диалог — окном сбоку.
 // Встраивается build-walk.mjs (общая область видимости с walk.js: data, camera, inside, LIFE, audio, toast…).
 const TALK = (() => {
-    const ROLE_NAME = { chef: 'Повар', ramenChef: 'Повар', cook: 'Хозяйка', vendor: 'Продавец', waiter: 'Официантка', barista: 'Бариста', clerk: 'Продавец', bookClerk: 'Продавец', teacher: 'Учитель', student: 'Ученик', student1r: 'Студент', family: 'Хозяин', elder: 'Бабушка', couple: 'Сосед', bar: 'Гость', party: 'Гость', ramenGuest: 'Гость', cafeGuest: 'Гость', shopper: 'Покупатель', reader: 'Читатель', gamer: 'Игрок', drummer: 'Игрок', worker: 'Сосед', sleeper: 'Ученик', pianist: 'Пианист', sneaker: 'Ученик' };
-    const ROLE_GROUP = { chef: 'food', ramenChef: 'food', cook: 'food', vendor: 'food', waiter: 'serve', barista: 'serve', clerk: 'serve', bookClerk: 'serve', teacher: 'teach', student: 'study', student1r: 'study', family: 'home', elder: 'home', couple: 'home', gamer: 'play', drummer: 'play', sleeper: 'sleep', pianist: 'study', sneaker: 'study' };
+    const ROLE_NAME = { chef: 'Повар', ramenChef: 'Повар', cook: 'Хозяйка', vendor: 'Продавец', waiter: 'Официантка', barista: 'Бариста', clerk: 'Продавец', bookClerk: 'Продавец', teacher: 'Учитель', student: 'Ученик', student1r: 'Студент', family: 'Хозяин', elder: 'Бабушка', couple: 'Сосед', bar: 'Гость', party: 'Гость', ramenGuest: 'Гость', cafeGuest: 'Гость', shopper: 'Покупатель', reader: 'Читатель', gamer: 'Игрок', drummer: 'Игрок', worker: 'Сосед', sleeper: 'Ученик', pianist: 'Пианист', sneaker: 'Ученик', dev: 'Разработчик', otakuClerk: 'Продавец', otakuShopper: 'Покупатель' };
+    const ROLE_GROUP = { chef: 'food', ramenChef: 'food', cook: 'food', vendor: 'food', waiter: 'serve', barista: 'serve', clerk: 'serve', bookClerk: 'serve', teacher: 'teach', student: 'study', student1r: 'study', family: 'home', elder: 'home', couple: 'home', gamer: 'play', drummer: 'play', sleeper: 'sleep', pianist: 'study', sneaker: 'study', otakuClerk: 'serve', otakuShopper: 'play' };
     const STAFF = new Set(['food', 'serve']), FRIEND = new Set(['study', 'play']);
     // темы по группам: реплика персонажа и ответы [мой jp, ru, его ответ [jp, ru]]
     const TOPICS = {
@@ -358,6 +358,7 @@ const TALK = (() => {
         if (!ch) return;
         if (ch.cat) { LIFE.say(ch, pick([['にゃー', 'Мяу'], ['ゴロゴロ…', 'Мррр…'], ['ふにゃ？', 'Мя?']]), 1.8, LIFE.S.t, inside.on ? null : scene); return; }
         const role = ch.role || 'guest', group = ROLE_GROUP[role] || 'guest';
+        if (role === 'dev') return devTalk(ch);
         const P = group === 'sleep' ? null : persona(ch, group);
         const myWord = ch.wordText ? pool().find((x) => jpOf(x) === ch.wordText) || { kanji: ch.wordText, translation: '' } : null;
         const meet = met.get(ch) || 0; met.set(ch, meet + 1);
@@ -446,6 +447,27 @@ const TALK = (() => {
             if (ch.root.parent && inside.on) LIFE.say(ch, pick([['ご清聴ありがとうございました。', 'Спасибо, что послушали.'], ['どうだった？', 'Ну как?'], ['ちょっと間違えちゃった、えへへ。', 'Чуть сбился, хе-хе.']]), 2.8, LIFE.S.t);
         }, Math.max(5, dur || 8) * 1000);
     }
+    // ---- разработчик: рассказывает, что делает, и принимает отзывы ----
+    function devTalk(ch) {
+        const meet = met.get(ch) || 0; met.set(ch, meet + 1);
+        begin({ kind: 'talk', ch, inside: inside.on, icon: '🛠', name: 'Разработчик', sub: 'делает эту улицу' + (meet ? ' · снова встретились' : '') });
+        const menu = () => [
+            { jp: '感想を伝えたいです。', ru: '✉ Хочу оставить отзыв', go: () => { show(['ぜひ！目安箱に書いてね。全部読むよ。', 'Конечно! Напиши в ящик для отзывов — я читаю всё.'], []); setTimeout(() => { close(); MAIL.open(); }, 1100); } },
+            { jp: '今、何を作っていますか？', ru: 'Над чем работаешь?', go: () => show(pick([['本が読める図書室を作ってるんだ。漫画も読めるよ。', 'Делаю библиотеку, где можно читать книги. И мангу тоже.'], ['二つの部屋がある家を作ってる。難しいんだよね…', 'Делаю дома из двух комнат. Сложно, если честно…'], ['新しいクイズを考えてるところ。', 'Придумываю новые квизы.']]), menu().slice(0, 1).concat([{ jp: '楽しみです！', ru: 'Жду с нетерпением!', go: () => show(['ありがとう！他に何かある？', 'Спасибо! Что-нибудь ещё?'], menu()) }])) },
+            { jp: 'この街、あなたが作ったんですか？', ru: 'Это ты сделал улицу?', go: () => show(['うん！単語を覚えるための街なんだ。言葉が増えると、街も大きくなるよ。', 'Ага! Это город для запоминания слов. Чем больше слов знаешь — тем больше город.'], [{ jp: '最高です！', ru: 'Очень круто!', go: () => end(['ありがとう！アイデアがあったら目安箱へ！', 'Спасибо! Есть идеи — бросай в ящик для отзывов!']) }, { jp: 'もっと部屋がほしい！', ru: 'Хочу больше комнат!', go: () => show(['了解！目安箱に書いておいて。', 'Принято! Напиши об этом в ящик.'], menu().slice(0, 1)) }]) },
+            { jp: 'じゃあ、また。', ru: 'Ну, до встречи.', go: () => end(['またね！がんばって！', 'Пока! Удачи с японским!']) },
+        ];
+        show(meet ? ['おかえり！何かあった？', 'С возвращением! Что-то случилось?'] : ['おっ、来てくれたんだ！ここで「アニメイ」を作ってるんだよ。', 'О, ты зашёл! Здесь я делаю «Аниме́й».'], menu());
+    }
+    // ---- гачапон в аниме-магазине: капсула со словом из словаря ----
+    let gachaAt = 0;
+    function gacha() {
+        if (performance.now() - gachaAt < 1500) return; gachaAt = performance.now();
+        const w = pickWord(); if (!w) { toast('Капсулы пусты — добавьте в словарь хотя бы 4 слова'); return; }
+        audio.ding(); if (typeof buzz === 'function') buzz(20);
+        const k = kanaOf(w);
+        setTimeout(() => { banner('🎁 ' + jpOf(w), (k ? k + ' — ' : '') + meaning(w)); speak(k || jpOf(w)); }, 500);
+    }
     // ---- предметы: попробовать еду ----
     function taste(w) {
         const l = pick([['いただきます！…おいしい！', 'Приятного аппетита!… Вкусно!'], ['うまい！', 'Вкуснятина!'], ['ん〜、最高！', 'М-м, божественно!']]);
@@ -481,6 +503,7 @@ const TALK = (() => {
         if (hc && hc.dist < (inside.on ? 3.8 : 3.6)) {
             const ch = hc.ch, stall = !inside.on && FESTIVAL.stalls ? FESTIVAL.stalls.find((s) => s.ch === ch) : null;
             if (stall) out.push({ icon: '🍢', t: 'Заказать', fn: () => order(stall) }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
+            else if (ch.role === 'dev') out.push({ icon: '✉', t: 'Оставить отзыв', fn: () => { close(); MAIL.open(); } }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
             else if (ch.role === 'pianist' && !ch.playing) out.push({ icon: '🎹', t: 'Попросить сыграть', fn: () => pianoMenu(ch) }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
             else if (ch.cat) out.push({ icon: '🐾', t: 'Погладить кота', fn: () => talk(ch) });
             else out.push({ icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
@@ -489,7 +512,8 @@ const TALK = (() => {
         const h = pickAt(pt[0], pt[1], inside.on ? 2.8 : 9);
         if (h && h.radio) out.push({ icon: '📻', t: 'Сменить станцию', fn: () => radioNext() });
         if (h && h.tv) out.push({ icon: '📺', t: 'Переключить канал', fn: () => tvNext(h.tv) });
-        if (h && h.post) out.push({ icon: '✉', t: 'Написать нам', fn: () => { close(); MAIL.open(); } });
+        if (h && h.post) out.push({ icon: '✉', t: 'Написать разработчику', fn: () => { close(); MAIL.open(); } });
+        if (h && h.gacha) out.push({ icon: '🎰', t: 'Крутить гачу', fn: () => gacha() });
         if (h && h.paper) out.push({ icon: '📰', t: 'Читать газету', fn: () => { close(); PAPER.open(); } });
         if (h && h.sign && h.sign.word && !h.sign.deco) {
             const sg = h.sign, w = sg.word, id = String(w.id || jpOf(w));
@@ -537,5 +561,5 @@ const TALK = (() => {
         }
         if (e.code === 'KeyE' && actList[0] && !acts.hidden) { actList[0].fn(); lastKey = ''; }
     });
-    return { talk, order, close, pickChar, update, get open() { return !!cur; } };
+    return { talk, order, close, pickChar, update, gacha, get open() { return !!cur; } };
 })();

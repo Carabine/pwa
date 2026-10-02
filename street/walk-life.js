@@ -960,5 +960,5 @@ const LIFE = (() => {
         S.loose.push(ch);
         return ch.root;
     }
-    return { screenTex, bindScreen, nextChannel, gameTex, makeChar, makeCat, populate, update, clearRoom, onEnter, onExit, upgradeMaterials, personProp, say, S };
+    return { LINES, screenTex, bindScreen, nextChannel, gameTex, makeChar, makeCat, populate, update, clearRoom, onEnter, onExit, upgradeMaterials, personProp, say, S };
 })();

@@ -88,8 +88,8 @@ const MAIL = (() => {
     function ui() {
         if (el) return el;
         el = document.createElement('div'); el.id = 'mail';
-        el.innerHTML = '<div class="mh"><div class="t">〒 Почтовый ящик</div><button class="tx" aria-label="Закрыть">×</button></div>'
-            + '<p class="lead">Что понравилось, что сломалось, чего не хватает на улице? Письмо прочитает автор.</p>'
+        el.innerHTML = '<div class="mh"><div class="t">目安箱 · отзыв разработчику</div><button class="tx" aria-label="Закрыть">×</button></div>'
+            + '<p class="lead">Что понравилось, что сломалось, чего не хватает? Разработчик читает каждое письмо.</p>'
             + '<textarea maxlength="2000" placeholder="Ваше письмо…"></textarea><div class="st"></div>'
             + '<div class="row"><button class="b-send">Отправить ✉</button></div>';
         document.body.appendChild(el);
