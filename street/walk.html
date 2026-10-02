@@ -524,7 +524,8 @@ function mergeStatic(group) {
 }
 const signsGroup = new THREE.Group(); scene.add(signsGroup);
 const doors = []; // двери магазинов: в них можно войти
-const colliders = { street: [], room: [] }; // AABB по xz; камера выталкивается наружу по меньшей оси
+const colliders = { street: [], room: [] };
+const blockers = []; // занятые места без коллизии (прохожие) — чтобы предметы не ставились в них // AABB по xz; камера выталкивается наружу по меньшей оси
 const _bb = new THREE.Box3();
 function addCollider(obj, list, pad) {
     obj.updateMatrixWorld(true);
@@ -545,7 +546,7 @@ function resolveCollisions(list) {
 }
 const dynSigns = []; // мигающие и зажигающиеся
 function buildWorld() {
-    doors.length = 0; colliders.street.length = 0; hoverDirty = true;
+    doors.length = 0; colliders.street.length = 0; blockers.length = 0; hoverDirty = true;
     const killMat = (mt) => { if (!mt) return; (Array.isArray(mt) ? mt : [mt]).forEach((x) => { if (x.map && x.map.dispose) x.map.dispose(); if (x.alphaMap && x.alphaMap.dispose) x.alphaMap.dispose(); x.dispose(); }); };
     while (world.children.length) { const o = world.children.pop(); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); killMat(m.material); }); }
     const rnd = mulberry32(hashStr(th.id + source) + 11);
@@ -672,7 +673,7 @@ function buildWorld() {
         const body = new THREE.Mesh(new THREE.CapsuleGeometry(h * 0.16, h * 0.5, 4, 8), fig); body.position.y = h * 0.45; g.add(body);
         const head = new THREE.Mesh(new THREE.SphereGeometry(h * 0.075, 8, 8), fig); head.position.y = h * 0.88; g.add(head);
         if (th.umbrellas && rnd() < 0.8) { const um = new THREE.Mesh(new THREE.SphereGeometry(h * 0.38, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), lamb(['#1b1b24', '#22243a', '#2a1a2a', '#c8d8ff'][Math.floor(rnd() * 4)], { side: THREE.DoubleSide })); um.position.y = h * 1.05; um.scale.y = 0.35; g.add(um); }
-        g.position.set(x, 0, z); g.rotation.y = rnd() * 6.28; world.add(g);
+        g.position.set(x, 0, z); g.rotation.y = rnd() * 6.28; world.add(g); blockers.push({ x0: x - 0.4, x1: x + 0.4, z0: z - 0.4, z1: z + 0.4 });
     }
     mergeStatic(world);
 }
@@ -1195,6 +1196,11 @@ function placeStreetProp(sign, b) {
     else if (mt.spot === 'wall') pick = ds.find((d) => !used.has(d) && (sign.text !== '薬' || d.userData.door.type === 'konbini')) || ds.find((d) => !used.has(d));
     if (pick) { used.add(pick); const d = pick.userData.door; sign.side = d.side; sign.z = d.z + (mt.spot === 'wall' ? 1.6 : (used.size % 2 ? 1.05 : -1.05)); sign.nearDoor = d; }
     if (!pick && mt.spot === 'floor' && sign.text === '車') { sign.side = sign.side || 1; sign.z = b.z0 - 4 - (used.size) * 6; }
+    // место занято декором, прохожим или другим предметом — сдвигаем вдоль улицы
+    const half = BIG_PROPS.has(sign.text) ? 2.2 : 0.6;
+    const x = sign.side * (W2 - (BIG_PROPS.has(sign.text) ? 1.45 : 0.7));
+    const busy = (z) => { const x0 = x - half, x1 = x + half, z0 = z - half, z1 = z + half; const hit = (c) => !(x1 <= c.x0 || x0 >= c.x1 || z1 <= c.z0 || z0 >= c.z1); return colliders.street.some(hit) || blockers.some(hit); };
+    if (busy(sign.z)) { const z0 = sign.z; let found = false; for (let d = 0.8; d <= 8 && !found; d += 0.8) for (const dir of [-1, 1]) { const z = z0 + dir * d; if (z <= b.z0 - 1 && z >= b.z1 + 1 && !busy(z)) { sign.z = z; found = true; break; } } }
 }
 function buildProp(sign, group) {
     const build = propFor(sign.text);
