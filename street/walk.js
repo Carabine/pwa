@@ -928,7 +928,10 @@ function decorateBuilding(side, b, z, len, rnd) {
     if (b.shop && !b.shutter) {
         const dz = z - len + 1.5 + 0.9;
         const bd = new THREE.Group();
-        [1, -1].forEach((k) => { const pl = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.75), lamb('#ffffff', { map: texBoard(rnd), side: THREE.DoubleSide })); pl.position.set(k * 0.09, 0.4, 0); pl.rotation.y = k * 0.22; bd.add(pl); });
+        // А-образная стойка: две створки наклонены и сходятся сверху, не пересекаясь
+        [1, -1].forEach((k) => { const pl = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.78), lamb('#ffffff', { map: texBoard(rnd), side: THREE.DoubleSide })); pl.position.set(0, 0.4, k * 0.12); pl.rotation.x = -k * 0.3; bd.add(pl); });
+        const hinge = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.03, 0.03), lamb('#2a2a30')); hinge.position.set(0, 0.78, 0); bd.add(hinge);
+        [-0.23, 0.23].forEach((x) => { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.3), lamb('#2a2a30')); leg.position.set(x, 0.015, 0); bd.add(leg); });
         bd.position.set(inward(0.75), 0, dz); bd.rotation.y = -side * Math.PI / 2 + (rnd() - 0.5) * 0.4; world.add(bd); addCollider(bd, null, 0.2);
     }
     const nj = Math.floor(rnd() * 3);
