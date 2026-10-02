@@ -2046,22 +2046,35 @@ function chalkOnBoard(recs, w) {
     tex.needsUpdate = true;
 }
 // японская речь: реплики людей рядом озвучиваются синтезом речи (тише, если дальше); выключается в настройках
-let voicesPref = settings.voices !== false, voiceLast = 0, jaVoices = null;
-function voicesOn() { return voicesPref && audio.enabled && !!window.speechSynthesis; }
+let voicesPref = settings.voices !== false, voiceLast = 0, ambAudio = null, talkAudio = null;
+const TTS_API = (location.protocol === 'file:' ? 'https://animei.space' : '') + '/api/v1/words/tts';
+function voicesOn() { return voicesPref && audio.enabled; }
+// нейроголос с сервера: женский/мужской, тон под возраст (дети выше, старики ниже); повтор фразы — из кэша
+function ttsPlay(text, o) {
+    o = o || {};
+    const t = String(text || '').replace(/[「」（）()…♪]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!t || !/[぀-ヿ㐀-鿿]/.test(t)) return null;
+    const a = new Audio(TTS_API + '?text=' + encodeURIComponent(t) + '&v=' + (o.male ? 'm' : 'f') + '&s=' + (o.style || 'norm'));
+    a.volume = Math.max(0, Math.min(1, o.volume == null ? 0.95 : o.volume)); a.preload = 'auto';
+    const t0 = performance.now();
+    // фоновая реплика, которая генерировалась слишком долго, уже не к месту — молчим
+    a.addEventListener('canplaythrough', () => { if (o.late && performance.now() - t0 > o.late) return; const p = a.play(); if (p && p.catch) p.catch(() => {}); }, { once: true });
+    a.load();
+    return a;
+}
+const KID_ROLES = new Set(['student', 'sneaker', 'sleeper', 'pianist', 'student1r', 'gamer']);
+function voiceOpts(ch) { const o = ch.o || {}; return { male: !o.fem, style: KID_ROLES.has(ch.role) ? 'kid' : (o.old || o.hairStyle === 'bald' ? 'old' : 'norm') }; }
 function voiceLine(ch, line, force) {
     try {
         if (!voicesOn() || !line || !line[0] || ch.cat) return;
         const p = (ch.J && ch.J.head ? ch.J.head : ch.root).getWorldPosition(new THREE.Vector3()), d = p.distanceTo(camera.position);
         if (d > 7) return;
-        const now = performance.now(); if (!force && (speechSynthesis.speaking || now - voiceLast < 2500)) return; voiceLast = now;
-        if (!jaVoices || !jaVoices.length) jaVoices = speechSynthesis.getVoices().filter((v) => /^ja/i.test(v.lang));
-        const u = new SpeechSynthesisUtterance(String(line[0]).replace(/[「」（）()…]/g, ' '));
-        u.lang = 'ja-JP'; const seed = hashStr(String(ch.seed || ch.role || 'x'));
-        if (jaVoices.length) u.voice = jaVoices[seed % jaVoices.length];
-        const o = ch.o || {}; u.pitch = Math.max(0.5, Math.min(1.8, (o.fem ? 1.25 : 0.95) - (o.old ? 0.25 : 0) + ((seed >>> 4) % 7 - 3) * 0.04));
-        u.rate = 1.0 + ((seed >>> 8) % 5 - 2) * 0.04; u.volume = force ? 0.9 : Math.max(0.15, 0.75 * (1 - d / 7));
-        if (force) speechSynthesis.cancel(); speechSynthesis.speak(u);
-    } catch (e) { /* нет синтеза речи */ }
+        const vo = voiceOpts(ch);
+        if (force) { if (talkAudio) talkAudio.pause(); if (ambAudio) ambAudio.pause(); talkAudio = ttsPlay(line[0], Object.assign(vo, { volume: 0.95 })); return; }
+        const now = performance.now(); if (now - voiceLast < 2500 || (talkAudio && !talkAudio.paused && !talkAudio.ended) || TALK.open) return; voiceLast = now;
+        if (ambAudio && !ambAudio.paused && !ambAudio.ended) return;
+        ambAudio = ttsPlay(line[0], Object.assign(vo, { volume: Math.max(0.15, 0.7 * (1 - d / 7)), late: 3500 }));
+    } catch (e) { /* без звука */ }
 }
 // для модулей, где имя pick занято (диалоги): тот же луч из точки экрана
 function pickAt(x, y, d) { return pick(x, y, d); }
@@ -2205,7 +2218,7 @@ panel.querySelectorAll('[data-music]').forEach((b) => { b.classList.toggle('on',
 panel.querySelectorAll('[data-theme]').forEach((b) => { b.classList.toggle('on', b.dataset.theme === th.id); });
 if (window.STREET_WORDS && window.STREET_WORDS.words && !SAMPLE && location.protocol === 'file:') panel.querySelector('[data-src="demo"]').textContent = 'Мой словарь (выгрузка)';
 const voiceBtn = panel.querySelector('[data-voices]');
-if (voiceBtn) { voiceBtn.classList.toggle('on', voicesPref); voiceBtn.addEventListener('click', () => { voicesPref = !voicesPref; saveSet({ voices: voicesPref }); voiceBtn.classList.toggle('on', voicesPref); if (!voicesPref && window.speechSynthesis) speechSynthesis.cancel(); toast(voicesPref ? 'Голоса включены' : 'Голоса выключены'); }); }
+if (voiceBtn) { voiceBtn.classList.toggle('on', voicesPref); voiceBtn.addEventListener('click', () => { voicesPref = !voicesPref; saveSet({ voices: voicesPref }); voiceBtn.classList.toggle('on', voicesPref); if (!voicesPref) { if (talkAudio) talkAudio.pause(); if (ambAudio) ambAudio.pause(); } toast(voicesPref ? 'Голоса включены' : 'Голоса выключены'); }); }
 const rainBtn = panel.querySelector('[data-rain]'); rainBtn.hidden = false; rainBtn.classList.toggle('on', opts.rain);
 rainBtn.addEventListener('click', () => { opts.rain = !opts.rain; saveSet({ rain: opts.rain }); rainBtn.classList.toggle('on', opts.rain); if (rain) rain.visible = opts.rain; });
 const reflBtn = { classList: { remove() {}, toggle() {} } }; // кнопки отражений больше нет

@@ -80,6 +80,7 @@ const TALK = (() => {
     }
     let jaVoice = null;
     function speak(text) {
+        if (typeof ttsPlay === 'function' && audio.enabled) { ttsPlay(text, { volume: 0.95 }); return; }
         try {
             if (!window.speechSynthesis) return;
             if (!jaVoice) jaVoice = speechSynthesis.getVoices().find((v) => /^ja/i.test(v.lang)) || null;
@@ -151,8 +152,7 @@ const TALK = (() => {
     }
     function msg(who, jp, ru, kana) {
         const m = document.createElement('div'); m.className = 'm ' + who;
-        m.innerHTML = '<div class="jp">' + furiTag('span', jp, kana) + (who === 'c' ? ' <button class="spk" aria-label="Озвучить">🔊</button>' : '') + '</div>' + (ru ? '<div class="ru">' + esc(ru) + '</div>' : '');
-        if (who === 'c') m.querySelector('.spk').addEventListener('click', () => speak(jp));
+        m.innerHTML = '<div class="jp">' + furiTag('span', jp, kana) + '</div>' + (ru ? '<div class="ru">' + esc(ru) + '</div>' : '');
         const log = el.querySelector('.log'); log.appendChild(m); log.scrollTop = log.scrollHeight;
     }
     function head() {
