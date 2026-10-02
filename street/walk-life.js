@@ -897,6 +897,7 @@ const LIFE = (() => {
                 if (!attached(ch.root)) { if (ch._seen || t - (ch._born || (ch._born = t)) > 3) S.loose.splice(i, 1); continue; }
                 ch._seen = true;
                 ch.root.getWorldPosition(_v); const d = _v.distanceTo(camera.position);
+                ch.root.visible = d < 28;
                 if (d > (LOW ? 9 : 16)) continue;
                 if (d < 3.2 && !ch.waved && !ch.gest) { ch.waved = true; ch.gest = { kind: ch.o.armPose === 'up' ? 'nod' : 'wave', t0: t, t1: t + 2.2 }; }
                 if (d > 6) ch.waved = false;

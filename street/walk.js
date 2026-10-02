@@ -41,6 +41,16 @@ const THEMES = {
         tiers: [{ y0: 3.3, y1: 5.9, w: 0.55, chars: 5 }],
         spacing: 2.5, awning: 2.95, hbox: { y0: 2.98, y1: 3.42, minChars: 6 }, noren: { y0: 1.55, y1: 2.2, maxChars: 3 },
     },
+    // праздничная улица: ятай с едой вдоль домов, слова — на фонарях и вертикальных вывесках над лотками
+    matsuri: {
+        id: 'matsuri', W: 6.0, floors: [2, 2], floorH: 3.0, lenB: [3.0, 4.6], rain: false, festival: true,
+        lanterns: { y: 3.35, r: 0.22, step: 1.4, maxChars: 2 },
+        fog: '#2a1008', fogD: 0.038, sky: '#08040c', ground: '#0c0806',
+        palette: { 5: '#ffcf5a', 4: '#ff8a3c', 3: '#ff5f7a', 2: '#5ad8c8', 1: '#b98cff', 0: '#8c9bff' },
+        wallColors: ['#2a1a14', '#30201a', '#241814', '#2a1c18'], winColors: ['#ffc070', '#ffd9a0', '#ff9a6a'], shopGlow: ['#ffb060', '#ffcf7a', '#ff7a4a'],
+        tiers: [{ y0: 4.0, y1: 6.3, w: 0.6, chars: 5 }],
+        spacing: 2.8, awning: 3.75, hbox: null, noren: null,
+    },
 };
 
 // ---------- текстуры вывесок (тот же стиль, что в 2D-макете) ----------
@@ -621,6 +631,7 @@ function buildWorld() {
         if (th.umbrellas && rnd() < 0.8) { const um = new THREE.Mesh(new THREE.SphereGeometry(h * 0.38, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), lamb(['#1b1b24', '#22243a', '#2a1a2a', '#c8d8ff'][Math.floor(rnd() * 4)], { side: THREE.DoubleSide })); um.position.y = h * 1.05; um.scale.y = 0.35; g.add(um); }
         g.position.set(x, 0, z); g.rotation.y = rnd() * 6.28; world.add(g); blockers.push({ x0: x - 0.4, x1: x + 0.4, z0: z - 0.4, z1: z + 0.4 });
     }
+    if (th.festival) FESTIVAL.build(world);
     mergeStatic(world);
 }
 function texPuddlesInverse(seed) {
@@ -1378,8 +1389,29 @@ function buildRoom(b, color, type) {
     // предметы-слова по местам; в комбини — с ценником
     const free = spots.slice();
     objs.forEach((sg) => { for (let i = 0; i < free.length; i++) { const sp = free[i]; if (placeObject(sg, sp)) { if (sp.price) { const tg = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.18), lamb('#ffffff', { map: texPrice(sg), side: THREE.DoubleSide })); const off = new THREE.Vector3(0.46, -0.1, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), sp.ry); tg.position.set(sp.x + off.x, sp.y - 0.1, sp.z + off.z); tg.rotation.y = sp.ry + Math.PI / 2; tg.userData.sign = sg; room.add(tg); } free.splice(i, 1); break; } } });
+    placeRadio(free);
     LIFE.upgradeMaterials(room, type);
 }
+// ретро-радиоприёмник: тап переключает станцию (вариант музыки); мигающая лампочка — без текстовых подсказок
+function placeRadio(free) {
+    const sp = free.find((s) => s.kind === 'table') || free.find((s) => s.kind === 'wall' || s.kind === 'door');
+    if (!sp) return;
+    const g = new THREE.Group(); g.userData.radio = true;
+    const B = (sx, sy, sz, col, x, y, z, basic) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), basic ? new THREE.MeshBasicMaterial({ color: new THREE.Color(col) }) : lamb(col)); m.position.set(x, y, z); m.userData.radio = true; g.add(m); return m; };
+    B(0.34, 0.2, 0.13, '#6a4024', 0, 0.1, 0); B(0.32, 0.03, 0.12, '#4a2c18', 0, 0.215, 0);
+    const gc = document.createElement('canvas'); gc.width = 64; gc.height = 64; const gg = gc.getContext('2d'); gg.fillStyle = '#2a2018'; gg.fillRect(0, 0, 64, 64); gg.strokeStyle = 'rgba(200,170,120,0.55)'; gg.lineWidth = 2; for (let y = 6; y < 64; y += 6) { gg.beginPath(); gg.moveTo(4, y); gg.lineTo(60, y); gg.stroke(); }
+    const grille = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.13), lamb('#ffffff', { map: makeTex(gc) })); grille.position.set(-0.08, 0.1, 0.066); grille.userData.radio = true; g.add(grille);
+    const dial = B(0.12, 0.05, 0.005, '#ffb04a', 0.09, 0.14, 0.066, true);
+    const needle = B(0.004, 0.045, 0.006, '#2a1a10', 0.09, 0.14, 0.07, true);
+    [0.06, 0.12].forEach((x) => { const k = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.02, 12), lamb('#e8dcc0')); k.rotation.x = Math.PI / 2; k.position.set(x, 0.065, 0.072); k.userData.radio = true; g.add(k); });
+    const led = B(0.014, 0.014, 0.006, '#ff5a3a', 0.15, 0.185, 0.066, true);
+    const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.28, 4), lamb('#c8ccd4')); ant.position.set(0.13, 0.33, -0.03); ant.rotation.z = -0.4; g.add(ant);
+    g.position.set(sp.x, sp.y, sp.z); g.rotation.y = sp.ry; g.scale.setScalar(sp.kind === 'table' ? 1.4 : 2);
+    g.userData.keep = true; room.add(g); g.traverse((o) => { o.userData.keep = true; });
+    radio.g = g; radio.led = led; radio.needle = needle; roomHover = [];
+}
+const radio = { g: null, led: null, needle: null };
+const STATION_NAMES = { city: 'Ночной город', snow: 'Снег над крышами', train: 'Ночной поезд', tea: 'Чайный дом', stars: 'Звёзды', harbor: 'Гавань', radio: 'Радио за стеной', calm: 'Тихий вечер', lane: 'Переулок', lofi: 'Lo-fi' };
 let fading = false;
 function enterRoom(door) {
     if (fading || inside.on) return;
@@ -1655,6 +1687,12 @@ const audio = (() => {
         resume() { if (!enabled) return; if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination); } catch (e) { return; } start(inside.on ? 'inside' : th.id); } else if (ctx.state === 'suspended') ctx.resume(); },
         setScene(id) { if (ctx && enabled && id !== sceneId) start(id); },
         get variant() { return variant; },
+        stationIndex() { return VARIANTS.indexOf(variant); },
+        nextStation() {
+            const v = VARIANTS[(VARIANTS.indexOf(variant) + 1) % VARIANTS.length];
+            if (ctx && master) { const w = ctx.currentTime; const s = ctx.createBufferSource(); s.buffer = getNoise(ctx); const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.setValueAtTime(900, w); bp.frequency.exponentialRampToValueAtTime(2600, w + 0.35); bp.Q.value = 2; const g = ctx.createGain(); g.gain.setValueAtTime(0.05, w); g.gain.exponentialRampToValueAtTime(0.0001, w + 0.4); s.connect(bp); bp.connect(g); g.connect(ctx.destination); s.start(w, Math.random()); s.stop(w + 0.42); }
+            this.setVariant(v); return v;
+        },
         setVariant(v) { if (!VARIANTS.includes(v)) return; variant = v; saveSet({ musicVar: v }); if (!enabled) { enabled = true; saveSet({ music: true }); btn.classList.add('on'); } if (ctx) start(sceneId || (inside.on ? 'inside' : th.id)); else this.resume(); },
         setMotion(k) { if (motionGain && ctx) { motionGain._lfo.gain.setTargetAtTime(Math.min(1, k) * 0.04, ctx.currentTime, 0.1); } },
         ding() { if (!ctx || !enabled || !master) return; const w = ctx.currentTime; [N.C5, N.E5, N.G5, 1046.5].forEach((f, i) => keys(ctx, f, w + i * 0.08, 0.6, 0.05, master)); },
@@ -1760,6 +1798,7 @@ function tap(x, y) {
     const h = pick(x, y, 40);
     if (!h) { if (!FINE) hideHint(); return; }
     if (h.exit) { buzz(15); exitRoom(); return; }
+    if (h.radio) { buzz(12); const v = audio.nextStation(); toast('📻 ' + (STATION_NAMES[v] || v)); document.querySelectorAll('#panel [data-music]').forEach((x) => x.classList.toggle('on', x.dataset.music === v)); if (radio.needle) radio.needle.position.x = 0.04 + (audio.stationIndex() / 9) * 0.1; return; }
     if (h.door) { if (h.dist < 7) { buzz(15); enterRoom(h.door); } else toast('Подойди ближе к двери'); return; }
     buzz(10); showHint(h.sign, true);
 }
@@ -1779,9 +1818,10 @@ function pick(x, y, maxDist) {
     ray.setFromCamera(new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1), camera);
     ray.far = maxDist || 24; // вывески висят высоко на фасадах — ловим издалека
     if (inside.on) {
-        if (!roomHover.length) room.traverse((o) => { if ((o.isMesh || o.isSprite) && (o.userData.sign || o.userData.exit)) roomHover.push(o); });
-        const h = ray.intersectObjects(roomHover, false).find((o) => o.object.userData.sign || o.object.userData.exit);
+        if (!roomHover.length) room.traverse((o) => { if ((o.isMesh || o.isSprite) && (o.userData.sign || o.userData.exit || o.userData.radio)) roomHover.push(o); });
+        const h = ray.intersectObjects(roomHover, false).find((o) => o.object.userData.sign || o.object.userData.exit || o.object.userData.radio);
         if (!h) return null;
+        if (h.object.userData.radio) return { radio: true, dist: h.distance };
         return h.object.userData.exit ? { exit: true, dist: h.distance } : { sign: h.object.userData.sign, dist: h.distance };
     }
     if (hoverDirty) rebuildHover();
@@ -1826,7 +1866,7 @@ function updateHover(now) {
     let pt = null;
     if (locked()) pt = [innerWidth / 2, innerHeight / 2]; else if (FINE && hover.lastMouse) pt = hover.lastMouse;
     else if (GAZE) {
-        const h = pick(innerWidth / 2, innerHeight / 2, 22), key = h && h.sign || null; // двери не подписываем; вывески — издалека
+        const h = pick(innerWidth / 2, innerHeight / 2, 22), key = h && h.sign || null; if (h && h.radio) document.getElementById('cross').classList.add('hit'); // двери не подписываем; вывески — издалека
         document.getElementById('cross').classList.toggle('hit', !!key);
         if (key !== hover.gazeKey) { hover.gazeKey = key; hover.gazeT = now; }
         if (key && now - hover.gazeT > 280) showHint(h.sign, false);
@@ -2006,6 +2046,8 @@ function frame(now) {
     inside.steam.forEach((sp) => { const u = sp.userData; if (!u.base) u.base = sp.position.clone(); u.age += dt; if (u.age > u.life) u.age = 0; const k = u.age / u.life; sp.position.set(u.base.x + Math.sin(k * 6 + u.life) * 0.2, u.base.y + k * 1.1, u.base.z + k * 0.3); sp.scale.setScalar(0.4 + k * 1.2); sp.material.opacity = (1 - k) * k * 0.4; });
     blocks.forEach((b) => { if (b.built) b.signs.forEach((sg) => { if (sg.flickerLight) sg.flickerLight.intensity = 2.4 + Math.sin(t * 17 + sg.seed) * 0.5 + Math.sin(t * 31) * 0.3; }); });
     LIFE.update(t, dt);
+    if (th.festival) FESTIVAL.update(t, dt);
+    if (inside.on && radio.led && radio.g && radio.g.parent) radio.led.material.color.setHSL(0.03, 1, 0.35 + 0.25 * (Math.sin(t * 3.2) * 0.5 + 0.5));
     updateLabels(t); updateHover(now);
     const bi = ensureBlocks();
     if (bi !== hudBlock) updateHud();
