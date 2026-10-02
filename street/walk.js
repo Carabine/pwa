@@ -1439,13 +1439,19 @@ function buildSteam() {
 }
 
 
-// ---- звук: тёплый lo-fi трек на Web Audio, без файлов ----
+// ---- звук на Web Audio, без файлов: четыре варианта на выбор (настройки → «Музыка») ----
+// city — «Ночной город»: редкие колокольчики ветра, тихий дождь, изредка далёкий аккорд. Почти фон.
+// calm — «Тихий вечер»: мягкий мажорный аккорд, голоса дышат, иногда музыкальная шкатулка.
+// lane — «Переулок»: короткие фразы кото в японском мажорном ладу (ё-сэн), фурин, сверчки на Ёкотё.
+// lofi — тёплый lo-fi трек (ниже подробнее).
 // Настоящая музыка, а не эмбиент: мажорные джазовые аккорды (Cmaj9 · Am9 · Dm9 · G13) на электропиано,
 // мягкие барабаны со свингом, бас, сочинённые мелодии по мажорной пентатонике. Ноты ставятся по часам
 // AudioContext с упреждением (не по setInterval — тот плавает, и ритм «расползается»).
 // Синдзюку — э-пиано и тихий дождь; Ёкотё — мелодия на кото; в комнате — тот же трек приглушённо, «из колонки».
 const audio = (() => {
     let ctx = null, master = null, bus = null, tone = null, enabled = settings.music !== false, sceneId = null, nodes = [], timer = 0, motionGain = null;
+    const VARIANTS = ['city', 'calm', 'lane', 'lofi'];
+    let variant = VARIANTS.includes(settings.musicVar) ? settings.musicVar : 'city';
     const btn = document.getElementById('music');
     let noiseBuf = null;
     function getNoise(c) { if (noiseBuf) return noiseBuf; const b = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return (noiseBuf = b); }
@@ -1463,6 +1469,21 @@ const audio = (() => {
         const o = c.createOscillator(); o.type = 'triangle'; o.frequency.value = f; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(f * 6, when); lp.frequency.exponentialRampToValueAtTime(f * 1.3, when + 0.9);
         const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(vel, when + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, when + 1.4);
         o.connect(lp); lp.connect(g); g.connect(dest); o.start(when); o.stop(when + 1.5);
+    }
+    // колокольчик ветра: чистые гармоники (без неровных обертонов — они и звучат тревожно), долгий хвост
+    function chime(c, f, when, vel, dest) {
+        const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(vel, when + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, when + 3.2); g.connect(dest);
+        [[1, 1], [2, 0.22], [3, 0.06]].forEach(([h, a]) => { const o = c.createOscillator(); o.frequency.value = f * h; const hg = c.createGain(); hg.gain.value = a; o.connect(hg); hg.connect(g); o.start(when); o.stop(when + 3.3); });
+    }
+    function musicBox(c, f, when, vel, dest) {
+        const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(vel, when + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, when + 1.8); g.connect(dest);
+        [[1, 1], [4, 0.12]].forEach(([h, a]) => { const o = c.createOscillator(); o.frequency.value = f * h; const hg = c.createGain(); hg.gain.value = a; o.connect(hg); hg.connect(g); o.start(when); o.stop(when + 1.9); });
+    }
+    // голос аккорда: плавно входит и выходит, высота не скользит
+    function voice(c, f, when, dur, vel, dest) {
+        const o = c.createOscillator(), o2 = c.createOscillator(); o.frequency.value = f; o2.type = 'triangle'; o2.frequency.value = f * 2; const g2 = c.createGain(); g2.gain.value = 0.08;
+        const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(vel, when + 3.5); g.gain.setValueAtTime(vel, when + dur - 4); g.gain.linearRampToValueAtTime(0, when + dur);
+        o.connect(g); o2.connect(g2); g2.connect(g); g.connect(dest); o.start(when); o2.start(when); o.stop(when + dur + 0.1); o2.stop(when + dur + 0.1);
     }
     function bass(c, f, when, dur, vel, dest) {
         const o = c.createOscillator(), o2 = c.createOscillator(); o.type = 'sine'; o2.type = 'triangle'; o.frequency.value = f; o2.frequency.value = f;
@@ -1513,7 +1534,30 @@ const audio = (() => {
         // фон: на Синдзюку тихий дождь, больше никакого гула
         if (id === 'shinjuku') { const r = loopNoise(c, 'bandpass', 1300, 0.4, 0.012); const rl = c.createBiquadFilter(); rl.type = 'lowpass'; rl.frequency.value = 3200; r.g.disconnect(); r.g.connect(rl); rl.connect(master); nodes.push(r); }
         let step = 0, next = t0;
-        const play = (s, when) => {
+        // ---- спокойные варианты ----
+        const PENTA_HI = [1046.5, 1174.7, 1318.5, 1568, 1760]; // до-мажорная пентатоника, 6-я октава
+        const YO = [293.7, 329.6, 392, 440, 493.9, 587.3, 659.3, 784]; // ё-сэн (японский мажорный лад)
+        const CALM = [[N.C4, N.E4, N.G4, N.A4, N.D5], [174.6, N.A3, N.C4, N.D4, N.G4], [N.A3, N.C4, N.E4, N.G4, N.B3 * 2], [N.G3, N.B3, N.D4, N.E4, N.A4]];
+        const softBus = c.createGain(); softBus.gain.value = 1; softBus.connect(bus);
+        if (variant === 'lane' && id === 'yokocho') { const cr = loopNoise(c, 'bandpass', 4300, 14, 0.0035, softBus); const lf = c.createOscillator(); lf.type = 'square'; lf.frequency.value = 7.5; const lg = c.createGain(); lg.gain.value = 0.0035; lf.connect(lg); lg.connect(cr.g.gain); lf.start(); nodes.push(cr, { o: lf }); }
+        let lanePos = 3;
+        const playCity = (s, when) => {
+            if (Math.random() < 0.04) { const n = 1 + Math.floor(Math.random() * 3); for (let i = 0; i < n; i++) chime(c, PENTA_HI[Math.floor(Math.random() * PENTA_HI.length)], when + i * (0.12 + Math.random() * 0.2), 0.05, softBus); }
+            if (s % 128 === 8) CHORDS[0].keys.forEach((f, i) => keys(c, f, when + i * 0.03, 3, 0.7, keysBus)); // далёкий тёплый аккорд раз в полминуты
+            if (s % 128 === 72) CHORDS[2].keys.forEach((f, i) => keys(c, f, when + i * 0.03, 3, 0.6, keysBus));
+        };
+        const playCalm = (s, when) => {
+            if (s % 64 === 0) CALM[Math.floor(s / 64) % CALM.length].forEach((f, i) => voice(c, f, when + i * 0.4, 14, 0.022, softBus)); // аккорды внахлёст, каждые ~11 с
+            if (Math.random() < 0.02) { const ch = CALM[Math.floor(s / 64) % CALM.length]; musicBox(c, ch[Math.floor(Math.random() * ch.length)] * 2, when, 0.02, softBus); }
+        };
+        const playLane = (s, when) => {
+            if (s % 48 === 0 || (s % 48 === 24 && Math.random() < 0.4)) { // короткая фраза кото: ходит по соседним ступеням, последняя нота длиннее
+                const len = 3 + Math.floor(Math.random() * 3);
+                for (let i = 0; i < len; i++) { lanePos = Math.max(0, Math.min(YO.length - 1, lanePos + (Math.random() < 0.5 ? -1 : 1) * (Math.random() < 0.25 ? 2 : 1))); koto(c, YO[lanePos], when + i * S16 * 2 + (i === len - 1 ? S16 : 0), 0.8, melBus); }
+            }
+            if (Math.random() < 0.006) chime(c, 2637, when, 0.025, softBus); // фурин
+        };
+        const playLofi = (s, when) => {
             const bar = Math.floor(s / 16), st = s % 16, ch = CHORDS[bar % 4];
             const section = bar < 4 ? 'intro' : ((bar - 4) % 16 < 8 ? 'groove' : 'melody');
             KEYS_HITS.forEach(([k, v, len]) => { if (st === k && !(section === 'intro' && k !== 0)) ch.keys.forEach((f, i) => keys(c, f, when + i * 0.012, len * S16, v * (0.9 + Math.random() * 0.15), keysBus)); });
@@ -1530,6 +1574,8 @@ const audio = (() => {
             }
             if (Math.random() < 0.18) crackle(c, when + Math.random() * S16, bus);
         };
+        const play = { city: playCity, calm: playCalm, lane: playLane, lofi: playLofi }[variant] || playCity;
+        if (variant === 'lane') melBus.gain.value = 0.15;
         timer = setInterval(() => { while (next < c.currentTime + 0.15) { play(step, next + (step % 2 ? S16 * SWING : 0)); next += S16; step++; } }, 25);
         // шаги: шорох, громкость от скорости
         const sn = loopNoise(c, 'lowpass', 900, 0.7, 0); motionGain = sn.g; nodes.push(sn);
@@ -1540,12 +1586,14 @@ const audio = (() => {
     return {
         resume() { if (!enabled) return; if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination); } catch (e) { return; } start(inside.on ? 'inside' : th.id); } else if (ctx.state === 'suspended') ctx.resume(); },
         setScene(id) { if (ctx && enabled && id !== sceneId) start(id); },
+        get variant() { return variant; },
+        setVariant(v) { if (!VARIANTS.includes(v)) return; variant = v; saveSet({ musicVar: v }); if (!enabled) { enabled = true; saveSet({ music: true }); btn.classList.add('on'); } if (ctx) start(sceneId || (inside.on ? 'inside' : th.id)); else this.resume(); },
         setMotion(k) { if (motionGain && ctx) { motionGain._lfo.gain.setTargetAtTime(Math.min(1, k) * 0.04, ctx.currentTime, 0.1); } },
         ding() { if (!ctx || !enabled || !master) return; const w = ctx.currentTime; [N.C5, N.E5, N.G5, 1046.5].forEach((f, i) => keys(ctx, f, w + i * 0.08, 0.6, 0.05, master)); },
         toggle() { enabled = !enabled; saveSet({ music: enabled }); btn.classList.toggle('on', enabled); if (!enabled) { stop(); if (ctx) ctx.suspend(); } else this.resume(); toast(enabled ? 'Звук включён' : 'Звук выключен'); },
         get enabled() { return enabled; },
         // для записи превью: проиграть сцену в заданный узел
-        _debug: { start: (c, m, id) => { ctx = c; master = m; start(id); } },
+        _debug: { start: (c, m, id, v) => { ctx = c; master = m; if (v) variant = v; start(id); } },
     };
 })();
 document.getElementById('music').addEventListener('click', () => audio.toggle());
@@ -1776,6 +1824,7 @@ panel.querySelectorAll('[data-src]').forEach((b) => {
 });
 // смена улицы сохраняет тестовую колоду в адресе
 if (SAMPLE) panel.querySelectorAll('a[data-theme]').forEach((a) => { const u = new URL(a.href, location.href); u.searchParams.set('src', 'sample'); a.href = u.toString(); });
+panel.querySelectorAll('[data-music]').forEach((b) => { b.classList.toggle('on', b.dataset.music === audio.variant); b.addEventListener('click', () => { audio.setVariant(b.dataset.music); panel.querySelectorAll('[data-music]').forEach((x) => x.classList.toggle('on', x === b)); }); });
 panel.querySelectorAll('[data-theme]').forEach((b) => { b.classList.toggle('on', b.dataset.theme === th.id); });
 if (window.STREET_WORDS && window.STREET_WORDS.words && !SAMPLE && location.protocol === 'file:') panel.querySelector('[data-src="demo"]').textContent = 'Мой словарь (выгрузка)';
 const rainBtn = panel.querySelector('[data-rain]'); rainBtn.hidden = !th.rain; rainBtn.classList.toggle('on', opts.rain);
