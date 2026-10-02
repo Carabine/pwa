@@ -29,17 +29,17 @@ const THEMES = {
         fog: '#10102a', fogD: 0.028, sky: '#04040c', ground: '#07070e',
         palette: { 5: '#ffd23f', 4: '#ff6b35', 3: '#ff3fa4', 2: '#36e2ff', 1: '#b06bff', 0: '#7c8cf8' },
         wallColors: ['#15151f', '#181422', '#121a22', '#1a1624'], winColors: ['#ffd9a0', '#9ad0ff', '#ffb0c8'], shopGlow: ['#ffb060', '#7c8cf8', '#ff5a8a', '#52e0ff'],
-        tiers: [{ y0: 4.2, y1: 7.8, w: 0.95, chars: 4 }, { y0: 8.0, y1: 11.6, w: 0.95, chars: 4 }, { y0: 11.8, y1: 16.5, w: 1.05, chars: 5 }],
-        spacing: 2.7, awning: 3.3, hbox: { y0: 3.45, y1: 4.15, minChars: 4 }, vending: true, umbrellas: true,
+        tiers: [{ y0: 4.2, y1: 7.8, w: 0.95, chars: 4 }, { y0: 8.4, y1: 12.6, w: 1.0, chars: 5 }],
+        spacing: 3.8, awning: 3.3, hbox: { y0: 3.45, y1: 4.15, minChars: 4 }, vending: true, umbrellas: true,
     },
     yokocho: {
         id: 'yokocho', W: 3.2, floors: [2, 2], floorH: 2.9, lenB: [2.4, 3.8], rain: false,
-        lanterns: { y: 2.45, r: 0.2, step: 0.9, maxChars: 2 },
+        lanterns: { y: 2.45, r: 0.2, step: 1.35, maxChars: 2 },
         fog: '#2a180a', fogD: 0.05, sky: '#07050a', ground: '#0a0806',
         palette: { 5: '#ffcf5a', 4: '#ff8a3c', 3: '#ff5f7a', 2: '#5ad8c8', 1: '#b98cff', 0: '#8c9bff' },
         wallColors: ['#2a1c12', '#241a14', '#2e2016', '#1f1812'], winColors: ['#ffc070', '#ffd9a0'], shopGlow: ['#ffb060', '#ffcf7a', '#ff9a4a'],
         tiers: [{ y0: 3.3, y1: 5.9, w: 0.55, chars: 5 }],
-        spacing: 1.7, awning: 2.95, hbox: { y0: 2.98, y1: 3.42, minChars: 6 }, noren: { y0: 1.55, y1: 2.2, maxChars: 3 },
+        spacing: 2.5, awning: 2.95, hbox: { y0: 2.98, y1: 3.42, minChars: 6 }, noren: { y0: 1.55, y1: 2.2, maxChars: 3 },
     },
 };
 
@@ -254,7 +254,7 @@ function lsSet() { try { return JSON.parse(localStorage.getItem(SET_KEY) || '{}'
 function saveSet(p) { try { localStorage.setItem(SET_KEY, JSON.stringify(Object.assign(lsSet(), p))); } catch (e) { /* приватный режим */ } }
 const settings = lsSet();
 let source = params.get('src') || settings.source || 'demo';
-const opts = { rain: settings.rain !== false, reflect: settings.reflect !== false, bloom: true };
+const opts = { rain: settings.rain !== false, reflect: false, bloom: true }; // отражения на улице выключены навсегда
 
 const canvas = document.getElementById('scene');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
@@ -329,8 +329,8 @@ function planBlocks() {
         let extraWords = [];
         if (qi === 0) { extraWords = data.words.filter((w) => q.words.indexOf(w) < 0 && propMeta(w.kanji || w.kana || '')).sort((x, y) => (x._state === 'new') - (y._state === 'new') || hashStr(x.kanji || '') % 7 - hashStr(y.kanji || '') % 7).slice(0, 36); extraWords.forEach((w) => { w._takenBy = 0; }); }
         const n = q.words.length + extraWords.length;
-        const perM = th.lanterns ? 2.4 : (2 * th.tiers.length) / th.spacing;
-        const len = Math.max(14, Math.ceil(n / perM) + 8);
+        const perM = th.lanterns ? 2 / th.lanterns.step + 2 / th.spacing : (2 * th.tiers.length) / th.spacing + 2 / 8;
+        const len = Math.max(14, Math.ceil(n / perM * 1.12) + 8);
         const b = { q, qi, z0: z, z1: z - len, len, signs: [], built: false, group: null, extraWords };
         layoutBlock(b);
         blocks.push(b);
@@ -345,7 +345,7 @@ function layoutBlock(b) {
     th.tiers.forEach((t, ti) => [-1, 1].forEach((side) => { let z = zs - (ti * 0.37 + (side > 0 ? 0.5 : 0)) * th.spacing; let i = 0; while (z > ze) { slots.push({ kind: 'vsign', side, z, tier: t, style: (i + ti + (side > 0 ? 1 : 0)) % 3 === 0 ? 'vbox' : 'vneon' }); z -= th.spacing; i++; } }));
     if (th.lanterns) [-1, 1].forEach((side) => { let z = zs - (side > 0 ? 0.45 : 0); let i = 0; while (z > ze) { slots.push({ kind: 'lantern', side, z, white: i % 3 === 2 }); z -= th.lanterns.step; i++; } });
     if (th.noren) [-1, 1].forEach((side) => { for (let z = zs - 1; z > ze + 1.5; z -= 3.1) slots.push({ kind: 'noren', side, z, len: 1.5 }); });
-    if (th.hbox) [-1, 1].forEach((side) => { for (let z = zs - 2.5; z > ze + 3; z -= 5.5) slots.push({ kind: 'hbox', side, z, len: 3.8 }); });
+    if (th.hbox) [-1, 1].forEach((side) => { for (let z = zs - 2.5; z > ze + 3; z -= 8) slots.push({ kind: 'hbox', side, z, len: 3.8 }); });
     // ближе к началу квартала — новее
     slots.sort((a, c) => c.z - a.z);
     const used = new Set();
@@ -479,6 +479,7 @@ function buildWorld() {
                 if (rtype === 'konbini') { door.material.color.set('#e8f4ff'); const strip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.35, 2.4), new THREE.MeshBasicMaterial({ color: new THREE.Color('#2f7fe0') })); strip.position.set(side * (W2 - 0.05), 2.45, dz); world.add(strip); const strip2 = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.12, 2.4), new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff8a2a') })); strip2.position.set(side * (W2 - 0.05), 2.2, dz); world.add(strip2); }
                 else if (rtype === 'class') { const plq = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.7), new THREE.MeshBasicMaterial({ map: texPlaque('塾'), fog: true })); plq.position.set(side * (W2 - 0.02), 2.0, dz + 0.9); plq.rotation.y = -side * Math.PI / 2; world.add(plq); door.material.color.set('#fff0d0'); }
                 else if (rtype === 'home') { door.material.color.set('#3a2a1a'); const mb = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.3, 0.25), lamb('#8a8a96')); mb.position.set(side * (W2 - 0.08), 1.3, dz + 0.75); world.add(mb); const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe6b0 })); lamp.position.set(side * (W2 - 0.1), 2.3, dz); world.add(lamp); }
+                ROOMX.door(rtype, { door, side, dz, W2, world, rnd });
                 const dark = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 2.3), lamb('#0a0806')); dark.position.set(side * (W2 - 0.005), 1.15, dz); dark.rotation.y = -side * Math.PI / 2; world.add(dark);
                 if (rtype === 'izakaya') { const nr = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.55), new THREE.MeshBasicMaterial({ map: texNorenPlain(['#1d2a5c', '#4a1a1a', '#1a3a3a'][Math.floor(rnd() * 3)]), side: THREE.DoubleSide, fog: true, transparent: true })); nr.position.set(side * (W2 - 0.08), 1.85, dz); nr.rotation.y = -side * Math.PI / 2; world.add(nr); }
                 const dl = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.0), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color(b.shopColor), transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -760,11 +761,10 @@ function texLabel(sign, lit) {
     const c = document.createElement('canvas'); c.width = 128 + n * 56; c.height = 128; const g = c.getContext('2d');
     const w = c.width, col = lit ? sign.color : '#8a8a96';
     g.fillStyle = 'rgba(8,8,16,0.86)'; roundRect(g, 4, 4, w - 8, 92, 18); g.fill();
-    g.strokeStyle = rgba(col, lit ? 0.9 : 0.4); g.lineWidth = 3; roundRect(g, 4, 4, w - 8, 92, 18); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,0.16)'; g.lineWidth = 2; roundRect(g, 4, 4, w - 8, 92, 18); g.stroke();
     g.fillStyle = 'rgba(8,8,16,0.86)'; g.beginPath(); g.moveTo(w / 2 - 12, 95); g.lineTo(w / 2 + 12, 95); g.lineTo(w / 2, 112); g.closePath(); g.fill();
     g.textAlign = 'center'; g.textBaseline = 'middle';
-    if (lit) { g.shadowColor = col; g.shadowBlur = 14; }
-    g.fillStyle = lit ? mix(col, '#ffffff', 0.55) : '#c8c8d0'; g.font = '700 50px ' + JP;
+    g.fillStyle = lit ? mix(col, '#ffffff', 0.7) : '#c8c8d0'; g.font = '700 50px ' + JP;
     const ks = sign.word && sign.word.kana && sign.word.kana !== sign.text ? sign.word.kana : '';
     g.fillText(sign.text, w / 2, ks ? 40 : 50);
     g.shadowBlur = 0;
@@ -877,7 +877,9 @@ function disposeBlock(b) {
 function blockAt(z) { for (let i = 0; i < blocks.length; i++) if (z <= blocks[i].z0 + 4 && z > blocks[i].z1) return i; return z > 0 ? 0 : blocks.length - 1; }
 function ensureBlocks() {
     const bi = blockAt(camera.position.z);
-    blocks.forEach((b, i) => { if (Math.abs(i - bi) <= 1) buildBlock(b); else if (Math.abs(i - bi) > 2) disposeBlock(b); });
+    // строим всё, что ближе дальности тумана (короткие кварталы иначе пропадали за спиной и впереди), сносим с запасом
+    const cz = camera.position.z, R = clamp(2.3 / th.fogD, 40, 85);
+    blocks.forEach((b, i) => { const d = cz > b.z0 ? cz - b.z0 : (cz < b.z1 ? b.z1 - cz : 0); if (Math.abs(i - bi) <= 1 || d < R) buildBlock(b); else if (Math.abs(i - bi) > 2 && d > R + 30) disposeBlock(b); });
     return bi;
 }
 
@@ -970,6 +972,7 @@ const inside = { on: false, block: null, strips: [], lights: [], saved: null, do
 const ROOM = { w: 7.6, d: 11.5, h: 3.2, doorX: 1.4 }; // размеры текущей комнаты, задаются генератором
 const ROOM_TYPES = ['izakaya', 'konbini', 'class', 'home'];
 const ROOM_NAMES = { izakaya: '居酒屋 · идзакая', konbini: 'コンビニ · комбини', class: '塾 · вечерняя школа', home: '部屋 · квартира' };
+ROOM_TYPES.push(...ROOMX.types); Object.assign(ROOM_NAMES, ROOMX.names);
 function texPlaque(ch) { const c = document.createElement('canvas'); c.width = 64; c.height = 90; const g = c.getContext('2d'); g.fillStyle = '#f4ecd8'; g.fillRect(0, 0, 64, 90); g.strokeStyle = '#2a2a30'; g.lineWidth = 3; g.strokeRect(3, 3, 58, 84); g.fillStyle = '#1a1a1e'; g.font = '700 44px ' + JP; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, 32, 46); return makeTex(c); }
 function texBlackboard(words) {
     const c = document.createElement('canvas'); c.width = 1024; c.height = 512; const g = c.getContext('2d');
@@ -1083,7 +1086,7 @@ function splitWords(b, type) {
     const ds = doors.filter((d) => d.userData.door.z <= b.z0 && d.userData.door.z > b.z1).sort((x, y) => y.userData.door.z - x.userData.door.z);
     const n = Math.max(1, ds.length), k = Math.max(0, ds.indexOf(inside.door));
     const words = b.signs.filter((s) => !s.deco && !s.isProp).filter((s, i) => i % n === k);
-    const fits = (s) => { const mt = propMeta(s.text); return !!mt && !!type && mt.where.indexOf(type) >= 0; };
+    const fits = (s) => { const mt = propMeta(s.text); return !!mt && !!type && (mt.where.indexOf(type) >= 0 || mt.where.indexOf(ROOMX.alias[type]) >= 0); };
     const objs = words.filter(fits).sort((x, y) => (x.state === 'new') - (y.state === 'new')).slice(0, 24);
     return { objs, rest: words.filter((s) => objs.indexOf(s) < 0) };
 }
@@ -1162,11 +1165,11 @@ function wallPoint(wall, t, y, inset) {
 function catalog(type, rnd) {
     const B = (g, sx, sy, sz, col, x, y, z, extra) => { const md = Math.min(sx, sy, sz); const m = new THREE.Mesh(md >= 0.03 ? new RoundedBoxGeometry(sx, sy, sz, 2, Math.min(0.022, md * 0.28)) : new THREE.BoxGeometry(sx, sy, sz), lamb(col, extra)); m.position.set(x, y, z); g.add(m); return m; };
     const C = (g, r1, r2, hh, col, x, y, z, seg) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, hh, seg || 10), lamb(col)); m.position.set(x, y, z); g.add(m); return m; };
-    const bottleRow = (g, x, y, z0, n, step) => { for (let i = 0; i < n; i++) C(g, 0.045, 0.055, 0.3, ['#2a5a3a', '#6a3a1a', '#d8d0b8', '#2a3a6a', '#8a2a2a', '#c8a84a'][Math.floor(rnd() * 6)], x, y, z0 + i * step, 8); };
+    const bottleRow = (g, x0, y, z, n, step) => { for (let i = 0; i < n; i++) C(g, 0.045, 0.055, 0.3, ['#2a5a3a', '#6a3a1a', '#d8d0b8', '#2a3a6a', '#8a2a2a', '#c8a84a'][Math.floor(rnd() * 6)], x0 + i * step, y, z, 8); };
     const bookRow = (g, x, y0, z0, rows, n, horiz) => { for (let r = 0; r < rows; r++) for (let k = 0; k < n; k++) { const bh = 0.26 + rnd() * 0.1; const m = B(g, horiz ? 0.06 + rnd() * 0.05 : 0.22, bh, horiz ? 0.22 : 0.06 + rnd() * 0.05, ['#c84a4a', '#3a6fd9', '#d9b23a', '#2a8a5a', '#f0e8d8', '#6a3a8a'][Math.floor(rnd() * 6)], horiz ? x + k * 0.16 : x, y0 + r * 0.42 + bh / 2, horiz ? z0 : z0 + k * 0.16); } };
     const lantern = (g, x, y, z, col) => { const ln = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), new THREE.MeshBasicMaterial({ map: texLantern({ chars: [], white: false, inten: 1, dead: -1 }, true) })); ln.position.set(x, y, z); ln.scale.set(0.8, 1.1, 0.8); g.add(ln); const hl = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: 0xff8a3a, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false })); hl.position.copy(ln.position); hl.scale.set(1.4, 1.4, 1); g.add(hl); };
     const window_ = (g, len) => { const win = new THREE.Mesh(new THREE.PlaneGeometry(len - 0.3, 1.3), new THREE.MeshBasicMaterial({ map: texSky() })); win.position.set(0, 1.9, 0.04); g.add(win); B(g, len - 0.1, 1.4, 0.06, '#f0ece0', 0, 1.9, 0.02); B(g, 0.05, 1.3, 0.09, '#f0ece0', 0, 1.9, 0.05); if (rnd() < 0.5) { const moon = new THREE.Mesh(new THREE.CircleGeometry(0.14, 20), new THREE.MeshBasicMaterial({ color: 0xfff6e0 })); moon.position.set(len * 0.25, 2.3, 0.05); g.add(moon); } };
-    const tv = (g, x, y, z, ry, sw) => { const scr = new THREE.Mesh(new THREE.PlaneGeometry(sw, sw * 0.56), new THREE.MeshBasicMaterial({ map: texTV() })); scr.position.set(x, y, z + 0.045); scr.rotation.y = ry || 0; g.add(scr); B(g, sw + 0.12, sw * 0.56 + 0.12, 0.06, '#111116', x, y, z); };
+    const tv = (g, x, y, z, ry, sw) => { const scr = new THREE.Mesh(new THREE.PlaneGeometry(sw, sw * 0.56), new THREE.MeshBasicMaterial({ map: LIFE.screenTex() })); scr.position.set(x, y, z + 0.045); scr.rotation.y = ry || 0; g.add(scr); B(g, sw + 0.12, sw * 0.56 + 0.12, 0.06, '#111116', x, y, z); };
 
     const poster = (g, x, y, z) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.64), lamb('#ffffff', { map: texPoster(rnd) })); p.position.set(x, y, z); p.rotation.z = (rnd() - 0.5) * 0.06; g.add(p); };
     const acUnit = (g, x, y, z) => { B(g, 0.9, 0.3, 0.22, '#e8ecf0', x, y, z); B(g, 0.8, 0.04, 0.2, '#c8ccd4', x, y - 0.12, z + 0.02); for (let i = 0; i < 8; i++) B(g, 0.08, 0.02, 0.01, '#b8bcc4', x - 0.35 + i * 0.1, y - 0.1, z + 0.12); };
@@ -1223,6 +1226,7 @@ function catalog(type, rnd) {
         { name: 'plant', rule: 'corner', walls: ['left', 'right', 'back'], w: 0.7, d: 0.7, h: 1.6, solid: true, build(g) { const t = PROP_BUILDERS['木'](lamb); t.scale.setScalar(0.9); g.add(t); } },
         { name: 'lights', rule: 'none', build(g) { const { w, d, h } = ROOM; for (let z = -d / 2 + 1.8; z < d / 2 - 1; z += 4.6) for (let x = -w / 2 + 1.9; x < w / 2 - 1; x += 3.8) { const l = new THREE.PointLight(0xfff6e0, 2.2, 10, 1.3); l.position.set(x, h - 0.3, z); g.add(l); B(g, 1.2, 0.05, 0.16, '#fff8e8', x, h - 0.04, z, { emissive: new THREE.Color(0xfff8e8), emissiveIntensity: 0.5 }); } g.add(new THREE.AmbientLight(0xfff4e0, 0.4)); } },
     ];
+    const X = ROOMX.catalog(type, { B, C, bookRow, lantern, window_, tv, poster, acUnit, COMMON, rnd }); if (X) return X.filter(Boolean);
     return [...COMMON, // home
         { name: 'genkan', rule: 'door', w: 1.6, d: 0.9, h: 0.5, solid: true, build(g) { B(g, 1.6, 0.12, 0.9, '#8a7a68', 0, 0.06, 0); B(g, 0.7, 0.45, 0.35, '#5a3a22', -0.4, 0.34, -0.2); B(g, 0.65, 0.02, 0.32, '#8a6a48', -0.4, 0.3, -0.2); for (let i = 0; i < 3; i++) { const sh = PROP_BUILDERS['靴'] ? PROP_BUILDERS['靴'](lamb) : null; if (sh) { sh.scale.setScalar(0.8); sh.position.set(0.1 + i * 0.3, 0.12, 0.1); g.add(sh); } } } },
         { name: 'wardrobe', rule: 'wall', walls: ['left', 'right', 'back'], w: 1.2, d: 0.6, h: 2.2, solid: true, build(g) { B(g, 1.2, 2.2, 0.6, '#d8c8a8', 0, 1.1, 0); B(g, 0.02, 2.0, 0.02, '#b8a888', 0, 1.1, 0.31); C(g, 0.015, 0.015, 0.12, '#8a8a94', -0.08, 1.1, 0.33, 6, Math.PI / 2); C(g, 0.015, 0.015, 0.12, '#8a8a94', 0.08, 1.1, 0.33, 6, Math.PI / 2); } },
@@ -1231,7 +1235,7 @@ function catalog(type, rnd) {
         { name: 'rug', rule: 'center', w: 2.2, d: 1.6, h: 0.02, solid: false, build(g, r) { B(g, 2.2, 0.02, 1.6, ['#8a3a3a', '#3a5a8a', '#6a6a3a'][Math.floor(r() * 3)], 0, 0.01, 0); B(g, 2.0, 0.025, 1.4, ['#a85a5a', '#5a7aaa', '#8a8a5a'][Math.floor(r() * 3)], 0, 0.012, 0); } },
         { name: 'bathDoor', rule: 'wall', walls: ['left', 'right', 'back'], w: 1.0, d: 0.1, h: 2.1, high: true, build(g) { B(g, 0.9, 2.0, 0.06, '#e8e4d8', 0, 1.0, 0.03); B(g, 1.0, 2.1, 0.03, '#b8a888', 0, 1.05, 0.0); C(g, 0.02, 0.02, 0.12, '#8a8a94', 0.3, 1.0, 0.08, 6, Math.PI / 2); const p = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.3), new THREE.MeshBasicMaterial({ map: texPlaque('湯') })); p.position.set(0, 1.6, 0.065); g.add(p); } },
         { name: 'trinkets', rule: 'wall', walls: ['left', 'right', 'back'], w: 1.2, d: 0.3, h: 0.4, high: true, build(g, r) { B(g, 1.2, 0.03, 0.25, '#5a3a22', 0, 1.9, 0.12); for (let i = 0; i < 5; i++) { if (i % 2) C(g, 0.03, 0.04, 0.12, ['#c8a84a', '#8a2a2a', '#2a5a8a'][i % 3], -0.45 + i * 0.22, 1.97, 0.12, 8); else { const s2 = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), lamb(['#f0d8c0', '#4aa050'][i % 2])); s2.position.set(-0.45 + i * 0.22, 1.97, 0.12); g.add(s2); } } } },
-        { name: 'kitchen', rule: 'wall', walls: ['back', 'left', 'right'], w: 3.6, d: 0.65, h: 2.0, solid: true, build(g, r) { B(g, 2.6, 0.9, 0.6, '#d8d4cc', -0.5, 0.45, 0); B(g, 2.6, 0.05, 0.62, '#8a8a94', -0.5, 0.92, 0); B(g, 0.5, 0.06, 0.4, '#a8acb4', -1.1, 0.95, 0); C(g, 0.015, 0.015, 0.3, '#a8acb4', -1.1, 1.1, -0.2, 6); B(g, 0.55, 0.06, 0.45, '#2a2a32', 0.1, 0.95, 0); [[-0.12, -0.1], [0.12, -0.1], [-0.12, 0.1], [0.12, 0.1]].forEach((p) => C(g, 0.07, 0.07, 0.02, '#1a1a20', 0.1 + p[0], 0.99, p[1], 10)); C(g, 0.13, 0.12, 0.14, '#8a8a94', 0.1, 1.07, 0, 12); B(g, 0.65, 1.6, 0.65, '#e8ecf0', 1.45, 0.8, 0.0); B(g, 0.02, 0.5, 0.04, '#8a8a94', 1.15, 1.1, 0.34); B(g, 2.0, 0.04, 0.3, '#5a3a22', -0.5, 1.9, -0.15); for (let k = 0; k < 7; k++) C(g, 0.05, 0.06, 0.16 + r() * 0.12, ['#f0e8d8', '#c8a84a', '#2a5a3a', '#8a2a2a'][k % 4], -1.4 + k * 0.28, 2.0, -0.15, 8); this.spots = [{ kind: 'table', x: -0.5, y: 0.95, z: 0.05 }]; this.notes = [{ x: 1.45, y: 1.7, z: 0.34 }, { x: 1.45, y: 1.4, z: 0.34 }, { x: 1.7, y: 1.55, z: 0.34 }]; } },
+        { name: 'kitchen', rule: 'wall', walls: ['back', 'left', 'right'], w: 3.6, d: 0.65, h: 2.0, solid: true, build(g, r) { B(g, 2.6, 0.9, 0.6, '#d8d4cc', -0.5, 0.45, 0); B(g, 2.6, 0.05, 0.62, '#8a8a94', -0.5, 0.92, 0); B(g, 0.5, 0.06, 0.4, '#a8acb4', -1.1, 0.95, 0); C(g, 0.015, 0.015, 0.3, '#a8acb4', -1.1, 1.1, -0.2, 6); B(g, 0.55, 0.06, 0.45, '#2a2a32', 0.1, 0.95, 0); [[-0.12, -0.1], [0.12, -0.1], [-0.12, 0.1], [0.12, 0.1]].forEach((p) => C(g, 0.07, 0.07, 0.02, '#1a1a20', 0.1 + p[0], 0.99, p[1], 10)); C(g, 0.13, 0.12, 0.14, '#8a8a94', 0.1, 1.07, 0, 12); B(g, 0.65, 1.6, 0.65, '#e8ecf0', 1.45, 0.8, 0.0); B(g, 0.02, 0.5, 0.04, '#8a8a94', 1.15, 1.1, 0.34); B(g, 2.0, 0.04, 0.3, '#5a3a22', -0.5, 1.9, -0.15); for (let k = 0; k < 7; k++) C(g, 0.05, 0.06, 0.16 + r() * 0.12, ['#f0e8d8', '#c8a84a', '#2a5a3a', '#8a2a2a'][k % 4], -1.4 + k * 0.28, 2.0, -0.15, 8); this.spots = [{ kind: 'table', x: -0.5, y: 0.95, z: 0.05 }]; this.notes = [{ x: 1.32, y: 1.36, z: 0.335 }, { x: 1.58, y: 1.28, z: 0.335 }, { x: 1.4, y: 1.04, z: 0.335 }]; } },
         { name: 'kotatsu', first: true, rule: 'center', w: 2.6, d: 2.2, h: 0.45, solid: true, build(g, r) { B(g, 1.6, 0.06, 1.0, '#6a4a2c', 0, 0.38, 0); B(g, 2.0, 0.02, 1.4, '#b8402a', 0, 0.33, 0); [[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]].forEach((p) => B(g, 0.06, 0.36, 0.06, '#4a3020', p[0], 0.18, p[1])); [[0, 1.0], [0, -1.0], [1.2, 0], [-1.2, 0]].forEach((p) => B(g, 0.5, 0.1, 0.5, ['#4a6a9a', '#9a4a4a', '#4a8a6a', '#9a8a4a'][Math.floor(r() * 4)], p[0], 0.05, p[1])); for (let k = 0; k < 2; k++) C(g, 0.04, 0.035, 0.1, '#d8d0b8', -0.3 + k * 0.5, 0.46, -0.1, 8); this.spots = []; for (let k = 0; k < 4; k++) this.spots.push({ kind: 'table', x: -0.55 + k * 0.37, y: 0.41, z: k % 2 ? 0.25 : -0.25 }); } },
         { name: 'tv', rule: 'wall', walls: ['back', 'left', 'right'], w: 1.7, d: 0.5, h: 1.4, solid: true, build(g) { B(g, 1.6, 0.5, 0.45, '#5a3a22', 0, 0.25, 0); tv(g, 0, 0.95, -0.05, 0, 1.2); this.spots = [{ kind: 'table', x: 0.6, y: 0.5, z: 0.1 }]; } },
         { name: 'bookshelf', rule: 'wall', walls: ['left', 'right', 'back'], w: 1.6, d: 0.35, h: 2.2, solid: true, build(g, r) { B(g, 1.6, 2.2, 0.35, '#5a3a22', 0, 1.1, 0); bookRow(g, -0.7, 0.25, 0.08, 5, 9, true); this.spots = [{ kind: 'table', x: 0, y: 2.22, z: 0 }]; } },
@@ -1243,17 +1247,18 @@ function catalog(type, rnd) {
     ];
 }
 const ROOM_SHELLS = {
-    izakaya: () => { const wood = texWood('#5a3b22', 8); wood.repeat.set(3, 1); const woodF = texWood('#2b1b10', 10); woodF.repeat.set(4, 6); roomShell(lamb('#ffffff', { map: wood }), lamb('#ffffff', { map: woodF }), '#1a120c'); const nr = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.55), new THREE.MeshBasicMaterial({ map: texNorenPlain('#1d2a5c'), side: THREE.DoubleSide, transparent: true })); nr.position.set(ROOM.doorX, 1.85, ROOM.d / 2 - 0.1); room.add(nr); room.add(new THREE.AmbientLight(0xffe0c0, 0.75)); for (let z = -ROOM.d / 2 + 2.0; z < ROOM.d / 2 - 1; z += 4.6) for (let x = -ROOM.w / 2 + 1.9; x < ROOM.w / 2 - 1; x += 3.8) { const l = new THREE.PointLight(0xffd9a0, 3.2, 11, 1.4); l.position.set(x, ROOM.h - 0.6, z); room.add(l); const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfff1d0 })); bulb.position.set(x, ROOM.h - 0.45, z); room.add(bulb); } },
+    izakaya: () => { const wood = texWood('#5a3b22', 8); wood.repeat.set(3, 1); const woodF = texWood('#2b1b10', 10); woodF.repeat.set(4, 6); roomShell(lamb('#ffffff', { map: wood }), lamb('#ffffff', { map: woodF }), '#1a120c'); const nr = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.55), new THREE.MeshBasicMaterial({ map: texNorenPlain('#1d2a5c'), side: THREE.DoubleSide, transparent: true })); nr.position.set(ROOM.doorX, 1.85, ROOM.d / 2 - 0.16); nr.rotation.y = Math.PI; room.add(nr); room.add(new THREE.AmbientLight(0xffe0c0, 0.75)); for (let z = -ROOM.d / 2 + 2.0; z < ROOM.d / 2 - 1; z += 4.6) for (let x = -ROOM.w / 2 + 1.9; x < ROOM.w / 2 - 1; x += 3.8) { const l = new THREE.PointLight(0xffd9a0, 3.2, 11, 1.4); l.position.set(x, ROOM.h - 0.6, z); room.add(l); const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfff1d0 })); bulb.position.set(x, ROOM.h - 0.45, z); room.add(bulb); } },
     konbini: () => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#e4e6ea'; g.fillRect(0, 0, 128, 128); g.strokeStyle = 'rgba(0,0,0,0.18)'; g.lineWidth = 2; [[1, 1], [65, 65], [65, 1], [1, 65]].forEach((p) => g.strokeRect(p[0], p[1], 62, 62)); const t = makeTex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(ROOM.w, ROOM.d); roomShell(lamb('#eef0f4'), lamb('#ffffff', { map: t }), '#f4f6fa', '#dfefff'); },
     class: () => { roomShell(lamb('#e8e2d0'), lamb('#b9a98a'), '#f0ece0', '#f4e8c8'); },
     home: () => { const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#9aa06a'; g.fillRect(0, 0, 256, 128); for (let y = 0; y < 128; y += 3) { g.fillStyle = 'rgba(0,0,0,' + (y % 6 ? 0.06 : 0.12) + ')'; g.fillRect(0, y, 256, 1); } g.fillStyle = '#2a2a24'; g.fillRect(0, 0, 256, 6); g.fillRect(0, 122, 256, 6); const t = makeTex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(ROOM.w / 2, ROOM.d / 2); roomShell(lamb('#e6dcc4'), lamb('#ffffff', { map: t }), '#d8ccb4', '#3a2a1a'); },
 };
+Object.assign(ROOM_SHELLS, ROOMX.shells);
 function buildRoom(b, color, type) {
     clearRoom();
     type = type || 'izakaya';
     const rnd = mulberry32(hashStr(b.q.name + type + (b.qi || 0)) + (inside.door ? Math.round(inside.door.userData.door.z * 10) : 0));
     // размер комнаты — свой у каждой двери
-    ROOM.w = 7.0 + Math.floor(rnd() * 5) * 0.8; ROOM.d = 10 + Math.floor(rnd() * 6) * 1.0; ROOM.h = 3.0 + Math.floor(rnd() * 3) * 0.2; ROOM.doorX = Math.min(1.4, ROOM.w / 2 - 1.2);
+    ROOM.w = 7.0 + Math.floor(rnd() * 5) * 0.8; ROOM.d = 10 + Math.floor(rnd() * 6) * 1.0; ROOM.h = 3.0 + Math.floor(rnd() * 3) * 0.2; if (ROOMX.size[type]) Object.assign(ROOM, ROOMX.size[type](rnd)); if (ROOMX.size[type]) Object.assign(ROOM, ROOMX.size[type](rnd)); ROOM.doorX = Math.min(1.4, ROOM.w / 2 - 1.2);
     const { objs, rest: restAll } = splitWords(b, type);
     // на листочках/доске/ценниках — не больше 12 слов, выборка стабильна для комнаты
     const rest = restAll.slice().sort(() => rnd() - 0.5).slice(0, 12);
@@ -1287,14 +1292,15 @@ function buildRoom(b, color, type) {
     // слова без предмета — на поверхности типа комнаты по свободным стенам
     let wi = 0;
     const surfaceOn = (wall, y, step, make) => { freeWallSegments(wall, used).forEach((sg) => { for (let t = sg[0] + step / 2; t < sg[1] - step / 2 && wi < rest.length; t += step) { const sgn = rest[wi++]; const p = wallPoint(wall, t, y, 0.02); const m = make(sgn); m.position.set(p.x, p.y, p.z); m.rotation.y = p.ry; m.rotation.z = (hashStr(sgn.text) % 7 - 3) * 0.01; m.userData.sign = sgn; room.add(m); sgn.strip = m; inside.strips.push(m); } }); };
-    if (type === 'izakaya') {
+    const stp = ROOMX.surf[type] || type;
+    if (stp === 'izakaya') {
         const geo = new THREE.PlaneGeometry(0.19, 0.74);
         ['right', 'back', 'left', 'front'].forEach((wl) => { surfaceOn(wl, 2.4, 0.42, (sg) => new THREE.Mesh(geo, lamb('#ffffff', { map: texStrip(sg) }))); });
         ['right', 'left'].forEach((wl) => { surfaceOn(wl, 1.55, 0.42, (sg) => new THREE.Mesh(geo, lamb('#ffffff', { map: texStrip(sg) }))); });
-    } else if (type === 'konbini') {
+    } else if (stp === 'konbini') {
         if (magMod) magMod.mag.forEach((p) => { if (wi >= rest.length) return; const sg = rest[wi++]; const m = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.28), lamb('#ffffff', { map: texMagazine(sg) })); m.position.set(p.x, p.y, p.z); m.rotation.x = -0.25; m.userData.sign = sg; magMod._g.add(m); sg.strip = m; });
         ['front', 'left', 'right'].forEach((wl) => { surfaceOn(wl, 2.3, 0.5, (sg) => new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.56), lamb('#ffffff', { map: texWordPoster(sg) }))); surfaceOn(wl, 1.65, 0.5, (sg) => new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.56), lamb('#ffffff', { map: texWordPoster(sg) }))); });
-    } else if (type === 'class') {
+    } else if (stp === 'class') {
         const onBoard = rest.slice(0, 16); wi = Math.min(16, rest.length);
         if (boardMod) { const t = texBlackboard(onBoard); boardMod.boardMesh.material.map = t; boardMod.boardMesh.material.emissive = new THREE.Color(0xffffff); boardMod.boardMesh.material.emissiveMap = t; boardMod.boardMesh.material.emissiveIntensity = 0.25; boardMod.boardMesh.material.needsUpdate = true; onBoard.forEach((sg, i) => { const hit = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.5), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(-2.25 + (i % 4) * 1.15, 2.5 - Math.floor(i / 4) * 0.45, 0.06); hit.userData.sign = sg; boardMod.boardMesh.parent.add(hit); }); }
         ['left', 'right', 'front'].forEach((wl) => { surfaceOn(wl, 2.2, 0.33, (sg) => new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), lamb('#ffffff', { map: texNote(sg) }))); surfaceOn(wl, 1.85, 0.33, (sg) => new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), lamb('#ffffff', { map: texNote(sg) }))); });
@@ -1544,7 +1550,7 @@ function tap(x, y) {
 
 // ---- подсказка сверху: наведение (прицел / курсор) или тап, без модалки ----
 const STATE_LABEL = { lit: 'выучено', warm: 'учу', new: 'новое', due: 'пора повторить', worn: 'забывается' };
-const ROOM_HINT = { izakaya: 'Идзакая', konbini: 'Комбини', class: 'Вечерняя школа', home: 'Квартира' };
+const ROOM_HINT = { izakaya: 'Идзакая', konbini: 'Комбини', class: 'Вечерняя школа', home: 'Квартира' }; Object.assign(ROOM_HINT, ROOMX.hints); Object.assign(ROOM_HINT, ROOMX.hints);
 const hintEl = document.getElementById('hint');
 const hover = { sign: null, door: null, sticky: 0, lastMouse: null, frame: 0 };
 document.addEventListener('mousemove', (e) => { if (!locked()) hover.lastMouse = [e.clientX, e.clientY]; });
@@ -1611,7 +1617,7 @@ function reviewSign(s) {
     if (!s || s.state === 'lit') return;
     s.word._state = 'lit'; s.state = 'lit'; s.inten = 1; s.isLit = true; s.dead = -1; s.tex = {};
     s.meshes.forEach((m) => { m.rotation.z = 0; });
-    if (s.strip) { const tp = inside.door && inside.door.userData.door.type; s.strip.material.map = tp === 'konbini' ? (s.strip.geometry.parameters.width > 0.3 ? texWordPoster(s) : texMagazine(s)) : (tp === 'home' || (tp === 'class') ? texNote(s) : texStrip(s)); s.strip.material.needsUpdate = true; }
+    if (s.strip) { const tp0 = inside.door && inside.door.userData.door.type, tp = ROOMX.surf[tp0] || tp0; s.strip.material.map = tp === 'konbini' ? (s.strip.geometry.parameters.width > 0.3 ? texWordPoster(s) : texMagazine(s)) : (tp === 'home' || (tp === 'class') ? texNote(s) : texStrip(s)); s.strip.material.needsUpdate = true; }
     if (inside.on && inside.door && inside.door.userData.door.type === 'class') { let bd = null; room.traverse((o) => { if (o.userData.board) bd = o; }); if (bd) { const t = texBlackboard(splitWords(inside.block, 'class').rest); bd.material.map = t; bd.material.emissiveMap = t; bd.material.needsUpdate = true; } }
     if (s.label) { s.label.material.map = texLabel(s, true); s.label.material.needsUpdate = true; }
     if (s.prop) { const b = blocks.find((x) => x.signs.indexOf(s) >= 0); if (b && b.built) { disposeBlock(b); buildBlock(b); if (dynSigns.indexOf(s) < 0) dynSigns.push(s); } }
@@ -1670,8 +1676,7 @@ panel.querySelectorAll('[data-theme]').forEach((b) => { b.classList.toggle('on',
 if (window.STREET_WORDS && window.STREET_WORDS.words) panel.querySelector('[data-src="demo"]').textContent = 'Мой словарь (выгрузка)';
 const rainBtn = panel.querySelector('[data-rain]'); rainBtn.hidden = !th.rain; rainBtn.classList.toggle('on', opts.rain);
 rainBtn.addEventListener('click', () => { opts.rain = !opts.rain; saveSet({ rain: opts.rain }); rainBtn.classList.toggle('on', opts.rain); if (rain) rain.visible = opts.rain; });
-const reflBtn = panel.querySelector('[data-reflect]'); reflBtn.classList.toggle('on', opts.reflect);
-reflBtn.addEventListener('click', () => { opts.reflect = !opts.reflect; saveSet({ reflect: opts.reflect }); reflBtn.classList.toggle('on', opts.reflect); buildWorld(); });
+const reflBtn = { classList: { remove() {}, toggle() {} } }; // кнопки отражений больше нет
 
 // ---- загрузка ----
 function load() {
@@ -1774,5 +1779,5 @@ function frame(now) {
 }
 load();
 requestAnimationFrame(frame);
-window.__walk = { camera, blocks, scene, doors, colliders, renderer, tap, enter: (i) => enterRoom(doors[i || 0]), exit: exitRoom, pick: (x, y) => pick(x, y, 40), get fps() { return fpsV; }, get inside() { return inside.on; }, LIFE, ROOM, view: (x, z, yw, pt) => { camera.position.x = x; camera.position.z = z; yaw = tYaw = yw; pitch = tPitch = pt || 0; vel.set(0, 0, 0); lookVel.x = lookVel.y = 0; } };
+window.__walk = { camera, blocks, scene, doors, colliders, renderer, tap, enter: (i) => enterRoom(doors[i || 0]), exit: exitRoom, pick: (x, y) => pick(x, y, 40), get fps() { return fpsV; }, get inside() { return inside.on; }, LIFE, ROOM, PROP_BUILDERS, lamb, room, view: (x, z, yw, pt) => { camera.position.x = x; camera.position.z = z; yaw = tYaw = yw; pitch = tPitch = pt || 0; vel.set(0, 0, 0); lookVel.x = lookVel.y = 0; } };
 if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('700 20px "Noto Sans JP"')]).then(() => { blocks.forEach((b) => { if (b.built) { disposeBlock(b); } }); ensureBlocks(); }).catch(() => {});

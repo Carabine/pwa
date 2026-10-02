@@ -28,10 +28,10 @@
         #cross.on { display: block; }
         #cross::before, #cross::after { content: ''; position: absolute; background: #fff; box-shadow: 0 0 6px rgba(0,0,0,.9); }
         #cross::before { left: 8px; top: 0; width: 2px; height: 18px; } #cross::after { top: 8px; left: 0; width: 18px; height: 2px; }
-        #hint { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 96px); transform: translate(-50%, -24px); opacity: 0; pointer-events: none; transition: transform .25s cubic-bezier(.2,.8,.2,1), opacity .2s; min-width: 220px; max-width: 86vw; padding: 12px 16px 12px; border-radius: 18px; background: rgba(12,12,22,0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset, 0 12px 40px rgba(0,0,0,0.5), 0 0 24px color-mix(in srgb, var(--c, #7c8cf8) 35%, transparent); text-align: left; }
+        #hint { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 96px); transform: translate(-50%, -24px); opacity: 0; pointer-events: none; transition: transform .25s cubic-bezier(.2,.8,.2,1), opacity .2s; min-width: 220px; max-width: 86vw; padding: 12px 16px 12px; border-radius: 18px; background: rgba(12,12,22,0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset, 0 12px 40px rgba(0,0,0,0.5); text-align: left; }
         #hint.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
         #hint .hw { display: flex; align-items: baseline; gap: 10px; }
-        #h-kanji { font-size: 30px; font-weight: 700; line-height: 1.1; color: #fff; text-shadow: 0 0 14px var(--c, #7c8cf8), 0 0 30px var(--c, #7c8cf8); }
+        #h-kanji { font-size: 30px; font-weight: 700; line-height: 1.1; color: #fff; text-shadow: none; }
         #h-kana { font-size: 14px; color: var(--muted); }
         #h-jlpt { margin-left: auto; font-size: 10px; font-weight: 700; color: var(--muted); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; padding: 1px 5px; }
         #h-tr { margin-top: 4px; font-size: 15px; font-weight: 500; }
@@ -92,7 +92,7 @@
     <h4>Улица</h4>
     <div class="opts"><a class="opt" data-theme="shinjuku" href="./walk.html?theme=shinjuku">Синдзюку</a><a class="opt" data-theme="yokocho" href="./walk.html?theme=yokocho">Ёкотё</a></div>
     <h4>Графика</h4>
-    <div class="opts"><button class="opt" data-rain>Дождь</button><button class="opt" data-reflect>Отражения</button></div>
+    <div class="opts"><button class="opt" data-rain>Дождь</button></div>
     <h4>Управление</h4>
     <div class="opts"><button class="opt" data-gyro>Гироскоп</button></div>
 </div>

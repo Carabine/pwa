@@ -323,13 +323,14 @@ const LIFE = (() => {
             case 'cup': P.add(G.y(0.03, 0.022, 0.05, 12), '#f4f0e8', 0, 0, 0); P.add(G.y(0.027, 0.027, 0.004, 12), '#8aa04a', 0, 0.022, 0); break;
             case 'phone': P.add(G.b(0.07, 0.14, 0.009), '#16161c', 0, 0, 0); P.add(G.b(0.062, 0.125, 0.002), '#8fd0ff', 0, 0, 0.005); break;
             case 'chopsticks': P.add(G.y(0.003, 0.002, 0.22, 5), '#c89a5a', -0.006, 0, 0); P.add(G.y(0.003, 0.002, 0.22, 5), '#c89a5a', 0.006, 0, 0.004); break;
-            case 'ladle': P.add(G.y(0.008, 0.008, 0.36, 6), '#8a6a3a', 0, 0.1, 0); P.add(G.sp(0.04, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2, 10, 5), '#a8acb4', 0, -0.08, 0); break;
+            case 'ladle': P.add(G.y(0.007, 0.007, 0.2, 6), '#b8bcc4', 0, -0.07, 0); P.add(G.y(0.034, 0.03, 0.03, 12), '#b8bcc4', 0, -0.165, 0); P.add(G.y(0.009, 0.009, 0.06, 6), '#5a3a22', 0, 0.02, 0); break;
             case 'chalk': P.add(G.y(0.006, 0.006, 0.06, 6), '#ffffff', 0, 0, 0); break;
             case 'pen': P.add(G.y(0.004, 0.004, 0.13, 6), '#2a5ad0', 0, 0, 0); break;
             case 'book': P.add(G.b(0.15, 0.21, 0.025), '#c84a4a', 0, 0, 0); P.add(G.b(0.14, 0.2, 0.026), '#f4efe0', 0.006, 0, 0); break;
             case 'pad': P.add(G.b(0.08, 0.11, 0.008), '#f4efe0', 0, 0, 0); P.add(G.b(0.08, 0.02, 0.01), '#c8322a', 0, 0.055, 0); break;
             case 'basket': P.add(G.b(0.3, 0.16, 0.2), '#d83a3a', 0, -0.16, 0); P.add(G.b(0.27, 0.02, 0.17), '#f0c030', 0, -0.075, 0); P.add(G.t(0.09, 0.008, Math.PI, 10), '#c8322a', 0, -0.075, 0); break;
             case 'mikan': P.add(G.s(0.035, 10, 8), '#f08a1a', 0, 0, 0, 0, 0, 0, 1, 0.85, 1); break;
+            case 'bachi': P.add(G.y(0.011, 0.014, 0.36, 6), '#e0c890', 0, -0.13, 0.01); break;
             case 'stick': P.add(G.y(0.012, 0.014, 0.82, 6), '#5a3a22', 0, -0.39, 0.02); break;
             case 'sword': P.add(G.b(0.022, 0.8, 0.008), '#d8dce4', 0, -0.42, 0.02); P.add(G.b(0.07, 0.025, 0.03), '#c8a84a', 0, -0.03, 0.02); P.add(G.y(0.014, 0.014, 0.16, 6), '#1a1a1e', 0, 0.06, 0.02); break;
             default: return;
@@ -340,7 +341,7 @@ const LIFE = (() => {
         else if (kind === 'phone') { m.rotation.x = Math.PI / 2 + 0.5; m.position.set(0, -0.04, 0.035); }
         else if (kind === 'chopsticks' || kind === 'pen' || kind === 'chalk') { m.rotation.x = -0.3; m.position.set(0, -0.06, 0.02); }
         else if (kind === 'book' || kind === 'pad') { m.rotation.x = Math.PI / 2; m.position.set(0, -0.05, 0.03); }
-        else if (kind === 'ladle') { m.position.set(0, -0.03, 0.02); }
+        else if (kind === 'ladle') { m.rotation.x = Math.PI / 2; m.position.set(0, -0.02, 0.0); }
         ch.J['hd' + side].add(g); ch.held[side] = g;
     }
 
@@ -435,6 +436,8 @@ const LIFE = (() => {
                 else { const pt = env4(c, 1, 1.5, 4, 4.6); arm(J, 'R', lerp(-0.3, -1.45, pt), lerp(0.1, 0.55, pt), lerp(-0.9, -0.15, pt)); arm(J, 'L', -0.45, 0.08, -1.2); }
                 break; }
             case 'wave': break;
+            case 'play': { arm(J, 'L', -0.82 + Math.sin(T * 7) * 0.05, 0.14 + Math.sin(T * 9.3) * 0.08, -0.72); arm(J, 'R', -0.82, 0.1, -0.72 + Math.max(0, Math.sin(T * 13)) * 0.18); J.spine.rotation.x += 0.14; headX = 0.08; canLook = false; if (T % 9 < 0.6) { J.spine.rotation.x -= 0.1; headX = -0.15; } break; }
+            case 'drum': { const a = T * 7.5; arm(J, 'L', -1.05 + Math.sin(a) * 0.5, 0.18, -0.9 + Math.sin(a) * 0.3); arm(J, 'R', -1.05 + Math.sin(a + Math.PI) * 0.5, 0.18, -0.9 + Math.sin(a + Math.PI) * 0.3); J.spine.rotation.x += 0.08 + Math.abs(Math.sin(a)) * 0.04; canLook = false; break; }
             default: { if (p === 'stand') arm(J, 'L', 0.04 + Math.sin(T * 0.8) * 0.03, 0.09, -0.14); }
         }
         if (ch.o && ch.o.armPose === 'up') arm(J, 'R', -2.9, 0.1, -0.2);
@@ -584,6 +587,17 @@ const LIFE = (() => {
         family: { greet: ['おかえり！', 'С возвращением!', 'wave'], lines: [['みかん食べる？', 'Будешь мандаринку?'], ['このドラマ、面白い！', 'Классная дорама!', 'nod'], ['こたつから出られない…', 'Не могу вылезти из котацу…'], ['お茶いれようか？', 'Заварить чаю?']] },
         cook: { lines: [['ごはんできたよ！', 'Ужин готов!'], ['いいにおい！', 'Как вкусно пахнет!'], ['手を洗ってね', 'Помой руки!']] },
         worker: { lines: [['締め切りが…', 'Дедлайн…'], ['あと少し！', 'Ещё чуть-чуть!'], ['疲れたなあ', 'Устал…']] },
+        student1r: { greet: ['あ、どうぞ！', 'О, заходи!', 'wave'], lines: [['レポートが終わらない…', 'Курсовая не кончается…'], ['ゲームしよう！', 'Давай поиграем!'], ['カップ麺でいいや', 'Сойдёт и лапша быстрого…'], ['来週テストだ…', 'На следующей неделе экзамен…'], ['この漫画、最高！', 'Эта манга — огонь!']] },
+        elder: { greet: ['いらっしゃい', 'Проходи, проходи', 'bow'], lines: [['お茶をどうぞ', 'Угощайся чаем'], ['いい天気ですね', 'Хорошая погода, правда?'], ['足を崩してください', 'Сиди, как удобно'], ['昔はね…', 'Вот в наше время…', 'nod']] },
+        couple: { greet: ['おかえり！', 'С возвращением!', 'wave'], lines: [['映画見ようか', 'Посмотрим фильм?'], ['夜景がきれい', 'Какой красивый ночной вид'], ['ワイン飲む？', 'Будешь вино?'], ['今日どうだった？', 'Как прошёл день?']] },
+        ramenChef: { greet: ['へい、らっしゃい！', 'Добро пожаловать!', 'nod'], lines: [['ラーメン一丁！', 'Одна рамен!'], ['麺の硬さは？', 'Лапшу какой жёсткости?'], ['替え玉、どうぞ！', 'Добавка лапши!'], ['お待ちどう！', 'Готово!']] },
+        ramenGuest: { lines: [['ズズッ…', 'Хлюп…'], ['うまっ！', 'Вкуснятина!'], ['替え玉ください！', 'Ещё порцию лапши!', 'raise'], ['スープまで飲める', 'Даже бульон допью']] },
+        barista: { greet: ['いらっしゃいませ', 'Добро пожаловать', 'bow'], lines: [['ブレンドでございます', 'Ваш фирменный кофе'], ['ご注文はお決まりですか？', 'Готовы заказать?'], ['ケーキもいかがですか', 'Не хотите торт?']] },
+        cafeGuest: { lines: [['このケーキ、おいしい！', 'Этот торт — чудо!'], ['コーヒーおかわり', 'Ещё кофе, пожалуйста', 'raise'], ['ゆっくりしよう', 'Давай не спешить'], ['この本、面白いよ', 'Интересная книга'], ['それでね…', 'И вот, значит…', 'nod']] },
+        reader: { lines: [['新刊が出てる！', 'Вышел новый том!'], ['この漫画、面白そう', 'Эта манга выглядит интересно'], ['どこにあるかな…', 'Где же она…'], ['ちょっと立ち読み…', 'Почитаю немножко…']] },
+        bookClerk: { greet: ['いらっしゃいませ', 'Добро пожаловать', 'bow'], lines: [['カバーおかけしますか？', 'Обернуть в обложку?'], ['新刊はこちらです', 'Новинки вот здесь'], ['ありがとうございました', 'Спасибо за покупку!', 'bow']] },
+        gamer: { lines: [['よっしゃ！', 'Есть!', 'raise'], ['もう一回！', 'Ещё разок!'], ['あー、惜しい！', 'Эх, чуть-чуть!'], ['ハイスコアだ！', 'Рекорд!', 'raise'], ['これ欲しい！', 'Хочу вот эту!']] },
+        drummer: { lines: [['ドン！カッ！', 'Дон! Ка!'], ['フルコンボだ！', 'Полное комбо!', 'raise'], ['難しい〜', 'Сложно-о!']] },
     };
     function populate(type, placed, grid, seed) {
         const rnd = mulberry32(seed), pick = (a) => a[Math.floor(rnd() * a.length)];
@@ -594,7 +608,7 @@ const LIFE = (() => {
         const add = (o, p, yaw, extra) => {
             const ch = makeChar(look(rnd, o));
             ch.root.position.set(p.x, 0, p.z); ch.yaw = ch.baseYaw = yaw; ch.root.rotation.y = yaw;
-            Object.assign(ch, extra || {}); if (extra && extra.role) { ch.lines = LINES[extra.role].lines; ch.greet = LINES[extra.role].greet; }
+            Object.assign(ch, extra || {}); if (extra && extra.role && LINES[extra.role]) { ch.lines = LINES[extra.role].lines; ch.greet = LINES[extra.role].greet; }
             room.add(ch.root); S.room.push(ch);
             if (ch.pose === 'stand' && !ch.route) { colliders.room.push({ x0: p.x - 0.3, x1: p.x + 0.3, z0: p.z - 0.3, z1: p.z + 0.3, npc: true }); grid.mark(p.x - 0.35, p.z - 0.35, p.x + 0.35, p.z + 0.35); }
             blobs.push({ x: p.x, z: p.z, r: ch.pose === 'stand' ? 0.24 : 0.3 });
@@ -612,7 +626,7 @@ const LIFE = (() => {
             return null;
         };
         if (type === 'izakaya') {
-            mods('kitchen').forEach((m) => { const g = m._grp; const x = (rnd() - 0.5) * 1.2; add({ fem: false, outfit: 'samue', top: '#2a3550', hachimaki: true, hairStyle: 'short', mouth: 'grin', holdR: 'ladle' }, W(g, x, 0, 0.62), yawOf(g, Math.PI), { act: 'cook', role: 'chef' }); const n = W(g, 0, 1.98, 0.22); noren(n.x, n.y, n.z, g.rotation.y, ['居', '酒', '屋'], '#1f2a4a'); });
+            mods('kitchen').forEach((m) => { const g = m._grp; const x = pick([-0.8, 0, 0.8]) - 0.15; add({ fem: false, outfit: 'samue', top: '#2a3550', hachimaki: true, hairStyle: 'short', mouth: 'grin', holdR: 'ladle' }, W(g, x, 0, 0.35), yawOf(g, Math.PI), { act: 'cook', role: 'chef' }); const n = W(g, 0, 1.98, 0.22); noren(n.x, n.y, n.z, g.rotation.y, ['居', '酒', '屋'], '#1f2a4a'); });
             mods('counter').forEach((m) => {
                 const g = m._grp, len = m._len || 6, n = Math.floor(len / 1.05); let k = 0;
                 for (let i = 1; i < n && k < 3; i++) { if (rnd() > 0.5) continue; k++; const drink = rnd() < 0.6; const p = W(g, -len / 2 + 0.6 + i * 1.05, 0, 0.45);
@@ -648,12 +662,23 @@ const LIFE = (() => {
                 });
             });
             motes('#fff2d8');
+        } else if (ROOMX.types.indexOf(type) >= 0) {
+            const cap = 10;
+            placed.forEach((m) => { const g = m._grp; if (!g) return;
+                (m.stations || []).forEach((st) => { if (S.room.length >= cap || rnd() > (st.p == null ? 0.6 : st.p)) return; const o = { holdR: st.act === 'drum' ? 'bachi' : st.hold, holdL: st.act === 'drum' ? 'bachi' : null, apron: st.apron, hachimaki: st.hachimaki, short: st.short, top: st.top, outfit: st.outfit, fem: st.fem }; const p = W(g, st.x, 0, st.z); if (Math.abs(p.x) > ROOM.w / 2 - 0.35 || Math.abs(p.z) > ROOM.d / 2 - 0.35) return; add(o, p, yawOf(g, st.yaw), { act: st.act, role: st.role }); });
+                (m.seats || []).forEach((se) => { if (S.room.length >= cap || rnd() > (se.p == null ? 0.6 : se.p)) return; const act = pick(se.acts); const o = { seated: true, holdR: se.hold && se.hold[act], fem: se.fem, old: se.old, outfit: se.outfit, hairStyle: se.old ? (se.fem ? 'bun' : 'bald') : null, hair: se.old ? '#c8c8d0' : null };
+                    const fc = se.focus || m.focus; add(o, W(g, se.x, 0, se.z), yawOf(g, se.yaw), { pose: se.pose, seatY: se.y, act, role: se.role, focus: fc ? W(g, fc.x, fc.y, fc.z) : null });
+                    if (se.bowl) { const q = W(g, se.bowl.x, se.bowl.y, se.bowl.z); propMesh((P) => BOWL(P, 0, 0, '#c8322a'), q.x, q.y, q.z, g.rotation.y); steamAt(q.x, q.y + 0.12, q.z, 3); } });
+            });
+            if (type === 'oneroom' || type === 'washitsu') { const catCol = pick(['#e8a050', '#8a8a92', '#2a2a2e', '#f2ece2']); const cat = makeCat(catCol, type === 'oneroom'); for (let i = 0; i < 30; i++) { const x = (rnd() - 0.5) * (ROOM.w - 1.6), z = (rnd() - 0.5) * (ROOM.d - 2.5); if (!free(x, z, 0.3)) continue; cat.root.position.set(x, 0, z); cat.root.rotation.y = rnd() * 6; room.add(cat.root); S.room.push(cat); blobs.push({ x, z, r: 0.15 }); break; } }
+            if (type === 'arcade' || type === 'books' || type === 'cafe') walker({ fem: rnd() < 0.5, holdL: type === 'books' ? 'book' : null }, { act: 'idle', role: type === 'arcade' ? 'gamer' : (type === 'books' ? 'reader' : 'cafeGuest') });
+            motes({ oneroom: '#fff2dc', washitsu: '#ffd8a0', loft: '#ffe2c0', ramen: '#ffd9a0', cafe: '#ffcf8a', books: '#fff4e0', arcade: '#c8b0ff' }[type]);
         } else {
             mods('kotatsu').forEach((m) => { const g = m._grp; const seats = [[0, 1.0, Math.PI], [0, -1.0, 0], [1.2, 0, -Math.PI / 2], [-1.2, 0, Math.PI / 2]].sort(() => rnd() - 0.5).slice(0, 1 + Math.floor(rnd() * 2)); const center = W(g, 0, 0.9, 0);
                 seats.forEach((q) => { const act = pick(['watch', 'mikan', 'phone', 'talk']); add({ seated: true, hairStyle: undefined, holdR: act === 'mikan' ? 'mikan' : (act === 'phone' ? 'phone' : null), top: pick(['#c86a4a', '#6a8aa8', '#e8d8b8', '#8a6a9a']) }, W(g, q[0], 0, q[1]), yawOf(g, q[2]), { pose: 'kotatsu', seatY: 0.1, act, role: 'family', focus: center }); });
                 const t0 = W(g, 0.2, 0.41, -0.05); propMesh((P) => { P.add(G.y(0.11, 0.08, 0.05, 16), '#5a3a22', 0, 0.025, 0); for (let i = 0; i < 5; i++) P.add(G.s(0.032, 10, 8), '#f08a1a', Math.cos(i * 1.26) * 0.05, 0.065 + (i === 4 ? 0.03 : 0), Math.sin(i * 1.26) * 0.05, 0, 0, 0, 1, 0.85, 1); }, t0.x, t0.y, t0.z);
             });
-            mods('kitchen').forEach((m) => { const g = m._grp; if (rnd() < 0.25) return; add({ fem: rnd() < 0.7, apron: '#d86a6a', holdR: 'ladle' }, W(g, -0.7, 0, 0.6), yawOf(g, Math.PI), { act: 'cook', role: 'cook' }); const s = W(g, -1.1, 1.0, 0); steamAt(s.x, s.y, s.z, 4); });
+            mods('kitchen').forEach((m) => { const g = m._grp; if (rnd() < 0.25) return; add({ fem: rnd() < 0.7, apron: '#d86a6a', holdR: 'ladle' }, W(g, -0.05, 0, 0.45), yawOf(g, Math.PI), { act: 'cook', role: 'cook' }); const s = W(g, 0.1, 1.2, 0); steamAt(s.x, s.y, s.z, 4); });
             mods('desk').forEach((m) => { const g = m._grp; if (rnd() < 0.4) return; add({ seated: true, short: rnd() < 0.5, glasses: rnd() < 0.5 }, W(g, 0, 0, 0.66), yawOf(g, Math.PI), { pose: 'sit', seatY: 0.47, act: 'type', role: 'worker' }); });
             const fut = mods('futon')[0];
             const catCol = pick(['#e8a050', '#8a8a92', '#2a2a2e', '#f2ece2', '#c88a4a']);
@@ -701,11 +726,116 @@ const LIFE = (() => {
         } catch (e) { room.position.y = 0; scene.environment = null; }
     }
 
+    // ---------- телевизор: передачи сменяют друг друга, между ними — рябь ----------
+    const PROGS = ['anime', 'news', 'weather', 'cook', 'baseball', 'music'];
+    function screenTex() {
+        const c = document.createElement('canvas'); c.width = 256; c.height = 144;
+        const t = makeTex(c);
+        S.screens.push({ c, g: c.getContext('2d'), t, prog: PROGS[Math.floor(Math.random() * PROGS.length)], since: 0, next: 0, until: 6 + Math.random() * 6, col: '#5a8ad0' });
+        return t;
+    }
+    const TICK = ['今日の天気は晴れ、のち雨', '東京で桜が満開に', '新しい駅が開業しました', 'ラーメンの日、全国で行列', '週末は花火大会'];
+    const SUBS = [['行くぞ！', 'Вперёд!'], ['まさか…', 'Не может быть…'], ['ありがとう', 'Спасибо'], ['待って！', 'Подожди!'], ['約束だよ', 'Обещаешь?']];
+    function drawScreen(sc, t) {
+        const g = sc.g, W = 256, H = 144, k = t - sc.since;
+        g.save();
+        if (k < 0.35) { // рябь при переключении
+            const id = g.createImageData(64, 36); for (let i = 0; i < id.data.length; i += 4) { const v = Math.random() * 255; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255; }
+            g.putImageData(id, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(sc.c, 0, 0, 64, 36, 0, 0, W, H); sc.col = '#8a8a8a'; g.restore(); return;
+        }
+        const P = sc.prog;
+        if (P === 'anime') {
+            const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#ff9a6a'); gr.addColorStop(0.6, '#ffd8a0'); gr.addColorStop(1, '#6a4a7a'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+            g.fillStyle = '#3a2a4a'; for (let i = 0; i < 6; i++) g.fillRect(((i * 53 - k * 30) % 300 + 300) % 300 - 30, 70 - (i % 3) * 14, 34, 80);
+            const bob = Math.sin(k * 3) * 3, x = 128 + Math.sin(k * 0.7) * 20;
+            g.fillStyle = '#2a1a1a'; g.beginPath(); g.arc(x, 66 + bob, 30, Math.PI, 0); g.fill();
+            g.fillStyle = '#f6dcc4'; g.beginPath(); g.ellipse(x, 78 + bob, 24, 27, 0, 0, Math.PI * 2); g.fill();
+            g.fillStyle = '#2a1a1a'; for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(x + i * 10 - 8, 56 + bob); g.lineTo(x + i * 10 + 8, 56 + bob); g.lineTo(x + i * 10, 70 + bob); g.fill(); }
+            const blink = (k % 3.2) < 0.12; g.fillStyle = '#3a2a5a';
+            [-1, 1].forEach((s2) => { if (blink) g.fillRect(x + s2 * 10 - 5, 80 + bob, 10, 2); else { g.beginPath(); g.ellipse(x + s2 * 10, 80 + bob, 4.5, 6.5, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = '#fff'; g.fillRect(x + s2 * 10 - 3, 76 + bob, 2.5, 2.5); g.fillStyle = '#3a2a5a'; } });
+            g.strokeStyle = '#8a3a3a'; g.lineWidth = 2; g.beginPath(); const open = Math.sin(k * 14) > 0 && (k % 4) < 2.2; if (open) g.ellipse(x, 94 + bob, 4, 3, 0, 0, Math.PI * 2); else { g.moveTo(x - 5, 93 + bob); g.lineTo(x + 5, 93 + bob); } g.stroke();
+            g.fillStyle = '#f0e0d0'; g.fillRect(x - 20, 104 + bob, 40, 40);
+            const sub = SUBS[Math.floor(k / 4) % SUBS.length]; g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(0, 118, W, 26); g.fillStyle = '#fff'; g.font = '700 16px ' + JP; g.textAlign = 'center'; g.fillText(sub[0], W / 2, 136);
+            sc.col = '#ffb080';
+        } else if (P === 'news') {
+            const gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#16305a'); gr.addColorStop(1, '#3a6aa8'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+            g.fillStyle = 'rgba(255,255,255,0.08)'; for (let i = 0; i < 8; i++) g.fillRect(i * 34, 0, 2, 100);
+            g.fillStyle = '#c8d4e8'; g.fillRect(150, 20, 90, 58); g.fillStyle = '#4a6a3a'; g.fillRect(150, 55, 90, 23); g.fillStyle = '#e8c860'; g.beginPath(); g.arc(215, 36, 8, 0, 7); g.fill();
+            g.fillStyle = '#2a2a3a'; g.fillRect(52, 80, 70, 40); g.fillStyle = '#f0d0b8'; g.beginPath(); g.ellipse(87, 62 + Math.sin(k * 2) * 1, 15, 18, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = '#1a1414'; g.beginPath(); g.arc(87, 55, 16, Math.PI, 0); g.fill();
+            if (Math.sin(k * 12) > 0.2) { g.fillStyle = '#7a3a3a'; g.fillRect(83, 70, 8, 3); }
+            g.fillStyle = '#c8322a'; g.fillRect(0, 108, 70, 18); g.fillStyle = '#fff'; g.font = '700 13px ' + JP; g.textAlign = 'left'; g.fillText('ニュース', 6, 122);
+            g.fillStyle = 'rgba(255,255,255,0.92)'; g.fillRect(0, 126, W, 18); g.fillStyle = '#1a1a24'; g.font = '700 12px ' + JP;
+            const txt = TICK.join('　◆　'); g.fillText(txt, W - ((k * 45) % (txt.length * 12 + W)), 139);
+            g.fillStyle = '#fff'; g.font = '700 11px ' + UI; g.fillText(new Date().toTimeString().slice(0, 5), 214, 14);
+            sc.col = '#5a8ad0';
+        } else if (P === 'weather') {
+            g.fillStyle = '#7ab8e8'; g.fillRect(0, 0, W, H);
+            g.fillStyle = '#7ac070'; [[150, 30, 22, 14], [140, 52, 18, 24], [120, 80, 30, 16], [92, 96, 22, 12], [70, 110, 14, 10]].forEach((p) => { g.beginPath(); g.ellipse(p[0], p[1], p[2], p[3], -0.5, 0, 7); g.fill(); });
+            [['晴', 150, 26, '#ffcc33'], ['雨', 118, 74, '#5a7ab8'], ['曇', 80, 104, '#d0d4dc']].forEach((q, i) => { const y = q[2] + Math.sin(k * 2 + i) * 2; g.fillStyle = q[3]; g.beginPath(); g.arc(q[1] + 30, y, 10, 0, 7); g.fill(); g.fillStyle = '#1a1a24'; g.font = '700 12px ' + JP; g.textAlign = 'center'; g.fillText(q[0], q[1] + 30, y + 4); g.font = '700 11px ' + UI; g.fillText((18 + i * 3) + '°', q[1] + 54, y + 4); });
+            g.fillStyle = 'rgba(255,255,255,0.9)'; g.fillRect(0, 0, W, 20); g.fillStyle = '#1a3a6a'; g.font = '700 13px ' + JP; g.textAlign = 'left'; g.fillText('明日の天気', 8, 15);
+            sc.col = '#8ac0e8';
+        } else if (P === 'cook') {
+            g.fillStyle = '#f4e8d8'; g.fillRect(0, 0, W, H); g.fillStyle = '#c8a070'; g.fillRect(0, 96, W, 48);
+            g.fillStyle = '#6a6a74'; g.fillRect(90, 70, 76, 34); g.fillStyle = '#e8b048'; g.fillRect(94, 66, 68, 8);
+            for (let i = 0; i < 6; i++) { const ph = (k * 0.8 + i * 0.37) % 1; g.fillStyle = 'rgba(255,255,255,' + (0.7 * (1 - ph)) + ')'; g.beginPath(); g.arc(100 + i * 11 + Math.sin(k * 3 + i) * 3, 64 - ph * 50, 4 + ph * 6, 0, 7); g.fill(); }
+            const hx = 200 + Math.cos(k * 4) * 10, hy = 60 + Math.sin(k * 4) * 6; g.strokeStyle = '#8a6a3a'; g.lineWidth = 4; g.beginPath(); g.moveTo(128, 70); g.lineTo(hx, hy); g.stroke();
+            g.fillStyle = '#c8322a'; g.fillRect(0, 0, 110, 22); g.fillStyle = '#fff'; g.font = '700 13px ' + JP; g.textAlign = 'left'; g.fillText('今日の料理', 8, 16);
+            sc.col = '#f0c890';
+        } else if (P === 'baseball') {
+            g.fillStyle = '#3a8a3a'; g.fillRect(0, 0, W, H); g.fillStyle = '#c89a6a'; g.beginPath(); g.moveTo(128, 40); g.lineTo(200, 100); g.lineTo(128, 140); g.lineTo(56, 100); g.closePath(); g.fill();
+            g.fillStyle = '#fff'; [[128, 40], [200, 100], [56, 100], [128, 136]].forEach((p) => g.fillRect(p[0] - 3, p[1] - 3, 6, 6));
+            const ph = (k % 2.4) / 2.4; const bx = 128 + Math.sin(ph * 3) * 60 * ph, by = 120 - ph * 90 + ph * ph * 60;
+            g.fillStyle = '#ffffff'; g.beginPath(); g.arc(bx, by, 3, 0, 7); g.fill();
+            g.fillStyle = '#1a1a24'; g.fillRect(0, 0, W, 18); g.fillStyle = '#fff'; g.font = '700 12px ' + UI; g.textAlign = 'left'; g.fillText('TOKYO 3 - 2 OSAKA   9回裏', 8, 13);
+            sc.col = '#5ab05a';
+        } else {
+            const hue = (k * 40) % 360; g.fillStyle = 'hsl(' + hue + ',60%,25%)'; g.fillRect(0, 0, W, H);
+            for (let i = 0; i < 16; i++) { const h = 20 + Math.abs(Math.sin(k * 5 + i * 0.9)) * 70; g.fillStyle = 'hsl(' + ((hue + i * 15) % 360) + ',80%,60%)'; g.fillRect(8 + i * 15, 130 - h, 11, h); }
+            g.fillStyle = '#fff'; g.font = '700 16px ' + JP; g.textAlign = 'center'; g.fillText('♪ 今週のヒット曲', W / 2, 24);
+            sc.col = 'hsl(' + hue + ',70%,60%)';
+        }
+        // кинескопная полоса и виньетка
+        g.fillStyle = 'rgba(255,255,255,0.05)'; g.fillRect(0, (k * 40) % H, W, 6);
+        g.restore();
+    }
+
+    function gameTex(i) {
+        const kind = i === 7 ? 'taiko' : ['shmup', 'fight', 'puzzle'][i % 3];
+        let gm = S.games.find((x) => x.kind === kind);
+        if (!gm) { const c = document.createElement('canvas'); c.width = 192; c.height = 144; gm = { kind, c, g: c.getContext('2d'), t: makeTex(c), next: 0 }; gm.t.userData.shared = true; S.games.push(gm); }
+        return gm.t;
+    }
+    function drawGame(gm, t) {
+        const g = gm.g, W = 192, H = 144;
+        if (gm.kind === 'shmup') { g.fillStyle = '#05051a'; g.fillRect(0, 0, W, H); for (let i = 0; i < 40; i++) { g.fillStyle = '#fff'; g.fillRect((i * 47) % W, ((i * 31) + t * (20 + i % 3 * 25)) % H, 1.5, 1.5); } const sx = 96 + Math.sin(t * 1.3) * 60; g.fillStyle = '#36e2ff'; g.beginPath(); g.moveTo(sx, 120); g.lineTo(sx - 9, 134); g.lineTo(sx + 9, 134); g.fill(); g.fillStyle = '#ffd23f'; for (let i = 0; i < 6; i++) g.fillRect(sx - 1, 118 - ((t * 160 + i * 22) % 120), 2, 6); for (let i = 0; i < 5; i++) { const ex = 20 + i * 38 + Math.sin(t * 2 + i) * 10, ey = 20 + Math.sin(t + i) * 8; g.fillStyle = ['#ff3fa4', '#7cff6a'][i % 2]; g.fillRect(ex - 7, ey - 5, 14, 10); } g.fillStyle = '#fff'; g.font = '700 10px ' + UI; g.fillText('SCORE ' + String(Math.floor(t * 130) % 100000).padStart(5, '0'), 6, 12); }
+        else if (gm.kind === 'fight') { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#ff8a3a'); gr.addColorStop(1, '#3a1a3a'); g.fillStyle = gr; g.fillRect(0, 0, W, H); g.fillStyle = '#2a1a1a'; g.fillRect(0, 112, W, 32); const a = Math.sin(t * 3) * 14; [[60 + a, '#36e2ff'], [132 - a, '#ff3fa4']].forEach(([x, col], i) => { g.fillStyle = col; g.fillRect(x - 8, 70, 16, 30); g.beginPath(); g.arc(x, 62, 8, 0, 7); g.fill(); g.fillRect(x - 8 + (i ? -12 : 12) * Math.max(0, Math.sin(t * 6 + i * 3)), 76, 16, 6); g.fillRect(x - 7, 100, 5, 14); g.fillRect(x + 2, 100, 5, 14); }); g.fillStyle = '#ffd23f'; g.fillRect(8, 8, 70 - (t * 5) % 60, 7); g.fillRect(W - 78, 8, 70 - (t * 7) % 60, 7); g.fillStyle = '#fff'; g.font = '900 14px ' + UI; g.textAlign = 'center'; g.fillText(Math.max(0, 99 - Math.floor(t) % 99), W / 2, 18); g.textAlign = 'left'; }
+        else if (gm.kind === 'puzzle') { g.fillStyle = '#1a1a3a'; g.fillRect(0, 0, W, H); const cols = ['#ff3fa4', '#36e2ff', '#ffd23f', '#7cff6a', '#b06bff']; for (let y = 0; y < 8; y++) for (let x = 0; x < 6; x++) { const v = (x * 7 + y * 13 + Math.floor(t * 0.7)) % 9; if (y < 3 && v > 3) continue; g.fillStyle = cols[v % 5]; g.fillRect(48 + x * 16, 10 + y * 16, 14, 14); } const fx = 48 + (Math.floor(t * 1.5) % 6) * 16, fy = 10 + ((t * 30) % 48); g.fillStyle = '#fff'; g.fillRect(fx, fy, 14, 14); g.font = '700 10px ' + UI; g.fillText('NEXT', 150, 20); }
+        else { g.fillStyle = '#ffe8a0'; g.fillRect(0, 0, W, H); g.fillStyle = '#3a2a2a'; g.fillRect(0, 54, W, 36); g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.arc(30, 72, 14, 0, 7); g.stroke(); for (let i = 0; i < 9; i++) { const x = W - ((t * 70 + i * 40) % (W + 40)) + 20; g.fillStyle = i % 3 ? '#e03a2a' : '#3a8ad0'; g.beginPath(); g.arc(x, 72, i % 4 === 0 ? 13 : 9, 0, 7); g.fill(); } g.fillStyle = '#c8322a'; g.font = '900 16px ' + JP; g.fillText('ドン!', 8, 30); g.fillStyle = '#3a2a2a'; g.font = '700 11px ' + UI; g.fillText('COMBO ' + (Math.floor(t * 3) % 120), 110, 122); }
+    }
+
     // ---------- состояние и кадр ----------
-    const S = { room: [], loose: [], bubbles: [], cloth: [], tv: [], motes: null, envRT: null, nextLine: 0, greetAt: 0, greeted: true, t: 0 };
-    function clearRoom() { S.room = []; S.bubbles = []; S.cloth = []; S.tv = []; S.motes = null; }
+    const S = { room: [], loose: [], bubbles: [], cloth: [], tv: [], screens: [], games: [], fx: [], motes: null, envRT: null, nextLine: 0, greetAt: 0, greeted: true, t: 0 };
+    function clearRoom() { S.room = []; S.bubbles = []; S.cloth = []; S.tv = []; S.screens = []; S.games.forEach((gm) => gm.t.dispose()); S.games = []; S.fx = []; S.motes = null; S.occ = null; }
     function onEnter() { captureEnv(); S.greeted = false; S.greetAt = S.t + 0.7; S.nextLine = S.t + 4; }
     function onExit() { scene.environment = null; if (S.envRT) { S.envRT.dispose(); S.envRT = null; } S.bubbles.forEach((b) => { if (b.s.parent) b.s.parent.remove(b.s); b.s.material.dispose(); }); S.bubbles = []; }
+    const _ray = new THREE.Raycaster();
+    function occluders() {
+        if (S.occ) return S.occ;
+        const list = [];
+        room.traverse((o) => {
+            if (!o.isMesh || !o.visible || !o.material || Array.isArray(o.material)) return;
+            const m = o.material; if (m.transparent && (m.opacity < 0.95 || !m.depthWrite)) return;
+            let p = o; while (p && p !== room) { if (p.userData && p.userData.char) return; p = p.parent; }
+            list.push(o);
+        });
+        return (S.occ = list);
+    }
+    function hidden(ch) {
+        (ch.J.head || ch.root).getWorldPosition(_v2); _v2.y += 0.12 * (ch.sc || 1);
+        const d = _v2.distanceTo(camera.position); if (d < 0.6) return false;
+        _ray.set(camera.position, _v2.clone().sub(camera.position).normalize()); _ray.far = d - 0.2; _ray.near = 0.05;
+        return _ray.intersectObjects(occluders(), false).length > 0;
+    }
     function attached(o) { let p = o; while (p) { if (p === scene) return true; p = p.parent; } return false; }
     function update(t, dt) {
         S.t = t;
@@ -736,7 +866,7 @@ const LIFE = (() => {
                 S.nextLine = t + 3 + Math.random() * 4;
                 if (!S.bubbles.length) {
                     camera.getWorldDirection(_v);
-                    const cands = S.room.filter((ch) => { if (!ch.lines || t < ch.talkUntil + 5) return false; _v2.copy(ch.root.position).sub(camera.position); const d = _v2.length(); if (d > 8.5 || d < 0.3) return false; return _v2.normalize().dot(_v) > 0.45; });
+                    const cands = S.room.filter((ch) => { if (!ch.lines || t < ch.talkUntil + 5) return false; _v2.copy(ch.root.position).sub(camera.position); const d = _v2.length(); if (d > 8.5 || d < 0.3) return false; if (_v2.normalize().dot(_v) <= 0.45) return false; return !hidden(ch); });
                     if (cands.length) { const ch = cands[Math.floor(Math.random() * cands.length)]; const ln = ch.lines[Math.floor(Math.random() * ch.lines.length)]; if (ch.looking || ch.cat) ch.faceUntil = 0; say(ch, ln, ch.cat ? 1.8 : 2.8, t); }
                 }
             }
@@ -744,10 +874,17 @@ const LIFE = (() => {
                 const b = S.bubbles[i];
                 if (t > b.t1 || !attached(b.ch.root)) { if (b.s.parent) b.s.parent.remove(b.s); b.s.material.dispose(); S.bubbles.splice(i, 1); continue; }
                 (b.ch.J.head || b.ch.root).getWorldPosition(_v); b.s.position.set(_v.x, _v.y + (b.ch.cat ? 0.2 : 0.3) * (b.ch.sc || 1), _v.z);
-                b.s.material.opacity = Math.min(1, (t - b.t0) / 0.18, (b.t1 - t) / 0.3);
+                if (t > (b.chk || 0)) { b.chk = t + 0.15; b.vis = !hidden(b.ch); }
+                b.a = (b.a || 0) + ((b.vis ? 1 : 0) - (b.a || 0)) * Math.min(1, dt * 12);
+                b.s.material.opacity = Math.max(0, Math.min(1, (t - b.t0) / 0.18, (b.t1 - t) / 0.3)) * b.a;
+                b.s.visible = b.s.material.opacity > 0.01;
             }
             S.cloth.forEach((c) => { const a = c.m.geometry.attributes.position, p = a.array, b = c.base; for (let i = 0; i < p.length; i += 3) { const k = clamp((0.22 - b[i + 1]) / 0.44, 0, 1); p[i + 2] = b[i + 2] + k * k * 0.05 * Math.sin(t * 1.5 + c.ph + b[i] * 4); p[i] = b[i] + k * k * 0.012 * Math.sin(t * 1.1 + c.ph); } a.needsUpdate = true; });
-            S.tv.forEach((v) => { if (t > v.next) { v.next = t + 0.12 + Math.random() * 0.5; v.l.intensity = 0.4 + Math.random() * 1.0; v.l.color.setHSL(0.55 + Math.random() * 0.12, 0.5, 0.65); } });
+            S.screens.forEach((sc) => { if (!sc.since) { sc.since = t; } if (t - sc.since > sc.until) { sc.since = t; sc.until = 7 + Math.random() * 7; sc.prog = PROGS[(PROGS.indexOf(sc.prog) + 1 + Math.floor(Math.random() * (PROGS.length - 1))) % PROGS.length]; } if (t > sc.next) { sc.next = t + 0.08; drawScreen(sc, t); sc.t.needsUpdate = true; } });
+            S.games.forEach((gm) => { if (t > gm.next) { gm.next = t + 0.1; drawGame(gm, t); gm.t.needsUpdate = true; } });
+            S.fx.forEach((f) => f(t, dt));
+            const scol = S.screens.length ? S.screens[0].col : '#9fc0ff';
+            S.tv.forEach((v) => { if (t > v.next) { v.next = t + 0.1 + Math.random() * 0.25; v.l.intensity = 0.7 + Math.random() * 0.7; v.l.color.set(scol); } });
             if (S.motes) { const a = S.motes.geometry.attributes.position, p = a.array, b = S.motes.userData.base; for (let i = 0; i < p.length; i += 3) { p[i] = b[i] + Math.sin(t * 0.13 + i) * 0.25; p[i + 1] = b[i + 1] + Math.sin(t * 0.09 + i * 0.7) * 0.2; p[i + 2] = b[i + 2] + Math.cos(t * 0.11 + i * 1.3) * 0.25; } a.needsUpdate = true; }
         }
         {
@@ -785,5 +922,5 @@ const LIFE = (() => {
         S.loose.push(ch);
         return ch.root;
     }
-    return { makeChar, makeCat, populate, update, clearRoom, onEnter, onExit, upgradeMaterials, personProp, say, S };
+    return { screenTex, gameTex, makeChar, makeCat, populate, update, clearRoom, onEnter, onExit, upgradeMaterials, personProp, say, S };
 })();
