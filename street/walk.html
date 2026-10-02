@@ -121,6 +121,8 @@
         #talk .task .q { width: 100%; font-size: 12.5px; color: rgba(255,255,255,0.55); order: -1; }
         #talk .task .big { font: 700 32px/1.1 "Noto Sans JP", sans-serif; }
         #talk .task .kana { font: 500 15px "Noto Sans JP", sans-serif; color: rgba(255,255,255,0.6); }
+        #talk .task .line { width: 100%; font: 600 16px/1.55 "Noto Sans JP", sans-serif; color: #fff; }
+        #talk .task .trl { width: 100%; font-size: 12.5px; color: rgba(255,255,255,0.6); }
         #talk .task .want { font: 700 22px/1.2 Inter, sans-serif; color: #ffd9a0; }
         #talk .opts { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 10px 12px 12px; }
         #talk .opts.four { grid-template-columns: 1fr 1fr; }
@@ -2825,6 +2827,60 @@ const TALK = (() => {
     }
     function begin(c) { cur = c; ui().querySelector('.log').innerHTML = ''; }
     // ---- вопрос «что значит слово?»: варианты — переводы ----
+    // ---- ещё три вида вопросов по словам из словаря ----
+    const NEXT_OK = [['えへへ。', 'Хе-хе.'], ['まあね！', 'Ну да!'], ['勉強してるからね。', 'Я же учусь.']], NEXT_BAD = [['なるほど！', 'Понятно!'], ['覚えておきます。', 'Запомню.'], ['あ、そっか！', 'А, точно!']];
+    const kanaOf = (w) => (w.kana && w.kana !== jpOf(w) ? w.kana : '');
+    const hasReading = (w) => !!(w.kanji && w.kana && w.kana !== w.kanji && /[㐀-鿿]/.test(w.kanji) && /^[ぁ-ゖー]+$/.test(w.kana));
+    // реплика из аниме, откуда слово взято (у слов из плеера есть sentence)
+    const lineOf = (w) => { const s = String(w.sentence || ''); const k = jpOf(w); return s.length > k.length + 2 && s.length < 70 && k && s.includes(k) ? s : ''; };
+    const markGood = (txt) => [...el.querySelectorAll('.op')].forEach((bb) => { if (bb.querySelector('b').dataset.furi === txt) bb.classList.add('good'); });
+    function answerWith(ok, line, after) { setTimeout(() => show(line, sample(ok ? NEXT_OK : NEXT_BAD, 2).map(([j, r]) => ({ jp: j, ru: r, go: after }))), 650); }
+    // «как по-японски?»: показываем перевод, выбираем слово
+    function quizHow(w, after) {
+        const opts = shuffle([w].concat(distractors(w, 3, jpOf))).map((x) => ({ jp: jpOf(x), kana: x.kana, go: (b) => {
+            const ok = x === w; b.classList.add(ok ? 'good' : 'bad'); if (ok) audio.ding(); else markGood(jpOf(w));
+            const k = kanaOf(w) ? ' (' + kanaOf(w) + ')' : '';
+            answerWith(ok, ok ? pick([['そうそう、「' + jpOf(w) + '」だ！ありがとう！', 'Точно, «' + jpOf(w) + '»! Спасибо!'], ['それそれ！「' + jpOf(w) + '」！', 'Оно самое! «' + jpOf(w) + '»!']])
+                : ['うーん、「' + jpOf(x) + '」は別の意味だよ。正解は「' + jpOf(w) + '」！', 'Хм, «' + jpOf(x) + '» — это «' + meaning(x) + '». Правильно — «' + jpOf(w) + '»' + k + '.'], after);
+        } }));
+        show(pick([['ねえ、これって日本語で何て言うんだっけ？', 'Слушай, а как это по-японски?'], ['ど忘れしちゃった…何だっけ？', 'Вылетело из головы… как же это?'], ['日本語で何と言うか、分かる？', 'Знаешь, как это сказать по-японски?']]), opts,
+            '<span class="want">' + esc(meaning(w)) + '</span><span class="q">Как это по-японски?</span>');
+    }
+    // «как читается?»: иероглифы → чтение каной
+    function quizRead(w, after) {
+        const others = distractors(w, 6, (x) => x.kana || '').filter((x) => /^[ぁ-ゖー]+$/.test(x.kana || '') && x.kana !== w.kana).slice(0, 3);
+        if (others.length < 3) return quizHow(w, after);
+        const opts = shuffle([w.kana].concat(others.map((x) => x.kana))).map((k) => ({ jp: k, go: (b) => {
+            const ok = k === w.kana; b.classList.add(ok ? 'good' : 'bad'); if (ok) audio.ding(); else markGood(w.kana);
+            answerWith(ok, ok ? ['正解！「' + w.kanji + '」は「' + w.kana + '」と読みます。', 'Верно! «' + w.kanji + '» читается «' + w.kana + '» — «' + meaning(w) + '».']
+                : ['惜しい！「' + w.kanji + '」は「' + w.kana + '」だよ。', 'Почти! «' + w.kanji + '» читается «' + w.kana + '» — «' + meaning(w) + '».'], after);
+        } }));
+        show(pick([['この漢字、どう読むか知ってる？', 'Знаешь, как читается этот иероглиф?'], ['これ、読める？', 'Сможешь прочитать?'], ['読み方、覚えてる？', 'Помнишь чтение?']]), opts,
+            '<span class="big">' + esc(w.kanji) + '</span><span class="q">Как это читается?</span>');
+    }
+    // реплика из аниме, где слово пропущено
+    function quizLine(w, after) {
+        const s = lineOf(w); if (!s) return quizHow(w, after);
+        const k = jpOf(w), blank = s.replace(k, '＿＿'), tr = String(w.sentenceTranslation || '').trim();
+        const opts = shuffle([w].concat(distractors(w, 3, jpOf))).map((x) => ({ jp: jpOf(x), kana: x.kana, go: (b) => {
+            const ok = x === w; b.classList.add(ok ? 'good' : 'bad'); if (ok) audio.ding(); else markGood(k);
+            answerWith(ok, [(ok ? 'そう！' : '正解は「' + k + '」。') + '「' + s + '」', (ok ? 'Точно! ' : 'Правильно — «' + k + '» (' + meaning(w) + '). ') + (tr ? '«' + tr + '»' : '')], after);
+        } }));
+        show(pick([['このセリフ、覚えてる？アニメで聞いたやつ。', 'Помнишь эту реплику? Из аниме, которое ты смотрел.'], ['あのアニメのセリフ、一言抜けてるよ。', 'В реплике из того аниме пропало слово.']]), opts,
+            '<span class="line">' + esc(blank) + '</span>' + (tr ? '<span class="trl">' + esc(tr) + '</span>' : '') + '<span class="q">Какое слово пропущено?</span>');
+    }
+    // вопрос по слову: вид выбираем из доступных для этого слова
+    function wordQuiz(w, after) {
+        if (!w) return after();
+        const kinds = ['meaning', 'how'];
+        if (hasReading(w)) kinds.push('read');
+        if (lineOf(w)) kinds.push('line', 'line');
+        const k = pick(kinds);
+        if (k === 'how') return quizHow(w, after);
+        if (k === 'read') return quizRead(w, after);
+        if (k === 'line') return quizLine(w, after);
+        return quiz(w, pick(QUIZ_ASK)(jpOf(w)), after);
+    }
     function quiz(w, ask, after) {
         if (!w) return after();
         const opts = shuffle([w].concat(distractors(w, 3, meaning))).map((x) => ({ jp: meaning(x), go: (b) => {
@@ -2951,6 +3007,7 @@ const TALK = (() => {
             const say = staff ? ['他に何かありますか？', 'Что-нибудь ещё?'] : pick([['今日は話せて楽しかった！', 'Было приятно поболтать!'], ['あ、もうこんな時間！', 'Ой, уже столько времени!'], ['また話そうね。', 'Поболтаем ещё как-нибудь.']]);
             const opts = sample(BYE_ME, 2).map(([j, r]) => ({ jp: j, ru: r, go: finish }));
             if (canMore) opts.unshift({ jp: staff ? 'あと一つ、いいですか？' : 'もう少し話そう！', ru: staff ? 'Можно ещё вопрос?' : 'Давай ещё поболтаем!', go: () => topic(false) });
+            if (group !== 'sleep' && role !== 'teacher' && role !== 'pianist' && pool().length >= 4 && opts.length < 4) opts.push({ jp: 'もう一問、お願い！', ru: 'Давай ещё вопрос!', go: () => wordQuiz(pickWord(), () => farewell(false)) });
             if (role === 'pianist') opts.unshift({ jp: '何か弾いてくれませんか？', ru: 'Сыграешь что-нибудь?', go: () => pianoMenu(ch, true) });
             if (role === 'teacher') opts.unshift({ jp: '黒板に書いてもいいですか？', ru: 'Можно написать на доске?', go: () => { show(['もちろん！書いてみてください。', 'Конечно! Попробуйте.'], []); setTimeout(() => { close(); WRITE.open(ch); }, 900); } });
             show(say, opts);
@@ -2958,9 +3015,9 @@ const TALK = (() => {
         const afterTopic = (first) => {
             if (group === 'sleep') return farewell(first);
             // чаще — интересный факт с пропущенным словом (учитель и старшие рассказывают охотнее), иначе — «что значит слово?»
-            if (pool().length >= 4 && Math.random() < (P && P.facts ? P.facts : (group === 'teach' || group === 'home' ? 0.75 : 0.55))) return factQuiz(() => farewell(first));
+            if (pool().length >= 4 && Math.random() < (P && P.facts ? P.facts * 0.8 : (group === 'teach' || group === 'home' ? 0.55 : 0.4))) return factQuiz(() => farewell(first));
             const w = pickWord();
-            if (w && Math.random() < (first ? 0.6 : 0.8)) return quiz(w, pick(QUIZ_ASK)(jpOf(w)), () => farewell(first));
+            if (w && Math.random() < (first ? 0.75 : 0.9)) return wordQuiz(w, () => farewell(first));
             farewell(first);
         };
         const topic = (first) => {
