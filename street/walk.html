@@ -115,7 +115,7 @@
     <h4>Улица</h4>
     <div class="opts"><a class="opt" data-theme="shinjuku" href="./walk.html?theme=shinjuku">Синдзюку</a><a class="opt" data-theme="yokocho" href="./walk.html?theme=yokocho">Ёкотё</a></div>
     <h4>Музыка</h4>
-    <div class="opts"><button class="opt" data-music="city">Ночной город</button><button class="opt" data-music="calm">Тихий вечер</button><button class="opt" data-music="lane">Переулок</button><button class="opt" data-music="lofi">Lo-fi</button></div>
+    <div class="opts"><button class="opt" data-music="city">Ночной город</button><button class="opt" data-music="snow">Снег над крышами</button><button class="opt" data-music="train">Ночной поезд</button><button class="opt" data-music="tea">Чайный дом</button><button class="opt" data-music="stars">Звёзды</button><button class="opt" data-music="harbor">Гавань</button><button class="opt" data-music="radio">Радио за стеной</button><button class="opt" data-music="calm">Тихий вечер</button><button class="opt" data-music="lane">Переулок</button><button class="opt" data-music="lofi">Lo-fi</button></div>
     <h4>Графика</h4>
     <div class="opts"><button class="opt" data-rain>Дождь</button></div>
     <h4>Управление</h4>
@@ -3454,7 +3454,7 @@ function buildSteam() {
 // Синдзюку — э-пиано и тихий дождь; Ёкотё — мелодия на кото; в комнате — тот же трек приглушённо, «из колонки».
 const audio = (() => {
     let ctx = null, master = null, bus = null, tone = null, enabled = settings.music !== false, sceneId = null, nodes = [], timer = 0, motionGain = null;
-    const VARIANTS = ['city', 'calm', 'lane', 'lofi'];
+    const VARIANTS = ['city', 'snow', 'train', 'tea', 'stars', 'harbor', 'radio', 'calm', 'lane', 'lofi'];
     let variant = VARIANTS.includes(settings.musicVar) ? settings.musicVar : 'city';
     const btn = document.getElementById('music');
     let noiseBuf = null, verb = null;
@@ -3496,6 +3496,13 @@ const audio = (() => {
         const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(vel, when + 3.5); g.gain.setValueAtTime(vel, when + dur - 4); g.gain.linearRampToValueAtTime(0, when + dur);
         o.connect(g); o2.connect(g2); g2.connect(g); g.connect(dest); o.start(when); o2.start(when); o.stop(when + dur + 0.1); o2.stop(when + dur + 0.1);
     }
+    function flute(c, f, when, dur, vel, dest) {
+        const o = c.createOscillator(); o.frequency.value = f; const vib = c.createOscillator(); vib.frequency.value = 4.8; const vg = c.createGain(); vg.gain.setValueAtTime(0, when); vg.gain.linearRampToValueAtTime(f * 0.004, when + 0.8); vib.connect(vg); vg.connect(o.frequency);
+        const g = c.createGain(); g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(vel, when + 0.18); g.gain.setValueAtTime(vel, when + Math.max(0.2, dur - 0.4)); g.gain.linearRampToValueAtTime(0, when + dur);
+        const br = c.createBufferSource(); br.buffer = getNoise(c); const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f * 2; bp.Q.value = 6; const bg = c.createGain(); bg.gain.value = 0.25;
+        o.connect(g); br.connect(bp); bp.connect(bg); bg.connect(g); g.connect(dest); o.start(when); vib.start(when); br.start(when, Math.random()); o.stop(when + dur + 0.1); vib.stop(when + dur + 0.1); br.stop(when + dur + 0.1);
+    }
+    function tick(c, when, vel, dest) { const s = c.createBufferSource(); s.buffer = getNoise(c); const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 1.2; const g = c.createGain(); g.gain.setValueAtTime(vel, when); g.gain.exponentialRampToValueAtTime(0.0001, when + 0.06); s.connect(bp); bp.connect(g); g.connect(dest); s.start(when, Math.random()); s.stop(when + 0.07); }
     function bass(c, f, when, dur, vel, dest) {
         const o = c.createOscillator(), o2 = c.createOscillator(); o.type = 'sine'; o2.type = 'triangle'; o.frequency.value = f; o2.frequency.value = f;
         const g2 = c.createGain(); g2.gain.value = 0.35; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; const g = c.createGain();
@@ -3596,16 +3603,52 @@ const audio = (() => {
                 BASS_HITS.forEach(([k, v, len]) => { if (st === k) bass(c, k === 10 && bar % 2 ? ch.bass * 1.5 : ch.bass, when, len * S16, v, bassBus); });
                 if ((bar % 2 ? KICK_B : KICK).includes(st)) kick(c, when, 0.55, drumBus);
                 if (st === 4 || st === 12) snare(c, when, 0.13, drumBus);
-                if (st % 2 === 0) hat(c, when, st % 4 === 2 ? 0.07 : 0.035, drumBus);
+                if (st % 2 === 0 && variant !== 'radio') hat(c, when, st % 4 === 2 ? 0.07 : 0.035, drumBus);
                 if (st === 15 && bar % 4 === 3) hat(c, when, 0.05, drumBus);
             }
             if (section === 'melody') {
                 const ph = PHRASES[Math.floor((bar - 4) / 2) % PHRASES.length], ps = (bar % 2) * 16 + st;
                 ph.forEach(([k, n, len]) => { if (k === ps) { if (id === 'yokocho') koto(c, N[n], when, 0.9, melBus); else keys(c, N[n], when, len * S16, 0.9, melBus); } });
             }
-            if (Math.random() < 0.18) crackle(c, when + Math.random() * S16, bus);
+            if (Math.random() < (variant === 'radio' ? 0.45 : 0.18)) crackle(c, when + Math.random() * S16, bus);
         };
-        const play = { city: playCity, calm: playCalm, lane: playLane, lofi: playLofi }[variant] || playCity;
+        // ---- ещё шесть вариантов в духе «Ночного города»: общая тёплая подложка и пространство ----
+        const bed = (ch, when, k) => { ch.low.forEach((f, i) => voice(c, f, when + i * 0.6, 15, (i ? 0.0075 : 0.0095) * k, cityBus)); ch.up.forEach((f, i) => voice(c, f, when + 1 + i * 0.5, 14, 0.0038 * k, cityBus)); };
+        // «Снег над крышами»: медленные нисходящие арпеджио челесты над Fadd9 · Cadd9 · Dm7 · B♭add9
+        const SNOW = [{ low: [87.3, N.C3], up: [N.A3, N.C4, N.G4] }, { low: [N.C3, N.G3], up: [N.E4, N.G4, N.D5] }, { low: [N.D3, N.A3], up: [349.2, N.A4, N.C5] }, { low: [116.5, 174.6], up: [N.D4, 349.2, N.C5] }];
+        const playSnow = (s, when) => {
+            const ch = SNOW[Math.floor(s / 64) % 4]; if (s % 64 === 0) bed(ch, when, 1.1);
+            if (s % 24 === 4 && Math.random() < 0.8) { const ns = ch.up.slice().reverse().map((f) => f * 2); if (Math.random() < 0.5) ns.push(ns[1]); ns.forEach((f, i) => musicBox(c, f, when + i * S16 * 2.2, 0.052, cityBus)); }
+        };
+        // «Ночной поезд»: тихий перестук колёс, аккорд раз в такт, мягкий бас — движение без барабанов
+        const playTrain = (s, when) => {
+            const ch = CITY[Math.floor(s / 64) % 4], st = s % 16; if (s % 64 === 0) bed(ch, when, 0.8);
+            if (st === 0 || st === 3 || st === 8 || st === 11) tick(c, when, st === 0 || st === 8 ? 0.018 : 0.011, cityBus);
+            if (st === 0) { ch.up.forEach((f, i) => keys(c, f, when + i * 0.02, 6 * S16, 0.2, keysBus)); bass(c, ch.low[0], when, 6 * S16, 0.32, bassBus); }
+            if (st === 8 && Math.random() < 0.6) bass(c, ch.low[1], when, 4 * S16, 0.24, bassBus);
+            if (Math.random() < 0.012) chime(c, ch.up[Math.floor(Math.random() * 3)] * 2, when, 0.04, cityBus, true);
+        };
+        // «Чайный дом»: долгие ноты бамбуковой флейты в ё-сэн и редкие щипки кото
+        let teaPos = 4;
+        const playTea = (s, when) => {
+            const ch = CITY[Math.floor(s / 64) % 4]; if (s % 64 === 0) bed(ch, when, 0.75);
+            if (s % 32 === 0 && Math.random() < 0.85) { let t = 0; const n = 2 + Math.floor(Math.random() * 2); for (let i = 0; i < n; i++) { teaPos = Math.max(1, Math.min(YO.length - 2, teaPos + (Math.random() < 0.5 ? -1 : 1))); const d = (6 + Math.floor(Math.random() * 5)) * S16; flute(c, YO[teaPos], when + t, d, 0.04, cityBus); t += d + S16; } }
+            if (Math.random() < 0.025) koto(c, YO[Math.floor(Math.random() * 5)], when, 0.5, melBus);
+        };
+        // «Звёзды»: колыбельная — музыкальная шкатулка перебирает аккорд над тёплым фоном
+        const ARP = [0, 1, 2, 3, 2, 1];
+        const playStars = (s, when) => {
+            const ch = CITY[Math.floor(s / 64) % 4]; if (s % 64 === 0) bed(ch, when, 0.95);
+            if (s % 4 === 0) { const notes = [ch.low[0] * 4, ch.up[0] * 2, ch.up[1] * 2, ch.up[2] * 2]; musicBox(c, notes[ARP[(s / 4) % ARP.length]], when, (s / 4) % 6 === 0 ? 0.05 : 0.034, cityBus); }
+        };
+        // «Гавань»: мягкий прибой, далёкий колокол в такт аккорду, редкие колокольчики
+        if (variant === 'harbor') [[0.07, 0.019], [0.045, 0.015]].forEach(([rate, depth]) => { const w = loopNoise(c, 'lowpass', 520, 0.4, depth * 1.2, cityBus); const lf = c.createOscillator(); lf.frequency.value = rate; const lg = c.createGain(); lg.gain.value = depth; lf.connect(lg); lg.connect(w.g.gain); lf.start(); nodes.push(w, { o: lf }); });
+        const playHarbor = (s, when) => {
+            const ch = CITY[Math.floor(s / 64) % 4]; if (s % 64 === 0) { bed(ch, when, 1.05); if (Math.random() < 0.7) { chime(c, ch.low[0] * 2, when + 0.5, 0.075, cityBus, true); chime(c, ch.low[1] * 2, when + 1.1, 0.055, cityBus, true); } }
+            if (Math.random() < 0.012) chime(c, ch.up[Math.floor(Math.random() * 3)] * 2, when, 0.035, cityBus, true);
+        };
+        if (variant === 'radio') { tone.frequency.value = 850; drumBus.gain.value = 0.4; bus.gain.value = 0.28; }
+        const play = { city: playCity, snow: playSnow, train: playTrain, tea: playTea, stars: playStars, harbor: playHarbor, radio: playLofi, calm: playCalm, lane: playLane, lofi: playLofi }[variant] || playCity;
         if (variant === 'lane') melBus.gain.value = 0.15;
         timer = setInterval(() => { while (next < c.currentTime + 0.15) { play(step, next + (step % 2 ? S16 * SWING : 0)); next += S16; step++; } }, 25);
         // шаги: шорох, громкость от скорости
