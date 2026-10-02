@@ -413,6 +413,11 @@ function layoutBlock(b) {
 const world = new THREE.Group(); scene.add(world);
 // Склейка статики: тысячи одноцветных коробок/цилиндров → один меш на цвет. Пропускаем всё с текстурами,
 // прозрачностью и всё, по чему кликают (userData.sign/door/exit/board).
+// склейка по отрезкам улицы (MERGE_CHUNK м) с отсечением вне кадра: раньше одна сетка тянулась на всю улицу
+// и видеокарта каждый кадр обрабатывала даже то, что за спиной
+const MERGE_CHUNK = +(new URLSearchParams(location.search).get('chunk') || 40);
+const _mp = new THREE.Vector3();
+const chunkOf = (o) => Math.floor(_mp.setFromMatrixPosition(o.matrixWorld).z / MERGE_CHUNK);
 function mergeStatic(group) {
     group.updateMatrixWorld(true);
     const buckets = new Map(), remove = [];
@@ -428,11 +433,14 @@ function mergeStatic(group) {
         let p = o, tagged = false;
         while (p && p !== group) { const u = p.userData || {}; if (u.sign || u.door || u.exit || u.board || u.label || u.keep) { tagged = true; break; } p = p.parent; }
         if (tagged && !doorMesh) return;
-        const key = (mt.userData.atlas ? 'atlas' + mt.uuid : '') + (mt.isMeshBasicMaterial ? 'b' : (mt.isMeshStandardMaterial ? 's' + mt.roughness + '/' + mt.metalness + '/' + mt.envMapIntensity : 'l')) + mt.color.getHex() + ':' + (mt.emissive ? mt.emissive.getHex() + '/' + mt.emissiveIntensity : 0) + ':' + mt.side;
-        if (!buckets.has(key)) buckets.set(key, { mt, geos: [] });
+        const kind = (mt.isMeshBasicMaterial ? 'b' : (mt.isMeshStandardMaterial ? 's' + mt.roughness + '/' + mt.metalness + '/' + mt.envMapIntensity : 'l')) + ':' + (mt.emissive ? mt.emissive.getHex() + '/' + mt.emissiveIntensity : 0) + ':' + mt.side + ':' + (mt.fog !== false);
+        const vc = !mt.userData.atlas; // цвет переносим в вершины: разные цвета — одна сетка
+        const ckey = (vc ? kind + '|vc' : 'atlas' + mt.uuid + kind + mt.color.getHex()) + '#' + chunkOf(o);
+        if (!buckets.has(ckey)) buckets.set(ckey, { mt, geos: [] });
         const g = o.geometry.clone().applyMatrix4(o.matrixWorld);
         for (const a of Object.keys(g.attributes)) if (a !== 'position' && a !== 'normal' && a !== 'uv') g.deleteAttribute(a);
-        buckets.get(key).geos.push(g);
+        if (vc) { const n = g.attributes.position.count, col = new Float32Array(n * 3), c = mt.color; for (let i = 0; i < n; i++) { col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; } g.setAttribute('color', new THREE.BufferAttribute(col, 3)); buckets.get(ckey).vc = true; }
+        buckets.get(ckey).geos.push(g);
         if (doorMesh) mt.visible = false; else remove.push(o); // дверь остаётся для касаний, но не рисуется
     });
     remove.forEach((o) => { if (o.parent) o.parent.remove(o); });
@@ -441,7 +449,9 @@ function mergeStatic(group) {
         const merged = BufferGeometryUtils.mergeGeometries(b.geos, false);
         b.geos.forEach((g) => g.dispose());
         if (!merged) return;
-        const m = new THREE.Mesh(merged, b.mt.clone()); m.frustumCulled = false; m.userData.merged = true;
+        merged.computeBoundingSphere();
+        const mm = b.mt.clone(); if (b.vc) { mm.vertexColors = true; mm.color.set(0xffffff); }
+        const m = new THREE.Mesh(merged, mm); m.userData.merged = true;
         group.add(m); n++;
     });
     mergeLines(group);
@@ -450,18 +460,19 @@ function mergeStatic(group) {
 }
 function mergeGlows(group) {
     group.updateMatrixWorld(true);
-    const geos = [], remove = [];
+    const chunks = new Map(), remove = [];
     group.children.forEach((o) => {
         const mt = o.material; if (!o.isMesh || !mt || Array.isArray(mt) || mt.map !== discTex || mt.blending !== THREE.AdditiveBlending || o.userData.door) return;
         const g = o.geometry.clone().applyMatrix4(o.matrixWorld); const c = mt.color.clone().multiplyScalar(mt.opacity), n = g.attributes.position.count, col = new Float32Array(n * 3);
         for (let i = 0; i < n; i++) { col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
         g.setAttribute('color', new THREE.BufferAttribute(col, 3)); for (const a of Object.keys(g.attributes)) if (!['position', 'normal', 'uv', 'color'].includes(a)) g.deleteAttribute(a);
-        geos.push(g); remove.push(o);
+        const ck = chunkOf(o); if (!chunks.has(ck)) chunks.set(ck, []); chunks.get(ck).push(g); remove.push(o);
     });
-    if (geos.length < 2) return;
-    const merged = BufferGeometryUtils.mergeGeometries(geos, false); geos.forEach((g) => g.dispose()); if (!merged) return;
+    if (remove.length < 2) return;
     remove.forEach((o) => { group.remove(o); o.geometry.dispose(); o.material.dispose(); });
-    const m = new THREE.Mesh(merged, new THREE.MeshBasicMaterial({ map: discTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); m.frustumCulled = false; m.userData.merged = true; group.add(m);
+    const gmat = new THREE.MeshBasicMaterial({ map: discTex, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+    chunks.forEach((geos) => { const merged = BufferGeometryUtils.mergeGeometries(geos, false); geos.forEach((g) => g.dispose()); if (!merged) return; merged.computeBoundingSphere();
+    const m = new THREE.Mesh(merged, gmat); m.userData.merged = true; group.add(m); });
 }
 // линии (провода, верёвки) одного цвета → один LineSegments: раньше каждая была отдельным вызовом отрисовки
 function mergeLines(group) {
@@ -2004,6 +2015,9 @@ rainBtn.addEventListener('click', () => { opts.rain = !opts.rain; saveSet({ rain
 const reflBtn = { classList: { remove() {}, toggle() {} } }; // кнопки отражений больше нет
 
 // ---- загрузка ----
+// японский шрифт: первая постройка ждёт его (не дольше 1,5 с) — раньше улица строилась дважды
+const fontReady = (document.fonts && document.fonts.load) ? Promise.race([document.fonts.load('700 20px "Noto Sans JP"').then((l) => l.length > 0).catch(() => false), new Promise((r) => setTimeout(() => r(false), 1500))]) : Promise.resolve(true);
+let builtBeforeFont = false;
 function load() {
     data = source === 'real' ? D.loadReal() : D.buildDemo();
     if (source === 'real' && !data.words.length) { toast('В этом браузере нет слов — показан встроенный набор'); data = D.buildDemo(); source = 'demo'; }
@@ -2015,7 +2029,8 @@ function load() {
         camera.position.set(0, 1.6, 2); yaw = tYaw = 0; pitch = tPitch = 0.02; vel.set(0, 0, 0);
         ensureBlocks(); updateHud(true);
     };
-    if (source === 'real' || data.source === 'owner') D.loadJlpt().then((m) => { jlptMap = m || {}; go(); }); else go();
+    const run = () => fontReady.then((ok) => { if (!ok) builtBeforeFont = true; go(); });
+    if (source === 'real' || data.source === 'owner') Promise.all([D.loadJlpt(), fontReady]).then(([m]) => { jlptMap = m || {}; run(); }); else run();
 }
 
 function resize() {
@@ -2129,4 +2144,5 @@ requestAnimationFrame(frame);
 })();
 { const ld = document.getElementById('loading'); if (ld) { ld.style.opacity = '0'; setTimeout(() => ld.remove(), 500); } const nw = document.getElementById('nowebgl'); if (nw) nw.style.display = 'none'; }
 window.__walk = { camera, blocks, scene, doors, colliders, renderer, tap, enter: (i) => enterRoom(doors[i || 0]), exit: exitRoom, pick: (x, y) => pick(x, y, 40), get fps() { return fpsV; }, get inside() { return inside.on; }, audio, LIFE, FESTIVAL, TALK, ROOM, PROP_BUILDERS, lamb, room, view: (x, z, yw, pt) => { camera.position.x = x; camera.position.z = z; yaw = tYaw = yw; pitch = tPitch = pt || 0; vel.set(0, 0, 0); lookVel.x = lookVel.y = 0; } };
-if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('700 20px "Noto Sans JP"')]).then(() => { blocks.forEach((b) => { if (b.built) { disposeBlock(b); } }); ensureBlocks(); }).catch(() => {});
+// шрифт опоздал к первой постройке — перерисовываем кварталы один раз
+if (document.fonts && document.fonts.load) document.fonts.load('700 20px "Noto Sans JP"').then(() => { if (!builtBeforeFont) return; builtBeforeFont = false; blocks.forEach((b) => { if (b.built) { disposeBlock(b); } }); ensureBlocks(); }).catch(() => {});
