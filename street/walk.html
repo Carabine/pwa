@@ -1159,9 +1159,10 @@ function placeModule(mod, grid, rnd, used) {
         if (mod.rule === 'wall' || mod.rule === 'corner') {
             wall = walls[Math.floor(rnd() * walls.length)];
             const along = (wall === 'back' || wall === 'front') ? W : D;
-            const len = mod.fill ? along - 0.4 : mod.w;
+            // модуль во всю стену: у боковых стен не доходит до входа на 3 м
+            const len = mod.fill ? (wall === 'back' ? along - 0.4 : along - 3.2) : mod.w;
             if (len > along - 0.4) continue;
-            let t = mod.rule === 'corner' ? (rnd() < 0.5 ? -along / 2 + 0.2 + len / 2 : along / 2 - 0.2 - len / 2) : (-along / 2 + 0.3 + len / 2 + rnd() * (along - 0.6 - len));
+            let t = mod.fill ? (wall === 'back' ? 0 : -along / 2 + 0.2 + len / 2) : (mod.rule === 'corner' ? (rnd() < 0.5 ? -along / 2 + 0.2 + len / 2 : along / 2 - 0.2 - len / 2) : (-along / 2 + 0.3 + len / 2 + rnd() * (along - 0.6 - len)));
             if (wall === 'front' && Math.abs(t - doorX) < len / 2 + 1.0) continue; // не перекрывать вход
             ry = WALL_RY[wall];
             if (wall === 'back') { x = t; z = -D / 2 + mod.d / 2; fw = len; fd = mod.d; }
@@ -1273,6 +1274,7 @@ function buildRoom(b, color, type) {
     const { objs, rest } = splitWords(b, type);
     ROOM_SHELLS[type]();
     const grid = new Grid(ROOM.w, ROOM.d);
+    grid.mark(ROOM.doorX - 1.4, ROOM.d / 2 - 2.6, ROOM.doorX + 1.4, ROOM.d / 2); // зона входа всегда свободна
     const used = { back: [], left: [], right: [], front: [] };
     const spots = [], placed = [];
     const mods = catalog(type, rnd);
