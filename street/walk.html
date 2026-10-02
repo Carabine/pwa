@@ -3455,7 +3455,7 @@ function buildSteam() {
 const audio = (() => {
     let ctx = null, master = null, bus = null, tone = null, enabled = settings.music !== false, sceneId = null, nodes = [], timer = 0, motionGain = null;
     const VARIANTS = ['city', 'snow', 'train', 'tea', 'stars', 'harbor', 'radio', 'calm', 'lane', 'lofi'];
-    let variant = VARIANTS.includes(settings.musicVar) ? settings.musicVar : 'city';
+    let variant = VARIANTS.includes(settings.musicVar) ? settings.musicVar : 'radio'; // по умолчанию — «Радио за стеной» (выбор пользователя)
     const btn = document.getElementById('music');
     let noiseBuf = null, verb = null;
     function getVerb(c) {
