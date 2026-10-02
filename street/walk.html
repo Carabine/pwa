@@ -432,10 +432,13 @@ function planBlocks() {
     data.words.forEach((w) => { delete w._takenBy; });
     quarters.forEach((q, qi) => {
         q.deckName = q.deckName || q.name; q.name = districtName(hashStr(q.deckName + th.id) + qi * 97, usedNames); q.emoji = '';
-        const n = q.words.length;
+        // первый квартал забирает из всего словаря до 36 предметных слов (улица + его комнаты); у исходных кварталов они исчезают
+        let extraWords = [];
+        if (qi === 0) { extraWords = data.words.filter((w) => q.words.indexOf(w) < 0 && propMeta(w.kanji || w.kana || '')).sort((x, y) => (x._state === 'new') - (y._state === 'new') || hashStr(x.kanji || '') % 7 - hashStr(y.kanji || '') % 7).slice(0, 36); extraWords.forEach((w) => { w._takenBy = 0; }); }
+        const n = q.words.length + extraWords.length;
         const perM = th.lanterns ? 2.4 : (2 * th.tiers.length) / th.spacing;
         const len = Math.max(14, Math.ceil(n / perM) + 8);
-        const b = { q, qi, z0: z, z1: z - len, len, signs: [], built: false, group: null };
+        const b = { q, qi, z0: z, z1: z - len, len, signs: [], built: false, group: null, extraWords };
         layoutBlock(b);
         blocks.push(b);
         z -= len;
@@ -443,7 +446,7 @@ function planBlocks() {
     streetLen = -z + 6;
 }
 function layoutBlock(b) {
-    const words = b.q.words.filter((w) => w._takenBy == null || w._takenBy === b.qi).sort((a, c) => String(c.createdAt || '').localeCompare(String(a.createdAt || '')));
+    const words = b.q.words.concat(b.extraWords || []).filter((w) => w._takenBy == null || w._takenBy === b.qi).sort((a, c) => String(c.createdAt || '').localeCompare(String(a.createdAt || '')));
     const slots = [];
     const zs = b.z0 - 3, ze = b.z1 + 3;
     th.tiers.forEach((t, ti) => [-1, 1].forEach((side) => { let z = zs - (ti * 0.37 + (side > 0 ? 0.5 : 0)) * th.spacing; let i = 0; while (z > ze) { slots.push({ kind: 'vsign', side, z, tier: t, style: (i + ti + (side > 0 ? 1 : 0)) % 3 === 0 ? 'vbox' : 'vneon' }); z -= th.spacing; i++; } }));
@@ -456,9 +459,8 @@ function layoutBlock(b) {
     const take = (pred) => { for (let i = 0; i < slots.length; i++) if (!used.has(i) && pred(slots[i])) { used.add(i); return slots[i]; } return null; };
     // слова-предметы: только те, что уместны на этой улице, не больше 4 на квартал; ставятся у дверей при постройке
     const streetOk = (text) => { const mt = propMeta(text); if (!mt || mt.where.indexOf('street') < 0) return false; if (mt.rain && !th.rain) return false; if (mt.theme && mt.theme !== th.id) return false; return true; };
-    const pool = b.qi === 0 ? words.concat((data ? data.words : []).filter((w) => words.indexOf(w) < 0)) : words;
-    const cand = pool.filter((w) => streetOk(w.kanji || w.kana || '')).sort((x, y) => (x._state === 'new') - (y._state === 'new') || hashStr(x.kanji || '') % 7 - hashStr(y.kanji || '') % 7).slice(0, b.qi === 0 ? 14 : 10);
-    cand.forEach((w) => { if (words.indexOf(w) < 0) { words.push(w); w._takenBy = b.qi; } }); // чужие слова первого квартала переезжают в него насовсем
+    // первый квартал забирает из всего словаря до 36 предметных слов: часть на улицу, остальные — в его комнаты; у исходных кварталов они исчезают
+    const cand = words.filter((w) => streetOk(w.kanji || w.kana || '')).sort((x, y) => (x._state === 'new') - (y._state === 'new') || hashStr(x.kanji || '') % 7 - hashStr(y.kanji || '') % 7).slice(0, b.qi === 0 ? 14 : 10);
     let pi = 0;
     words.forEach((w, idx) => {
         const text = w.kanji || w.kana || '', chars = Array.from(text), n = chars.length;
