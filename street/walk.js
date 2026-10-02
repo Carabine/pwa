@@ -346,12 +346,14 @@ function layoutBlock(b) {
     const take = (pred) => { for (let i = 0; i < slots.length; i++) if (!used.has(i) && pred(slots[i])) { used.add(i); return slots[i]; } return null; };
     // слова-предметы: только те, что уместны на этой улице, не больше 4 на квартал; ставятся у дверей при постройке
     const streetOk = (text) => { const mt = propMeta(text); if (!mt || mt.where.indexOf('street') < 0) return false; if (mt.rain && !th.rain) return false; if (mt.theme && mt.theme !== th.id) return false; return true; };
-    const cand = words.filter((w) => streetOk(w.kanji || w.kana || '')).sort((x, y) => (x._state === 'new') - (y._state === 'new') || hashStr(x.kanji || '') % 7 - hashStr(y.kanji || '') % 7).slice(0, 4);
+    const pool = b.qi === 0 ? words.concat((data ? data.words : []).filter((w) => words.indexOf(w) < 0)) : words;
+    const cand = pool.filter((w) => streetOk(w.kanji || w.kana || '')).sort((x, y) => (x._state === 'new') - (y._state === 'new') || hashStr(x.kanji || '') % 7 - hashStr(y.kanji || '') % 7).slice(0, b.qi === 0 ? 12 : 8);
+    cand.forEach((w) => { if (words.indexOf(w) < 0) words.push(w); }); // чужие слова первого квартала становятся его предметами
     let pi = 0;
     words.forEach((w, idx) => {
         const text = w.kanji || w.kana || '', chars = Array.from(text), n = chars.length;
         let s = null;
-        if (cand.indexOf(w) >= 0) s = { kind: 'prop', side: (pi++ % 2) ? 1 : -1, z: zs - 2 - pi * 3 };
+        if (cand.indexOf(w) >= 0) s = { kind: 'prop', side: (pi++ % 2) ? 1 : -1, z: zs - 1.5 - pi * 2.2 };
         if (n <= 2 && th.lanterns && idx % 3 !== 1) s = take((sl) => sl.kind === 'lantern');
         if (!s && n <= 3 && th.noren && idx % 4 === 2) s = take((sl) => sl.kind === 'noren');
         if (!s && th.hbox && n >= th.hbox.minChars) s = take((sl) => sl.kind === 'hbox');
@@ -512,8 +514,10 @@ function buildWorld() {
         const tube = new THREE.Mesh(new THREE.BoxGeometry(th.W - 0.4, 0.06, 0.06), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(col, '#ffffff', 0.4)) })); tube.position.set(0, 4.05, z + 0.14); world.add(tube);
         const name = next ? next.q.name : 'Начало';
         const gt = texGate(next ? name : '↻ ' + name, '', col);
-        const sign = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(th.W - 0.8, 4.4), Math.min(th.W - 0.8, 4.4) / 4), new THREE.MeshBasicMaterial({ map: gt, side: THREE.DoubleSide, transparent: true }));
+        const gw = Math.min(th.W - 0.8, 4.4);
+        const sign = new THREE.Mesh(new THREE.PlaneGeometry(gw, gw / 4), new THREE.MeshBasicMaterial({ map: gt, transparent: true }));
         sign.position.set(0, 3.4, z); world.add(sign);
+        const sback = new THREE.Mesh(new THREE.PlaneGeometry(gw, gw / 4), lamb('#14141b')); sback.position.set(0, 3.4, z - 0.02); sback.rotation.y = Math.PI; world.add(sback);
         // без световой стены: только арка, вывеска и трубка над ней
     });
     // прохожие
@@ -779,7 +783,8 @@ function buildBlock(b) {
             const x = s.side * (W2 - 0.12 - s.w / 2), y = (s.y0 + s.y1) / 2;
             const edge = lamb('#0e0e14');
             const face = new THREE.MeshBasicMaterial({ map: signTexture(s, s.isLit && s.state !== 'due'), fog: true });
-            const m = new THREE.Mesh(geo, [edge, edge, edge, edge, face, face]);
+            const back = lamb('#14141b');
+            const m = new THREE.Mesh(geo, [edge, edge, edge, edge, face, back]); // с тыла — глухая панель, текст только с лица
             m.position.set(x, y, s.z); m.userData.sign = s; g.add(m); s.meshes.push(m);
             if (s.state === 'worn') m.rotation.z = (s.seed % 2 ? 1 : -1) * 0.04;
             // кронштейны
