@@ -260,7 +260,9 @@ if (location.protocol !== 'file:') { const hb = document.getElementById('home');
 const opts = { rain: settings.rain !== false, reflect: false, bloom: true }; // отражения на улице выключены навсегда
 
 const canvas = document.getElementById('scene');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' }); }
+catch (e) { try { renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'default', failIfMajorPerformanceCaveat: false }); } catch (e2) { throw new Error('WebGL context: ' + (e2 && e2.message || e2)); } }
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ('ontouchstart' in window) ? 1.25 : 1.5));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene();
@@ -1797,5 +1799,25 @@ function frame(now) {
 }
 load();
 requestAnimationFrame(frame);
+// ---- телефон: во весь экран и горизонтально (браузер разрешает это только по касанию) ----
+(() => {
+    const phone = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
+    if (!phone) return;
+    const ov = document.getElementById('rotate'), portrait = () => innerHeight > innerWidth;
+    let skipped = false, lockFailed = false;
+    const sync = () => { ov.classList.toggle('on', portrait() && !skipped); if (lockFailed) { ov.querySelector('.t').textContent = 'Поверните телефон горизонтально'; ov.querySelector('.sub').textContent = 'Этот браузер не умеет поворачивать экран сам'; } };
+    const go = async () => {
+        try { if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: 'hide' }); } catch (e) { /* без полного экрана */ }
+        try { await screen.orientation.lock('landscape'); lockFailed = false; } catch (e) { lockFailed = true; }
+        sync();
+    };
+    ov.addEventListener('click', (e) => { if (e.target.id === 'rotate-skip') { skipped = true; sync(); return; } go(); });
+    // и любое первое касание сцены тоже разворачивает
+    addEventListener('pointerdown', (e) => { if (!skipped && portrait() && !ov.contains(e.target)) go(); }, { capture: true, once: true });
+    // вышли из полного экрана жестом «назад» — предложим снова
+    document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) { try { screen.orientation.unlock(); } catch (e) { /* нет */ } } sync(); });
+    addEventListener('resize', sync); sync();
+})();
+{ const ld = document.getElementById('loading'); if (ld) { ld.style.opacity = '0'; setTimeout(() => ld.remove(), 500); } const nw = document.getElementById('nowebgl'); if (nw) nw.style.display = 'none'; }
 window.__walk = { camera, blocks, scene, doors, colliders, renderer, tap, enter: (i) => enterRoom(doors[i || 0]), exit: exitRoom, pick: (x, y) => pick(x, y, 40), get fps() { return fpsV; }, get inside() { return inside.on; }, LIFE, ROOM, PROP_BUILDERS, lamb, room, view: (x, z, yw, pt) => { camera.position.x = x; camera.position.z = z; yaw = tYaw = yw; pitch = tPitch = pt || 0; vel.set(0, 0, 0); lookVel.x = lookVel.y = 0; } };
 if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('700 20px "Noto Sans JP"')]).then(() => { blocks.forEach((b) => { if (b.built) { disposeBlock(b); } }); ensureBlocks(); }).catch(() => {});

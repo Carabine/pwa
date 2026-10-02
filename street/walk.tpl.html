@@ -40,10 +40,28 @@
         #hint .btn.small { padding: 7px 12px; font-size: 12.5px; margin-left: auto; }
         #hint .key { font: 700 11px/1 Inter, monospace; color: var(--muted); border: 1px solid rgba(255,255,255,0.25); border-radius: 5px; padding: 3px 5px; }
         #hint.door #h-kanji { font-size: 22px; }
-        #nowebgl { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 30px; text-align: center; background: #05050a; color: #fff; font-size: 15px; }
+        #nowebgl { position: absolute; inset: 0; display: none; flex-direction: column; gap: 12px; align-items: center; justify-content: center; padding: 30px; text-align: center; background: #05050a; color: #fff; font-size: 15px; z-index: 50; }
+        #nowebgl .why { color: rgba(255,255,255,0.55); font-size: 12px; max-width: 320px; word-break: break-word; }
+        #nowebgl a { color: #9fb0ff; }
+        #rotate { position: absolute; inset: 0; z-index: 45; display: none; flex-direction: column; gap: 14px; align-items: center; justify-content: center; padding: 28px; text-align: center; color: #fff; background: rgba(5,5,12,0.82); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); font-size: 16px; font-weight: 700; }
+        #rotate.on { display: flex; }
+        #rotate .ph { width: 46px; height: 78px; border: 3px solid #fff; border-radius: 10px; animation: rot 1.8s ease-in-out infinite; }
+        #rotate .sub { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.6); max-width: 280px; }
+        #rotate button { margin-top: 6px; background: none; border: 0; color: rgba(255,255,255,0.55); font: inherit; font-size: 13px; text-decoration: underline; }
+        @keyframes rot { 0%, 25% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+        /* телефон лёжа: экран низкий — убираем текст управления, ужимаем легенду и кнопки */
+        @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
+            .hud.bottom .hint { display: none; }
+            .hud.bottom .legend { font-size: 11px; gap: 10px; }
+            .hud.bottom .btn { padding: 8px 14px; font-size: 13px; }
+            .hud.bottom .btn.ghost { padding: 8px 11px; }
+            .hud.top .name { font-size: 16px; }
+            #joy { bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); left: calc(env(safe-area-inset-left, 0px) + 22px); }
+        }
+        #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 14px; letter-spacing: 0.04em; pointer-events: none; z-index: 40; transition: opacity .4s; }
     </style>
     <script type="importmap">
-    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+    { "imports": { "three": "./vendor/three/build/three.module.min.js", "three/addons/": "./vendor/three/examples/jsm/" } }
     </script>
 </head>
 <body data-theme="shinjuku">
@@ -102,12 +120,27 @@
 </div>
 <div id="toast"></div>
 <div id="fps"></div>
-<div id="nowebgl">Для «Улицы слов» нужен WebGL и доступ к сети (библиотека Three.js грузится с CDN). Попробуйте открыть страницу в другом браузере.</div>
+<div id="loading">Зажигаем вывески…</div>
+<div id="rotate"><div class="ph"></div><div class="t">Коснитесь — улица развернётся во весь экран</div><div class="sub">Гулять удобнее, держа телефон горизонтально</div><button type="button" id="rotate-skip">Остаться вертикально</button></div>
+<div id="nowebgl"><div class="msg"></div><div class="why"></div><a href="#" onclick="location.reload(); return false;">Попробовать ещё раз</a></div>
 <script>if (/[?&]src=sample\b/.test(location.search)) document.write('<script src="./sample-words.js"><\/script>'); else if (location.protocol === 'file:') document.write('<script src="./words-busyd.js"><\/script>');</script>
 <script src="./street-data.js"></script>
 <script type="module">
 /*__WALK_JS__*/
 </script>
-<script>window.addEventListener('error', function (e) { if (/three|import/i.test(String(e.message)) || !window.__walk) { setTimeout(function () { if (!window.__walk) document.getElementById('nowebgl').style.display = 'flex'; }, 4000); } });</script>
+<script>(function () {
+    function webgl() { try { var c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } }
+    function show(msg, why) { if (window.__walk) return; var el = document.getElementById('nowebgl'); el.querySelector('.msg').textContent = msg; el.querySelector('.why').textContent = why || ''; el.style.display = 'flex'; var l = document.getElementById('loading'); if (l) l.style.display = 'none'; }
+    var firstErr = '';
+    window.addEventListener('error', function (e) {
+        if (window.__walk) return;
+        var m = String(e.message || (e.error && e.error.message) || ''); if (!firstErr) firstErr = m;
+        if (!webgl()) show('Этот браузер не даёт доступ к 3D-графике (WebGL).', 'Включите аппаратное ускорение в настройках браузера или откройте страницу в Chrome.');
+        else if (/WebGL|context/i.test(m)) show('Не удалось включить 3D-графику на этом устройстве.', m);
+        else if (/import|module|fetch|three/i.test(m)) show('Не загрузилась 3D-библиотека — похоже, проблема с сетью.', m);
+    });
+    // долго нет старта — объясняем, что именно не так
+    setTimeout(function () { if (!window.__walk) show(webgl() ? (firstErr ? 'Улица не запустилась.' : 'Улица всё ещё загружается…') : 'Этот браузер не даёт доступ к 3D-графике (WebGL).', firstErr || (webgl() ? 'Проверьте сеть и попробуйте ещё раз.' : 'Включите аппаратное ускорение в настройках браузера или откройте страницу в Chrome.')); }, 30000);
+})();</script>
 </body>
 </html>
