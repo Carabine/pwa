@@ -347,7 +347,7 @@ function layoutBlock(b) {
     // слова-предметы: только те, что уместны на этой улице, не больше 4 на квартал; ставятся у дверей при постройке
     const streetOk = (text) => { const mt = propMeta(text); if (!mt || mt.where.indexOf('street') < 0) return false; if (mt.rain && !th.rain) return false; if (mt.theme && mt.theme !== th.id) return false; return true; };
     const pool = b.qi === 0 ? words.concat((data ? data.words : []).filter((w) => words.indexOf(w) < 0)) : words;
-    const cand = pool.filter((w) => streetOk(w.kanji || w.kana || '')).sort((x, y) => (x._state === 'new') - (y._state === 'new') || hashStr(x.kanji || '') % 7 - hashStr(y.kanji || '') % 7).slice(0, b.qi === 0 ? 12 : 8);
+    const cand = pool.filter((w) => streetOk(w.kanji || w.kana || '')).sort((x, y) => (x._state === 'new') - (y._state === 'new') || hashStr(x.kanji || '') % 7 - hashStr(y.kanji || '') % 7).slice(0, b.qi === 0 ? 14 : 10);
     cand.forEach((w) => { if (words.indexOf(w) < 0) words.push(w); }); // чужие слова первого квартала становятся его предметами
     let pi = 0;
     words.forEach((w, idx) => {
@@ -1033,7 +1033,7 @@ function roomShell(wallMat, floorMat, ceilColor, doorColor) {
 function splitWords(b, type) {
     const words = b.signs.filter((s) => !s.deco);
     const fits = (s) => { const mt = propMeta(s.text); return !!mt && !!type && mt.where.indexOf(type) >= 0; };
-    const objs = words.filter(fits).sort((x, y) => (x.state === 'new') - (y.state === 'new')).slice(0, 14);
+    const objs = words.filter(fits).sort((x, y) => (x.state === 'new') - (y.state === 'new')).slice(0, 24);
     return { objs, rest: words.filter((s) => objs.indexOf(s) < 0) };
 }
 
@@ -1120,6 +1120,7 @@ function catalog(type, rnd) {
     const poster = (g, x, y, z) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.64), lamb('#ffffff', { map: texPoster(rnd) })); p.position.set(x, y, z); p.rotation.z = (rnd() - 0.5) * 0.06; g.add(p); };
     const acUnit = (g, x, y, z) => { B(g, 0.9, 0.3, 0.22, '#e8ecf0', x, y, z); B(g, 0.8, 0.04, 0.2, '#c8ccd4', x, y - 0.12, z + 0.02); for (let i = 0; i < 8; i++) B(g, 0.08, 0.02, 0.01, '#b8bcc4', x - 0.35 + i * 0.1, y - 0.1, z + 0.12); };
     const COMMON = [
+        { name: 'display', rule: 'wall', walls: ['left', 'right', 'back'], w: 1.8, d: 0.45, h: 1.9, solid: true, count: [1, 2], build(g) { B(g, 1.8, 1.9, 0.4, '#4a3a2e', 0, 0.95, -0.02); this.spots = []; for (let lv = 0; lv < 4; lv++) { B(g, 1.7, 0.03, 0.36, '#8a6a48', 0, 0.35 + lv * 0.45, 0); for (let k = 0; k < 4; k++) this.spots.push({ kind: 'table', x: -0.6 + k * 0.4, y: 0.37 + lv * 0.45, z: 0.05 }); } } },
         { name: 'posters', rule: 'wall', walls: ['left', 'right', 'front', 'back'], w: 1.3, d: 0.06, h: 0.8, high: true, count: [1, 3], build(g) { poster(g, -0.35, 1.8 + rnd() * 0.5, 0.02); poster(g, 0.3, 1.7 + rnd() * 0.5, 0.02); } },
         { name: 'ac', rule: 'wall', walls: ['left', 'right', 'back'], w: 1.0, d: 0.3, h: 0.5, high: true, count: [1, 2], build(g) { acUnit(g, 0, ROOM.h - 0.45, 0.12); } },
         { name: 'skirting', rule: 'none', build(g) { const { w, d } = ROOM; B(g, w, 0.1, 0.03, '#2a2016', 0, 0.05, -d / 2 + 0.015); B(g, w, 0.1, 0.03, '#2a2016', 0, 0.05, d / 2 - 0.015); B(g, 0.03, 0.1, d, '#2a2016', -w / 2 + 0.015, 0.05, 0); B(g, 0.03, 0.1, d, '#2a2016', w / 2 - 0.015, 0.05, 0); } },
@@ -1191,7 +1192,7 @@ function catalog(type, rnd) {
     ];
 }
 const ROOM_SHELLS = {
-    izakaya: () => { const wood = texWood('#5a3b22', 8); wood.repeat.set(3, 1); const woodF = texWood('#2b1b10', 10); woodF.repeat.set(4, 6); roomShell(lamb('#ffffff', { map: wood }), lamb('#ffffff', { map: woodF }), '#1a120c'); const nr = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.55), new THREE.MeshBasicMaterial({ map: texNorenPlain('#1d2a5c'), side: THREE.DoubleSide, transparent: true })); nr.position.set(ROOM.doorX, 1.85, ROOM.d / 2 - 0.1); room.add(nr); room.add(new THREE.AmbientLight(0xffe0c0, 0.6)); [[-1.5, -ROOM.d / 4], [1.5, ROOM.d / 4], [0, 0]].forEach((p) => { const l = new THREE.PointLight(0xffd9a0, 3.6, 12, 1.4); l.position.set(p[0], ROOM.h - 0.6, p[1]); room.add(l); }); },
+    izakaya: () => { const wood = texWood('#5a3b22', 8); wood.repeat.set(3, 1); const woodF = texWood('#2b1b10', 10); woodF.repeat.set(4, 6); roomShell(lamb('#ffffff', { map: wood }), lamb('#ffffff', { map: woodF }), '#1a120c'); const nr = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.55), new THREE.MeshBasicMaterial({ map: texNorenPlain('#1d2a5c'), side: THREE.DoubleSide, transparent: true })); nr.position.set(ROOM.doorX, 1.85, ROOM.d / 2 - 0.1); room.add(nr); room.add(new THREE.AmbientLight(0xffe0c0, 0.75)); for (let z = -ROOM.d / 2 + 1.8; z < ROOM.d / 2 - 1; z += 3.2) for (let x = -ROOM.w / 2 + 1.6; x < ROOM.w / 2 - 1; x += 2.8) { const l = new THREE.PointLight(0xffd9a0, 2.4, 9, 1.4); l.position.set(x, ROOM.h - 0.6, z); room.add(l); const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfff1d0 })); bulb.position.set(x, ROOM.h - 0.45, z); room.add(bulb); } },
     konbini: () => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#e4e6ea'; g.fillRect(0, 0, 128, 128); g.strokeStyle = 'rgba(0,0,0,0.18)'; g.lineWidth = 2; [[1, 1], [65, 65], [65, 1], [1, 65]].forEach((p) => g.strokeRect(p[0], p[1], 62, 62)); const t = makeTex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(ROOM.w, ROOM.d); roomShell(lamb('#eef0f4'), lamb('#ffffff', { map: t }), '#f4f6fa', '#dfefff'); },
     class: () => { roomShell(lamb('#e8e2d0'), lamb('#b9a98a'), '#f0ece0', '#f4e8c8'); },
     home: () => { const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#9aa06a'; g.fillRect(0, 0, 256, 128); for (let y = 0; y < 128; y += 3) { g.fillStyle = 'rgba(0,0,0,' + (y % 6 ? 0.06 : 0.12) + ')'; g.fillRect(0, y, 256, 1); } g.fillStyle = '#2a2a24'; g.fillRect(0, 0, 256, 6); g.fillRect(0, 122, 256, 6); const t = makeTex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(ROOM.w / 2, ROOM.d / 2); roomShell(lamb('#e6dcc4'), lamb('#ffffff', { map: t }), '#d8ccb4', '#3a2a1a'); },
@@ -1231,7 +1232,7 @@ function buildRoom(b, color, type) {
     });
     // места у двери и на стенах для предметов
     spots.push({ kind: 'door', x: ROOM.doorX - 1.0, y: 0, z: ROOM.d / 2 - 0.6, ry: 0 });
-    ['left', 'right', 'back'].forEach((wall) => freeWallSegments(wall, used).forEach((sg) => { const p = wallPoint(wall, (sg[0] + sg[1]) / 2, 0, 0.05); spots.push({ kind: 'wall', x: p.x, y: 0, z: p.z, ry: p.ry }); }));
+    ['left', 'right', 'back', 'front'].forEach((wall) => freeWallSegments(wall, used).forEach((sg) => { const p = wallPoint(wall, (sg[0] + sg[1]) / 2, 0, 0.05); spots.push({ kind: 'wall', x: p.x, y: 0, z: p.z, ry: p.ry }); for (let t = sg[0] + 0.5; t < sg[1] - 0.4; t += 1.1) { const q = wallPoint(wall, t, 0, 0.55); spots.push({ kind: 'floor', x: q.x, y: 0, z: q.z, ry: q.ry }); } }));
     // слова без предмета — на поверхности типа комнаты по свободным стенам
     let wi = 0;
     const surfaceOn = (wall, y, step, make) => { freeWallSegments(wall, used).forEach((sg) => { for (let t = sg[0] + step / 2; t < sg[1] - step / 2 && wi < rest.length; t += step) { const sgn = rest[wi++]; const p = wallPoint(wall, t, y, 0.02); const m = make(sgn); m.position.set(p.x, p.y, p.z); m.rotation.y = p.ry; m.rotation.z = (hashStr(sgn.text) % 7 - 3) * 0.01; m.userData.sign = sgn; room.add(m); sgn.strip = m; inside.strips.push(m); } }); };
