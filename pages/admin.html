@@ -44,12 +44,24 @@
     .dot--ok { background: var(--ok); } .dot--warn { background: var(--warn); } .dot--bad { background: var(--bad); }
 
     /* вкладки: липкие, мелкие */
-    .tabs { position: sticky; top: 0; z-index: 10; display: flex; gap: 4px; padding: 6px 0; margin: 0 0 6px; background: var(--bg); }
+    .tabs { position: sticky; top: 0; z-index: 10; display: flex; gap: 4px; padding: 6px 0; margin: 0 0 6px; background: var(--bg);
+        overflow-x: auto; scrollbar-width: none; }
     .tabs button { flex: 1 1 auto; padding: 6px 8px; border-radius: 7px; background: var(--card); color: var(--muted);
         border: 0; font: inherit; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
     .tabs button.active { background: var(--card2); color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
+    /* пять вкладок на 360px: поджимаем, иначе «Почта» уезжает за край */
+    @media (max-width: 400px) { .tabs { gap: 3px; } .tabs button { padding: 6px 5px; font-size: 12px; } }
     .tab { display: none; }
     .tab.active { display: block; }
+
+    /* почта: сообщение целиком, переносы сохраняем */
+    .fb { padding: 7px 10px; border-top: 1px solid var(--border); }
+    .fb__top { display: flex; gap: 8px; align-items: baseline; font-size: 12px; color: var(--muted); min-width: 0; }
+    .fb__who { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fb__who b { color: var(--text); font-weight: 600; }
+    .fb__at { color: var(--faint); white-space: nowrap; }
+    .fb__text { margin: 3px 0 2px; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .fb__meta { font-size: 11px; color: var(--faint); overflow-wrap: anywhere; }
 
     /* коробка = блок с шапкой и строками */
     .box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
@@ -229,6 +241,7 @@
         <button data-tab="stats">Посетители</button>
         <button data-tab="users">Пользователи</button>
         <button data-tab="system">Система</button>
+        <button data-tab="mail">Почта</button>
     </div>
 
     <!-- Обзор: кто на сайте → 4 цифры + дни → что смотрят/откуда → аккаунты → система. -->
@@ -293,6 +306,15 @@
             <div class="box__h">Материалы</div>
             <div class="row"><span class="l"><a href="https://animei.space/promo-vert-bf6b634a/" target="_blank" rel="noopener">🎬 Промо-ролики</a></span>
                 <span class="m">6 сцен · вертикаль и 16:9 · RU/UA/EN</span></div>
+        </div>
+    </div>
+
+    <!-- Почта: обратная связь из приложений (POST /feedback), новые сверху. -->
+    <div class="tab" id="tab-mail">
+        <div class="box">
+            <div class="box__h">Почта <span id="fbSum"></span>
+                <button class="btn btn--small" id="fbRefresh" type="button">обновить</button></div>
+            <div id="fbList" class="msg">Загрузка…</div>
         </div>
     </div>
 </div>
@@ -394,6 +416,7 @@
         if (loaded[name]) return;
         loaded[name] = true;
         if (name === 'users') loadUsers();
+        if (name === 'mail') loadFeedback();
         // Статистика встроена прямо здесь (без отдельной страницы/iframe): виджет
         // из stats-view.js монтируется в контейнер, использует ту же сессию/ключ.
         if (name === 'stats' && window.StatsView) StatsView.mount(document.getElementById('statsRoot'));
@@ -691,6 +714,37 @@
         });
     }
     document.getElementById('issuesRefresh').addEventListener('click', loadIssues);
+
+    // ---------- Почта (POST /feedback → /admin/feedback) ----------
+    // Грузится только при открытии вкладки: приоритет низкий.
+    var FB_FROM = { street: 'Улица слов' };
+    function renderFeedback(d) {
+        var items = d.items || [];
+        var el = document.getElementById('fbList');
+        var weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+        var week = items.filter(function (i) { return new Date(i.at).getTime() > weekAgo; }).length;
+        document.getElementById('fbSum').textContent = '· ' + items.length + (week ? ' · ' + week + ' за неделю' : '');
+        if (!items.length) { el.className = 'msg'; el.textContent = 'Писем пока нет'; return; }
+        el.className = '';
+        el.innerHTML = items.map(function (i) {
+            var m = i.meta || {};
+            var who = i.email ? '<b>' + esc(i.email) + '</b>' : i.userId ? '<b>id ' + esc(i.userId) + '</b>' : 'гость';
+            var from = i.from ? esc(FB_FROM[i.from] || i.from) : '—';
+            var extra = Object.keys(m).filter(function (k) { return k !== 'page' && k !== 'lang' && k !== 'ua'; })
+                .map(function (k) { return k + '=' + (typeof m[k] === 'object' ? JSON.stringify(m[k]) : m[k]); });
+            var meta = [m.page, m.lang, uaShort(m.ua || i.ua), i.ip].concat(extra).filter(Boolean).join(' · ');
+            return '<div class="fb"><div class="fb__top"><span class="fb__who">' + from + ' · ' + who + '</span>' +
+                '<span class="fb__at">' + dt(i.at) + '</span></div>' +
+                '<div class="fb__text">' + esc(i.text) + '</div>' +
+                '<div class="fb__meta">' + esc(meta) + '</div></div>';
+        }).join('');
+    }
+    function loadFeedback() {
+        api('/feedback?limit=200').then(renderFeedback).catch(function () {
+            document.getElementById('fbList').textContent = 'Не удалось загрузить';
+        });
+    }
+    document.getElementById('fbRefresh').addEventListener('click', loadFeedback);
 
     // Статус системы: три подсистемы → плашка в шапке + три строки в обзоре.
     var sysState = {};

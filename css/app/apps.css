@@ -1,5 +1,8 @@
-/* Страница «Приложения» (pages/apps.html): тихий список отдельных инструментов —
-   JP News и Прописи. Строка целиком — ссылка; без кнопок и градиентов. */
+/* Страница «Приложения» (pages/apps.html).
+   Сверху — «Улица слов» витриной: ночной переулок нарисован инлайн-SVG прямо
+   в разметке, сама карточка всегда «ночная» в обеих темах (это сцена, а не
+   поверхность интерфейса). Ниже — обычные инструменты (JP News, Sumi) на
+   токенах темы: плитка-иконка с градиентом акцента, лёгкий тинт фона. */
 .apps {
     width: 100%;
     max-width: 640px;
@@ -9,47 +12,250 @@
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
-    gap: 4px;
+    gap: 0;
 }
-.apps__title { font-size: 22px; font-weight: 700; }
-.apps__subtitle { color: var(--text-muted); font-size: var(--fs-caption); margin-bottom: 14px; }
-.apps__grid { display: flex; flex-direction: column; gap: 8px; }
+/* .apps — сам скроллер фиксированной высоты (flex-колонка): без flex-shrink:0
+   дети сжимаются, и витрина с overflow:hidden схлопывала картинку в ноль. */
+.apps > * { flex-shrink: 0; }
+.apps__title { font-size: 24px; font-weight: 750; letter-spacing: -0.01em; }
+.apps__subtitle { color: var(--text-muted); font-size: var(--fs-caption); line-height: 1.45; margin: 4px 0 18px; }
+.apps__section {
+    margin: 26px 0 10px;
+    font-size: var(--fs-eyebrow);
+    font-weight: 650;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+
+/* ========== ВИТРИНА: «Улица слов» ========== */
+.app-hero {
+    --hero-bg: #110b22;
+    --hero-text: #f1ecff;
+    --hero-muted: rgba(226, 220, 245, 0.74);
+    --neon-pink: #ff4fa3;
+    --neon-violet: #a78bfa;
+    --neon-cyan: #7ee6ff;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #1a1033 0%, var(--hero-bg) 55%);
+    border: 1px solid rgba(167, 139, 250, 0.22);
+    box-shadow: 0 18px 44px -22px rgba(255, 79, 163, 0.55), 0 2px 10px rgba(8, 4, 20, 0.35);
+    color: var(--hero-text);
+    text-decoration: none;
+    isolation: isolate;
+    transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-3) var(--ease-out), border-color var(--dur-2) var(--ease-out);
+}
+:root[data-theme="light"] .app-hero {
+    border-color: rgba(91, 42, 110, 0.25);
+    box-shadow: 0 18px 40px -20px rgba(91, 42, 110, 0.55), 0 2px 8px rgba(30, 34, 60, 0.12);
+}
+.app-hero__art {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+}
+.app-hero__art svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform-origin: 50% 55%;
+    transition: transform var(--dur-4) var(--ease-out);
+}
+/* Нижний край сцены растворяется в фон карточки — текст читается без рамки. */
+.app-hero__art::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 42%;
+    background: linear-gradient(180deg, rgba(17, 11, 34, 0), var(--hero-bg));
+    pointer-events: none;
+}
+.app-hero__body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 18px 18px;
+    margin-top: -14px;
+}
+.app-hero__tag {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--neon-cyan);
+}
+.app-hero__name {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-shadow: 0 0 18px rgba(255, 79, 163, 0.45);
+}
+.app-hero__desc {
+    margin: 2px 0 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--hero-muted);
+}
+.app-hero__cta {
+    margin-top: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--neon-pink), var(--neon-violet));
+    color: #fff;
+    font-size: var(--fs-body);
+    font-weight: 700;
+    box-shadow: 0 6px 22px -6px rgba(255, 79, 163, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transition: filter var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
+}
+.app-hero__cta svg { transition: transform var(--dur-2) var(--ease-out); }
+
+@media (hover: hover) and (pointer: fine) {
+    .app-hero:hover {
+        border-color: rgba(255, 79, 163, 0.45);
+        box-shadow: 0 24px 54px -22px rgba(255, 79, 163, 0.7), 0 2px 10px rgba(8, 4, 20, 0.35);
+    }
+    .app-hero:hover .app-hero__art svg { transform: scale(1.04); }
+    .app-hero:hover .app-hero__cta { filter: brightness(1.08); box-shadow: 0 8px 28px -6px rgba(255, 79, 163, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+    .app-hero:hover .app-hero__cta svg { transform: translateX(3px); }
+}
+.app-hero:active { transform: scale(0.985); }
+.app-hero:focus-visible { outline: 2px solid var(--neon-pink); outline-offset: 3px; }
+
+/* Жизнь в переулке: одни вывески мигают, фонари покачиваются. Только если
+   пользователь не просил меньше движения. */
+@media (prefers-reduced-motion: no-preference) {
+    .ah-sign--d { animation: ah-flicker 5.2s steps(1, end) infinite; }
+    .ah-sign--b { animation: ah-flicker 7.4s steps(1, end) 1.3s infinite; }
+    .ah-lantern {
+        transform-box: fill-box;
+        transform-origin: 50% 0;
+        animation: ah-sway 3.6s var(--ease-in-out) infinite alternate;
+    }
+    .ah-lantern:nth-child(2n) { animation-delay: -1.2s; animation-duration: 4.1s; }
+    .ah-lantern:nth-child(3n) { animation-delay: -2.4s; }
+}
+@keyframes ah-flicker {
+    0%, 61%, 66%, 70%, 100% { opacity: 1; }
+    62%, 68% { opacity: 0.25; }
+    64% { opacity: 0.7; }
+}
+@keyframes ah-sway {
+    from { transform: rotate(-5deg); }
+    to { transform: rotate(5deg); }
+}
+
+/* ========== ОБЫЧНЫЕ ИНСТРУМЕНТЫ ========== */
+.apps__grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
 .app-card {
+    --accent: var(--primary);
+    --accent-2: #38bdf8;
     position: relative;
     display: grid;
-    grid-template-columns: 44px 1fr auto;
-    grid-template-areas: "icon head chev" "icon desc chev";
+    grid-template-columns: 48px 1fr auto;
+    grid-template-areas: "icon head chev" "icon desc desc";
     column-gap: 14px;
-    row-gap: 4px;
+    row-gap: 8px;
     align-items: center;
-    padding: 14px 14px 14px 16px;
+    padding: 16px;
     background: var(--surface);
+    background:
+        radial-gradient(120% 100% at 100% 0%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 62%),
+        var(--surface);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 16px;
     color: var(--text);
-    transition: border-color var(--transition);
+    text-decoration: none;
+    transition: transform var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
 }
-@media (hover: hover) and (pointer: fine) {
-    .app-card:hover { border-color: var(--text-dim); }
-}
-.app-card__head { grid-area: head; display: flex; align-items: center; gap: 12px; }
+.app-card--news { --accent: #7c8cf8; --accent-2: #38bdf8; }
+.app-card--kanji { --accent: #f43f5e; --accent-2: #f59e0b; }
 .app-card__icon {
     grid-area: icon;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    align-self: start;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
     display: grid;
     place-items: center;
     font-family: 'Noto Sans JP', var(--font);
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--text);
-    background: var(--card);
-    border: 1px solid var(--border);
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(140deg, var(--accent-2), var(--accent));
+    box-shadow: 0 6px 16px -8px var(--accent), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
-.app-card__head > .app-card__icon { display: none; }
-.app-card__name { font-size: var(--fs-body); font-weight: 600; }
-.app-card__tag { font-size: 12px; color: var(--text-dim); margin-top: 1px; }
-.app-card__desc { grid-area: desc; color: var(--text-muted); font-size: var(--fs-caption); line-height: 1.45; margin: 0; }
-.app-card__chev { grid-area: chev; color: var(--text-dim); font-size: 20px; padding-left: 6px; }
-.apps__hint { margin-top: 10px; color: var(--text-dim); font-size: 12px; }
+.app-card--kanji .app-card__icon { background: linear-gradient(140deg, #fb7185, #be123c); }
+.app-card__head { grid-area: head; min-width: 0; }
+.app-card__name { font-size: 17px; font-weight: 700; line-height: 1.25; }
+.app-card__tag { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.app-card__desc { grid-area: desc; color: var(--text-muted); font-size: var(--fs-caption); line-height: 1.5; margin: 0; }
+.app-card__chev {
+    grid-area: chev;
+    align-self: start;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    transition: transform var(--dur-2) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+    .app-card:hover {
+        transform: translateY(-2px);
+        border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+        box-shadow: var(--shadow-sm);
+    }
+    .app-card:hover .app-card__chev { transform: translateX(2px); }
+}
+.app-card:active { transform: scale(0.985); }
+.app-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.apps__hint {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dim);
+    font-size: 12px;
+    line-height: 1.4;
+}
+.apps__hint svg { flex: none; }
+
+/* ========== ДЕСКТОП: витрина в две колонки, инструменты рядом ========== */
+@media (min-width: 760px) {
+    .apps { max-width: 820px; padding-top: 28px; }
+    .apps__title { font-size: 28px; }
+    .app-hero {
+        display: grid;
+        grid-template-columns: 1.35fr 1fr;
+        min-height: 300px;
+    }
+    .app-hero__art { aspect-ratio: auto; }
+    .app-hero__art::after {
+        inset: 0 0 0 auto;
+        width: 24%;
+        height: auto;
+        background: linear-gradient(90deg, rgba(17, 11, 34, 0), var(--hero-bg));
+    }
+    .app-hero__body {
+        justify-content: center;
+        margin: 0 0 0 -10px;
+        padding: 28px 28px 28px 0;
+    }
+    .app-hero__name { font-size: 30px; }
+    .app-hero__cta { align-self: flex-start; }
+    .apps__grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+    .app-card { padding: 18px; }
+}

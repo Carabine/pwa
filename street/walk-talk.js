@@ -2,8 +2,8 @@
 // Справа — меню действий для того, что рядом (поговорить, заказать у ятай, сменить станцию); диалог — окном сбоку.
 // Встраивается build-walk.mjs (общая область видимости с walk.js: data, camera, inside, LIFE, audio, toast…).
 const TALK = (() => {
-    const ROLE_NAME = { chef: 'Повар', ramenChef: 'Повар', cook: 'Хозяйка', vendor: 'Продавец', waiter: 'Официантка', barista: 'Бариста', clerk: 'Продавец', bookClerk: 'Продавец', teacher: 'Учитель', student: 'Ученик', student1r: 'Студент', family: 'Хозяин', elder: 'Бабушка', couple: 'Сосед', bar: 'Гость', party: 'Гость', ramenGuest: 'Гость', cafeGuest: 'Гость', shopper: 'Покупатель', reader: 'Читатель', gamer: 'Игрок', drummer: 'Игрок', worker: 'Сосед', sleeper: 'Ученик' };
-    const ROLE_GROUP = { chef: 'food', ramenChef: 'food', cook: 'food', vendor: 'food', waiter: 'serve', barista: 'serve', clerk: 'serve', bookClerk: 'serve', teacher: 'teach', student: 'study', student1r: 'study', family: 'home', elder: 'home', couple: 'home', gamer: 'play', drummer: 'play', sleeper: 'sleep' };
+    const ROLE_NAME = { chef: 'Повар', ramenChef: 'Повар', cook: 'Хозяйка', vendor: 'Продавец', waiter: 'Официантка', barista: 'Бариста', clerk: 'Продавец', bookClerk: 'Продавец', teacher: 'Учитель', student: 'Ученик', student1r: 'Студент', family: 'Хозяин', elder: 'Бабушка', couple: 'Сосед', bar: 'Гость', party: 'Гость', ramenGuest: 'Гость', cafeGuest: 'Гость', shopper: 'Покупатель', reader: 'Читатель', gamer: 'Игрок', drummer: 'Игрок', worker: 'Сосед', sleeper: 'Ученик', pianist: 'Пианист', sneaker: 'Ученик' };
+    const ROLE_GROUP = { chef: 'food', ramenChef: 'food', cook: 'food', vendor: 'food', waiter: 'serve', barista: 'serve', clerk: 'serve', bookClerk: 'serve', teacher: 'teach', student: 'study', student1r: 'study', family: 'home', elder: 'home', couple: 'home', gamer: 'play', drummer: 'play', sleeper: 'sleep', pianist: 'study', sneaker: 'study' };
     const STAFF = new Set(['food', 'serve']), FRIEND = new Set(['study', 'play']);
     // темы по группам: реплика персонажа и ответы [мой jp, ru, его ответ [jp, ru]]
     const TOPICS = {
@@ -59,7 +59,8 @@ const TALK = (() => {
         (w) => ['クイズ！「' + w + '」の意味は？', 'Викторина! Что значит «' + w + '»?'],
         (w) => ['友だちが「' + w + '」って言ってたけど、意味が分からなくて…', 'Друг сказал «' + w + '», а я не понял…'],
     ];
-    const QUIZ_OK = [['そうそう！', 'Точно!'], ['さすが！', 'Как и ожидалось!'], ['よく知ってるね！', 'Хорошо знаешь!'], ['正解！', 'Верно!'], ['ありがとう、すっきりした！', 'Спасибо, теперь всё ясно!']];
+    const QUIZ_OK = [['そうそう！', 'Точно!'], ['さすが！', 'Ну ты даёшь!'], ['よく知ってるね！', 'Хорошо знаешь!'], ['正解！', 'Верно!'], ['ありがとう、すっきりした！', 'Спасибо, теперь всё ясно!']];
+    const FACT_OK = [['正解！', 'Верно!'], ['そうそう、その通り！', 'Да-да, именно так!'], ['さすが！', 'Ну ты даёшь!'], ['よく知ってるね！', 'Хорошо знаешь!']];
     const QUIZ_BAD = [['惜しい！', 'Почти!'], ['うーん、ちょっと違うかな。', 'Хм, не совсем.'], ['あれ？違うと思うよ。', 'Хм, кажется, нет.']];
     const BYE_ME = [['じゃあ、またね！', 'Ну, пока!'], ['そろそろ行きます。', 'Мне пора.'], ['ありがとうございました！', 'Спасибо!']];
     const BYE_THEM = [['またね！', 'Пока!'], ['気をつけてね！', 'Береги себя!'], ['また来てね！', 'Заходи ещё!'], ['じゃあね〜', 'Давай!']];
@@ -109,9 +110,46 @@ const TALK = (() => {
     }
     const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
     const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-    function msg(who, jp, ru) {
+    const FURI_API = location.protocol === 'file:' ? 'https://animei.space/api/v1/analyze' : '/api/v1/analyze';
+    const furiCache = new Map(), furiWait = new Set(), KANJI_RE = /[㐀-鿿々〆ヶ]/;
+    const hira = (s) => String(s || '').replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+    const escA = (s) => esc(s).replace(/"/g, '&quot;');
+    // одно слово: окуригану (общие с чтением хвост/начало каной) выносим из-под фуриганы
+    function rubyWord(sf, rd) {
+        if (!KANJI_RE.test(sf) || !rd) return esc(sf);
+        const Sx = [...sf], R = [...hira(rd)], SH = Sx.map(hira); let a = 0, b = 0;
+        while (a < Sx.length - 1 && a < R.length - 1 && !KANJI_RE.test(Sx[a]) && SH[a] === R[a]) a++;
+        while (b < Sx.length - a - 1 && b < R.length - a - 1 && !KANJI_RE.test(Sx[Sx.length - 1 - b]) && SH[Sx.length - 1 - b] === R[R.length - 1 - b]) b++;
+        const core = Sx.slice(a, Sx.length - b).join(''), rc = R.slice(a, R.length - b).join('');
+        if (hira(core) === rc) return esc(sf);
+        return esc(Sx.slice(0, a).join('')) + '<ruby>' + esc(core) + '<rt>' + esc(rc) + '</rt></ruby>' + esc(Sx.slice(Sx.length - b).join(''));
+    }
+    function furiHtml(text, kana) {
+        text = String(text || '');
+        if (!KANJI_RE.test(text)) return esc(text);
+        if (kana) return rubyWord(text, kana);
+        if (!furiCache.has(text)) return null;
+        const toks = furiCache.get(text);
+        return toks ? toks.map((t) => rubyWord(t.surface, t.reading)).join('') : esc(text);
+    }
+    const furiTag = (tag, text, kana) => { const h = furiHtml(text, kana); return '<' + tag + ' data-furi="' + escA(text) + '"' + (kana ? ' data-kana="' + escA(kana) + '"' : '') + '>' + (h == null ? esc(text) : h) + '</' + tag + '>'; };
+    function furiRefresh() {
+        if (!el) return;
+        el.querySelectorAll('[data-furi]').forEach((n) => { const h = furiHtml(n.dataset.furi, n.dataset.kana); if (h != null && n.innerHTML !== h) n.innerHTML = h; });
+        const log = el.querySelector('.log'); if (log) log.scrollTop = log.scrollHeight;
+    }
+    function furiLoad(texts) {
+        const need = [...new Set(texts.map(String))].filter((t) => KANJI_RE.test(t) && !furiCache.has(t) && !furiWait.has(t)).slice(0, 100);
+        if (!need.length) return;
+        need.forEach((t) => furiWait.add(t));
+        fetch(FURI_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: need, merge: true }) })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((j) => { need.forEach((t, i) => { const toks = j && j.data && j.data[i]; furiCache.set(t, toks && toks.map((x) => x.surface).join('').replace(/\s/g, '') === t.replace(/\s/g, '') ? toks.map((x) => ({ surface: x.surface, reading: x.reading })) : null); furiWait.delete(t); }); furiRefresh(); })
+            .catch(() => need.forEach((t) => furiWait.delete(t)));
+    }
+    function msg(who, jp, ru, kana) {
         const m = document.createElement('div'); m.className = 'm ' + who;
-        m.innerHTML = '<div class="jp">' + esc(jp) + (who === 'c' ? ' <button class="spk" aria-label="Озвучить">🔊</button>' : '') + '</div>' + (ru ? '<div class="ru">' + esc(ru) + '</div>' : '');
+        m.innerHTML = '<div class="jp">' + furiTag('span', jp, kana) + (who === 'c' ? ' <button class="spk" aria-label="Озвучить">🔊</button>' : '') + '</div>' + (ru ? '<div class="ru">' + esc(ru) + '</div>' : '');
         if (who === 'c') m.querySelector('.spk').addEventListener('click', () => speak(jp));
         const log = el.querySelector('.log'); log.appendChild(m); log.scrollTop = log.scrollHeight;
     }
@@ -124,13 +162,15 @@ const TALK = (() => {
     function show(line, opts, task) {
         if (!cur) return;
         const e = ui(); e.classList.add('on'); acts.hidden = true; head();
+        furiLoad([line[0]].concat(opts.map((o) => o.jp)));
+        if (cur.ch && typeof voiceLine === 'function') voiceLine(cur.ch, line, true);
         msg('c', line[0], line[1]);
         e.querySelector('.task').innerHTML = task || ''; e.querySelector('.task').hidden = !task;
         const box = e.querySelector('.opts'); box.innerHTML = '';
         opts.forEach((o, i) => {
             const b = document.createElement('button'); b.className = 'op';
-            b.innerHTML = (FINE ? '<kbd>' + (i + 1) + '</kbd>' : '') + '<span><b>' + esc(o.jp) + '</b>' + (o.ru ? '<small>' + esc(o.ru) + '</small>' : '') + '</span>';
-            b.addEventListener('click', () => { if (box.dataset.busy || !cur) return; box.dataset.busy = '1'; buzz(8); if (o.say !== false) msg('p', o.jp, o.ru); o.go(b); });
+            b.innerHTML = (FINE ? '<kbd>' + (i + 1) + '</kbd>' : '') + '<span>' + furiTag('b', o.jp, o.kana && o.kana !== o.jp ? o.kana : null) + (o.ru ? '<small>' + esc(o.ru) + '</small>' : '') + '</span>';
+            b.addEventListener('click', () => { if (box.dataset.busy || !cur) return; box.dataset.busy = '1'; buzz(8); if (o.say !== false) msg('p', o.jp, o.ru, o.kana && o.kana !== o.jp ? o.kana : null); o.go(b); });
             box.appendChild(b);
         });
         delete box.dataset.busy;
@@ -150,7 +190,7 @@ const TALK = (() => {
         if (!w) return after();
         const opts = shuffle([w].concat(distractors(w, 3, meaning))).map((x) => ({ jp: meaning(x), go: (b) => {
             const ok = x === w; b.classList.add(ok ? 'good' : 'bad');
-            if (!ok) [...el.querySelectorAll('.op')].forEach((bb) => { if (bb.querySelector('b').textContent === meaning(w)) bb.classList.add('good'); });
+            if (!ok) [...el.querySelectorAll('.op')].forEach((bb) => { if (bb.querySelector('b').dataset.furi === meaning(w)) bb.classList.add('good'); });
             if (ok) audio.ding();
             const kana = w.kana && w.kana !== jpOf(w) ? ' (' + w.kana + ')' : '';
             const line = ok ? pick(QUIZ_OK) : (() => { const b0 = pick(QUIZ_BAD); return [b0[0], b0[1] + ' «' + jpOf(w) + '»' + kana + ' — это «' + meaning(w) + '».']; })();
@@ -211,12 +251,13 @@ const TALK = (() => {
     function factQuiz(after) {
         const { f, w } = pickFact();
         const ans = w ? jpOf(w) : f.w[0], kana = w ? w.kana : f.w.find((x) => /^[ぁ-ん]+$/.test(x)) || '';
-        const others = distractors(w || { kanji: ans, kana, translation: '—' }, 3, jpOf).map(jpOf).filter((x) => x !== ans).slice(0, 3);
+        const others = distractors(w || { kanji: ans, kana, translation: '—' }, 3, jpOf).filter((x) => jpOf(x) !== ans).slice(0, 3);
         const fill = (s) => s.split('＿＿').join(ans);
-        const opts = shuffle([ans].concat(others)).map((x) => ({ jp: x, go: (b) => {
-            const ok = x === ans; b.classList.add(ok ? 'good' : 'bad'); if (ok) audio.ding(); else [...el.querySelectorAll('.op')].forEach((bb) => { if (bb.querySelector('b').textContent === ans) bb.classList.add('good'); });
-            const react = ok ? pick(QUIZ_OK) : pick(QUIZ_BAD);
-            setTimeout(() => show([react[0] + ' ' + fill(f.q[0]), (ok ? react[1] : react[1] + ' Правильно: «' + ans + '»' + (kana && kana !== ans ? ' (' + kana + ')' : '') + '.')], [{ jp: 'それで？', ru: 'И что дальше?', go: () => show([fill(f.more[0]), fill(f.more[1])], sample([['へえ、知らなかった！', 'Ого, не знал!'], ['面白いですね！', 'Интересно!'], ['もっと知りたい！', 'Хочу знать больше!']], 2).map(([j, r]) => ({ jp: j, ru: r, go: after }))) }]), 650);
+        const fillRu = (s) => s.split('＿＿').join(w && meaning(w) ? meaning(w) : '«' + ans + '»');
+        const opts = shuffle([{ jp: ans, kana }].concat(others.map((x) => ({ jp: jpOf(x), kana: x.kana })))).map(({ jp: x, kana: xk }) => ({ jp: x, kana: xk, go: (b) => {
+            const ok = x === ans; b.classList.add(ok ? 'good' : 'bad'); if (ok) audio.ding(); else [...el.querySelectorAll('.op')].forEach((bb) => { if (bb.querySelector('b').dataset.furi === ans) bb.classList.add('good'); });
+            const react = ok ? pick(FACT_OK) : pick(QUIZ_BAD);
+            setTimeout(() => show([react[0] + ' ' + fill(f.q[0]), react[1] + ' ' + fillRu(f.q[1]) + (ok ? '' : ' Правильно: «' + ans + '»' + (kana && kana !== ans ? ' (' + kana + ')' : '') + '.')], [{ jp: 'それで？', ru: 'И что дальше?', go: () => show([fill(f.more[0]), fillRu(f.more[1])], sample([['へえ、知らなかった！', 'Ого, не знал!'], ['面白いですね！', 'Интересно!'], ['もっと知りたい！', 'Хочу знать больше!']], 2).map(([j, r]) => ({ jp: j, ru: r, go: after }))) }]), 650);
         } }));
         show(f.q, opts, '<span class="q">Какое слово пропущено?</span>');
     }
@@ -271,6 +312,7 @@ const TALK = (() => {
             const say = staff ? ['他に何かありますか？', 'Что-нибудь ещё?'] : pick([['今日は話せて楽しかった！', 'Было приятно поболтать!'], ['あ、もうこんな時間！', 'Ой, уже столько времени!'], ['また話そうね。', 'Поболтаем ещё как-нибудь.']]);
             const opts = sample(BYE_ME, 2).map(([j, r]) => ({ jp: j, ru: r, go: finish }));
             if (canMore) opts.unshift({ jp: staff ? 'あと一つ、いいですか？' : 'もう少し話そう！', ru: staff ? 'Можно ещё вопрос?' : 'Давай ещё поболтаем!', go: () => topic(false) });
+            if (role === 'pianist') opts.unshift({ jp: '何か弾いてくれませんか？', ru: 'Сыграешь что-нибудь?', go: () => pianoMenu(ch, true) });
             if (role === 'teacher') opts.unshift({ jp: '黒板に書いてもいいですか？', ru: 'Можно написать на доске?', go: () => { show(['もちろん！書いてみてください。', 'Конечно! Попробуйте.'], []); setTimeout(() => { close(); WRITE.open(ch); }, 900); } });
             show(say, opts);
         };
@@ -291,7 +333,7 @@ const TALK = (() => {
         };
         if (group === 'sleep') return topic(true);
         const g = greetLines(group, meet, ch);
-        const say = P && !meet ? pick(P.greet) : g.say;
+        const say = role === 'sneaker' ? pick([['しーっ！今、アニメ見てるの。先生には内緒ね！', 'Тсс! Я смотрю аниме. Только учителю не говори!'], ['あっ…見つかった？これ、最新話なんだ…', 'Ой… спалил? Это новая серия…'], ['静かに！今、一番いいところ！', 'Тихо! Сейчас самое интересное!']]) : (P && !meet ? pick(P.greet) : g.say);
         // при первой встрече человек представляется — у каждого по-своему
         const introLine = () => { const l = P.intro(P.name); if (!myWord) return l; const m = meaning(myWord); return [l[0] + '私は' + jpOf(myWord) + 'です。', l[1] + (m ? ' Я — ' + m + ' (' + jpOf(myWord) + ').' : '')]; };
         const intro = () => (P && !meet ? show(introLine(), [['よろしくお願いします！', 'Очень приятно!'], ['こちらこそ、よろしく！', 'Взаимно!']].map(([j, r]) => ({ jp: j, ru: r, go: () => topic(true) }))) : topic(true));
@@ -304,9 +346,9 @@ const TALK = (() => {
         begin({ kind: 'order', ch, stall, inside: false, icon: '🍢', name: 'Продавец', sub: stall.food });
         const round = (first) => {
             const w = pickWord(FOODISH); if (!w) return close();
-            const opts = shuffle([w].concat(distractors(w, 3, jpOf))).map((x) => ({ jp: jpOf(x), go: (b) => {
+            const opts = shuffle([w].concat(distractors(w, 3, jpOf))).map((x) => ({ jp: jpOf(x), kana: x.kana, go: (b) => {
                 const ok = x === w; score.all++; if (ok) score.ok++; head();
-                b.classList.add(ok ? 'good' : 'bad'); if (ok) audio.ding(); else [...el.querySelectorAll('.op')].forEach((bb) => { if (bb.querySelector('b').textContent === jpOf(w)) bb.classList.add('good'); });
+                b.classList.add(ok ? 'good' : 'bad'); if (ok) audio.ding(); else [...el.querySelectorAll('.op')].forEach((bb) => { if (bb.querySelector('b').dataset.furi === jpOf(w)) bb.classList.add('good'); });
                 const next = [{ jp: pick(['もう一つください！', 'あと一つお願いします！']), ru: 'Ещё одну, пожалуйста!', go: () => round(false) }, { jp: pick(['ありがとう！', 'それで全部です。']), ru: 'Спасибо, это всё!', go: () => end(pick(BYE_STAFF)) }];
                 const k = w.kana && w.kana !== jpOf(w) ? ' (' + w.kana + ')' : '';
                 const okL = pick([['はい、「' + jpOf(w) + '」ですね！どうぞ！', 'Да, «' + jpOf(w) + '»! Держите!'], ['まいど！「' + jpOf(w) + '」ひとつ！', 'Благодарю! Один «' + jpOf(w) + '»!'], ['「' + jpOf(w) + '」ね、ちょっと待ってて！', '«' + jpOf(w) + '», минутку!']]);
@@ -316,6 +358,41 @@ const TALK = (() => {
             show(first ? pick([['いらっしゃい！何にしますか？', 'Добро пожаловать! Что будете?'], ['へい、らっしゃい！何にする？', 'Заходи! Что возьмёшь?'], ['いらっしゃいませ！ご注文は？', 'Добро пожаловать! Ваш заказ?']]) : pick([['はい、次は？', 'Так, что ещё?'], ['ほかには？', 'Что-нибудь ещё?'], ['もう一つ？何にする？', 'Ещё одну? Что именно?']]), opts, '<span class="q">Скажи продавцу, что хочешь:</span><span class="want">«' + esc(meaning(w)) + '»</span>');
         };
         round(true);
+    }
+    // ---- пианист: попросишь — сыграет (живой синтез audio.playSong) ----
+    const SONG_LIST = [
+        { id: 'sakura', jp: 'さくらさくら', ru: 'Сакура-сакура', d: 'старинная песня о цветущей вишне' },
+        { id: 'furusato', jp: 'ふるさと', ru: 'Родные края', d: 'песня 1914 года, её знает вся Япония' },
+        { id: 'kaeru', jp: 'かえるの合唱', ru: 'Хор лягушек', d: 'детская песенка-канон' },
+        { id: 'kira', jp: 'きらきら星', ru: 'Мерцай, звёздочка', d: 'колыбельная' },
+        { id: 'chocho', jp: 'ちょうちょう', ru: 'Бабочка', d: 'песенка из начальной школы' },
+    ];
+    let pianoCh = null;
+    function pianoMenu(ch, inDialog) {
+        if (!inDialog) { const P = persona(ch, 'study'); begin({ kind: 'talk', ch, inside: inside.on, icon: '🎹', name: P.ruName + ' · ' + P.name, sub: 'пианист · ' + P.ru }); }
+        if (ch.playing) return end(['今、弾いてるところだよ。', 'Я же как раз играю.']);
+        const opts = sample(SONG_LIST, 3).map((s) => ({ jp: '「' + s.jp + '」をお願いします！', ru: '«' + s.ru + '» — ' + s.d, go: () => {
+            show(pick([['いいよ！「' + s.jp + '」ね。', 'Давай! «' + s.ru + '».'], ['はい、「' + s.jp + '」を弾きます。', 'Хорошо, играю «' + s.ru + '».'], ['じゃあ、聞いてね…', 'Тогда слушай…']]), []);
+            setTimeout(() => { close(); playPiano(ch, s); }, 1000);
+        } }));
+        opts.push({ jp: 'やっぱり、いいです。', ru: 'Пожалуй, не надо.', go: () => end(['そう？いつでも言ってね。', 'Да? Скажи, если захочешь.']) });
+        show(pick([['何を弾こうか？', 'Что тебе сыграть?'], ['リクエストある？', 'Есть пожелания?'], ['いいよ！どの曲がいい？', 'Давай! Какую мелодию?']]), opts);
+    }
+    function playPiano(ch, s) {
+        audio.resume();
+        const dur = audio.playSong(s.id);
+        if (!dur) toast(audio.enabled ? 'Коснитесь экрана — включится звук' : 'Звук выключен — включите его кнопкой вверху');
+        ch.playing = true; pianoCh = ch;
+        LIFE.say(ch, ['♪ 「' + s.jp + '」', '♪ ' + s.ru], 2.6, LIFE.S.t);
+        setTimeout(() => {
+            if (pianoCh !== ch) return; ch.playing = false; pianoCh = null;
+            if (ch.root.parent && inside.on) LIFE.say(ch, pick([['ご清聴ありがとうございました。', 'Спасибо, что послушали.'], ['どうだった？', 'Ну как?'], ['ちょっと間違えちゃった、えへへ。', 'Чуть сбился, хе-хе.']]), 2.8, LIFE.S.t);
+        }, Math.max(5, dur || 8) * 1000);
+    }
+    // ---- предметы: попробовать еду ----
+    function taste(w) {
+        const l = pick([['いただきます！…おいしい！', 'Приятного аппетита!… Вкусно!'], ['うまい！', 'Вкуснятина!'], ['ん〜、最高！', 'М-м, божественно!']]);
+        speak(l[0].replace('…', '、')); toast('🥢 ' + jpOf(w) + ' — ' + l[1]); audio.ding();
     }
     // ---- выбор персонажа по тапу ----
     const _ray = new THREE.Raycaster(), _p = new THREE.Vector2();
@@ -347,11 +424,23 @@ const TALK = (() => {
         if (hc && hc.dist < (inside.on ? 3.8 : 3.6)) {
             const ch = hc.ch, stall = !inside.on && FESTIVAL.stalls ? FESTIVAL.stalls.find((s) => s.ch === ch) : null;
             if (stall) out.push({ icon: '🍢', t: 'Заказать', fn: () => order(stall) }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
+            else if (ch.role === 'pianist' && !ch.playing) out.push({ icon: '🎹', t: 'Попросить сыграть', fn: () => pianoMenu(ch) }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
             else if (ch.cat) out.push({ icon: '🐾', t: 'Погладить кота', fn: () => talk(ch) });
             else out.push({ icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
             return out;
         }
-        if (inside.on) { const h = pick(pt[0], pt[1], 2.6); if (h && h.radio) out.push({ icon: '📻', t: 'Сменить станцию', fn: () => radioNext() }); }
+        const h = pickAt(pt[0], pt[1], inside.on ? 2.8 : 9);
+        if (h && h.radio) out.push({ icon: '📻', t: 'Сменить станцию', fn: () => radioNext() });
+        if (h && h.tv) out.push({ icon: '📺', t: 'Переключить канал', fn: () => tvNext(h.tv) });
+        if (h && h.post) out.push({ icon: '✉', t: 'Написать нам', fn: () => { close(); MAIL.open(); } });
+        if (h && h.paper) out.push({ icon: '📰', t: 'Читать газету', fn: () => { close(); PAPER.open(); } });
+        if (h && h.sign && h.sign.word && !h.sign.deco) {
+            const sg = h.sign, w = sg.word, id = String(w.id || jpOf(w));
+            out.push({ icon: '🔊', t: 'Произнести', s: id, fn: () => speak(w.kana || jpOf(w)) });
+            if (sg.state !== 'lit') out.push({ icon: '✨', t: 'Повторить', s: id, fn: () => reviewSign(sg) });
+            if (inside.on && FOODISH(w)) out.push({ icon: '🥢', t: 'Попробовать', s: id, fn: () => taste(w) });
+            if (WRITE.can(w)) out.push({ icon: '✍', t: 'Прописать', s: id, fn: () => { close(); WRITE.open(null, w); } });
+        }
         if (inside.on && inside.door && inside.door.userData.door.type === 'class') {
             let bd = null; room.traverse((o) => { if (!bd && o.userData && o.userData.board) bd = o; });
             if (bd) { _p.set((pt[0] / innerWidth) * 2 - 1, -(pt[1] / innerHeight) * 2 + 1); _ray.setFromCamera(_p, camera); _ray.far = 8; if (_ray.intersectObject(bd, false).length) out.push({ icon: '✍', t: 'Написать на доске', fn: () => { close(); WRITE.open(null); } }); }
@@ -369,7 +458,10 @@ const TALK = (() => {
         });
     }
     function update() {
-        if (!inside.on) WRITE.close();
+        if (WRITE.open_ && WRITE.at !== inside.on) WRITE.close();
+        if (!inside.on && PAPER.on) PAPER.close();
+        if (MAIL.on && !MAIL.near()) MAIL.close();
+        if (pianoCh && (!inside.on || !pianoCh.root.parent)) { audio.stopSong(); pianoCh.playing = false; pianoCh = null; }
         if (cur) {
             const p = cur.ch && cur.ch.root.getWorldPosition(new THREE.Vector3());
             if (!p || flat(p, camera.position) > (cur.kind === 'order' ? 3.6 : 4.5) || (cur.inside !== undefined && cur.inside !== inside.on)) close();

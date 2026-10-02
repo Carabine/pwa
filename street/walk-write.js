@@ -7,6 +7,7 @@ const WRITE = (() => {
     const strokesCache = new Map();
     const isKanji = (ch) => /[㐀-鿿]/.test(ch);
     const writable = (ch) => /[぀-ヿ㐀-鿿]/.test(ch);
+    const can = (w) => !!(w && w.kanji && [...w.kanji].some(isKanji) && [...w.kanji].every(writable) && [...w.kanji].length <= 4);
     function loadCore() {
         // ядро мерит длину черт через скрытый SVG #kj-measure (как на странице «Прописей»)
         if (!document.getElementById('kj-measure')) { const m = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); m.id = 'kj-measure'; m.setAttribute('viewBox', '0 0 109 109'); m.setAttribute('width', '0'); m.setAttribute('height', '0'); m.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'; document.body.appendChild(m); }
@@ -46,11 +47,11 @@ const WRITE = (() => {
         const rank = (w) => ({ due: 0, worn: 0, warm: 1, new: 2, lit: 3 }[w._state] ?? 2) + Math.random() * 2.2;
         return P.slice().sort((a, b) => rank(a) - rank(b))[0];
     }
-    async function open(teacher) {
+    async function open(teacher, word) {
         const e = ui(); e.classList.add('on'); if (typeof hideHint === 'function') hideHint();
-        const w = pickWord();
+        const w = can(word) ? word : pickWord();
         if (!w) { msg('В словаре нет слов с иероглифами — добавь их, и сюда можно будет писать.', 'err'); return; }
-        cur = { w, chars: [...w.kanji], i: 0, idx: 0, miss: 0, misses: 0, ghost: w._state === 'new' || w._state === 'due', teacher };
+        cur = { w, chars: [...w.kanji], i: 0, idx: 0, miss: 0, misses: 0, ghost: w._state === 'new' || w._state === 'due', teacher, inside: inside.on };
         e.querySelector('.kana').textContent = w.kana && w.kana !== w.kanji ? w.kana : '';
         e.querySelector('.mean').textContent = String(w.translation).split(/[;,]/)[0].trim();
         e.querySelector('.b-ghost').classList.toggle('on', cur.ghost);
@@ -98,11 +99,12 @@ const WRITE = (() => {
         const w = cur.w, clean = cur.misses === 0;
         msg((clean ? 'Без единой ошибки! ' : 'Готово! ') + w.kanji + (w.kana && w.kana !== w.kanji ? ' — ' + w.kana : ''), 'ok');
         board.setEnabled(false); if (typeof audio !== 'undefined') audio.ding();
+        if (typeof chalkOnBoard === 'function') chalkOnBoard(cur.recs, w);
         el.querySelector('.prog').innerHTML = cur.chars.map((c) => '<span class="done">' + c + '</span>').join('');
         // учитель хвалит
         const t = cur.teacher || (LIFE.S.room || []).find((c) => c.role === 'teacher');
         if (t) LIFE.say(t, clean ? ['よくできました！', 'Прекрасно!'] : ['いいですね、その調子！', 'Хорошо, так держать!'], 2.6, LIFE.S.t);
     }
     function close() { if (el) el.classList.remove('on'); if (board) board.setEnabled(false); cur = null; }
-    return { open, close, get open_() { return !!cur; } };
+    return { open, close, can, get open_() { return !!cur; }, get at() { return cur ? cur.inside : null; } };
 })();

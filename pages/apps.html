@@ -74,42 +74,164 @@
     <main class="main apps">
         <h1 class="apps__title" data-i18n="apps.title">Приложения</h1>
         <p class="apps__subtitle" data-i18n="apps.subtitle">Отдельные инструменты Animei. Слова, колоды и аккаунт у них общие.</p>
+
+        <a class="app-hero" href="../street/walk.html">
+            <div class="app-hero__art" aria-hidden="true">
+                <!-- Ночной переулок с одной точкой схода (200,120): стены, вывески-татэкан
+                     смотрят на зрителя, гирлянда фонарей, тёплая дверь с норэном, мокрый асфальт. -->
+                <svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" focusable="false">
+                    <defs>
+                        <linearGradient id="ah-sky" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0" stop-color="#0b0820"/>
+                            <stop offset="0.55" stop-color="#2a1550"/>
+                            <stop offset="1" stop-color="#5b2a6e"/>
+                        </linearGradient>
+                        <radialGradient id="ah-far" cx="0.5" cy="0.6" r="0.6">
+                            <stop offset="0" stop-color="#ffd2a8"/>
+                            <stop offset="0.35" stop-color="#ff7aa8" stop-opacity="0.75"/>
+                            <stop offset="1" stop-color="#5b2a6e" stop-opacity="0"/>
+                        </radialGradient>
+                        <linearGradient id="ah-wall-l" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0" stop-color="#0d0a1c"/>
+                            <stop offset="1" stop-color="#1f1436"/>
+                        </linearGradient>
+                        <linearGradient id="ah-wall-r" x1="1" y1="0" x2="0" y2="0">
+                            <stop offset="0" stop-color="#0d0a1c"/>
+                            <stop offset="1" stop-color="#1f1436"/>
+                        </linearGradient>
+                        <linearGradient id="ah-ground" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0" stop-color="#3a1f52"/>
+                            <stop offset="1" stop-color="#0c0918"/>
+                        </linearGradient>
+                        <radialGradient id="ah-lantern" cx="0.45" cy="0.4" r="0.65">
+                            <stop offset="0" stop-color="#ffe2a8"/>
+                            <stop offset="0.45" stop-color="#ff7a45"/>
+                            <stop offset="1" stop-color="#c2263f"/>
+                        </radialGradient>
+                        <linearGradient id="ah-door" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0" stop-color="#ffcf8a"/>
+                            <stop offset="1" stop-color="#ff8a4c"/>
+                        </linearGradient>
+                        <filter id="ah-glow" x="-60%" y="-60%" width="220%" height="220%">
+                            <feGaussianBlur stdDeviation="2.4" result="b"/>
+                            <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                        <filter id="ah-blur" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="4"/>
+                        </filter>
+                    </defs>
+
+                    <rect width="400" height="240" fill="url(#ah-sky)"/>
+                    <g fill="#fff">
+                        <circle cx="132" cy="14" r="0.9" opacity="0.7"/>
+                        <circle cx="178" cy="34" r="0.7" opacity="0.5"/>
+                        <circle cx="214" cy="10" r="1" opacity="0.8"/>
+                        <circle cx="252" cy="28" r="0.7" opacity="0.5"/>
+                        <circle cx="286" cy="12" r="0.8" opacity="0.6"/>
+                        <circle cx="196" cy="58" r="0.6" opacity="0.4"/>
+                    </g>
+
+                    <!-- Дальний конец переулка: силуэты и тёплое зарево -->
+                    <rect x="150" y="70" width="100" height="90" fill="url(#ah-far)"/>
+                    <path d="M165 144.5V112h9v-8h12v14h8v-20h14v12h10v-6h17v38.5z" fill="#1a1030" opacity="0.85"/>
+
+                    <!-- Земля и стены -->
+                    <path d="M0 260 165 144.5h70L400 260z" fill="url(#ah-ground)"/>
+                    <path d="M0-60 165 88.5v56L0 260z" fill="url(#ah-wall-l)"/>
+                    <path d="M400-60 235 88.5v56L400 260z" fill="url(#ah-wall-r)"/>
+                    <path d="M0-60 165 88.5M400-60 235 88.5" stroke="#3b2a63" stroke-width="1"/>
+
+                    <!-- Отражения в мокром асфальте -->
+                    <g filter="url(#ah-blur)" opacity="0.5">
+                        <ellipse cx="200" cy="186" rx="34" ry="18" fill="#ff7aa8" opacity="0.3"/>
+                        <rect x="50" y="214" width="16" height="30" fill="#ff4fa3"/>
+                        <rect x="326" y="210" width="14" height="34" fill="#ffb54d"/>
+                        <rect x="72" y="200" width="26" height="40" fill="#ffb26b" opacity="0.8"/>
+                    </g>
+
+                    <!-- Тёплая дверь с норэном (левая стена) -->
+                    <g class="ah-door">
+                        <path d="M66 145 98 139v66l-32 22z" fill="url(#ah-door)" filter="url(#ah-glow)" opacity="0.92"/>
+                        <path d="M66 145 98 139v22l-32 8z" fill="#7a1d3a"/>
+                        <path d="M76 143.2v23.4M87 141.1v21.9" stroke="#ffcf8a" stroke-width="1.2" opacity="0.7"/>
+                    </g>
+                    <path d="M98 205 66 227 100 240h52z" fill="#ffb26b" opacity="0.12"/>
+
+                    <!-- Окно справа -->
+                    <path d="M290 103.6 310 100v30l-20-1.8z" fill="#7ee6ff" opacity="0.55" filter="url(#ah-glow)"/>
+                    <path d="M300 101.8v27.3M290 116h20" stroke="#1f1436" stroke-width="1.4"/>
+
+                    <!-- Провод с фонарями -->
+                    <path d="M100 58Q200 86 300 58" fill="none" stroke="#2e2050" stroke-width="1"/>
+                    <g filter="url(#ah-glow)">
+                        <g class="ah-lantern"><line x1="124" y1="64" x2="124" y2="68" stroke="#2e2050"/><ellipse cx="124" cy="74" rx="5.5" ry="7" fill="url(#ah-lantern)"/></g>
+                        <g class="ah-lantern"><line x1="162" y1="70.5" x2="162" y2="74" stroke="#2e2050"/><ellipse cx="162" cy="80" rx="5" ry="6.5" fill="url(#ah-lantern)"/></g>
+                        <g class="ah-lantern"><line x1="200" y1="72" x2="200" y2="75" stroke="#2e2050"/><ellipse cx="200" cy="81" rx="5" ry="6.5" fill="url(#ah-lantern)"/></g>
+                        <g class="ah-lantern"><line x1="238" y1="70.5" x2="238" y2="74" stroke="#2e2050"/><ellipse cx="238" cy="80" rx="5" ry="6.5" fill="url(#ah-lantern)"/></g>
+                        <g class="ah-lantern"><line x1="276" y1="64" x2="276" y2="68" stroke="#2e2050"/><ellipse cx="276" cy="74" rx="5.5" ry="7" fill="url(#ah-lantern)"/></g>
+                    </g>
+
+                    <!-- Вывески-татэкан со словами -->
+                    <g font-weight="700" text-anchor="middle" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic','Meiryo',sans-serif">
+                        <g class="ah-sign ah-sign--a" filter="url(#ah-glow)">
+                            <rect x="36" y="30" width="34" height="98" rx="4" fill="#1a0b22" stroke="#ff4fa3" stroke-width="2"/>
+                            <text x="53" y="70" font-size="24" fill="#ff8fc6">言</text>
+                            <text x="53" y="106" font-size="24" fill="#ff8fc6">葉</text>
+                        </g>
+                        <g class="ah-sign ah-sign--b" filter="url(#ah-glow)">
+                            <rect x="118" y="78" width="18" height="40" rx="2.5" fill="#0b1a24" stroke="#4de8ff" stroke-width="1.4"/>
+                            <text x="127" y="95" font-size="12" fill="#9ff3ff">夢</text>
+                            <text x="127" y="111" font-size="12" fill="#9ff3ff">中</text>
+                        </g>
+                        <g class="ah-sign ah-sign--c" filter="url(#ah-glow)">
+                            <rect x="320" y="40" width="32" height="104" rx="4" fill="#24160a" stroke="#ffb54d" stroke-width="2"/>
+                            <text x="336" y="72" font-size="18" fill="#ffd28f">ラ</text>
+                            <text x="336" y="92" font-size="18" fill="#ffd28f">ー</text>
+                            <text x="336" y="113" font-size="18" fill="#ffd28f">メ</text>
+                            <text x="336" y="134" font-size="18" fill="#ffd28f">ン</text>
+                        </g>
+                        <g class="ah-sign ah-sign--d" filter="url(#ah-glow)">
+                            <rect x="262" y="84" width="17" height="38" rx="2.5" fill="#160f2a" stroke="#a78bfa" stroke-width="1.4"/>
+                            <text x="270.5" y="100" font-size="11" fill="#d6c8ff">猫</text>
+                            <text x="270.5" y="115" font-size="11" fill="#d6c8ff">屋</text>
+                        </g>
+                        <g class="ah-sign ah-sign--e" filter="url(#ah-glow)">
+                            <rect x="224" y="98" width="8" height="18" rx="1.5" fill="#0c1f16" stroke="#4dffb0" stroke-width="1"/>
+                            <text x="228" y="110.5" font-size="6" fill="#b5ffe0">酒</text>
+                        </g>
+                    </g>
+                </svg>
+            </div>
+            <div class="app-hero__body">
+                <div class="app-hero__tag" data-i18n="apps.street.tag">3D · переулок, который знает ваши слова</div>
+                <div class="app-hero__name" data-i18n="apps.street.name">Улица слов</div>
+                <p class="app-hero__desc" data-i18n="apps.street.desc">Ночью ваши слова зажигаются над переулком. Одни горят ровно, другие мигают, будто вот-вот погаснут. За дверями кто-то готовит, спорит, смеётся — и говорит по-японски. Зайдёте?</p>
+                <span class="app-hero__cta"><span data-i18n="apps.street.cta">Войти на улицу</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>
+            </div>
+        </a>
+
+        <h2 class="apps__section" data-i18n="apps.more">Инструменты</h2>
         <div class="apps__grid">
-            <a class="app-card" href="./news.html">
-                <div class="app-card__icon">報</div>
+            <a class="app-card app-card--news" href="./news.html">
+                <div class="app-card__icon" aria-hidden="true">報</div>
                 <div class="app-card__head">
-                    <div>
-                        <div class="app-card__name">JP News</div>
-                        <div class="app-card__tag" data-i18n="apps.news.tag">Чтение · три уровня сложности</div>
-                    </div>
+                    <div class="app-card__name">JP News</div>
+                    <div class="app-card__tag" data-i18n="apps.news.tag">Чтение · три уровня сложности</div>
                 </div>
                 <p class="app-card__desc" data-i18n="apps.news.desc">Японские новости на три уровня сложности: читайте простой вариант и переходите к оригиналу. Слова кликаются, как в плеере.</p>
-                <span class="app-card__chev">›</span>
+                <span class="app-card__chev" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>
             </a>
-            <a class="app-card" href="../kanji/">
-                <div class="app-card__icon">書</div>
+            <a class="app-card app-card--kanji" href="../kanji/">
+                <div class="app-card__icon" aria-hidden="true">書</div>
                 <div class="app-card__head">
-                    <div>
-                        <div class="app-card__name"><span data-i18n="nav.kanji">Sumi</span></div>
-                        <div class="app-card__tag" data-i18n="apps.kanji.tag">Письмо · иероглифы из ваших колод</div>
-                    </div>
+                    <div class="app-card__name"><span data-i18n="nav.kanji">Sumi</span></div>
+                    <div class="app-card__tag" data-i18n="apps.kanji.tag">Письмо · иероглифы из ваших колод</div>
                 </div>
                 <p class="app-card__desc" data-i18n="apps.kanji.desc">Пишите иероглифы из своих колод пальцем: порядок штрихов, обводка, письмо по памяти и повторения.</p>
-                <span class="app-card__chev">›</span>
-            </a>
-            <a class="app-card" href="../street/walk.html">
-                <div class="app-card__icon">街</div>
-                <div class="app-card__head">
-                    <div>
-                        <div class="app-card__name"><span data-i18n="apps.street.name">Улица слов</span></div>
-                        <div class="app-card__tag" data-i18n="apps.street.tag">3D · переулок, который знает ваши слова</div>
-                    </div>
-                </div>
-                <p class="app-card__desc" data-i18n="apps.street.desc">Ночью ваши слова зажигаются над переулком. Одни горят ровно, другие мигают, будто вот-вот погаснут. За дверями кто-то готовит, спорит, смеётся — и говорит по-японски. Зайдёте?</p>
-                <span class="app-card__chev">›</span>
+                <span class="app-card__chev" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>
             </a>
         </div>
-        <p class="apps__hint" data-i18n="apps.installHint">Каждое можно добавить на экран «Домой» как отдельное приложение.</p>
+        <p class="apps__hint"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg><span data-i18n="apps.installHint">Каждое можно добавить на экран «Домой» как отдельное приложение.</span></p>
     </main>
 
     <nav class="sidebar" id="sidebar">

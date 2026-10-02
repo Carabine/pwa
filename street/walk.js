@@ -532,6 +532,21 @@ let skyMesh = null, skyTheme = '', endGateZ = -1e9, endShown = 0;
 const nextUnlock = () => { const lit = data && data.words ? litCount() : 0; return { lit, need: Math.max(1, Math.ceil((lit + 1) / 25) * 25 - lit) }; };
 const plural3 = (n, a, b, c) => { const m = n % 10, h = n % 100; return (m === 1 && h !== 11) ? a : (m >= 2 && m <= 4 && (h < 12 || h > 14)) ? b : c; };
 // конец коридора: опущенная решётка с табличкой — дальше пока закрыто
+// красный почтовый ящик (ポスト) у начала улицы: «✉ Написать нам» — отзыв уходит в админку
+const postMeshes = [];
+function buildPostBox() {
+    postMeshes.length = 0; if (!blocks.length) return; useTheme(blocks[0].th);
+    const g = new THREE.Group(), red = lamb('#d0281e'), x = -(W2 - 0.55), z = 1.4;
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 1.05, 18), red); body.position.y = 0.66; g.add(body);
+    const top = new THREE.Mesh(new THREE.SphereGeometry(0.245, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), red); top.position.y = 1.185; g.add(top);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.29, 0.14, 18), lamb('#2a2a2e')); base.position.y = 0.07; g.add(base);
+    const slot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.03, 0.04), lamb('#1a1a1e')); slot.position.set(0, 0.98, 0.225); g.add(slot);
+    const c = document.createElement('canvas'); c.width = 128; c.height = 160; const cg = c.getContext('2d'); cg.fillStyle = '#f4f0e6'; cg.fillRect(0, 0, 128, 160); cg.fillStyle = '#d0281e'; cg.font = '900 64px ' + JP; cg.textAlign = 'center'; cg.textBaseline = 'middle'; cg.fillText('〒', 64, 56); cg.fillStyle = '#1a1a22'; cg.font = '700 22px ' + UI; cg.fillText('Напишите', 64, 112); cg.fillText('нам', 64, 138);
+    const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.25), new THREE.MeshLambertMaterial({ map: makeTex(c) })); plate.position.set(0, 0.68, 0.242); g.add(plate);
+    g.position.set(x, 0, z); g.rotation.y = Math.PI / 2; world.add(g);
+    g.traverse((o) => { if (o.isMesh) { o.userData.post = true; postMeshes.push(o); } });
+    colliders.street.push({ x0: x - 0.32, x1: x + 0.32, z0: z - 0.32, z1: z + 0.32, obj: null });
+}
 function buildEndGate() {
     if (!blocks.length) return;
     const last = blocks[blocks.length - 1]; useTheme(last.th);
@@ -688,6 +703,7 @@ function buildWorld() {
     // тёмные силуэты прохожих убраны (по просьбе): улицу оживляют люди-слова и продавцы
     BL.forEach((bk, bi) => withTheme(bk.th, () => { if (th.festival) FESTIVAL.build(world, bk); if (th.temple) TEMPLE.build(world, bk, false); }));
     buildEndGate();
+    buildPostBox();
     useTheme(BL[0].th);
     mergeStatic(world);
 }
@@ -894,7 +910,7 @@ function texLabel(sign, lit) {
     const t = makeTex(c); sign.tex[key] = t; return t;
 }
 function attachLabel(sign, group, x, y, z, scale) {
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: texLabel(sign, sign.isLit && sign.state !== 'due'), transparent: true, depthTest: false, depthWrite: false, opacity: 0 }));
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: texLabel(sign, sign.isLit && sign.state !== 'due'), transparent: true, depthTest: true, depthWrite: false, opacity: 0 }));
     const n = Math.max(1, sign.chars.length), k = scale || 1;
     sp.scale.set((128 + n * 56) / 128 * 0.42 * k, 0.42 * k, 1); sp.position.set(x, y, z); sp.renderOrder = 10;
     sp.userData.sign = sign; group.add(sp); sign.label = sp; sp.userData.baseY = y;
@@ -1308,7 +1324,7 @@ function catalog(type, rnd) {
     const bookRow = (g, x, y0, z0, rows, n, horiz) => { for (let r = 0; r < rows; r++) for (let k = 0; k < n; k++) { const bh = 0.26 + rnd() * 0.1; const m = B(g, horiz ? 0.06 + rnd() * 0.05 : 0.22, bh, horiz ? 0.22 : 0.06 + rnd() * 0.05, ['#c84a4a', '#3a6fd9', '#d9b23a', '#2a8a5a', '#f0e8d8', '#6a3a8a'][Math.floor(rnd() * 6)], horiz ? x + k * 0.16 : x, y0 + r * 0.42 + bh / 2, horiz ? z0 : z0 + k * 0.16); } };
     const lantern = (g, x, y, z, col) => { const ln = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), new THREE.MeshBasicMaterial({ map: texLantern({ chars: [], white: false, inten: 1, dead: -1 }, true) })); ln.position.set(x, y, z); ln.scale.set(0.8, 1.1, 0.8); g.add(ln); const hl = new THREE.Sprite(new THREE.SpriteMaterial({ map: discTex, color: 0xff8a3a, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false })); hl.position.copy(ln.position); hl.scale.set(1.4, 1.4, 1); g.add(hl); };
     const window_ = (g, len) => { const win = new THREE.Mesh(new THREE.PlaneGeometry(len - 0.3, 1.3), new THREE.MeshBasicMaterial({ map: texSky() })); win.position.set(0, 1.9, 0.04); g.add(win); B(g, len - 0.1, 1.4, 0.06, '#f0ece0', 0, 1.9, 0.02); B(g, 0.05, 1.3, 0.09, '#f0ece0', 0, 1.9, 0.05); if (rnd() < 0.5) { const moon = new THREE.Mesh(new THREE.CircleGeometry(0.14, 20), new THREE.MeshBasicMaterial({ color: 0xfff6e0 })); moon.position.set(len * 0.25, 2.3, 0.05); g.add(moon); } };
-    const tv = (g, x, y, z, ry, sw) => { const scr = new THREE.Mesh(new THREE.PlaneGeometry(sw, sw * 0.56), new THREE.MeshBasicMaterial({ map: LIFE.screenTex() })); scr.position.set(x, y, z + 0.045); scr.rotation.y = ry || 0; g.add(scr); B(g, sw + 0.12, sw * 0.56 + 0.12, 0.06, '#111116', x, y, z); };
+    const tv = (g, x, y, z, ry, sw) => { const scr = new THREE.Mesh(new THREE.PlaneGeometry(sw, sw * 0.56), new THREE.MeshBasicMaterial({ map: LIFE.screenTex() })); scr.position.set(x, y, z + 0.045); scr.rotation.y = ry || 0; scr.userData.tv = true; scr.userData.canvasTex = scr.material.map; LIFE.bindScreen(scr.material.map, scr.material); g.add(scr); B(g, sw + 0.12, sw * 0.56 + 0.12, 0.06, '#111116', x, y, z); };
 
     const poster = (g, x, y, z) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.64), lamb('#ffffff', { map: texPoster(rnd) })); p.position.set(x, y, z); p.rotation.z = (rnd() - 0.5) * 0.06; g.add(p); };
     const acUnit = (g, x, y, z) => { B(g, 0.9, 0.3, 0.22, '#e8ecf0', x, y, z); B(g, 0.8, 0.04, 0.2, '#c8ccd4', x, y - 0.12, z + 0.02); for (let i = 0; i < 8; i++) B(g, 0.08, 0.02, 0.01, '#b8bcc4', x - 0.35 + i * 0.1, y - 0.1, z + 0.12); };
@@ -1346,7 +1362,42 @@ function catalog(type, rnd) {
         { name: 'lights', rule: 'none', build(g) { const { w, d, h } = ROOM; for (let z = -d / 2 + 1.8; z < d / 2 - 1; z += 4.6) for (let x = -w / 2 + 1.9; x < w / 2 - 1; x += 3.8) { const l = new THREE.PointLight(0xf4f8ff, 2.0, 10, 1.2); l.position.set(x, h - 0.3, z); g.add(l); B(g, 1.2, 0.05, 0.18, '#ffffff', x, h - 0.04, z, { emissive: new THREE.Color(0xffffff), emissiveIntensity: 0.5 }); } g.add(new THREE.AmbientLight(0xf0f6ff, 0.55)); } },
     ];
     if (type === 'class') return [...COMMON,
-        { name: 'cabinet', rule: 'wall', walls: ['left', 'right', 'front'], w: 1.4, d: 0.5, h: 2.0, solid: true, build(g, r) { B(g, 1.4, 2.0, 0.5, '#8a6a48', 0, 1.0, 0); for (let lv = 0; lv < 3; lv++) { B(g, 1.2, 0.03, 0.4, '#a88060', 0, 0.5 + lv * 0.5, 0); for (let k = 0; k < 3; k++) { if (lv === 2) { C(g, 0.05, 0.03, 0.14, '#e8c860', -0.4 + k * 0.4, 0.6 + lv * 0.5, 0.05, 10); C(g, 0.07, 0.05, 0.03, '#2a2a30', -0.4 + k * 0.4, 0.52 + lv * 0.5, 0.05, 10); } else B(g, 0.22, 0.3, 0.06, ['#c84a4a', '#3a6fd9', '#2a8a5a'][(k + lv) % 3], -0.4 + k * 0.4, 0.66 + lv * 0.5, 0.05); } } B(g, 1.3, 1.9, 0.01, '#cfe8ff', 0, 1.0, 0.26, { transparent: true, opacity: 0.25 }); } },
+        { name: 'cabinet', rule: 'wall', walls: ['left', 'right', 'front'], w: 1.4, d: 0.5, h: 2.1, solid: true, build(g, r) {
+            const BX = (sx, sy, sz, col, x, y, z, rz) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), lamb(col)); m.position.set(x, y, z); if (rz) m.rotation.z = rz; g.add(m); return m; };
+            const wood = '#7a5236', dark = '#4a3020', inner = '#3a281c';
+            B(g, 1.42, 0.1, 0.5, dark, 0, 0.05, 0); B(g, 0.05, 1.92, 0.5, wood, -0.675, 1.06, 0); B(g, 0.05, 1.92, 0.5, wood, 0.675, 1.06, 0);
+            B(g, 1.46, 0.06, 0.54, wood, 0, 2.04, 0.01); B(g, 1.52, 0.04, 0.58, dark, 0, 2.09, 0.015);
+            BX(1.3, 1.92, 0.02, inner, 0, 1.06, -0.235);
+            const SH = [0.13, 0.6, 1.07, 1.54], PAL = ['#a8322a', '#2a4a8a', '#2a6a4a', '#c89a3a', '#5a3a6a', '#1e2a3a', '#d8c8a8', '#8a2a4a', '#3a6a8a', '#6a4a2a', '#e8e0cc', '#b85a2a'];
+            SH.forEach((y) => BX(1.3, 0.025, 0.46, wood, 0, y, 0));
+            // книги на трёх нижних полках
+            for (let lv = 0; lv < 3; lv++) {
+                const y = SH[lv] + 0.0125; let x = -0.62;
+                while (x < 0.6) {
+                    if (r() < 0.07) { x += 0.04 + r() * 0.05; continue; }
+                    const bw = 0.028 + r() * 0.035, bh = 0.27 + r() * 0.13, bd = 0.24 + r() * 0.07, col = PAL[Math.floor(r() * PAL.length)];
+                    if (x + bw > 0.62) break;
+                    // последняя книга на полке иногда завалилась на соседей
+                    if (x > 0.45 && r() < 0.35) { BX(bw, bh, bd, col, x + bh * 0.28 + 0.02, y + bh * 0.47, 0.0, -0.55); break; }
+                    BX(bw, bh, bd, col, x + bw / 2, y + bh / 2, 0.0);
+                    BX(bw + 0.002, 0.018, 0.004, r() < 0.5 ? '#e8d49a' : '#f4f0e4', x + bw / 2, y + bh * 0.78, bd / 2 + 0.001);
+                    if (r() < 0.5) BX(bw + 0.002, 0.01, 0.004, '#e8d49a', x + bw / 2, y + bh * 0.2, bd / 2 + 0.001);
+                    x += bw + 0.003;
+                }
+            }
+            // верхняя полка: глобус, кубок, стопка книг, цветок
+            const y3 = SH[3] + 0.0125;
+            C(g, 0.05, 0.07, 0.03, dark, -0.45, y3 + 0.015, 0); C(g, 0.008, 0.008, 0.12, '#c8a84a', -0.45, y3 + 0.09, 0);
+            { const gl = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), lamb('#3a7ab8')); gl.position.set(-0.45, y3 + 0.24, 0); g.add(gl); const land = new THREE.Mesh(new THREE.SphereGeometry(0.102, 16, 12, 0.4, 1.6, 0.6, 1.2), lamb('#5a9a4a')); land.position.copy(gl.position); g.add(land); }
+            C(g, 0.045, 0.06, 0.03, '#c8a84a', -0.1, y3 + 0.015, 0); C(g, 0.012, 0.012, 0.08, '#c8a84a', -0.1, y3 + 0.07, 0); C(g, 0.07, 0.025, 0.09, '#e8c860', -0.1, y3 + 0.155, 0);
+            [0, 1, 2].forEach((k) => BX(0.3 - k * 0.03, 0.04, 0.22, PAL[(k * 5 + 2) % PAL.length], 0.22, y3 + 0.02 + k * 0.04, 0, (k - 1) * 0.04));
+            C(g, 0.06, 0.045, 0.1, '#c86a3a', 0.5, y3 + 0.05, 0); { const lf = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), lamb('#3a7a3a')); lf.position.set(0.5, y3 + 0.17, 0); lf.scale.set(1, 0.85, 1); g.add(lf); }
+            // дверцы: рамки и стекло
+            [-1, 1].forEach((k) => { const cx = k * 0.325;
+                BX(0.62, 0.035, 0.03, wood, cx, 1.98, 0.25); BX(0.62, 0.035, 0.03, wood, cx, 0.14, 0.25); BX(0.035, 1.87, 0.03, wood, cx - 0.29, 1.06, 0.25); BX(0.035, 1.87, 0.03, wood, cx + 0.29, 1.06, 0.25); BX(0.56, 0.025, 0.02, wood, cx, 1.07, 0.25);
+                C(g, 0.012, 0.012, 0.05, '#d8b84a', cx - k * 0.25, 1.06, 0.275).rotation.x = Math.PI / 2;
+                BX(0.56, 1.8, 0.006, '#d8ecff', cx, 1.06, 0.25).material = lamb('#d8ecff', { transparent: true, opacity: 0.14 }); });
+        } },
         { name: 'piano', rule: 'wall', walls: ['left', 'right'], w: 1.5, d: 0.65, h: 1.3, solid: true, build(g) { B(g, 1.5, 1.25, 0.6, '#1a1a1e', 0, 0.625, -0.05); B(g, 1.4, 0.06, 0.3, '#f4f4f4', 0, 0.8, 0.25); for (let i = 0; i < 25; i++) if (i % 7 !== 2 && i % 7 !== 6) B(g, 0.03, 0.05, 0.18, '#111', -0.65 + i * 0.054, 0.845, 0.2); B(g, 0.7, 0.08, 0.3, '#3a2a1e', 0, 0.5, 0.65); [[-0.3, 0.55], [0.3, 0.55], [-0.3, 0.75], [0.3, 0.75]].forEach((p) => C(g, 0.02, 0.02, 0.46, '#3a2a1e', p[0], 0.23, p[1], 6)); } },
         { name: 'clock', rule: 'wall', walls: ['back', 'left', 'right'], w: 0.7, d: 0.1, h: 0.7, high: true, build(g) { const c = PROP_BUILDERS['時計'](lamb); c.scale.setScalar(0.9); c.position.y = 0.3; g.add(c); } },
         { name: 'board', first: true, rule: 'wall', walls: ['back'], w: 5.2, d: 0.12, h: 2.7, solid: false, build(g) { this.boardMesh = new THREE.Mesh(new THREE.PlaneGeometry(5.0, 2.5), lamb('#ffffff', { map: null })); this.boardMesh.position.set(0, 1.8, 0.055); this.boardMesh.userData.board = true; g.add(this.boardMesh); B(g, 5.15, 2.65, 0.06, '#5a3a22', 0, 1.8, 0.0); B(g, 5.0, 0.05, 0.12, '#4a3020', 0, 0.52, 0.1); for (let k = 0; k < 5; k++) B(g, 0.08, 0.02, 0.02, k % 2 ? '#ffffff' : '#ffd34a', -2.0 + k * 0.3, 0.56, 0.1); } },
@@ -1448,6 +1499,7 @@ function buildRoom(b, color, type) {
         ['left', 'right', 'back', 'front'].forEach((wl) => { for (let r = 0; r < 3; r++) surfaceOn(wl, 2.35 - r * 0.3, 0.3, (sg) => new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), lamb('#ffffff', { map: texNote(sg) }))); });
     }
     LIFE.populate(type, placed, grid, hashStr(b.q.name + type + 'life') + (inside.door ? Math.round(inside.door.userData.door.z * 10) : 0));
+    placePaper(placed);
     LIFE.upgradeMaterials(room, type);
     mergeStatic(room);
     // предметы-слова по местам; в комбини — с ценником
@@ -1774,6 +1826,43 @@ const audio = (() => {
         // шагов нет — пользователь попросил убрать звук ходьбы
         master.gain.cancelScheduledValues(t0); master.gain.setValueAtTime(0, t0); master.gain.linearRampToValueAtTime(0.85, t0 + 2.5);
     }
+    // ---- пианино (пианист в классе): «нота:доли», аккорд через «+», R — пауза; мелодии — народные/старинные ----
+    const SONGS = {
+        sakura: { beat: 0.6, m: 'A4 A4 B4:2 | A4 A4 B4:2 | A4 B4 C5 B4 | A4 B4:.5 A4:.5 F4:2 | E4 C4 E4 F4 | E4 E4:.5 C4:.5 B3:2 | A4 B4 C5 B4 | A4 B4:.5 A4:.5 F4:2 | E4 C4 E4 F4 | E4 E4:.5 C4:.5 B3:2 | A4 A4 B4:2 | A4 A4 B4:2 | E4 F4 B4:.5 A4:.5 F4 | E4:4',
+            b: 'A2+E3:4 | A2+E3:4 | A2+E3:4 | F2+C3:4 | E2+B2:4 | E2+B2:4 | A2+E3:4 | F2+C3:4 | E2+B2:4 | E2+B2:4 | A2+E3:4 | A2+E3:4 | F2+C3:4 | E2+B2:4' },
+        furusato: { beat: 0.55, m: 'C5 C5 C5 | D5:1.5 E5:.5 D5 | E5 E5 F5 | G5:3 | F5 G5 A5 | E5:1.5 F5:.5 E5 | D5 D5 B4 | C5:3',
+            b: 'C3+G3:3 | G2+D3:3 | C3+G3:3 | C3+E3:3 | F2+C3:3 | C3+G3:3 | G2+D3:3 | C3+G3:3' },
+        kaeru: { beat: 0.42, m: 'C5 D5 E5 F5 | E5 D5 C5:2 | E5 F5 G5 A5 | G5 F5 E5:2 | C5 R C5 R | C5 R C5 R | C5:.5 C5:.5 D5:.5 D5:.5 E5:.5 E5:.5 F5:.5 F5:.5 | E5 D5 C5:2',
+            b: 'C3+G3:4 | G2+D3:2 C3+G3:2 | C3+G3:4 | G2+D3:2 C3+G3:2 | C3+G3:4 | C3+G3:4 | C3+G3:2 G2+D3:2 | G2+D3:2 C3+G3:2' },
+        kira: { beat: 0.45, m: 'C5 C5 G5 G5 | A5 A5 G5:2 | F5 F5 E5 E5 | D5 D5 C5:2 | G5 G5 F5 F5 | E5 E5 D5:2 | G5 G5 F5 F5 | E5 E5 D5:2 | C5 C5 G5 G5 | A5 A5 G5:2 | F5 F5 E5 E5 | D5 D5 C5:2',
+            b: 'C3+G3:2 C3+G3:2 | F2+C3:2 C3+G3:2 | F2+C3:2 C3+G3:2 | G2+D3:2 C3+G3:2 | C3+G3:2 F2+C3:2 | C3+G3:2 G2+D3:2 | C3+G3:2 F2+C3:2 | C3+G3:2 G2+D3:2 | C3+G3:2 C3+G3:2 | F2+C3:2 C3+G3:2 | F2+C3:2 C3+G3:2 | G2+D3:2 C3+G3:2' },
+        chocho: { beat: 0.4, m: 'G4 E4 E4:2 | F4 D4 D4:2 | C4 D4 E4 F4 | G4 G4 G4:2 | G4 E4 E4 E4 | F4 D4 D4 D4 | C4 E4 G4 G4 | E4 E4 E4:2 | D4 D4 D4 D4 | D4 E4 F4:2 | E4 E4 E4 E4 | E4 F4 G4:2 | G4 E4 E4:2 | F4 D4 D4:2 | C4 E4 G4 G4 | C4:4',
+            b: 'C3+G3:4 | G2+D3:4 | C3+G3:4 | C3+E3:4 | C3+G3:4 | G2+D3:4 | C3+G3:4 | C3+G3:4 | G2+D3:4 | G2+D3:4 | C3+G3:4 | C3+G3:4 | C3+G3:4 | G2+D3:4 | C3+G3:2 G2+D3:2 | C3+G3:4' },
+    };
+    const noteHz = (n) => { const m = /^([A-G])([#b]?)(\d)$/.exec(n); if (!m) return 0; const s = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0); return 440 * Math.pow(2, (12 * (+m[3] + 1) + s - 69) / 12); };
+    const parseTrack = (str) => { const out = []; let at = 0; str.replace(/\|/g, ' ').trim().split(/\s+/).forEach((tk) => { const [n, d] = tk.split(':'); const len = d ? parseFloat(d) : 1; if (n !== 'R') n.split('+').forEach((x) => out.push({ f: noteHz(x), at, len })); at += len; }); return { notes: out, len: at }; };
+    function pianoNote(c, f, w, dur, vel, dest) {
+        const g = c.createGain(), lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(Math.min(8000, f * 7), w); lp.frequency.setTargetAtTime(Math.max(500, f * 2.2), w, 0.35);
+        g.gain.setValueAtTime(0, w); g.gain.linearRampToValueAtTime(vel, w + 0.006); g.gain.setTargetAtTime(vel * 0.25, w + 0.006, 0.45); g.gain.setTargetAtTime(0.0001, w + dur, 0.16);
+        lp.connect(g); g.connect(dest);
+        (LOW ? [[1, 'triangle', 1], [2, 'sine', 0.3]] : [[1, 'triangle', 1], [2, 'sine', 0.32], [3, 'sine', 0.1], [4.02, 'sine', 0.05]]).forEach(([k, type, a]) => { const o = c.createOscillator(); o.type = type; o.frequency.value = f * k; const og = c.createGain(); og.gain.value = a; o.connect(og); og.connect(lp); o.start(w); o.stop(w + dur + 1); });
+    }
+    let songOut = null, songEnd = 0, duckBus = null;
+    function unduck() { if (duckBus && ctx) { try { duckBus.gain.setTargetAtTime(inside.on ? 0.8 : 1, ctx.currentTime, 0.8); } catch (e) { /* шина уже другая */ } } duckBus = null; }
+    function stopSong() { if (songOut && ctx) { const o = songOut; o.gain.setTargetAtTime(0, ctx.currentTime, 0.05); setTimeout(() => { try { o.disconnect(); } catch (e) { /* ok */ } }, 400); } songOut = null; unduck(); }
+    function playSong(id) {
+        const sg = SONGS[id]; if (!sg || !ctx || !enabled || !master) return 0;
+        stopSong();
+        const c = ctx, t0 = c.currentTime + 0.2, m = parseTrack(sg.m), b = parseTrack(sg.b), k = sg.beat;
+        const out = songOut = c.createGain(); out.gain.value = 1; out.connect(master);
+        const sv = c.createGain(); sv.gain.value = 0.5; out.connect(sv); sv.connect(getVerb(c));
+        m.notes.forEach((n) => pianoNote(c, n.f, t0 + n.at * k + (Math.random() - 0.5) * 0.012, n.len * k * 0.95, 0.15, out));
+        b.notes.forEach((n) => pianoNote(c, n.f, t0 + n.at * k, n.len * k * 0.98, 0.05, out));
+        if (bus) { duckBus = bus; bus.gain.setTargetAtTime(0.1, c.currentTime, 0.4); }
+        const total = Math.max(m.len, b.len) * k + 1.2; songEnd = c.currentTime + total;
+        setTimeout(() => { if (songOut === out) { songOut = null; unduck(); } }, total * 1000 + 300);
+        return total;
+    }
     function stop() { clearInterval(timer); stopAmb(); nodes.forEach((n) => { try { n.src && n.src.stop(); n.o && n.o.stop(); } catch (e) { /* уже остановлен */ } }); nodes = []; if (bus) { try { bus.disconnect(); } catch (e) { /* ok */ } bus = null; } }
     return {
         resume() { if (!enabled) return; if (!ctx) { try { const AC = window.AudioContext || window.webkitAudioContext; try { ctx = new AC({ latencyHint: 'playback' }); } catch (e) { ctx = new AC(); } master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination); ctx.onstatechange = () => { if (ctx.state === 'running' && enabled) start(sceneId || (inside.on ? 'inside' : th.id)); }; } catch (e) { return; } start(inside.on ? 'inside' : th.id); }
@@ -1793,6 +1882,7 @@ const audio = (() => {
         },
         setVariant(v) { if (!VARIANTS.includes(v)) return; variant = v; saveSet({ musicVar: v }); if (!enabled) { enabled = true; saveSet({ music2: true }); btn.classList.add('on'); } if (ctx) start(sceneId || (inside.on ? 'inside' : th.id)); else this.resume(); },
         setMotion(k) { if (motionGain && ctx) { motionGain._lfo.gain.setTargetAtTime(Math.min(1, k) * 0.04, ctx.currentTime, 0.1); } },
+        playSong, stopSong,
         ding() { if (!ctx || !enabled || !master) return; const w = ctx.currentTime; [N.C5, N.E5, N.G5, 1046.5].forEach((f, i) => keys(ctx, f, w + i * 0.08, 0.6, 0.05, master)); },
         toggle() { enabled = !enabled; saveSet({ music2: enabled }); btn.classList.toggle('on', enabled); if (!enabled) { stop(); if (ctx) ctx.suspend(); } else this.resume(); toast(enabled ? 'Звук включён' : 'Звук выключен'); },
         get enabled() { return enabled; },
@@ -1901,6 +1991,9 @@ function tap(x, y) {
     if (!h) { if (!FINE) hideHint(); return; }
     if (h.exit) { buzz(15); exitRoom(); return; }
     if (h.radio) { buzz(12); radioNext(); return; }
+    if (h.tv) { buzz(10); tvNext(h.tv); return; }
+    if (h.paper) { buzz(10); TALK.close(); PAPER.open(); return; }
+    if (h.post) { if (h.dist < 6) { buzz(10); TALK.close(); MAIL.open(); } else toast('Подойдите ближе к почтовому ящику'); return; }
     if (h.door) { if (h.dist < 7) { buzz(15); enterRoom(h.door); } else toast('Подойди ближе к двери'); return; }
     buzz(10); showHint(h.sign, true);
 }
@@ -1915,21 +2008,75 @@ const GAZE = !FINE;
 if (GAZE) document.getElementById('cross').classList.add('gaze');
 document.addEventListener('mousemove', (e) => { if (!locked()) hover.lastMouse = [e.clientX, e.clientY]; });
 let hoverDirty = true, hoverList = [], roomHover = [];
-function rebuildHover() { hoverList = []; signsGroup.traverse((o) => { if ((o.isMesh || o.isSprite) && o.userData.sign) hoverList.push(o); }); hoverList = hoverList.concat(doors); hoverDirty = false; }
+function rebuildHover() { hoverList = []; signsGroup.traverse((o) => { if ((o.isMesh || o.isSprite) && o.userData.sign) hoverList.push(o); }); hoverList = hoverList.concat(doors, postMeshes); hoverDirty = false; }
 function pick(x, y, maxDist) {
     ray.setFromCamera(new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1), camera);
     ray.far = maxDist || 24; // вывески висят высоко на фасадах — ловим издалека
     if (inside.on) {
-        if (!roomHover.length) room.traverse((o) => { if ((o.isMesh || o.isSprite) && (o.userData.sign || o.userData.exit || o.userData.radio)) roomHover.push(o); });
-        const h = ray.intersectObjects(roomHover, false).find((o) => o.object.userData.sign || o.object.userData.exit || o.object.userData.radio);
+        if (!roomHover.length) room.traverse((o) => { if ((o.isMesh || o.isSprite) && (o.userData.sign || o.userData.exit || o.userData.radio || o.userData.tv || o.userData.paper)) roomHover.push(o); });
+        const h = ray.intersectObjects(roomHover, false).find((o) => o.object.userData.sign || o.object.userData.exit || o.object.userData.radio || o.object.userData.tv || o.object.userData.paper);
         if (!h) return null;
         if (h.object.userData.radio) return { radio: true, dist: h.distance };
+        if (h.object.userData.tv) return { tv: h.object, dist: h.distance };
+        if (h.object.userData.paper) return { paper: true, dist: h.distance };
         return h.object.userData.exit ? { exit: true, dist: h.distance } : { sign: h.object.userData.sign, dist: h.distance };
     }
     if (hoverDirty) rebuildHover();
-    const h = ray.intersectObjects(hoverList, false).find((o) => (o.object.userData.sign && !o.object.userData.sign.deco) || o.object.userData.door);
+    const h = ray.intersectObjects(hoverList, false).find((o) => (o.object.userData.sign && !o.object.userData.sign.deco) || o.object.userData.door || o.object.userData.post);
     if (!h) return null;
+    if (h.object.userData.post) return { post: true, dist: h.distance };
     return h.object.userData.door ? { door: h.object, dist: h.distance } : { sign: h.object.userData.sign, dist: h.distance };
+}
+// написанное в окне «Доска» — мелом на доске в классе: справа сверху, слова встают в ряд справа налево
+function chalkOnBoard(recs, w) {
+    if (!inside.on) return; let bd = null; room.traverse((o) => { if (!bd && o.userData && o.userData.board) bd = o; });
+    const tex = bd && bd.material && bd.material.map; if (!tex || !tex.image || !tex.image.getContext) return;
+    const g = tex.image.getContext('2d'), n = recs.length, box = 74, gap = 2;
+    let x0 = (bd.userData.chalkX || 994) - n * (box + gap);
+    if (x0 < 520) { g.fillStyle = '#2b4a3a'; g.fillRect(500, 16, 494, 92); x0 = 994 - n * (box + gap); }
+    recs.forEach((r, i) => {
+        const x = x0 + i * (box + gap), y = 20;
+        if (r.rec && r.rec.s) { g.save(); g.translate(x, y); g.scale(box / 109, box / 109); g.lineCap = 'round'; g.lineJoin = 'round';
+            r.rec.s.forEach((d) => { const p = new Path2D(d); g.strokeStyle = 'rgba(255,255,255,0.22)'; g.lineWidth = 9; g.stroke(p); g.strokeStyle = 'rgba(250,250,240,0.92)'; g.lineWidth = 5; g.stroke(p); });
+            g.restore(); }
+        else { g.fillStyle = 'rgba(250,250,240,0.92)'; g.font = '700 58px ' + JP; g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText(r.ch, x + 6, y + 8); }
+    });
+    if (w && w.kana && w.kana !== w.kanji) { g.fillStyle = 'rgba(255,255,255,0.6)'; g.font = '500 16px ' + JP; g.textAlign = 'center'; g.textBaseline = 'top'; g.fillText(w.kana, x0 + n * (box + gap) / 2, 96); }
+    bd.userData.chalkX = x0 - 22;
+    tex.needsUpdate = true;
+}
+// японская речь: реплики людей рядом озвучиваются синтезом речи (тише, если дальше); выключается в настройках
+let voicesPref = settings.voices !== false, voiceLast = 0, jaVoices = null;
+function voicesOn() { return voicesPref && audio.enabled && !!window.speechSynthesis; }
+function voiceLine(ch, line, force) {
+    try {
+        if (!voicesOn() || !line || !line[0] || ch.cat) return;
+        const p = (ch.J && ch.J.head ? ch.J.head : ch.root).getWorldPosition(new THREE.Vector3()), d = p.distanceTo(camera.position);
+        if (d > 7) return;
+        const now = performance.now(); if (!force && (speechSynthesis.speaking || now - voiceLast < 2500)) return; voiceLast = now;
+        if (!jaVoices || !jaVoices.length) jaVoices = speechSynthesis.getVoices().filter((v) => /^ja/i.test(v.lang));
+        const u = new SpeechSynthesisUtterance(String(line[0]).replace(/[「」（）()…]/g, ' '));
+        u.lang = 'ja-JP'; const seed = hashStr(String(ch.seed || ch.role || 'x'));
+        if (jaVoices.length) u.voice = jaVoices[seed % jaVoices.length];
+        const o = ch.o || {}; u.pitch = Math.max(0.5, Math.min(1.8, (o.fem ? 1.25 : 0.95) - (o.old ? 0.25 : 0) + ((seed >>> 4) % 7 - 3) * 0.04));
+        u.rate = 1.0 + ((seed >>> 8) % 5 - 2) * 0.04; u.volume = force ? 0.9 : Math.max(0.15, 0.75 * (1 - d / 7));
+        if (force) speechSynthesis.cancel(); speechSynthesis.speak(u);
+    } catch (e) { /* нет синтеза речи */ }
+}
+// для модулей, где имя pick занято (диалоги): тот же луч из точки экрана
+function pickAt(x, y, d) { return pick(x, y, d); }
+function tvNext(m) {
+    const n = LIFE.nextChannel(m.userData.canvasTex || m.material.map); if (!n) return;
+    if (n[0] === 'アニメ' && ANITV.ensure()) setTimeout(() => toast('📺 アニメ — ' + (ANITV.title ? '«' + ANITV.title + '»' : 'аниме') + (ANITV.mine ? ' · сцена из вашего словаря' : '')), 900);
+    else toast('📺 ' + n[0] + ' — ' + n[1]);
+}
+// газета на столе (котацу, тябудай, столик кафе) — одна на комнату
+const PAPER_SPOTS = { kotatsu: [0.62, 0.415, 0, 0.3], chabudai: [-0.05, 0.362, -0.3, -0.4], cafeTable: [0, 0.763, -0.21, 0.2] };
+function placePaper(placed) {
+    const m = placed.find((x) => x._grp && PAPER_SPOTS[x.name]); if (!m) return;
+    const [x, y, z, r] = PAPER_SPOTS[m.name];
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(0.27, 0.196), new THREE.MeshLambertMaterial({ map: PAPER.texture() }));
+    p.rotation.x = -Math.PI / 2; p.rotation.z = r; p.position.set(x, y, z); p.userData.paper = true; m._grp.add(p);
 }
 function showHint(sg, sticky) {
     const now = performance.now();
@@ -2057,6 +2204,8 @@ if (SAMPLE) panel.querySelectorAll('a[data-theme]').forEach((a) => { const u = n
 panel.querySelectorAll('[data-music]').forEach((b) => { b.classList.toggle('on', b.dataset.music === audio.variant); b.addEventListener('click', () => { audio.setVariant(b.dataset.music); panel.querySelectorAll('[data-music]').forEach((x) => x.classList.toggle('on', x === b)); }); });
 panel.querySelectorAll('[data-theme]').forEach((b) => { b.classList.toggle('on', b.dataset.theme === th.id); });
 if (window.STREET_WORDS && window.STREET_WORDS.words && !SAMPLE && location.protocol === 'file:') panel.querySelector('[data-src="demo"]').textContent = 'Мой словарь (выгрузка)';
+const voiceBtn = panel.querySelector('[data-voices]');
+if (voiceBtn) { voiceBtn.classList.toggle('on', voicesPref); voiceBtn.addEventListener('click', () => { voicesPref = !voicesPref; saveSet({ voices: voicesPref }); voiceBtn.classList.toggle('on', voicesPref); if (!voicesPref && window.speechSynthesis) speechSynthesis.cancel(); toast(voicesPref ? 'Голоса включены' : 'Голоса выключены'); }); }
 const rainBtn = panel.querySelector('[data-rain]'); rainBtn.hidden = false; rainBtn.classList.toggle('on', opts.rain);
 rainBtn.addEventListener('click', () => { opts.rain = !opts.rain; saveSet({ rain: opts.rain }); rainBtn.classList.toggle('on', opts.rain); if (rain) rain.visible = opts.rain; });
 const reflBtn = { classList: { remove() {}, toggle() {} } }; // кнопки отражений больше нет

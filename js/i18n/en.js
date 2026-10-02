@@ -79,6 +79,8 @@ window.I18N_EN = {
         'apps.kanji.desc': 'Write kanji from your decks with your finger: stroke order, tracing, writing from memory and reviews.',
         'apps.street.name': 'Street of Words',
         'apps.street.tag': '3D · an alley that knows your words',
+        'apps.street.cta': 'Enter the street',
+        'apps.more': 'Tools',
         'apps.street.desc': "At night your words light up over the alley. Some burn steady, others flicker as if about to go out. Behind the doors someone is cooking, arguing, laughing — in Japanese. Will you step in?",
         'apps.installHint': 'Each one can be added to your home screen as a separate app.',
         'nav.kanji': 'Sumi',

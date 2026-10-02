@@ -22,6 +22,7 @@
         html body .hud.bottom #music { font-size: 22px; } html body .hud.bottom #gear { font-size: 16px; }
         #music.on { color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 16px rgba(124,140,248,0.7); }
         #music:not(.on) { color: rgba(255,255,255,0.45); background-image: linear-gradient(135deg, transparent 46%, rgba(255,255,255,0.55) 47%, rgba(255,255,255,0.55) 53%, transparent 54%); }
+        html body .hud.bottom #music svg, html body .hud.bottom #gear svg { display: block; flex: none; }
         /* телефон: подсказка слова — в правом верхнем углу, название места — слева под названием квартала */
         @media (pointer: coarse) {
             html body #hint { left: auto; right: calc(env(safe-area-inset-right, 0px) + 12px); top: calc(env(safe-area-inset-top, 0px) + 12px); transform: translate(0, -10px); min-width: 0; max-width: min(300px, 58vw); padding: 9px 12px; border-radius: 14px; }
@@ -154,12 +155,12 @@
         #write .av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,0.1); font-size: 18px; flex: none; }
         #write .tt { flex: 1; } #write .nm { font: 700 16px Inter, sans-serif; } #write .rl { font-size: 12px; color: rgba(255,255,255,0.5); }
         #write .tx { background: rgba(255,255,255,0.08); border: 0; border-radius: 50%; width: 32px; height: 32px; color: rgba(255,255,255,0.75); font-size: 20px; cursor: pointer; }
-        #write .card { padding: 0 16px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+        #write .card { position: static; left: auto; right: auto; bottom: auto; transform: none; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; border-radius: 0; margin: 0; padding: 0 16px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
         #write .kana { font: 700 22px "Noto Sans JP", sans-serif; color: #ffd9a0; } #write .mean { font-size: 14px; color: rgba(255,255,255,0.8); }
         #write .prog { width: 100%; display: flex; gap: 6px; } #write .prog span { font: 700 18px "Noto Sans JP", sans-serif; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.45); }
         #write .prog span.now { box-shadow: 0 0 0 1.5px #ffd9a0 inset; color: #ffd9a0; } #write .prog span.done { background: rgba(60,200,120,0.3); color: #fff; }
         #write .bd { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 14px; }
-        #write .host { position: relative; width: min(100%, 52vh); aspect-ratio: 1; }
+        #write .host { position: relative; width: min(100%, 68vh); aspect-ratio: 1; }
         #write .kj-board__svg { position: absolute; inset: 0; width: 100%; height: 100%; background: #f6f0e2; border-radius: 14px; touch-action: none; box-shadow: 0 0 0 1px rgba(0,0,0,0.2) inset; }
         #write .kj-board__svg.is-writable { cursor: crosshair; }
         #write .kj-grid line { stroke: rgba(120,70,40,0.22); stroke-width: 0.6; vector-effect: non-scaling-stroke; } #write .kj-grid line.kj-grid__diag { stroke-dasharray: 2 3; }
@@ -174,6 +175,72 @@
         #write .row { display: flex; gap: 6px; padding: 0 12px; } #write .row button { flex: 1; background: rgba(255,255,255,0.08); border: 0; border-radius: 10px; padding: 9px 6px; color: #fff; font: 600 12.5px Inter, sans-serif; box-shadow: 0 0 0 1px rgba(255,255,255,0.12) inset; cursor: pointer; } #write .row button.on { background: rgba(255,217,160,0.22); }
         @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) { #write { top: 8px; bottom: 8px; right: 8px; width: min(440px, 52vw); border-radius: 16px; gap: 4px; padding-bottom: 8px; } #write .th { padding: 6px 8px 2px 10px; } #write .av { width: 28px; height: 28px; } #write .host { width: min(100%, 46vh); } #write .row button { padding: 7px 4px; font-size: 12px; } }
         @media (pointer: coarse) and (orientation: portrait) { #write { left: 8px; right: 8px; width: auto; top: auto; height: 74vh; } }
+        /* фуригана в диалоге */
+        #talk ruby { ruby-position: over; } #talk rt { font-size: 0.52em; font-weight: 500; color: rgba(255,255,255,0.62); letter-spacing: 0; }
+        #talk .op b { line-height: 1.55; } #talk .m .jp { line-height: 1.75; }
+        /* газета: бумажный лист сбоку */
+        #paper { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 16px); top: calc(env(safe-area-inset-top, 0px) + 16px); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); width: min(440px, 44vw); z-index: 31; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transform: translateX(24px); transition: opacity .2s, transform .25s cubic-bezier(.2,.8,.2,1); background: #f3ecdb; color: #1c1a20; border-radius: 16px; box-shadow: 0 0 0 1px rgba(0,0,0,0.15) inset, 0 16px 44px rgba(0,0,0,0.55); overflow: hidden; }
+        #paper.on { opacity: 1; transform: none; pointer-events: auto; }
+        #paper .mh { display: flex; align-items: center; gap: 10px; margin: 0 12px; padding: 12px 0 8px 4px; border-bottom: 3px double #1c1a20; }
+        #paper .mh .t { flex: 1; font: 900 22px "Noto Sans JP", serif; letter-spacing: .06em; } #paper .mh .d { font: 600 12px Inter, sans-serif; color: #6a5a4a; }
+        #paper .tx { background: rgba(0,0,0,0.07); border: 0; border-radius: 50%; width: 32px; height: 32px; color: #3a3430; font-size: 20px; cursor: pointer; flex: none; }
+        #paper .body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 16px 6px; }
+        #paper .cat { display: inline-block; font: 700 11px Inter, sans-serif; color: #fff; background: #c8322a; border-radius: 4px; padding: 2px 7px; }
+        #paper h3 { font: 800 19px/1.75 "Noto Sans JP", sans-serif; margin: 6px 0 2px; } #paper .ttr { font: 500 13px/1.4 Inter, sans-serif; color: #5a4a3a; margin-bottom: 10px; }
+        #paper p { font: 500 16px/2.05 "Noto Sans JP", sans-serif; margin: 0 0 4px; cursor: pointer; border-radius: 6px; padding: 0 4px; }
+        #paper p:hover { background: rgba(200,50,42,0.07); }
+        #paper p .ru { display: none; font: 400 13px/1.45 Inter, sans-serif; color: #5a4a3a; padding: 0 0 6px; }
+        #paper p.open .ru, #paper.tr p .ru { display: block; }
+        #paper ruby { ruby-position: over; } #paper rt { font-size: .5em; color: #8a6a4a; font-weight: 500; }
+        #paper .voc { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 6px; } #paper .voc span { font: 400 12px/1.35 Inter, "Noto Sans JP", sans-serif; background: rgba(0,0,0,0.06); border-radius: 8px; padding: 4px 8px; }
+        #paper .src { font: 500 11px Inter, sans-serif; color: #8a7a6a; margin: 6px 0 4px; }
+        #paper .msg { padding: 28px 12px; text-align: center; color: #6a5a4a; font: 500 14px Inter, sans-serif; }
+        #paper .row { display: flex; gap: 6px; padding: 8px 12px 12px; }
+        #paper .row button, #paper .row a { flex: 1; text-align: center; text-decoration: none; background: #1c1a20; color: #f3ecdb; border: 0; border-radius: 10px; padding: 9px 6px; font: 600 12.5px Inter, sans-serif; cursor: pointer; }
+        #paper .row .on { background: #c8322a; }
+        @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) { #paper { top: 8px; bottom: 8px; right: 8px; width: min(460px, 54vw); border-radius: 14px; } #paper .mh { padding: 6px 0 4px 4px; } #paper .mh .t { font-size: 18px; } #paper h3 { font-size: 17px; } #paper p { font-size: 15px; } #paper .row { padding: 6px 8px 8px; } #paper .row button, #paper .row a { padding: 7px 4px; font-size: 12px; } }
+        @media (pointer: coarse) and (orientation: portrait) { #paper { left: 8px; right: 8px; width: auto; top: auto; height: 74vh; } }
+        #write { width: min(560px, 46vw); }
+        @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
+            #write { width: min(760px, 92vw); display: grid; grid-template-columns: auto 1fr; grid-template-rows: max-content max-content max-content minmax(0, 1fr) max-content; grid-template-areas: "bd th" "bd card" "bd msg" "bd sp" "bd row"; column-gap: 4px; row-gap: 2px; align-content: stretch; padding: 8px 8px 8px 8px; }
+            #write .th { grid-area: th; } #write .card { grid-area: card; padding: 4px 8px; } #write .msg { grid-area: msg; text-align: left; padding: 6px 8px; }
+            #write .row { grid-area: row; flex-wrap: wrap; padding: 0 4px; } #write .row button { flex: 1 1 40%; }
+            #write .bd { grid-area: bd; padding: 0; } #write .host { width: calc(100svh - 32px); height: calc(100svh - 32px); max-width: 60vw; }
+        }
+        @media (pointer: coarse) and (orientation: portrait) { #write { height: 88svh; } #write .host { width: min(100%, 60svh); } }
+        /* почтовый ящик */
+        #mail { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -46%); width: min(440px, calc(100vw - 32px)); z-index: 32; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; background: #fbf7ee; color: #1c1a20; border-radius: 18px; box-shadow: 0 0 0 1px rgba(0,0,0,0.12) inset, 0 18px 48px rgba(0,0,0,0.5); opacity: 0; pointer-events: none; transition: opacity .2s, transform .25s cubic-bezier(.2,.8,.2,1); }
+        #mail.on { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%); }
+        #mail .mh { display: flex; align-items: center; gap: 10px; } #mail .mh .t { flex: 1; font: 800 18px Inter, "Noto Sans JP", sans-serif; color: #b8241b; }
+        #mail .tx { background: rgba(0,0,0,0.07); border: 0; border-radius: 50%; width: 32px; height: 32px; color: #3a3430; font-size: 20px; cursor: pointer; }
+        #mail .lead { margin: 0; font: 400 13.5px/1.45 Inter, sans-serif; color: #5a4a3a; }
+        #mail textarea { width: 100%; box-sizing: border-box; min-height: 130px; resize: vertical; border: 0; border-radius: 12px; padding: 10px 12px; background: #fff; color: #1c1a20; font: 400 15px/1.45 Inter, sans-serif; box-shadow: 0 0 0 1px rgba(0,0,0,0.14) inset; outline: none; }
+        #mail textarea:focus { box-shadow: 0 0 0 2px #d0281e inset; }
+        #mail .st { min-height: 18px; font: 500 13px Inter, sans-serif; color: #6a5a4a; } #mail .st.err { color: #b8241b; } #mail .st.ok { color: #1f7a45; }
+        #mail .row { display: flex; } #mail .b-send { flex: 1; background: #d0281e; color: #fff; border: 0; border-radius: 12px; padding: 11px; font: 700 14px Inter, sans-serif; cursor: pointer; }
+        @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) { #mail { top: 8px; transform: translate(-50%, 0); gap: 6px; padding: 10px 12px 12px; } #mail.on { transform: translate(-50%, 0); } #mail textarea { min-height: 90px; } }
+        /* панель настроек */
+        #panel { width: 300px; padding: 0; overflow: hidden; flex-direction: column; max-height: calc(100svh - 136px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+        #panel.open { display: flex; }
+        #panel .ph { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); flex: none; }
+        #panel .ph b { font: 700 15px Inter, sans-serif; color: #fff; }
+        #panel #panel-close { position: static; width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75); font-size: 18px; line-height: 1; display: grid; place-items: center; padding: 0; }
+        #panel .pb { overflow-y: auto; padding: 12px 14px 14px; overscroll-behavior: contain; }
+        #panel h4 { margin: 0 0 8px; } #panel .opts + h4 { margin-top: 16px; }
+        #panel .opts.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 4px; }
+        #panel .opts.seg .opt { border-radius: 9px; padding: 8px 4px; font-size: 12px; line-height: 1.2; text-align: center; background: transparent; box-shadow: none; }
+        #panel .opts.seg .opt.on { background: var(--accent); }
+        #panel .opts.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        #panel .opts.grid .opt { border-radius: 10px; padding: 9px 10px; font-size: 12.5px; line-height: 1.2; text-align: left; }
+        #panel .opts.grid .opt.on { box-shadow: 0 0 12px rgba(124,140,248,0.5); }
+        #panel .opts.tg { display: flex; flex-direction: column; gap: 0; }
+        #panel .opts.tg .opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: none; box-shadow: none; border-radius: 0; padding: 9px 2px; font-size: 13.5px; font-weight: 500; text-align: left; }
+        #panel .opts.tg .opt + .opt { border-top: 1px solid rgba(255,255,255,0.07); }
+        #panel .opts.tg .opt i { position: relative; flex: none; width: 36px; height: 22px; border-radius: 11px; background: rgba(255,255,255,0.18); transition: background .2s; }
+        #panel .opts.tg .opt i::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .2s; }
+        #panel .opts.tg .opt.on i { background: var(--accent); } #panel .opts.tg .opt.on i::after { transform: translateX(14px); }
+        #panel .opt[hidden] { display: none !important; }
+        @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) { #panel { top: calc(env(safe-area-inset-top, 0px) + 8px); right: calc(env(safe-area-inset-right, 0px) + 8px); width: min(470px, 62vw); max-height: calc(100svh - 16px); } #panel .opts.grid { grid-template-columns: 1fr 1fr 1fr; } #panel .pb { padding: 10px 12px 12px; } }
         #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 14px; letter-spacing: 0.04em; pointer-events: none; z-index: 40; transition: opacity .4s; }
     </style>
     <script>
@@ -216,20 +283,20 @@
         <button class="btn ghost" id="exit" hidden>← На улицу</button>
         <button class="btn" id="share">Поделиться</button>
         <span class="spacer"></span>
-        <button class="btn ghost" id="music" aria-label="Звук">♪</button>
-        <button class="btn ghost" id="gear" aria-label="Настройки">⚙</button>
+        <button class="btn ghost" id="music" aria-label="Звук"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 17.5V5.5l11-2v12"/><circle cx="6.5" cy="17.5" r="2.6" fill="currentColor"/><circle cx="17.5" cy="15.5" r="2.6" fill="currentColor"/></svg></button>
+        <button class="btn ghost" id="gear" aria-label="Настройки"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
 </div>
 <div id="panel">
-    <button id="panel-close" aria-label="Закрыть">×</button>
-    <h4>Данные</h4>
-    <div class="opts"><button class="opt" data-src="real">Мои слова</button><button class="opt" data-src="sample">Тестовая колода</button><button class="opt" data-src="demo">Встроенный набор</button></div>
+    <div class="ph"><b>Настройки</b><button id="panel-close" aria-label="Закрыть">×</button></div>
+    <div class="pb">
+    <h4>Слова</h4>
+    <div class="opts seg"><button class="opt" data-src="real">Мои слова</button><button class="opt" data-src="sample">Тестовая колода</button><button class="opt" data-src="demo">Встроенный набор</button></div>
     <h4>Музыка</h4>
-    <div class="opts"><button class="opt" data-music="city">Ночной город</button><button class="opt" data-music="snow">Снег над крышами</button><button class="opt" data-music="train">Ночной поезд</button><button class="opt" data-music="tea">Чайный дом</button><button class="opt" data-music="stars">Звёзды</button><button class="opt" data-music="harbor">Гавань</button><button class="opt" data-music="radio">Радио за стеной</button><button class="opt" data-music="calm">Тихий вечер</button><button class="opt" data-music="lane">Переулок</button><button class="opt" data-music="lofi">Lo-fi</button></div>
-    <h4>Графика</h4>
-    <div class="opts"><button class="opt" data-rain>Дождь</button></div>
-    <h4>Управление</h4>
-    <div class="opts"><button class="opt" data-gyro>Гироскоп</button></div>
+    <div class="opts grid"><button class="opt" data-music="city">Ночной город</button><button class="opt" data-music="snow">Снег над крышами</button><button class="opt" data-music="train">Ночной поезд</button><button class="opt" data-music="tea">Чайный дом</button><button class="opt" data-music="stars">Звёзды</button><button class="opt" data-music="harbor">Гавань</button><button class="opt" data-music="radio">Радио за стеной</button><button class="opt" data-music="calm">Тихий вечер</button><button class="opt" data-music="lane">Переулок</button><button class="opt" data-music="lofi">Lo-fi</button></div>
+    <h4>Звук и вид</h4>
+    <div class="opts tg"><button class="opt" data-voices><span>Голоса прохожих</span><i></i></button><button class="opt" data-rain><span>Дождь</span><i></i></button><button class="opt" data-gyro><span>Гироскоп</span><i></i></button></div>
+    </div>
 </div>
 <div id="hint">
     <div class="hw"><span id="h-kanji" class="jp"></span><span id="h-kana" class="jp"></span><span id="h-jlpt"></span></div>
