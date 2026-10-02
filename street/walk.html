@@ -387,7 +387,7 @@ const lamb = (color, extra) => new THREE.MeshLambertMaterial(Object.assign({ col
 function updateNeonLights() {
     const cz = camera.position.z, cx = camera.position.x;
     const cands = [];
-    blocks.forEach((b) => { if (!b.built) return; b.signs.forEach((s) => { if (!s.isLit || s.deco && !th.lanterns) return; if (s.isProp && !(s.prop && s.prop.userData.light)) return; // предметы светят только если это светильник const dz = s.z - cz; if (Math.abs(dz) > 13) return; cands.push({ s, d: Math.abs(dz) + Math.abs(s.side * (W2 - 0.6) - cx) * 0.5 }); }); });
+    blocks.forEach((b) => { if (!b.built) return; b.signs.forEach((s) => { if (!s.isLit || s.deco && !th.lanterns) return; if (s.isProp && !(s.prop && s.prop.userData.light)) return; /* предметы светят только если это светильник */ const dz = s.z - cz; if (Math.abs(dz) > 13) return; cands.push({ s, d: Math.abs(dz) + Math.abs(s.side * (W2 - 0.6) - cx) * 0.5 }); }); });
     cands.sort((a, b) => a.d - b.d);
     neonLights.forEach((l, i) => {
         const c = cands[i];
