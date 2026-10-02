@@ -243,6 +243,44 @@
         #panel .opts.tg .opt.on i { background: var(--accent); } #panel .opts.tg .opt.on i::after { transform: translateX(14px); }
         #panel .opt[hidden] { display: none !important; }
         @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) { #panel { top: calc(env(safe-area-inset-top, 0px) + 8px); right: calc(env(safe-area-inset-right, 0px) + 8px); width: min(470px, 62vw); max-height: calc(100svh - 16px); } #panel .opts.grid { grid-template-columns: 1fr 1fr 1fr; } #panel .pb { padding: 10px 12px 12px; } }
+        /* книги: библиотека и читалка (разворот на ПК, страница на телефоне) */
+        #book { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -47%) scale(.98); width: min(1000px, calc(100vw - 32px)); height: min(660px, calc(100svh - 32px)); z-index: 33; display: flex; flex-direction: column; background: #f6efdf; color: #1c1a20; border-radius: 18px; box-shadow: 0 0 0 1px rgba(0,0,0,0.12) inset, 0 24px 60px rgba(0,0,0,0.6); opacity: 0; pointer-events: none; transition: opacity .2s, transform .25s cubic-bezier(.2,.8,.2,1); overflow: hidden; }
+        #book.on { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%); }
+        #book .bh { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid rgba(80,50,20,0.15); flex: none; }
+        #book .bh button { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.07); color: #3a3430; font-size: 20px; cursor: pointer; }
+        #book .bt { flex: 1; min-width: 0; display: flex; flex-direction: column; } #book .bt b { font: 800 18px/1.5 "Noto Sans JP", Inter, sans-serif; } #book .bt small { font: 500 12.5px Inter, sans-serif; color: #7a6a5a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #book .bb { flex: 1; min-height: 0; overflow-y: auto; position: relative; }
+        #book .bb.flip .spread { animation: bflip .32s ease; } @keyframes bflip { from { opacity: .2; transform: translateX(14px); } }
+        #book .lib { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; padding: 14px; }
+        #book .bk-card { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; border: 0; border-radius: 14px; padding: 14px; background: #fffaf0; box-shadow: 0 0 0 1px rgba(80,50,20,0.14) inset, 0 2px 0 rgba(80,50,20,0.08); color: inherit; cursor: pointer; font: inherit; }
+        #book .bk-card:hover { background: #fff4de; } #book .bk-card .ic { font-size: 24px; } #book .bk-card b { font: 800 16px/1.4 "Noto Sans JP", Inter, sans-serif; } #book .bk-card small { font: 500 12.5px/1.35 Inter, sans-serif; color: #7a6a5a; }
+        #book .bk-card.new { background: linear-gradient(135deg, #ff6ab8, #7c6af8); color: #fff; box-shadow: none; } #book .bk-card.new small { color: rgba(255,255,255,0.85); }
+        #book .bk-card.new.busy { animation: bpulse 1.2s ease-in-out infinite; } @keyframes bpulse { 50% { opacity: .65; } }
+        #book .msg { padding: 0 16px 12px; font: 500 13.5px Inter, sans-serif; color: #7a6a5a; } #book .msg.err { color: #b8241b; }
+        #book .spread { display: grid; grid-template-columns: 1fr; height: 100%; }
+        #book.wide .spread { grid-template-columns: 1fr 1fr; }
+        #book .page { padding: 18px 26px; overflow-y: auto; }
+        #book.wide .page + .page { border-left: 1px solid rgba(80,50,20,0.15); box-shadow: inset 12px 0 18px -14px rgba(80,50,20,0.35); }
+        #book p.s { margin: 0 0 12px; padding: 4px 6px; border-radius: 8px; cursor: pointer; }
+        #book p.s:hover { background: rgba(200,120,40,0.08); } #book p.s.now { background: rgba(255,210,63,0.35); }
+        #book p.s .ja { display: block; font: 500 19px/2.15 "Noto Sans JP", sans-serif; }
+        #book p.s .tr { display: none; font: 400 13.5px/1.45 Inter, sans-serif; color: #6a5a4a; padding-bottom: 4px; }
+        #book p.s.open .tr, #book.tr p.s .tr { display: block; }
+        #book ruby { ruby-position: over; } #book rt { font-size: .48em; color: #9a7a5a; font-weight: 500; }
+        #book .mine { text-decoration: underline 2px rgba(230,80,160,0.55); text-underline-offset: 5px; cursor: pointer; }
+        #book .tk { cursor: help; }
+        #book .tip { position: absolute; z-index: 2; width: 200px; padding: 10px 12px; border-radius: 12px; background: #1c1a20; color: #fff; font: 500 13px/1.4 Inter, "Noto Sans JP", sans-serif; box-shadow: 0 10px 28px rgba(0,0,0,0.35); }
+        #book .tip b { font: 800 17px "Noto Sans JP", sans-serif; } #book .tip span { color: #ffd9a0; } #book .tip small { display: block; margin-top: 4px; color: rgba(255,255,255,0.55); }
+        #book .quiz h4 { margin: 0 0 10px; font: 800 16px Inter, sans-serif; } #book .q { margin-bottom: 14px; } #book .qq { font: 600 17px/1.6 "Noto Sans JP", sans-serif; } #book .qt { font: 400 13px Inter, sans-serif; color: #7a6a5a; margin-bottom: 6px; }
+        #book .qo { display: flex; flex-wrap: wrap; gap: 6px; } #book .qo button { border: 0; border-radius: 10px; padding: 8px 12px; background: #fffaf0; box-shadow: 0 0 0 1px rgba(80,50,20,0.18) inset; font: 600 15px "Noto Sans JP", sans-serif; cursor: pointer; color: inherit; }
+        #book .qo button.good { background: #c8f0d4; } #book .qo button.bad { background: #f8c8c0; }
+        #book .bf { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-top: 1px solid rgba(80,50,20,0.15); flex: none; }
+        #book .bf:empty { display: none; }
+        #book .bf button { border: 0; border-radius: 10px; padding: 8px 12px; background: rgba(0,0,0,0.07); color: #2a2420; font: 700 13px Inter, "Noto Sans JP", sans-serif; cursor: pointer; }
+        #book .bf button.on { background: #1c1a20; color: #f6efdf; } #book .bf button:disabled { opacity: .35; cursor: default; }
+        #book .bf .nav { font-size: 20px; padding: 4px 16px; } #book .bf .pg { margin-left: auto; font: 600 12.5px Inter, sans-serif; color: #7a6a5a; }
+        #book .bf .nav:last-child { margin-left: 4px; }
+        @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) { #book { width: calc(100vw - 16px); height: calc(100svh - 16px); border-radius: 14px; } #book .bh { padding: 6px 10px; } #book .page { padding: 10px 16px; } #book p.s { margin-bottom: 6px; } #book p.s .ja { font-size: 17px; line-height: 2.0; } #book .bf { padding: 6px 10px; } }
         #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 14px; letter-spacing: 0.04em; pointer-events: none; z-index: 40; transition: opacity .4s; }
     </style>
     <script>

@@ -559,6 +559,7 @@ const TALK = (() => {
         if (h && h.tv) out.push({ icon: '📺', t: 'Переключить канал', fn: () => tvNext(h.tv) });
         if (h && h.post) out.push({ icon: '✉', t: 'Написать разработчику', fn: () => { close(); MAIL.open(); } });
         if (h && h.gacha) out.push({ icon: '🎰', t: 'Крутить гачу', fn: () => gacha() });
+        if (h && h.book && h.dist < 3.2) out.push({ icon: '📖', t: 'Почитать книгу', fn: () => { close(); BOOKS.open(ROOM_THEME[inside.door && inside.door.userData.door.type] || 'street'); } });
         if (h && h.paper) out.push({ icon: '📰', t: 'Читать газету', fn: () => { close(); PAPER.open(); } });
         if (h && h.sign && h.sign.word && !h.sign.deco) {
             const sg = h.sign, w = sg.word, id = String(w.id || jpOf(w));
@@ -587,6 +588,7 @@ const TALK = (() => {
         if (WRITE.open_ && WRITE.at !== inside.on) WRITE.close();
         if (!inside.on && PAPER.on) PAPER.close();
         if (MAIL.on && !MAIL.near()) MAIL.close();
+        if (!inside.on && BOOKS.on) BOOKS.close();
         if (pianoCh && (!inside.on || !pianoCh.root.parent)) { audio.stopSong(); pianoCh.playing = false; pianoCh = null; }
         if (cur) {
             const p = cur.ch && cur.ch.root.getWorldPosition(new THREE.Vector3());

@@ -444,7 +444,7 @@ function mergeStatic(group) {
         if (colObjs.has(o) && group !== world && group !== room) return; // в кварталах объект нужен, чтобы снять препятствие при сносе
         const doorMesh = !!o.userData.door && o.parent === group && mt.isMeshBasicMaterial;
         let p = o, tagged = false;
-        while (p && p !== group) { const u = p.userData || {}; if (u.sign || u.door || u.exit || u.board || u.label || u.keep || u.post || u.gacha || u.tv || u.paper || u.radio) { tagged = true; break; } p = p.parent; }
+        while (p && p !== group) { const u = p.userData || {}; if (u.sign || u.door || u.exit || u.board || u.label || u.keep || u.post || u.gacha || u.tv || u.paper || u.radio || u.book) { tagged = true; break; } p = p.parent; }
         if (tagged && !doorMesh) return;
         const kind = (mt.isMeshBasicMaterial ? 'b' : (mt.isMeshStandardMaterial ? 's' + mt.roughness + '/' + mt.metalness + '/' + mt.envMapIntensity : 'l')) + ':' + (mt.emissive ? mt.emissive.getHex() + '/' + mt.emissiveIntensity : 0) + ':' + mt.side + ':' + (mt.fog !== false);
         const vc = !mt.map; // цвет переносим в вершины: разные цвета — одна сетка
@@ -1500,6 +1500,7 @@ function buildRoom(b, color, type) {
     }
     LIFE.populate(type, placed, grid, hashStr(b.q.name + type + 'life') + (inside.door ? Math.round(inside.door.userData.door.z * 10) : 0));
     placePaper(placed);
+    placeBookHits(placed);
     LIFE.upgradeMaterials(room, type);
     mergeStatic(room);
     // предметы-слова по местам; в комбини — с ценником
@@ -1994,6 +1995,7 @@ function tap(x, y) {
     if (h.tv) { buzz(10); tvNext(h.tv); return; }
     if (h.paper) { buzz(10); TALK.close(); PAPER.open(); return; }
     if (h.gacha) { if (h.dist < 3) { buzz(12); TALK.gacha(); } return; }
+    if (h.book) { if (h.dist < 3.2) { buzz(10); TALK.close(); BOOKS.open(ROOM_THEME[inside.door && inside.door.userData.door.type] || 'street'); } return; }
     if (h.post) { if (h.dist < 6) { buzz(10); TALK.close(); MAIL.open(); } else toast('Подойдите ближе к почтовому ящику'); return; }
     if (h.door) { if (h.dist < 7) { buzz(15); enterRoom(h.door); } else toast('Подойди ближе к двери'); return; }
     buzz(10); showHint(h.sign, true);
@@ -2014,9 +2016,13 @@ function pick(x, y, maxDist) {
     ray.setFromCamera(new THREE.Vector2((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1), camera);
     ray.far = maxDist || 24; // вывески висят высоко на фасадах — ловим издалека
     if (inside.on) {
-        if (!roomHover.length) room.traverse((o) => { if ((o.isMesh || o.isSprite) && (o.userData.sign || o.userData.exit || o.userData.radio || o.userData.tv || o.userData.paper || o.userData.post || o.userData.gacha)) roomHover.push(o); });
-        const h = ray.intersectObjects(roomHover, false).find((o) => o.object.userData.sign || o.object.userData.exit || o.object.userData.radio || o.object.userData.tv || o.object.userData.paper || o.object.userData.post || o.object.userData.gacha);
+        if (!roomHover.length) room.traverse((o) => { if ((o.isMesh || o.isSprite) && (o.userData.sign || o.userData.exit || o.userData.radio || o.userData.tv || o.userData.paper || o.userData.post || o.userData.gacha || o.userData.book)) roomHover.push(o); });
+        const hits = ray.intersectObjects(roomHover, false).filter((o) => o.object.userData.sign || o.object.userData.exit || o.object.userData.radio || o.object.userData.tv || o.object.userData.paper || o.object.userData.post || o.object.userData.gacha || o.object.userData.book);
+        let h = hits[0];
+        // слово-предмет на полке важнее самой полки
+        if (h && h.object.userData.book) { const s2 = hits.find((o) => !o.object.userData.book); if (s2 && s2.distance - h.distance < 0.7) h = s2; }
         if (!h) return null;
+        if (h.object.userData.book) return { book: h.object.userData.book, dist: h.distance };
         if (h.object.userData.radio) return { radio: true, dist: h.distance };
         if (h.object.userData.tv) return { tv: h.object, dist: h.distance };
         if (h.object.userData.paper) return { paper: true, dist: h.distance };
@@ -2088,6 +2094,18 @@ function tvNext(m) {
 }
 // газета на столе (котацу, тябудай, столик кафе) — одна на комнату
 const PAPER_SPOTS = { kotatsu: [0.62, 0.415, 0, 0.3], chabudai: [-0.05, 0.362, -0.3, -0.4], cafeTable: [0, 0.763, -0.21, 0.2] };
+// книжные полки: невидимая зона для прицела «📖 Почитать» (сами корешки склеены со статикой)
+const BOOK_MODS = new Set(['bookWall', 'bookIsland', 'mangaRack', 'openShelf', 'bookshelf', 'cabinet', 'devshelf', 'manga']);
+const ROOM_THEME = { class: 'school', izakaya: 'izakaya', cafe: 'cafe', home: 'home', oneroom: 'home', washitsu: 'home', loft: 'home', animeshop: 'shop', books: 'books', ramen: 'ramen', arcade: 'arcade', dev: 'dev', konbini: 'street' };
+function placeBookHits(placed) {
+    const box = new THREE.Box3(), c = new THREE.Vector3(), sz = new THREE.Vector3();
+    placed.forEach((m) => {
+        if (!m._grp || !BOOK_MODS.has(m.name)) return;
+        box.setFromObject(m._grp); if (box.isEmpty()) return; box.getCenter(c); box.getSize(sz);
+        const hit = new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.3, sz.x), Math.max(0.3, sz.y), Math.max(0.3, sz.z)), new THREE.MeshBasicMaterial());
+        hit.visible = false; hit.userData.book = m.name; room.worldToLocal(c); hit.position.copy(c); room.add(hit);
+    });
+}
 function placePaper(placed) {
     const m = placed.find((x) => x._grp && PAPER_SPOTS[x.name]); if (!m) return;
     const [x, y, z, r] = PAPER_SPOTS[m.name];
