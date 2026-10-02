@@ -1482,7 +1482,7 @@ window.addEventListener('pointermove', (e) => {
 function endPointer(e) {
     if (joy.active && e.pointerId === joy.id) { joy.active = false; joy.dx = joy.dy = joy.mag = 0; joyKnob.style.transform = ''; joyEl.classList.remove('on'); joyEl.style.left = ''; joyEl.style.top = ''; joyEl.style.bottom = ''; return; }
     if (look && e.pointerId === look.id) {
-        if (!look.moved && tapStart && performance.now() - tapStart.t < 450) { tap(e.clientX, e.clientY); lookVel.x = lookVel.y = 0; }
+        if (!look.moved && tapStart && performance.now() - tapStart.t < 900) { tap(e.clientX, e.clientY); lookVel.x = lookVel.y = 0; }
         else if (performance.now() - look.lt > 80) { lookVel.x = lookVel.y = 0; } // палец замер перед отпусканием — без инерции
         look = null;
     }
