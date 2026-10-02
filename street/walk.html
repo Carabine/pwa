@@ -3666,11 +3666,15 @@ const audio = (() => {
         ding() { if (!ctx || !enabled || !master) return; const w = ctx.currentTime; [N.C5, N.E5, N.G5, 1046.5].forEach((f, i) => keys(ctx, f, w + i * 0.08, 0.6, 0.05, master)); },
         toggle() { enabled = !enabled; saveSet({ music: enabled }); btn.classList.toggle('on', enabled); if (!enabled) { stop(); if (ctx) ctx.suspend(); } else this.resume(); toast(enabled ? 'Звук включён' : 'Звук выключен'); },
         get enabled() { return enabled; },
+        get state() { return ctx ? ctx.state : 'none'; },
         // для записи превью: проиграть сцену в заданный узел
         _debug: { start: (c, m, id, v) => { ctx = c; master = m; if (v) variant = v; start(id); } },
     };
 })();
 document.getElementById('music').addEventListener('click', () => audio.toggle());
+// звук можно включить только по «жесту пользователя»: для касаний это отпускание пальца (pointerup/touchend),
+// а не pointerdown — поэтому раньше на телефоне музыка не стартовала. Слушаем всю страницу, включая оверлеи.
+['pointerup', 'touchend', 'click', 'keydown'].forEach((ev) => addEventListener(ev, () => audio.resume(), { capture: true, passive: true }));
 document.getElementById('music').classList.toggle('on', audio.enabled);
 
 // ---- управление ----
@@ -4036,7 +4040,7 @@ requestAnimationFrame(frame);
     addEventListener('resize', sync); sync();
 })();
 { const ld = document.getElementById('loading'); if (ld) { ld.style.opacity = '0'; setTimeout(() => ld.remove(), 500); } const nw = document.getElementById('nowebgl'); if (nw) nw.style.display = 'none'; }
-window.__walk = { camera, blocks, scene, doors, colliders, renderer, tap, enter: (i) => enterRoom(doors[i || 0]), exit: exitRoom, pick: (x, y) => pick(x, y, 40), get fps() { return fpsV; }, get inside() { return inside.on; }, LIFE, ROOM, PROP_BUILDERS, lamb, room, view: (x, z, yw, pt) => { camera.position.x = x; camera.position.z = z; yaw = tYaw = yw; pitch = tPitch = pt || 0; vel.set(0, 0, 0); lookVel.x = lookVel.y = 0; } };
+window.__walk = { camera, blocks, scene, doors, colliders, renderer, tap, enter: (i) => enterRoom(doors[i || 0]), exit: exitRoom, pick: (x, y) => pick(x, y, 40), get fps() { return fpsV; }, get inside() { return inside.on; }, audio, LIFE, ROOM, PROP_BUILDERS, lamb, room, view: (x, z, yw, pt) => { camera.position.x = x; camera.position.z = z; yaw = tYaw = yw; pitch = tPitch = pt || 0; vel.set(0, 0, 0); lookVel.x = lookVel.y = 0; } };
 if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('700 20px "Noto Sans JP"')]).then(() => { blocks.forEach((b) => { if (b.built) { disposeBlock(b); } }); ensureBlocks(); }).catch(() => {});
 
 </script>
