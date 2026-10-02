@@ -74,7 +74,7 @@ const TEMPLE = (() => {
         leaves.frustumCulled = false; scene.add(leaves);
     }
     function update(t, dt) {
-        if (!leaves) return; leaves.visible = !inside.on; if (inside.on) return;
+        if (!leaves) return; leaves.visible = !inside.on && !!th.temple; if (!leaves.visible) return;
         const p = leaves.geometry.attributes.position.array;
         for (let i = 0; i < p.length; i += 3) { p[i + 1] -= dt * (0.35 + (i % 7) * 0.04); p[i] += Math.sin(t * 0.9 + i) * dt * 0.25; if (p[i + 1] < 0.02) { p[i + 1] = 6 + Math.random() * 2; p[i] = (Math.random() - 0.5) * th.W; p[i + 2] = (Math.random() - 0.5) * 30; } }
         leaves.geometry.attributes.position.needsUpdate = true; leaves.position.set(0, 0, camera.position.z - 6);

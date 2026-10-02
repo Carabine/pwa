@@ -18,7 +18,8 @@
         #joy::before { content: ''; position: absolute; inset: 14px; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.18); }
         @media (hover: hover) and (pointer: fine) { #joy { display: none; } }
         .hint .d { display: none; } @media (hover: hover) and (pointer: fine) { .hint .m { display: none; } .hint .d { display: inline; } }
-        #music, #gear { font-size: 19px; width: 44px; height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+        html body .hud.bottom #music, html body .hud.bottom #gear { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+        html body .hud.bottom #music { font-size: 22px; } html body .hud.bottom #gear { font-size: 16px; }
         #music.on { color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 16px rgba(124,140,248,0.7); }
         #music:not(.on) { color: rgba(255,255,255,0.45); background-image: linear-gradient(135deg, transparent 46%, rgba(255,255,255,0.55) 47%, rgba(255,255,255,0.55) 53%, transparent 54%); }
         /* телефон: подсказка слова — в правом верхнем углу, название места — слева под названием квартала */
@@ -106,7 +107,7 @@
         #talk .nm { font: 700 16px/1.2 "Noto Sans JP", Inter, sans-serif; }
         #talk .rl { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 1px; }
         #talk .tx { background: rgba(255,255,255,0.08); border: 0; border-radius: 50%; width: 32px; height: 32px; color: rgba(255,255,255,0.75); font-size: 20px; line-height: 1; flex: none; cursor: pointer; }
-        #talk .log { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 12px 4px; display: flex; flex-direction: column; gap: 8px; }
+        #talk .log { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 8px; }
         #talk .m { max-width: 88%; padding: 8px 11px; border-radius: 14px; }
         #talk .m.c { align-self: flex-start; background: rgba(255,255,255,0.09); border-bottom-left-radius: 4px; }
         #talk .m.p { align-self: flex-end; background: rgba(255,186,110,0.2); border-bottom-right-radius: 4px; text-align: right; }
@@ -135,7 +136,7 @@
         @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
             #talk { top: calc(env(safe-area-inset-top, 0px) + 8px); bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); right: calc(env(safe-area-inset-right, 0px) + 8px); width: min(420px, 50vw); border-radius: 16px; }
             #talk .th { padding: 8px 8px 6px 10px; } #talk .av { width: 28px; height: 28px; font-size: 15px; } #talk .nm { font-size: 14px; }
-            #talk .log { padding: 8px 8px 2px; gap: 6px; } #talk .m { padding: 6px 9px; } #talk .m .jp { font-size: 15px; } #talk .m .ru { font-size: 11.5px; }
+            #talk .log { padding: 8px 8px 12px; gap: 6px; } #talk .m { padding: 6px 9px; } #talk .m .jp { font-size: 15px; } #talk .m .ru { font-size: 11.5px; }
             #talk .task .big { font-size: 24px; } #talk .task .want { font-size: 17px; }
             #talk .opts { gap: 6px; padding: 6px 8px 8px; } #talk .op { padding: 7px 10px; } #talk .op b { font-size: 14px; }
             #acts button { min-width: 160px; padding: 9px 12px; font-size: 14px; } #acts .ic { font-size: 19px; }
@@ -146,6 +147,33 @@
         }
         /* пока улица загружается — никаких подсказок и кнопок (не спойлерим управление) */
         body.loading .hud, body.loading #joy, body.loading #dots, body.loading #acts, body.loading #rotate { visibility: hidden; }
+        /* доска в классе: окно сбоку, бумага с сеткой, порядок черт */
+        #write { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 16px); top: calc(env(safe-area-inset-top, 0px) + 16px); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); width: min(400px, 40vw); z-index: 31; display: flex; flex-direction: column; gap: 8px; opacity: 0; pointer-events: none; transform: translateX(24px); transition: opacity .2s, transform .25s cubic-bezier(.2,.8,.2,1); background: rgba(12,12,22,0.94); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 20px; box-shadow: 0 0 0 1px rgba(255,255,255,0.12) inset, 0 16px 44px rgba(0,0,0,0.6); color: #fff; padding-bottom: 12px; overflow: hidden; }
+        #write.on { opacity: 1; transform: none; pointer-events: auto; }
+        #write .th { display: flex; align-items: center; gap: 10px; padding: 12px 12px 8px 14px; }
+        #write .av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,0.1); font-size: 18px; flex: none; }
+        #write .tt { flex: 1; } #write .nm { font: 700 16px Inter, sans-serif; } #write .rl { font-size: 12px; color: rgba(255,255,255,0.5); }
+        #write .tx { background: rgba(255,255,255,0.08); border: 0; border-radius: 50%; width: 32px; height: 32px; color: rgba(255,255,255,0.75); font-size: 20px; cursor: pointer; }
+        #write .card { padding: 0 16px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+        #write .kana { font: 700 22px "Noto Sans JP", sans-serif; color: #ffd9a0; } #write .mean { font-size: 14px; color: rgba(255,255,255,0.8); }
+        #write .prog { width: 100%; display: flex; gap: 6px; } #write .prog span { font: 700 18px "Noto Sans JP", sans-serif; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.45); }
+        #write .prog span.now { box-shadow: 0 0 0 1.5px #ffd9a0 inset; color: #ffd9a0; } #write .prog span.done { background: rgba(60,200,120,0.3); color: #fff; }
+        #write .bd { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 14px; }
+        #write .host { position: relative; width: min(100%, 52vh); aspect-ratio: 1; }
+        #write .kj-board__svg { position: absolute; inset: 0; width: 100%; height: 100%; background: #f6f0e2; border-radius: 14px; touch-action: none; box-shadow: 0 0 0 1px rgba(0,0,0,0.2) inset; }
+        #write .kj-board__svg.is-writable { cursor: crosshair; }
+        #write .kj-grid line { stroke: rgba(120,70,40,0.22); stroke-width: 0.6; vector-effect: non-scaling-stroke; } #write .kj-grid line.kj-grid__diag { stroke-dasharray: 2 3; }
+        #write .kj-ghost path { fill: none; stroke: rgba(40,30,20,0.16); stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; }
+        #write .kj-anim path, #write .kj-ink path { fill: none; stroke: #1c1a20; stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; }
+        #write .kj-live { fill: none; stroke: #3a5ad0; stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; stroke-opacity: 0.9; }
+        #write .kj-hint path { fill: none; stroke: #c8322a; stroke-width: 5; stroke-linecap: round; animation: wpulse 1s ease-in-out infinite; } #write .kj-hint .kj-hint__start { fill: #c8322a; }
+        #write .kj-hint .kj-wrong { stroke: #e04040; animation: wfade .45s forwards; }
+        #write .kj-nums text { fill: rgba(60,40,30,0.55); font-size: 7px; font-family: Inter, sans-serif; font-weight: 600; } #write .kj-nums text.is-pending { opacity: 0; }
+        @keyframes wpulse { 50% { stroke-opacity: .35; } } @keyframes wfade { to { stroke-opacity: 0; } }
+        #write .msg { min-height: 20px; padding: 0 16px; font-size: 13px; color: rgba(255,255,255,0.7); text-align: center; } #write .msg.err { color: #ff9a8a; } #write .msg.ok { color: #8ef0b0; }
+        #write .row { display: flex; gap: 6px; padding: 0 12px; } #write .row button { flex: 1; background: rgba(255,255,255,0.08); border: 0; border-radius: 10px; padding: 9px 6px; color: #fff; font: 600 12.5px Inter, sans-serif; box-shadow: 0 0 0 1px rgba(255,255,255,0.12) inset; cursor: pointer; } #write .row button.on { background: rgba(255,217,160,0.22); }
+        @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) { #write { top: 8px; bottom: 8px; right: 8px; width: min(440px, 52vw); border-radius: 16px; gap: 4px; padding-bottom: 8px; } #write .th { padding: 6px 8px 2px 10px; } #write .av { width: 28px; height: 28px; } #write .host { width: min(100%, 46vh); } #write .row button { padding: 7px 4px; font-size: 12px; } }
+        @media (pointer: coarse) and (orientation: portrait) { #write { left: 8px; right: 8px; width: auto; top: auto; height: 74vh; } }
         #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 14px; letter-spacing: 0.04em; pointer-events: none; z-index: 40; transition: opacity .4s; }
     </style>
     <script>
@@ -904,16 +932,7 @@ function buildWorld() {
         const sback = new THREE.Mesh(new THREE.PlaneGeometry(gw, gw / 4), lamb('#14141b')); sback.position.set(0, 3.4, z - 0.02); sback.rotation.y = Math.PI; world.add(sback);
         // без световой стены: только арка, вывеска и трубка над ней
     });
-    // прохожие
-    const fig = lamb('#0b0b12');
-    for (let i = 0; i < Math.floor(streetLen / 9); i++) {
-        const z = -9 - rnd() * (streetLen - 13); useTheme(themeAt(z)); const x = (rnd() - 0.5) * (th.W - 1.6), h = 1.5 + rnd() * 0.3;
-        const g = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CapsuleGeometry(h * 0.16, h * 0.5, 4, 8), fig); body.position.y = h * 0.45; g.add(body);
-        const head = new THREE.Mesh(new THREE.SphereGeometry(h * 0.075, 8, 8), fig); head.position.y = h * 0.88; g.add(head);
-        if (th.umbrellas && rnd() < 0.8) { const um = new THREE.Mesh(new THREE.SphereGeometry(h * 0.38, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), lamb(['#1b1b24', '#22243a', '#2a1a2a', '#c8d8ff'][Math.floor(rnd() * 4)], { side: THREE.DoubleSide })); um.position.y = h * 1.05; um.scale.y = 0.35; g.add(um); }
-        g.position.set(x, 0, z); g.rotation.y = rnd() * 6.28; world.add(g); blockers.push({ x0: x - 0.4, x1: x + 0.4, z0: z - 0.4, z1: z + 0.4 });
-    }
+    // тёмные силуэты прохожих убраны (по просьбе): улицу оживляют люди-слова и продавцы
     BL.forEach((bk, bi) => withTheme(bk.th, () => { if (th.festival) FESTIVAL.build(world, bk); if (th.temple) TEMPLE.build(world, bk, false); }));
     buildEndGate();
     useTheme(BL[0].th);
@@ -2408,7 +2427,7 @@ const FESTIVAL = (() => {
     }
     function update(t, dt) {
         if (inside.on) { fw.forEach((f) => { f.pts.visible = false; }); return; }
-        if (t > nextFw) { nextFw = t + 4 + Math.random() * 6; burst(t); if (Math.random() < 0.35) setTimeout(() => burst(performance.now() / 1000), 350); }
+        if (t > nextFw && th.festival) { nextFw = t + 4 + Math.random() * 6; burst(t); if (Math.random() < 0.35) setTimeout(() => burst(performance.now() / 1000), 350); }
         for (let i = fw.length - 1; i >= 0; i--) {
             const f = fw[i], k = t - f.t0, a = f.pts.geometry.attributes.position, p = a.array, v = f.vel;
             if (k > 2.6) { scene.remove(f.pts); f.pts.geometry.dispose(); f.pts.material.dispose(); fw.splice(i, 1); continue; }
@@ -2497,7 +2516,7 @@ const TEMPLE = (() => {
         leaves.frustumCulled = false; scene.add(leaves);
     }
     function update(t, dt) {
-        if (!leaves) return; leaves.visible = !inside.on; if (inside.on) return;
+        if (!leaves) return; leaves.visible = !inside.on && !!th.temple; if (!leaves.visible) return;
         const p = leaves.geometry.attributes.position.array;
         for (let i = 0; i < p.length; i += 3) { p[i + 1] -= dt * (0.35 + (i % 7) * 0.04); p[i] += Math.sin(t * 0.9 + i) * dt * 0.25; if (p[i + 1] < 0.02) { p[i + 1] = 6 + Math.random() * 2; p[i] = (Math.random() - 0.5) * th.W; p[i + 2] = (Math.random() - 0.5) * 30; } }
         leaves.geometry.attributes.position.needsUpdate = true; leaves.position.set(0, 0, camera.position.z - 6);
@@ -2778,6 +2797,7 @@ const TALK = (() => {
             const say = staff ? ['他に何かありますか？', 'Что-нибудь ещё?'] : pick([['今日は話せて楽しかった！', 'Было приятно поболтать!'], ['あ、もうこんな時間！', 'Ой, уже столько времени!'], ['また話そうね。', 'Поболтаем ещё как-нибудь.']]);
             const opts = sample(BYE_ME, 2).map(([j, r]) => ({ jp: j, ru: r, go: finish }));
             if (canMore) opts.unshift({ jp: staff ? 'あと一つ、いいですか？' : 'もう少し話そう！', ru: staff ? 'Можно ещё вопрос?' : 'Давай ещё поболтаем!', go: () => topic(false) });
+            if (role === 'teacher') opts.unshift({ jp: '黒板に書いてもいいですか？', ru: 'Можно написать на доске?', go: () => { show(['もちろん！書いてみてください。', 'Конечно! Попробуйте.'], []); setTimeout(() => { close(); WRITE.open(ch); }, 900); } });
             show(say, opts);
         };
         const afterTopic = (first) => {
@@ -2843,7 +2863,13 @@ const TALK = (() => {
     function nearby() {
         const out = [], pt = (typeof locked === 'function' && locked()) || !FINE ? [innerWidth / 2, innerHeight / 2] : (hover.lastMouse || null);
         if (!pt) return out;
-        const hc = pickChar(pt[0], pt[1]);
+        let hc = pickChar(pt[0], pt[1]);
+        // мягкое наведение: точно не попал — берём ближайшего человека в пределах ~13° от взгляда
+        if (!hc) {
+            _p.set((pt[0] / innerWidth) * 2 - 1, -(pt[1] / innerHeight) * 2 + 1); _ray.setFromCamera(_p, camera); const dir = _ray.ray.direction; let best = null, bd = 1e9;
+            (inside.on ? LIFE.S.room : LIFE.S.loose).forEach((c) => { if (!c.root.visible || !c.root.parent) return; (c.J && c.J.spine ? c.J.spine : c.root).getWorldPosition(_w); _w.y += 0.25; const v = _w.sub(camera.position), d = v.length(); if (d > 3.6 || d < 0.3) return; const ang = Math.acos(Math.min(1, v.dot(dir) / d)); if (ang < 0.23 && d < bd) { bd = d; best = c; } });
+            if (best) hc = { ch: best, dist: bd };
+        }
         if (hc && hc.dist < (inside.on ? 3.8 : 3.6)) {
             const ch = hc.ch, stall = !inside.on && FESTIVAL.stalls ? FESTIVAL.stalls.find((s) => s.ch === ch) : null;
             if (stall) out.push({ icon: '🍢', t: 'Заказать', fn: () => order(stall) }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
@@ -2852,6 +2878,10 @@ const TALK = (() => {
             return out;
         }
         if (inside.on) { const h = pick(pt[0], pt[1], 2.6); if (h && h.radio) out.push({ icon: '📻', t: 'Сменить станцию', fn: () => radioNext() }); }
+        if (inside.on && inside.door && inside.door.userData.door.type === 'class') {
+            let bd = null; room.traverse((o) => { if (!bd && o.userData && o.userData.board) bd = o; });
+            if (bd) { _p.set((pt[0] / innerWidth) * 2 - 1, -(pt[1] / innerHeight) * 2 + 1); _ray.setFromCamera(_p, camera); _ray.far = 8; if (_ray.intersectObject(bd, false).length) out.push({ icon: '✍', t: 'Написать на доске', fn: () => { close(); WRITE.open(null); } }); }
+        }
         return out;
     }
     function renderActs(list) {
@@ -2865,6 +2895,7 @@ const TALK = (() => {
         });
     }
     function update() {
+        if (!inside.on) WRITE.close();
         if (cur) {
             const p = cur.ch && cur.ch.root.getWorldPosition(new THREE.Vector3());
             if (!p || flat(p, camera.position) > (cur.kind === 'order' ? 3.6 : 4.5) || (cur.inside !== undefined && cur.inside !== inside.on)) close();
@@ -2884,6 +2915,115 @@ const TALK = (() => {
         if (e.code === 'KeyE' && actList[0] && !acts.hidden) { actList[0].fn(); lastKey = ''; }
     });
     return { talk, order, close, pickChar, update, get open() { return !!cur; } };
+})();
+
+// ===== Доска в классе: написать слово из словаря по порядку черт (ядро «Прописей»: /app/kanji/kanji-core.js) =====
+// Смотришь на доску — «✍ Написать на доске»; ещё учитель предлагает это в разговоре.
+// Черты знаков — с сервера (/api/v1/kanji/strokes, KanjiVG). Встраивается build-walk.mjs.
+const WRITE = (() => {
+    const API = location.protocol === 'file:' ? 'https://animei.space/api/v1/' : '/api/v1/';
+    let el = null, core = null, board = null, cur = null, loadingCore = null;
+    const strokesCache = new Map();
+    const isKanji = (ch) => /[㐀-鿿]/.test(ch);
+    const writable = (ch) => /[぀-ヿ㐀-鿿]/.test(ch);
+    function loadCore() {
+        // ядро мерит длину черт через скрытый SVG #kj-measure (как на странице «Прописей»)
+        if (!document.getElementById('kj-measure')) { const m = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); m.id = 'kj-measure'; m.setAttribute('viewBox', '0 0 109 109'); m.setAttribute('width', '0'); m.setAttribute('height', '0'); m.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'; document.body.appendChild(m); }
+        if (window.KanjiCore) return Promise.resolve(window.KanjiCore);
+        if (loadingCore) return loadingCore;
+        loadingCore = new Promise((res, rej) => { const s = document.createElement('script'); s.src = '../kanji/kanji-core.js'; s.onload = () => (window.KanjiCore ? res(window.KanjiCore) : rej(new Error('нет KanjiCore'))); s.onerror = () => rej(new Error('не загрузилось ядро прописей')); document.head.appendChild(s); });
+        return loadingCore;
+    }
+    async function strokesFor(chars) {
+        const need = [...new Set(chars)].filter((c) => !strokesCache.has(c));
+        if (need.length) {
+            const r = await fetch(API + 'kanji/strokes?chars=' + encodeURIComponent(need.join('')));
+            const j = r.ok ? await r.json() : { data: {} };
+            need.forEach((c) => strokesCache.set(c, (j.data || {})[c] || null));
+        }
+        return chars.map((c) => ({ ch: c, rec: strokesCache.get(c) }));
+    }
+    function ui() {
+        if (el) return el;
+        el = document.createElement('div'); el.id = 'write';
+        el.innerHTML = '<div class="th"><div class="av">✍</div><div class="tt"><div class="nm">Доска</div><div class="rl">напиши слово по порядку черт</div></div><button class="tx" aria-label="Закрыть">×</button></div>'
+            + '<div class="card"><div class="kana"></div><div class="mean"></div><div class="prog"></div></div>'
+            + '<div class="bd"><div class="host"></div></div><div class="msg"></div>'
+            + '<div class="row"><button class="b-show">▶ Порядок черт</button><button class="b-ghost">Обводка</button><button class="b-next">Другое слово</button></div>';
+        document.body.appendChild(el);
+        el.querySelector('.tx').addEventListener('click', close);
+        el.querySelector('.b-show').addEventListener('click', () => { if (board && cur) { board.setEnabled(false); board.animate().then(() => board && board.setEnabled(true)); } });
+        el.querySelector('.b-ghost').addEventListener('click', (e) => { if (!cur) return; cur.ghost = !cur.ghost; e.currentTarget.classList.toggle('on', cur.ghost); board.showGhost(cur.ghost); });
+        el.querySelector('.b-next').addEventListener('click', () => open(cur && cur.teacher));
+        ['pointerdown', 'touchstart', 'wheel'].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation(), { passive: true }));
+        return el;
+    }
+    const msg = (t, kind) => { const m = el.querySelector('.msg'); m.textContent = t || ''; m.className = 'msg' + (kind ? ' ' + kind : ''); };
+    function pickWord() {
+        const P = ((typeof data !== 'undefined' && data && data.words) || []).filter((w) => w.kanji && [...w.kanji].some(isKanji) && [...w.kanji].every(writable) && [...w.kanji].length <= 4 && w.translation);
+        if (!P.length) return null;
+        const rank = (w) => ({ due: 0, worn: 0, warm: 1, new: 2, lit: 3 }[w._state] ?? 2) + Math.random() * 2.2;
+        return P.slice().sort((a, b) => rank(a) - rank(b))[0];
+    }
+    async function open(teacher) {
+        const e = ui(); e.classList.add('on'); if (typeof hideHint === 'function') hideHint();
+        const w = pickWord();
+        if (!w) { msg('В словаре нет слов с иероглифами — добавь их, и сюда можно будет писать.', 'err'); return; }
+        cur = { w, chars: [...w.kanji], i: 0, idx: 0, miss: 0, misses: 0, ghost: w._state === 'new' || w._state === 'due', teacher };
+        e.querySelector('.kana').textContent = w.kana && w.kana !== w.kanji ? w.kana : '';
+        e.querySelector('.mean').textContent = String(w.translation).split(/[;,]/)[0].trim();
+        e.querySelector('.b-ghost').classList.toggle('on', cur.ghost);
+        msg('Загружаю черты…');
+        try {
+            const C = core = await loadCore();
+            const recs = await strokesFor(cur.chars);
+            if (!cur || cur.w !== w) return;
+            cur.recs = recs;
+            if (!board) board = new C.Board(e.querySelector('.host'), { onStroke });
+            glyph();
+        } catch (err) { msg('Не получилось загрузить доску: ' + (err && err.message || err), 'err'); }
+    }
+    function progress() {
+        el.querySelector('.prog').innerHTML = cur.chars.map((c, k) => '<span class="' + (k < cur.i ? 'done' : k === cur.i ? 'now' : '') + '">' + (k < cur.i ? c : (cur.recs && cur.recs[k] && !cur.recs[k].rec ? c : '？')) + '</span>').join('');
+    }
+    function glyph() {
+        while (cur.i < cur.recs.length && !cur.recs[cur.i].rec) cur.i++; // знаков без данных о чертах (редкие) — пропускаем
+        progress();
+        if (cur.i >= cur.recs.length) return done();
+        const r = cur.recs[cur.i].rec; cur.idx = 0; cur.miss = 0;
+        board.setGlyph(r); board.showGhost(cur.ghost); board.setEnabled(false);
+        msg((isKanji(cur.chars[cur.i]) ? 'Иероглиф ' : 'Знак ') + (cur.i + 1) + ' из ' + cur.chars.length + ' · черт: ' + r.s.length);
+        // новый знак: сначала покажем порядок черт
+        if (cur.i === 0 && (cur.w._state === 'new' || cur.w._state === 'due')) board.animate().then(() => { if (board) { board.stopAnimation(); board.showGhost(cur.ghost); board.setEnabled(true); } });
+        else board.setEnabled(true);
+    }
+    function onStroke(points) {
+        if (!cur || !cur.recs || cur.i >= cur.recs.length) return;
+        const r = cur.recs[cur.i].rec; if (!r || cur.idx >= r.s.length) return;
+        if (points.length < 2 && r.s.length > 1 && core.samplePath(r.s[cur.idx]).len > 12) return; // случайное касание
+        const res = core.recognize(points, r.s, cur.idx, core.TOL.normal);
+        if (res.ok) {
+            board.clearHint(); board.commit(cur.idx); cur.idx++; cur.miss = 0; if (typeof buzz === 'function') buzz(8);
+            if (cur.idx >= r.s.length) { msg('Отлично!', 'ok'); setTimeout(() => { if (cur) { cur.i++; glyph(); } }, 450); }
+            else msg('Черта ' + (cur.idx + 1) + ' из ' + r.s.length);
+            return;
+        }
+        cur.miss++; cur.misses++; board.flashWrong(points);
+        msg(res.reason === 'order' ? 'Не та черта — сейчас нужна ' + (cur.idx + 1) + '-я' : res.reason === 'reversed' ? 'Черта в другую сторону' : 'Форма не похожа — попробуй ещё', 'err');
+        if (cur.miss >= 2) board.hint(cur.idx);
+        if (cur.miss >= 3) setTimeout(() => { if (!cur || cur.i >= cur.recs.length) return; board.clearHint(); board.commit(cur.idx); cur.idx++; cur.miss = 0; if (cur.idx >= r.s.length) { cur.i++; glyph(); } }, 500);
+    }
+    function done() {
+        const w = cur.w, clean = cur.misses === 0;
+        msg((clean ? 'Без единой ошибки! ' : 'Готово! ') + w.kanji + (w.kana && w.kana !== w.kanji ? ' — ' + w.kana : ''), 'ok');
+        board.setEnabled(false); if (typeof audio !== 'undefined') audio.ding();
+        el.querySelector('.prog').innerHTML = cur.chars.map((c) => '<span class="done">' + c + '</span>').join('');
+        // учитель хвалит
+        const t = cur.teacher || (LIFE.S.room || []).find((c) => c.role === 'teacher');
+        if (t) LIFE.say(t, clean ? ['よくできました！', 'Прекрасно!'] : ['いいですね、その調子！', 'Хорошо, так держать!'], 2.6, LIFE.S.t);
+    }
+    function close() { if (el) el.classList.remove('on'); if (board) board.setEnabled(false); cur = null; }
+    return { open, close, get open_() { return !!cur; } };
 })();
 
 // Расширенный каталог предметов-слов: встраивается в walk.js на месте /*__PROPS_EXTRA__*/ (см. build-walk.mjs).
@@ -4856,8 +4996,7 @@ function frame(now) {
     if (!inside.on && scene.fog && scene.fog.isFogExp2) { const k = 1 - Math.exp(-dt * 1.4); _fogC.set(th.fog); scene.fog.color.lerp(_fogC, k); scene.fog.density += (th.fogD - scene.fog.density) * k; _fogC.set(th.sky); if (scene.background && scene.background.isColor) scene.background.lerp(_fogC, k); hemi.color.lerp(_fogC.set(th.fog), k); }
     if (rain) rain.visible = opts.rain && !!th.rain && !inside.on;
     if (!inside.on && camera.position.z < endGateZ + 5 && performance.now() - endShown > 15000) { endShown = performance.now(); const { need } = nextUnlock(); banner('この先、準備中', 'Выучите ещё ' + need + ' ' + plural3(need, 'слово', 'слова', 'слов') + ' — откроется новый квартал'); }
-    if (th.festival) FESTIVAL.update(t, dt);
-    if (th.temple) TEMPLE.update(t, dt);
+    FESTIVAL.update(t, dt); TEMPLE.update(t, dt); // сами решают: новые вспышки — только на Мацури, листья — только на Сандо
     TALK.update();
     if (inside.on && radio.led && radio.g && radio.g.parent) radio.led.material.color.setHSL(0.03, 1, 0.35 + 0.25 * (Math.sin(t * 3.2) * 0.5 + 0.5));
     updateLabels(t); updateHover(now);

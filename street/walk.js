@@ -685,16 +685,7 @@ function buildWorld() {
         const sback = new THREE.Mesh(new THREE.PlaneGeometry(gw, gw / 4), lamb('#14141b')); sback.position.set(0, 3.4, z - 0.02); sback.rotation.y = Math.PI; world.add(sback);
         // без световой стены: только арка, вывеска и трубка над ней
     });
-    // прохожие
-    const fig = lamb('#0b0b12');
-    for (let i = 0; i < Math.floor(streetLen / 9); i++) {
-        const z = -9 - rnd() * (streetLen - 13); useTheme(themeAt(z)); const x = (rnd() - 0.5) * (th.W - 1.6), h = 1.5 + rnd() * 0.3;
-        const g = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CapsuleGeometry(h * 0.16, h * 0.5, 4, 8), fig); body.position.y = h * 0.45; g.add(body);
-        const head = new THREE.Mesh(new THREE.SphereGeometry(h * 0.075, 8, 8), fig); head.position.y = h * 0.88; g.add(head);
-        if (th.umbrellas && rnd() < 0.8) { const um = new THREE.Mesh(new THREE.SphereGeometry(h * 0.38, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), lamb(['#1b1b24', '#22243a', '#2a1a2a', '#c8d8ff'][Math.floor(rnd() * 4)], { side: THREE.DoubleSide })); um.position.y = h * 1.05; um.scale.y = 0.35; g.add(um); }
-        g.position.set(x, 0, z); g.rotation.y = rnd() * 6.28; world.add(g); blockers.push({ x0: x - 0.4, x1: x + 0.4, z0: z - 0.4, z1: z + 0.4 });
-    }
+    // тёмные силуэты прохожих убраны (по просьбе): улицу оживляют люди-слова и продавцы
     BL.forEach((bk, bi) => withTheme(bk.th, () => { if (th.festival) FESTIVAL.build(world, bk); if (th.temple) TEMPLE.build(world, bk, false); }));
     buildEndGate();
     useTheme(BL[0].th);
@@ -2170,8 +2161,7 @@ function frame(now) {
     if (!inside.on && scene.fog && scene.fog.isFogExp2) { const k = 1 - Math.exp(-dt * 1.4); _fogC.set(th.fog); scene.fog.color.lerp(_fogC, k); scene.fog.density += (th.fogD - scene.fog.density) * k; _fogC.set(th.sky); if (scene.background && scene.background.isColor) scene.background.lerp(_fogC, k); hemi.color.lerp(_fogC.set(th.fog), k); }
     if (rain) rain.visible = opts.rain && !!th.rain && !inside.on;
     if (!inside.on && camera.position.z < endGateZ + 5 && performance.now() - endShown > 15000) { endShown = performance.now(); const { need } = nextUnlock(); banner('この先、準備中', 'Выучите ещё ' + need + ' ' + plural3(need, 'слово', 'слова', 'слов') + ' — откроется новый квартал'); }
-    if (th.festival) FESTIVAL.update(t, dt);
-    if (th.temple) TEMPLE.update(t, dt);
+    FESTIVAL.update(t, dt); TEMPLE.update(t, dt); // сами решают: новые вспышки — только на Мацури, листья — только на Сандо
     TALK.update();
     if (inside.on && radio.led && radio.g && radio.g.parent) radio.led.material.color.setHSL(0.03, 1, 0.35 + 0.25 * (Math.sin(t * 3.2) * 0.5 + 0.5));
     updateLabels(t); updateHover(now);

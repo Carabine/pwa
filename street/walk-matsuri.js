@@ -112,7 +112,7 @@ const FESTIVAL = (() => {
     }
     function update(t, dt) {
         if (inside.on) { fw.forEach((f) => { f.pts.visible = false; }); return; }
-        if (t > nextFw) { nextFw = t + 4 + Math.random() * 6; burst(t); if (Math.random() < 0.35) setTimeout(() => burst(performance.now() / 1000), 350); }
+        if (t > nextFw && th.festival) { nextFw = t + 4 + Math.random() * 6; burst(t); if (Math.random() < 0.35) setTimeout(() => burst(performance.now() / 1000), 350); }
         for (let i = fw.length - 1; i >= 0; i--) {
             const f = fw[i], k = t - f.t0, a = f.pts.geometry.attributes.position, p = a.array, v = f.vel;
             if (k > 2.6) { scene.remove(f.pts); f.pts.geometry.dispose(); f.pts.material.dispose(); fw.splice(i, 1); continue; }

@@ -18,7 +18,8 @@
         #joy::before { content: ''; position: absolute; inset: 14px; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.18); }
         @media (hover: hover) and (pointer: fine) { #joy { display: none; } }
         .hint .d { display: none; } @media (hover: hover) and (pointer: fine) { .hint .m { display: none; } .hint .d { display: inline; } }
-        #music, #gear { font-size: 19px; width: 44px; height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+        html body .hud.bottom #music, html body .hud.bottom #gear { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+        html body .hud.bottom #music { font-size: 22px; } html body .hud.bottom #gear { font-size: 16px; }
         #music.on { color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 16px rgba(124,140,248,0.7); }
         #music:not(.on) { color: rgba(255,255,255,0.45); background-image: linear-gradient(135deg, transparent 46%, rgba(255,255,255,0.55) 47%, rgba(255,255,255,0.55) 53%, transparent 54%); }
         /* телефон: подсказка слова — в правом верхнем углу, название места — слева под названием квартала */
@@ -106,7 +107,7 @@
         #talk .nm { font: 700 16px/1.2 "Noto Sans JP", Inter, sans-serif; }
         #talk .rl { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 1px; }
         #talk .tx { background: rgba(255,255,255,0.08); border: 0; border-radius: 50%; width: 32px; height: 32px; color: rgba(255,255,255,0.75); font-size: 20px; line-height: 1; flex: none; cursor: pointer; }
-        #talk .log { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 12px 4px; display: flex; flex-direction: column; gap: 8px; }
+        #talk .log { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 8px; }
         #talk .m { max-width: 88%; padding: 8px 11px; border-radius: 14px; }
         #talk .m.c { align-self: flex-start; background: rgba(255,255,255,0.09); border-bottom-left-radius: 4px; }
         #talk .m.p { align-self: flex-end; background: rgba(255,186,110,0.2); border-bottom-right-radius: 4px; text-align: right; }
@@ -135,7 +136,7 @@
         @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
             #talk { top: calc(env(safe-area-inset-top, 0px) + 8px); bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); right: calc(env(safe-area-inset-right, 0px) + 8px); width: min(420px, 50vw); border-radius: 16px; }
             #talk .th { padding: 8px 8px 6px 10px; } #talk .av { width: 28px; height: 28px; font-size: 15px; } #talk .nm { font-size: 14px; }
-            #talk .log { padding: 8px 8px 2px; gap: 6px; } #talk .m { padding: 6px 9px; } #talk .m .jp { font-size: 15px; } #talk .m .ru { font-size: 11.5px; }
+            #talk .log { padding: 8px 8px 12px; gap: 6px; } #talk .m { padding: 6px 9px; } #talk .m .jp { font-size: 15px; } #talk .m .ru { font-size: 11.5px; }
             #talk .task .big { font-size: 24px; } #talk .task .want { font-size: 17px; }
             #talk .opts { gap: 6px; padding: 6px 8px 8px; } #talk .op { padding: 7px 10px; } #talk .op b { font-size: 14px; }
             #acts button { min-width: 160px; padding: 9px 12px; font-size: 14px; } #acts .ic { font-size: 19px; }
@@ -146,6 +147,33 @@
         }
         /* пока улица загружается — никаких подсказок и кнопок (не спойлерим управление) */
         body.loading .hud, body.loading #joy, body.loading #dots, body.loading #acts, body.loading #rotate { visibility: hidden; }
+        /* доска в классе: окно сбоку, бумага с сеткой, порядок черт */
+        #write { position: absolute; right: calc(env(safe-area-inset-right, 0px) + 16px); top: calc(env(safe-area-inset-top, 0px) + 16px); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); width: min(400px, 40vw); z-index: 31; display: flex; flex-direction: column; gap: 8px; opacity: 0; pointer-events: none; transform: translateX(24px); transition: opacity .2s, transform .25s cubic-bezier(.2,.8,.2,1); background: rgba(12,12,22,0.94); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 20px; box-shadow: 0 0 0 1px rgba(255,255,255,0.12) inset, 0 16px 44px rgba(0,0,0,0.6); color: #fff; padding-bottom: 12px; overflow: hidden; }
+        #write.on { opacity: 1; transform: none; pointer-events: auto; }
+        #write .th { display: flex; align-items: center; gap: 10px; padding: 12px 12px 8px 14px; }
+        #write .av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,0.1); font-size: 18px; flex: none; }
+        #write .tt { flex: 1; } #write .nm { font: 700 16px Inter, sans-serif; } #write .rl { font-size: 12px; color: rgba(255,255,255,0.5); }
+        #write .tx { background: rgba(255,255,255,0.08); border: 0; border-radius: 50%; width: 32px; height: 32px; color: rgba(255,255,255,0.75); font-size: 20px; cursor: pointer; }
+        #write .card { padding: 0 16px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+        #write .kana { font: 700 22px "Noto Sans JP", sans-serif; color: #ffd9a0; } #write .mean { font-size: 14px; color: rgba(255,255,255,0.8); }
+        #write .prog { width: 100%; display: flex; gap: 6px; } #write .prog span { font: 700 18px "Noto Sans JP", sans-serif; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.45); }
+        #write .prog span.now { box-shadow: 0 0 0 1.5px #ffd9a0 inset; color: #ffd9a0; } #write .prog span.done { background: rgba(60,200,120,0.3); color: #fff; }
+        #write .bd { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 14px; }
+        #write .host { position: relative; width: min(100%, 52vh); aspect-ratio: 1; }
+        #write .kj-board__svg { position: absolute; inset: 0; width: 100%; height: 100%; background: #f6f0e2; border-radius: 14px; touch-action: none; box-shadow: 0 0 0 1px rgba(0,0,0,0.2) inset; }
+        #write .kj-board__svg.is-writable { cursor: crosshair; }
+        #write .kj-grid line { stroke: rgba(120,70,40,0.22); stroke-width: 0.6; vector-effect: non-scaling-stroke; } #write .kj-grid line.kj-grid__diag { stroke-dasharray: 2 3; }
+        #write .kj-ghost path { fill: none; stroke: rgba(40,30,20,0.16); stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; }
+        #write .kj-anim path, #write .kj-ink path { fill: none; stroke: #1c1a20; stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; }
+        #write .kj-live { fill: none; stroke: #3a5ad0; stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; stroke-opacity: 0.9; }
+        #write .kj-hint path { fill: none; stroke: #c8322a; stroke-width: 5; stroke-linecap: round; animation: wpulse 1s ease-in-out infinite; } #write .kj-hint .kj-hint__start { fill: #c8322a; }
+        #write .kj-hint .kj-wrong { stroke: #e04040; animation: wfade .45s forwards; }
+        #write .kj-nums text { fill: rgba(60,40,30,0.55); font-size: 7px; font-family: Inter, sans-serif; font-weight: 600; } #write .kj-nums text.is-pending { opacity: 0; }
+        @keyframes wpulse { 50% { stroke-opacity: .35; } } @keyframes wfade { to { stroke-opacity: 0; } }
+        #write .msg { min-height: 20px; padding: 0 16px; font-size: 13px; color: rgba(255,255,255,0.7); text-align: center; } #write .msg.err { color: #ff9a8a; } #write .msg.ok { color: #8ef0b0; }
+        #write .row { display: flex; gap: 6px; padding: 0 12px; } #write .row button { flex: 1; background: rgba(255,255,255,0.08); border: 0; border-radius: 10px; padding: 9px 6px; color: #fff; font: 600 12.5px Inter, sans-serif; box-shadow: 0 0 0 1px rgba(255,255,255,0.12) inset; cursor: pointer; } #write .row button.on { background: rgba(255,217,160,0.22); }
+        @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) { #write { top: 8px; bottom: 8px; right: 8px; width: min(440px, 52vw); border-radius: 16px; gap: 4px; padding-bottom: 8px; } #write .th { padding: 6px 8px 2px 10px; } #write .av { width: 28px; height: 28px; } #write .host { width: min(100%, 46vh); } #write .row button { padding: 7px 4px; font-size: 12px; } }
+        @media (pointer: coarse) and (orientation: portrait) { #write { left: 8px; right: 8px; width: auto; top: auto; height: 74vh; } }
         #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 14px; letter-spacing: 0.04em; pointer-events: none; z-index: 40; transition: opacity .4s; }
     </style>
     <script>

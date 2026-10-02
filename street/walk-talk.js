@@ -271,6 +271,7 @@ const TALK = (() => {
             const say = staff ? ['他に何かありますか？', 'Что-нибудь ещё?'] : pick([['今日は話せて楽しかった！', 'Было приятно поболтать!'], ['あ、もうこんな時間！', 'Ой, уже столько времени!'], ['また話そうね。', 'Поболтаем ещё как-нибудь.']]);
             const opts = sample(BYE_ME, 2).map(([j, r]) => ({ jp: j, ru: r, go: finish }));
             if (canMore) opts.unshift({ jp: staff ? 'あと一つ、いいですか？' : 'もう少し話そう！', ru: staff ? 'Можно ещё вопрос?' : 'Давай ещё поболтаем!', go: () => topic(false) });
+            if (role === 'teacher') opts.unshift({ jp: '黒板に書いてもいいですか？', ru: 'Можно написать на доске?', go: () => { show(['もちろん！書いてみてください。', 'Конечно! Попробуйте.'], []); setTimeout(() => { close(); WRITE.open(ch); }, 900); } });
             show(say, opts);
         };
         const afterTopic = (first) => {
@@ -336,7 +337,13 @@ const TALK = (() => {
     function nearby() {
         const out = [], pt = (typeof locked === 'function' && locked()) || !FINE ? [innerWidth / 2, innerHeight / 2] : (hover.lastMouse || null);
         if (!pt) return out;
-        const hc = pickChar(pt[0], pt[1]);
+        let hc = pickChar(pt[0], pt[1]);
+        // мягкое наведение: точно не попал — берём ближайшего человека в пределах ~13° от взгляда
+        if (!hc) {
+            _p.set((pt[0] / innerWidth) * 2 - 1, -(pt[1] / innerHeight) * 2 + 1); _ray.setFromCamera(_p, camera); const dir = _ray.ray.direction; let best = null, bd = 1e9;
+            (inside.on ? LIFE.S.room : LIFE.S.loose).forEach((c) => { if (!c.root.visible || !c.root.parent) return; (c.J && c.J.spine ? c.J.spine : c.root).getWorldPosition(_w); _w.y += 0.25; const v = _w.sub(camera.position), d = v.length(); if (d > 3.6 || d < 0.3) return; const ang = Math.acos(Math.min(1, v.dot(dir) / d)); if (ang < 0.23 && d < bd) { bd = d; best = c; } });
+            if (best) hc = { ch: best, dist: bd };
+        }
         if (hc && hc.dist < (inside.on ? 3.8 : 3.6)) {
             const ch = hc.ch, stall = !inside.on && FESTIVAL.stalls ? FESTIVAL.stalls.find((s) => s.ch === ch) : null;
             if (stall) out.push({ icon: '🍢', t: 'Заказать', fn: () => order(stall) }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
@@ -345,6 +352,10 @@ const TALK = (() => {
             return out;
         }
         if (inside.on) { const h = pick(pt[0], pt[1], 2.6); if (h && h.radio) out.push({ icon: '📻', t: 'Сменить станцию', fn: () => radioNext() }); }
+        if (inside.on && inside.door && inside.door.userData.door.type === 'class') {
+            let bd = null; room.traverse((o) => { if (!bd && o.userData && o.userData.board) bd = o; });
+            if (bd) { _p.set((pt[0] / innerWidth) * 2 - 1, -(pt[1] / innerHeight) * 2 + 1); _ray.setFromCamera(_p, camera); _ray.far = 8; if (_ray.intersectObject(bd, false).length) out.push({ icon: '✍', t: 'Написать на доске', fn: () => { close(); WRITE.open(null); } }); }
+        }
         return out;
     }
     function renderActs(list) {
@@ -358,6 +369,7 @@ const TALK = (() => {
         });
     }
     function update() {
+        if (!inside.on) WRITE.close();
         if (cur) {
             const p = cur.ch && cur.ch.root.getWorldPosition(new THREE.Vector3());
             if (!p || flat(p, camera.position) > (cur.kind === 'order' ? 3.6 : 4.5) || (cur.inside !== undefined && cur.inside !== inside.on)) close();
