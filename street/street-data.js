@@ -59,10 +59,12 @@ function buildOwner() {
     const have = new Set(words.map((w) => w.kanji));
     // «Уже знаю» — без карточки, перевода и расписания, но это тоже словарь: горят как выученные
     const extra = [];
-    (S.known || []).forEach((k, i) => { if (!have.has(k)) { have.add(k); extra.push({ id: 'known:' + k, kanji: k, kana: '', translation: '', createdAt: '2000-01-01T00:00:00.000Z', known: true }); } });
+    // known — строки или {kanji, kana, translation} (после обогащения выгрузкой)
+    const knownList = (S.known || []).map((k) => (typeof k === 'string' ? { kanji: k } : k)).filter((k) => k && k.kanji);
+    knownList.forEach((k) => { if (!have.has(k.kanji)) { have.add(k.kanji); extra.push({ id: 'known:' + k.kanji, kanji: k.kanji, kana: k.kana || '', translation: k.translation || '', createdAt: '2000-01-01T00:00:00.000Z', known: true }); } });
     const decks = (S.decks || []).filter((d) => d && Array.isArray(d.wordIds));
     if (extra.length) decks.push({ id: 'known-deck', name: 'Уже знаю', emoji: '✓', wordIds: extra.map((w) => w.id) });
-    return { words: words.concat(extra), schedule: S.schedule || {}, decks, known: new Set(S.known || []), jlpt: {}, source: 'owner' };
+    return { words: words.concat(extra), schedule: S.schedule || {}, decks, known: new Set(knownList.map((k) => k.kanji)), jlpt: {}, source: 'owner' };
 }
 
 function buildDemo() {
