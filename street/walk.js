@@ -1422,6 +1422,7 @@ function placeRadio(free) {
     radio.g = g; radio.led = led; radio.needle = needle; roomHover = [];
 }
 const radio = { g: null, led: null, needle: null };
+function radioNext() { const v = audio.nextStation(); toast('📻 ' + (STATION_NAMES[v] || v)); document.querySelectorAll('#panel [data-music]').forEach((x) => x.classList.toggle('on', x.dataset.music === v)); if (radio.needle) radio.needle.position.x = 0.04 + (audio.stationIndex() / 9) * 0.1; }
 const STATION_NAMES = { city: 'Ночной город', snow: 'Снег над крышами', train: 'Ночной поезд', tea: 'Чайный дом', stars: 'Звёзды', harbor: 'Гавань', radio: 'Радио за стеной', calm: 'Тихий вечер', lane: 'Переулок', lofi: 'Lo-fi' };
 let fading = false;
 function enterRoom(door) {
@@ -1845,7 +1846,7 @@ function tap(x, y) {
     const h = h0;
     if (!h) { if (!FINE) hideHint(); return; }
     if (h.exit) { buzz(15); exitRoom(); return; }
-    if (h.radio) { buzz(12); const v = audio.nextStation(); toast('📻 ' + (STATION_NAMES[v] || v)); document.querySelectorAll('#panel [data-music]').forEach((x) => x.classList.toggle('on', x.dataset.music === v)); if (radio.needle) radio.needle.position.x = 0.04 + (audio.stationIndex() / 9) * 0.1; return; }
+    if (h.radio) { buzz(12); radioNext(); return; }
     if (h.door) { if (h.dist < 7) { buzz(15); enterRoom(h.door); } else toast('Подойди ближе к двери'); return; }
     buzz(10); showHint(h.sign, true);
 }
