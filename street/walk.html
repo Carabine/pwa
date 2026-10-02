@@ -551,7 +551,13 @@ function buildWorld() {
     const killMat = (mt) => { if (!mt) return; (Array.isArray(mt) ? mt : [mt]).forEach((x) => { if (x.map && x.map.dispose) x.map.dispose(); if (x.alphaMap && x.alphaMap.dispose) x.alphaMap.dispose(); x.dispose(); }); };
     while (world.children.length) { const o = world.children.pop(); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); killMat(m.material); }); }
     const rnd = mulberry32(hashStr(th.id + source) + 11);
+    // тип комнаты за дверью: с весами (квартир ~18%), без двух квартир и без одного типа подряд на стороне улицы
+    const HOMES = new Set(['home', 'oneroom', 'washitsu', 'loft']);
+    const ROOM_W = { izakaya: 3, konbini: 2, class: 1.5, home: 1, oneroom: 0.8, washitsu: 0.7, loft: 0.6, ramen: 2, cafe: 2, books: 1.5, arcade: 1.5 };
+    let prevType = null;
+    const pickRoomType = () => { const tot = ROOM_TYPES.reduce((a, t) => a + (ROOM_W[t] || 1), 0); let t = ROOM_TYPES[0]; for (let tries = 0; tries < 8; tries++) { let x = rnd() * tot; for (const c of ROOM_TYPES) { x -= ROOM_W[c] || 1; if (x <= 0) { t = c; break; } } if (t !== prevType && !(HOMES.has(t) && HOMES.has(prevType))) break; } prevType = t; return t; };
     [-1, 1].forEach((side) => {
+        prevType = null;
         let z = 6;
         while (z > -streetLen - 10) {
             const len = lerp(th.lenB[0], th.lenB[1], rnd());
@@ -583,7 +589,7 @@ function buildWorld() {
             if (b.shop && !b.shutter) {
                 const dz = z - len + 1.1 + 0.4;
                 const door = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 2.1), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(b.shopColor, '#ffffff', 0.35)), fog: true }));
-                const rtype = ROOM_TYPES[Math.floor(rnd() * ROOM_TYPES.length)];
+                const rtype = pickRoomType();
                 door.position.set(side * (W2 - 0.01), 1.05, dz); door.rotation.y = -side * Math.PI / 2; door.userData.door = { side, z: dz, color: b.shopColor, type: rtype }; world.add(door); doors.push(door);
                 if (rtype === 'konbini') { door.material.color.set('#e8f4ff'); const strip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.35, 2.4), new THREE.MeshBasicMaterial({ color: new THREE.Color('#2f7fe0') })); strip.position.set(side * (W2 - 0.05), 2.45, dz); world.add(strip); const strip2 = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.12, 2.4), new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff8a2a') })); strip2.position.set(side * (W2 - 0.05), 2.2, dz); world.add(strip2); }
                 else if (rtype === 'class') { const plq = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.7), new THREE.MeshBasicMaterial({ map: texPlaque('塾'), fog: true })); plq.position.set(side * (W2 - 0.02), 2.0, dz + 0.9); plq.rotation.y = -side * Math.PI / 2; world.add(plq); door.material.color.set('#fff0d0'); }
