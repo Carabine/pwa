@@ -28,6 +28,10 @@
         #cross.on { display: block; }
         #cross::before, #cross::after { content: ''; position: absolute; background: #fff; box-shadow: 0 0 6px rgba(0,0,0,.9); }
         #cross::before { left: 8px; top: 0; width: 2px; height: 18px; } #cross::after { top: 8px; left: 0; width: 18px; height: 2px; }
+        /* телефон: взгляд — маленькая точка в центре; на слове она подсвечивается */
+        #cross.gaze { display: block; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: rgba(255,255,255,0.5); box-shadow: 0 0 0 2px rgba(0,0,0,0.25); opacity: 1; transition: transform .15s, background .15s; }
+        #cross.gaze::before, #cross.gaze::after { display: none; }
+        #cross.gaze.hit { background: #fff; transform: scale(1.7); box-shadow: 0 0 10px rgba(255,255,255,0.7); }
         #hint { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 96px); transform: translate(-50%, -24px); opacity: 0; pointer-events: none; transition: transform .25s cubic-bezier(.2,.8,.2,1), opacity .2s; min-width: 220px; max-width: 86vw; padding: 12px 16px 12px; border-radius: 18px; background: rgba(12,12,22,0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset, 0 12px 40px rgba(0,0,0,0.5); text-align: left; }
         #hint.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
         #hint .hw { display: flex; align-items: baseline; gap: 10px; }
@@ -3721,7 +3725,10 @@ function tap(x, y) {
 const STATE_LABEL = { lit: 'выучено', warm: 'учу', new: 'новое', due: 'пора повторить', worn: 'забывается' };
 const ROOM_HINT = { izakaya: 'Идзакая', konbini: 'Комбини', class: 'Вечерняя школа', home: 'Квартира' }; Object.assign(ROOM_HINT, ROOMX.hints); Object.assign(ROOM_HINT, ROOMX.hints);
 const hintEl = document.getElementById('hint');
-const hover = { sign: null, door: null, sticky: 0, lastMouse: null, frame: 0 };
+const hover = { sign: null, door: null, sticky: 0, lastMouse: null, frame: 0, gazeKey: null, gazeT: 0 };
+// телефон: подсказка по взгляду — что в центре экрана (до 7 м), то и подписываем, после короткой задержки
+const GAZE = !FINE;
+if (GAZE) document.getElementById('cross').classList.add('gaze');
 document.addEventListener('mousemove', (e) => { if (!locked()) hover.lastMouse = [e.clientX, e.clientY]; });
 let hoverDirty = true, hoverList = [], roomHover = [];
 function rebuildHover() { hoverList = []; signsGroup.traverse((o) => { if ((o.isMesh || o.isSprite) && o.userData.sign) hoverList.push(o); }); hoverList = hoverList.concat(doors); hoverDirty = false; }
@@ -3775,6 +3782,14 @@ function updateHover(now) {
     if ((hover.frame++ % 4) !== 0) return;
     let pt = null;
     if (locked()) pt = [innerWidth / 2, innerHeight / 2]; else if (FINE && hover.lastMouse) pt = hover.lastMouse;
+    else if (GAZE) {
+        const h = pick(innerWidth / 2, innerHeight / 2, 7), key = h && (h.sign || h.door) || null;
+        document.getElementById('cross').classList.toggle('hit', !!key);
+        if (key !== hover.gazeKey) { hover.gazeKey = key; hover.gazeT = now; }
+        if (key && now - hover.gazeT > 280) { if (h.sign) showHint(h.sign, false); else showDoorHint(h.door); }
+        else if (!key && (!hover.sticky || now > hover.sticky)) hideHint();
+        return;
+    }
     if (pt) {
         const h = pick(pt[0], pt[1]);
         if (h && h.sign) showHint(h.sign, false);

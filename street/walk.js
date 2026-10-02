@@ -1721,7 +1721,10 @@ function tap(x, y) {
 const STATE_LABEL = { lit: 'выучено', warm: 'учу', new: 'новое', due: 'пора повторить', worn: 'забывается' };
 const ROOM_HINT = { izakaya: 'Идзакая', konbini: 'Комбини', class: 'Вечерняя школа', home: 'Квартира' }; Object.assign(ROOM_HINT, ROOMX.hints); Object.assign(ROOM_HINT, ROOMX.hints);
 const hintEl = document.getElementById('hint');
-const hover = { sign: null, door: null, sticky: 0, lastMouse: null, frame: 0 };
+const hover = { sign: null, door: null, sticky: 0, lastMouse: null, frame: 0, gazeKey: null, gazeT: 0 };
+// телефон: подсказка по взгляду — что в центре экрана (до 7 м), то и подписываем, после короткой задержки
+const GAZE = !FINE;
+if (GAZE) document.getElementById('cross').classList.add('gaze');
 document.addEventListener('mousemove', (e) => { if (!locked()) hover.lastMouse = [e.clientX, e.clientY]; });
 let hoverDirty = true, hoverList = [], roomHover = [];
 function rebuildHover() { hoverList = []; signsGroup.traverse((o) => { if ((o.isMesh || o.isSprite) && o.userData.sign) hoverList.push(o); }); hoverList = hoverList.concat(doors); hoverDirty = false; }
@@ -1775,6 +1778,14 @@ function updateHover(now) {
     if ((hover.frame++ % 4) !== 0) return;
     let pt = null;
     if (locked()) pt = [innerWidth / 2, innerHeight / 2]; else if (FINE && hover.lastMouse) pt = hover.lastMouse;
+    else if (GAZE) {
+        const h = pick(innerWidth / 2, innerHeight / 2, 7), key = h && (h.sign || h.door) || null;
+        document.getElementById('cross').classList.toggle('hit', !!key);
+        if (key !== hover.gazeKey) { hover.gazeKey = key; hover.gazeT = now; }
+        if (key && now - hover.gazeT > 280) { if (h.sign) showHint(h.sign, false); else showDoorHint(h.door); }
+        else if (!key && (!hover.sticky || now > hover.sticky)) hideHint();
+        return;
+    }
     if (pt) {
         const h = pick(pt[0], pt[1]);
         if (h && h.sign) showHint(h.sign, false);
