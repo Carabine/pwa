@@ -13,7 +13,7 @@ const FESTIVAL = (() => {
         { id: 'ramune', name: 'ラムネ', bg: '#dff8ff', ink: '#0a7aa0', canopy: 2 },
     ];
     const CANOPY = [['#d8243a', '#fff4e8'], ['#1d3f8a', '#fff4e8'], ['#2a8a5a', '#fff4e8'], ['#e86aa0', '#fff4e8']];
-    let mats = null, fw = [], nextFw = 0;
+    let mats = null, fw = [], nextFw = 0; const stalls = [];
     function makeMats() {
         if (mats) return mats;
         // вывески лотков — один атлас (8 ячеек), материал общий → сливается
@@ -56,9 +56,10 @@ const FESTIVAL = (() => {
         goods(g, f, L, rnd);
         world.add(g); addCollider(g, null, 0.15);
         // продавец за прилавком
-        if (rnd() < (LOW ? 0.35 : 0.65)) {
+        g.updateMatrixWorld(true); const st = { ch: null, front: g.localToWorld(new THREE.Vector3(0, 0, 1.35)), food: f.name }; stalls.push(st);
+        if (rnd() < (LOW ? 0.6 : 0.85)) {
             const fem = rnd() < 0.45, ch = LIFE.makeChar({ fem, hairStyle: fem ? 'bun' : (rnd() < 0.5 ? 'short' : 'spiky'), hachimaki: !fem || rnd() < 0.5, top: ['#f4f4f4', '#2a3550', '#d8243a', '#1d3f8a'][Math.floor(rnd() * 4)], apron: '#1e2433', short: !fem, skin: ['#f3d6bd', '#eccaa8', '#e5bd98'][Math.floor(rnd() * 3)], hair: ['#16161c', '#2e1d14', '#4a2e1a'][Math.floor(rnd() * 3)], mouth: 'grin', holdR: f.id === 'kingyo' ? null : 'ladle', seed: rnd() * 100 });
-            ch.act = f.id === 'kingyo' ? 'idle' : 'cook'; ch.root.position.set(0.1, 0, -0.25); g.add(ch.root); LIFE.S.loose.push(ch);
+            ch.act = f.id === 'kingyo' ? 'idle' : 'cook'; ch.role = 'vendor'; ch.root.position.set(0.1, 0, -0.25); g.add(ch.root); LIFE.S.loose.push(ch); st.ch = ch;
         }
     }
     function nobori(world, side, z, i) {
@@ -83,7 +84,7 @@ const FESTIVAL = (() => {
         const plb = plq.clone(); plb.rotation.y = Math.PI; plb.position.z = z - 0.27; world.add(plb);
     }
     function build(world) {
-        const rnd = mulberry32(hashStr(th.id + 'matsuri'));
+        const rnd = mulberry32(hashStr(th.id + 'matsuri')); stalls.length = 0;
         torii(world, 4.2);
         const bounds = blocks.map((b) => b.z0);
         [-1, 1].forEach((side) => {
@@ -106,7 +107,7 @@ const FESTIVAL = (() => {
         const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
         const col = ['#ffcf5a', '#ff5a7a', '#7ad0ff', '#b98cff', '#9aff8a', '#ffffff'][Math.floor(Math.random() * 6)];
         const pts = new THREE.Points(geo, new THREE.PointsMaterial({ map: discTex, color: new THREE.Color(col), size: 2.2, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
-        pts.frustumCulled = false; scene.add(pts); fw.push({ pts, vel, t0: t, c: [cx, cy, cz] });
+        pts.frustumCulled = false; scene.add(pts); fw.push({ pts, vel, t0: t, c: [cx, cy, cz] }); audio.boom();
     }
     function update(t, dt) {
         if (inside.on) { fw.forEach((f) => { f.pts.visible = false; }); return; }
@@ -120,5 +121,5 @@ const FESTIVAL = (() => {
             a.needsUpdate = true; f.pts.visible = true; f.pts.material.opacity = Math.max(0, 1 - k / 2.6);
         }
     }
-    return { build, update };
+    return { build, update, stalls };
 })();

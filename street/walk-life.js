@@ -505,14 +505,15 @@ const LIFE = (() => {
         if (line[1]) { g.fillStyle = '#6b6b7c'; g.font = '500 25px ' + UI; g.fillText(line[1], W / 2, 118); }
         const t = makeTex(c); t.userData.shared = true; t.userData.aspect = W / c.height; bubbleCache.set(key, t); return t;
     }
-    function say(ch, line, dur, t) {
+    function say(ch, line, dur, t, parent) {
         if (!ch.root.parent) return;
         dur = dur || 2.8;
         const tex = bubbleTex(line);
         const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false, fog: false, opacity: 0 }));
         s.center.set(0.5, 0); s.renderOrder = 999; const h = line[1] ? 0.44 : 0.32; s.scale.set(h * tex.userData.aspect, h, 1);
-        room.add(s);
-        S.bubbles.push({ s, ch, t0: t, t1: t + dur });
+        (parent || room).add(s);
+        S.bubbles.forEach((b) => { if (b.ch === ch) b.t1 = Math.min(b.t1, t + 0.15); }); // у персонажа — одна реплика за раз
+        S.bubbles.push({ s, ch, t0: t, t1: t + dur, street: !!parent });
         ch.talkUntil = t + dur - 0.5;
         if (line[2]) ch.gest = { kind: line[2], t0: t, t1: t + (line[2] === 'bow' ? 1.6 : 2.4) };
     }
@@ -873,15 +874,20 @@ const LIFE = (() => {
                     if (cands.length) { const ch = cands[Math.floor(Math.random() * cands.length)]; const ln = ch.lines[Math.floor(Math.random() * ch.lines.length)]; if (ch.looking || ch.cat) ch.faceUntil = 0; say(ch, ln, ch.cat ? 1.8 : 2.8, t); }
                 }
             }
+        }
+        {
             for (let i = S.bubbles.length - 1; i >= 0; i--) {
                 const b = S.bubbles[i];
+                if (b.street === inside.on) { b.s.visible = false; if (t > b.t1) { if (b.s.parent) b.s.parent.remove(b.s); b.s.material.dispose(); S.bubbles.splice(i, 1); } continue; }
                 if (t > b.t1 || !attached(b.ch.root)) { if (b.s.parent) b.s.parent.remove(b.s); b.s.material.dispose(); S.bubbles.splice(i, 1); continue; }
                 (b.ch.J.head || b.ch.root).getWorldPosition(_v); b.s.position.set(_v.x, _v.y + (b.ch.cat ? 0.2 : 0.3) * (b.ch.sc || 1), _v.z);
-                if (t > (b.chk || 0)) { b.chk = t + 0.15; b.vis = !hidden(b.ch); }
+                if (t > (b.chk || 0)) { b.chk = t + 0.15; b.vis = b.street || !hidden(b.ch); }
                 b.a = (b.a || 0) + ((b.vis ? 1 : 0) - (b.a || 0)) * Math.min(1, dt * 12);
                 b.s.material.opacity = Math.max(0, Math.min(1, (t - b.t0) / 0.18, (b.t1 - t) / 0.3)) * b.a;
                 b.s.visible = b.s.material.opacity > 0.01;
             }
+        }
+        if (inside.on) {
             S.cloth.forEach((c) => { const a = c.m.geometry.attributes.position, p = a.array, b = c.base; for (let i = 0; i < p.length; i += 3) { const k = clamp((0.22 - b[i + 1]) / 0.44, 0, 1); p[i + 2] = b[i + 2] + k * k * 0.05 * Math.sin(t * 1.5 + c.ph + b[i] * 4); p[i] = b[i] + k * k * 0.012 * Math.sin(t * 1.1 + c.ph); } a.needsUpdate = true; });
             S.screens.forEach((sc) => { if (!sc.since) { sc.since = t; } if (t - sc.since > sc.until) { sc.since = t; sc.until = 7 + Math.random() * 7; sc.prog = PROGS[(PROGS.indexOf(sc.prog) + 1 + Math.floor(Math.random() * (PROGS.length - 1))) % PROGS.length]; } if (t > sc.next) { sc.next = t + 0.08; drawScreen(sc, t); sc.t.needsUpdate = true; } });
             S.games.forEach((gm) => { if (t > gm.next) { gm.next = t + 0.1; drawGame(gm, t); gm.t.needsUpdate = true; } });
@@ -920,7 +926,7 @@ const LIFE = (() => {
         o.cap = p.cap; o.hat = p.hat; o.glasses = p.glasses; o.bag = p.bag; o.small = p.small;
         if (p.phone) o.holdR = 'phone'; if (p.book) o.holdL = 'book'; if (p.stick) o.holdR = 'stick'; if (p.sword) o.holdR = 'sword';
         if (p.arm === 'up') o.armPose = 'up';
-        const ch = makeChar(o);
+        const ch = makeChar(o); ch.wordText = text;
         if (p.phone) ch.act = 'phone';
         if (p.arm === 'wave') ch.act = 'idle';
         S.loose.push(ch);
