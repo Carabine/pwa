@@ -25,6 +25,25 @@
         const t = LIFE.screenTex(); const sc = LIFE.S.screens[LIFE.S.screens.length - 1]; sc.prog = 'anime'; sc.until = 1e9;
         const m = plane(g, w, h, new THREE.MeshBasicMaterial({ map: t }), x, y, z); LIFE.bindScreen(t, m.material); return m;
     };
+    // экран ноутбука: карточки слов из словаря (листаются сами каждые 6 с)
+    function studyScreen(g, w, h, x, y, z) {
+        const c = document.createElement('canvas'); c.width = 384; c.height = 224; const cg = c.getContext('2d'); const tex = makeTex(c);
+        const words = ((typeof data !== 'undefined' && data && data.words) || []).filter((q) => (q.kanji || q.kana) && q.translation);
+        let i = Math.floor(Math.random() * Math.max(1, words.length)), next = 0;
+        const draw = () => {
+            const wd = words.length ? words[i++ % words.length] : { kanji: '勉強', kana: 'べんきょう', translation: 'учёба' };
+            cg.fillStyle = '#f4f1ea'; cg.fillRect(0, 0, 384, 224); cg.fillStyle = '#7c6af8'; cg.fillRect(0, 0, 384, 30);
+            cg.fillStyle = '#fff'; cg.font = '700 15px ' + UI; cg.textAlign = 'left'; cg.fillText('Animei · повторение', 12, 21);
+            cg.fillStyle = '#ffffff'; cg.fillRect(40, 44, 304, 150); cg.strokeStyle = 'rgba(0,0,0,0.12)'; cg.lineWidth = 2; cg.strokeRect(40, 44, 304, 150);
+            cg.textAlign = 'center'; cg.fillStyle = '#1c1a20'; cg.font = '900 54px ' + JP; cg.fillText(String(wd.kanji || wd.kana).slice(0, 6), 192, 116, 290);
+            if (wd.kana && wd.kana !== wd.kanji) { cg.fillStyle = '#7a6a5a'; cg.font = '600 18px ' + JP; cg.fillText(wd.kana, 192, 144, 290); }
+            cg.fillStyle = '#3a3a44'; cg.font = '600 16px ' + UI; cg.fillText(String(wd.translation).split(/[;,]/)[0].slice(0, 28), 192, 176, 290);
+            tex.needsUpdate = true;
+        };
+        draw();
+        LIFE.S.fx.push((t) => { if (t > next) { next = t + 6; draw(); } });
+        return plane(g, w, h, new THREE.MeshBasicMaterial({ map: tex }), x, y, z);
+    }
     const HAIR = ['#2a1a1a', '#f0d080', '#e86aa8', '#4a8ae8', '#f4f4f4', '#c8322a', '#7a4ae8', '#3ac8a0', '#f08a2a'], OUTFIT = ['#1e2a4a', '#c8322a', '#f4f4f4', '#2a2a30', '#3a6a3a', '#e8a8c8', '#3a5ad0'];
     // фигурка: подставка, тело, голова, причёска (иногда хвостики или меч)
     function figure(g, x, y, z, s, k) {
@@ -116,7 +135,7 @@
             } },
             { name: 'bdesk', rule: 'wall', walls: ['left', 'right', 'front'], w: 1.3, d: 1.3, h: 1.3, solid: true, build(g) {
                 const z0 = -0.3; B(g, 1.2, 0.04, 0.6, '#d8c0a0', 0, 0.74, z0); [[-0.55, -0.25], [0.55, -0.25], [-0.55, 0.25], [0.55, 0.25]].forEach((p) => BX(g, 0.04, 0.72, 0.04, '#a88a68', p[0], 0.36, z0 + p[1]));
-                B(g, 0.42, 0.02, 0.28, '#2a2a30', -0.05, 0.77, z0 + 0.05); const lid = new THREE.Group(); lid.position.set(-0.05, 0.78, z0 - 0.09); lid.rotation.x = -0.25; g.add(lid); B(lid, 0.42, 0.28, 0.015, '#2a2a30', 0, 0.14, 0); animeScreen(lid, 0.38, 0.22, 0, 0.14, 0.009);
+                B(g, 0.42, 0.02, 0.28, '#2a2a30', -0.05, 0.77, z0 + 0.05); const lid = new THREE.Group(); lid.position.set(-0.05, 0.78, z0 - 0.09); lid.rotation.x = -0.25; g.add(lid); B(lid, 0.42, 0.28, 0.015, '#2a2a30', 0, 0.14, 0); studyScreen(lid, 0.38, 0.22, 0, 0.14, 0.009);
                 CY(g, 0.05, 0.06, 0.03, '#2a2a30', 0.42, 0.77, z0 - 0.12, 10); CY(g, 0.008, 0.008, 0.35, '#2a2a30', 0.42, 0.95, z0 - 0.12, 6); SP(g, 0.07, '#f4e8c0', 0.36, 1.12, z0 - 0.05, 1, 0.7, 1); light(g, 0xffe0b0, 0.7, 2.5, 0.36, 1.1, z0);
                 B(g, 0.45, 0.06, 0.45, '#5a7aa8', 0, 0.46, z0 + 0.62); B(g, 0.45, 0.5, 0.05, '#5a7aa8', 0, 0.74, z0 + 0.85);
                 this.seats = [{ x: 0, z: z0 + 0.62, yaw: Math.PI, y: 0.49, pose: 'sit', acts: ['type'], role: 'student1r', p: 0.45 }];

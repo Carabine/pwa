@@ -423,7 +423,7 @@ const LIFE = (() => {
             case 'scan': { arm(J, 'L', -0.7, 0.12, -0.75); arm(J, 'R', -0.75 + Math.sin(T * 1.1) * 0.08, 0.12, -0.75 + Math.sin(T * 2.3) * 0.1); headX = 0.2; break; }
             case 'write': { arm(J, 'R', -0.78, 0.14, -1.1 + Math.sin(T * 9) * 0.04); J.shR.rotation.y = Math.sin(T * 2.2) * 0.06; arm(J, 'L', -0.72, 0.18, -1.3); J.spine.rotation.x += 0.28; headX = 0.42; if (T % 11 < 1.6) headX = 0.05; break; }
             case 'read': { arm(J, 'R', -0.85, 0.12, -1.35); arm(J, 'L', -0.85, 0.12, -1.35); J.spine.rotation.x += 0.18; headX = 0.38; break; }
-            case 'sleep': { arm(J, 'L', -1.05, -0.25, -1.75); arm(J, 'R', -1.05, -0.25, -1.75); J.spine.rotation.x += 0.62 + Math.sin(T * 0.9) * 0.02; headX = 0.55; J.head.rotation.y = 0.5; canLook = false; break; }
+            case 'sleep': { const q = [-1.55, 0.45, -2.0, 1.0, 0.1, 1.0]; /* голова на сложенных руках (раньше «спал на локтях») */ arm(J, 'L', q[0], q[1], q[2]); arm(J, 'R', q[0], q[1], q[2]); J.spine.rotation.x += q[3] + Math.sin(T * 0.9) * 0.02; headX = q[4]; J.head.rotation.y = q[5]; canLook = false; break; }
             case 'type': { arm(J, 'L', -0.9, 0.1, -0.85 + Math.sin(T * 11) * 0.04); arm(J, 'R', -0.9, 0.1, -0.85 + Math.sin(T * 13 + 1) * 0.04); J.spine.rotation.x += 0.1; headX = 0.12; break; }
             case 'phone': { arm(J, 'L', -0.7, -0.18, -1.45); arm(J, 'R', -0.75, -0.22, -1.45); headX = 0.45; break; }
             case 'browse': { headX = 0.1 + Math.sin(T * 0.5) * 0.15; J.head.rotation.y = Math.sin(T * 0.6) * 0.45; const e = env4(T % 7, 4.5, 5.1, 5.6, 6.2); arm(J, 'R', lerp(0.04, -1.25, e), 0.09, lerp(-0.14, -0.3, e)); if (ch.held.L) arm(J, 'L', 0.0, 0.14, -0.1); canLook = e < 0.1; break; }
