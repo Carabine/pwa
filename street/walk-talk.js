@@ -443,6 +443,9 @@ const TALK = (() => {
         show(md ? [say[0] + md[0], say[1] + ' ' + md[1]] : say, sample(g.me, 2).map(([j, r]) => ({ jp: j, ru: r, go: intro })));
     }
     // ---- заказ у ятай ----
+    // «Попробовать» — только еда и напитки (не люди и не вещи из идзакаи)
+    const EATABLE = new Set('寿司 卵 酒 お酒 ラーメン パン 肉 魚 りんご 林檎 お茶 茶 水 ご飯 米 豆腐 弁当 おにぎり 団子 餅 お菓子 菓子 ケーキ コーヒー 牛乳 ビール 野菜 果物 みかん 蜜柑 バナナ 焼き鳥 たこ焼き 刺身 うどん 味噌 飴 チョコ アイス'.split(' '));
+    const canTaste = (w) => { const m = propMeta(jpOf(w)); return EATABLE.has(jpOf(w)) || !!(m && ['dish', 'fruit', 'veg', 'fishy', 'can', 'bottle', 'jar'].indexOf(m.arch) >= 0); };
     const FOODISH = (w) => { const m = propMeta(jpOf(w)); return !!m && (m.where.indexOf('izakaya') >= 0 || m.where.indexOf('konbini') >= 0); };
     function order(stall) {
         const ch = stall.ch; if (!ch || pool().length < 4) { toast('Нужно хотя бы 4 слова с переводом'); return; }
@@ -601,8 +604,7 @@ const TALK = (() => {
             const sg = h.sign, w = sg.word, id = String(w.id || jpOf(w));
             out.push({ icon: '🔊', t: 'Произнести', s: id, fn: () => speak(w.kana || jpOf(w)) });
             if (sg.state !== 'lit') out.push({ icon: '✨', t: 'Повторить', s: id, fn: () => reviewSign(sg) });
-            if (inside.on && FOODISH(w)) out.push({ icon: '🥢', t: 'Попробовать', s: id, fn: () => taste(w) });
-            if (WRITE.can(w)) out.push({ icon: '✍', t: 'Прописать', s: id, fn: () => { close(); WRITE.open(null, w); } });
+            if (inside.on && canTaste(w)) out.push({ icon: '🥢', t: 'Попробовать', s: id, fn: () => taste(w) });
         }
         if (inside.on && inside.door && inside.door.userData.door.type === 'class') {
             let bd = null; room.traverse((o) => { if (!bd && o.userData && o.userData.board) bd = o; });
@@ -615,7 +617,7 @@ const TALK = (() => {
         acts.innerHTML = ''; acts.hidden = !list.length;
         list.forEach((a, i) => {
             const b = document.createElement('button'); b.className = i ? '' : 'main';
-            b.innerHTML = (FINE && !i ? '<kbd>E</kbd>' : '') + '<span class="ic">' + a.icon + '</span><span class="lb">' + esc(a.t) + '</span>';
+            b.innerHTML = (FINE && i < 4 ? '<kbd>' + (i ? i + 1 : 'E') + '</kbd>' : '') + '<span class="ic">' + a.icon + '</span><span class="lb">' + esc(a.t) + '</span>';
             b.addEventListener('click', () => { buzz(10); a.fn(); lastKey = ''; });
             acts.appendChild(b);
         });
@@ -644,6 +646,9 @@ const TALK = (() => {
             return;
         }
         if (e.code === 'KeyE' && actList[0] && !acts.hidden) { actList[0].fn(); lastKey = ''; }
+        // остальные действия — клавишами 2, 3, 4 (подписаны на кнопках)
+        const k = { Digit2: 1, Digit3: 2, Digit4: 3, Numpad2: 1, Numpad3: 2, Numpad4: 3 }[e.code];
+        if (k != null && actList[k] && !acts.hidden) { actList[k].fn(); lastKey = ''; }
     });
     return { talk, order, close, pickChar, update, gacha, nap, use, get open() { return !!cur; } };
 })();

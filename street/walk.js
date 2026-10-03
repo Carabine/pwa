@@ -2089,7 +2089,7 @@ function pick(x, y, maxDist) {
         const hits = ray.intersectObjects(roomHover, false).filter((o) => o.object.userData.sign || o.object.userData.exit || o.object.userData.radio || o.object.userData.tv || o.object.userData.paper || o.object.userData.post || o.object.userData.gacha || o.object.userData.book || o.object.userData.inner || o.object.userData.bed || o.object.userData.use);
         let h = hits[0];
         // слово-предмет на полке важнее самой полки
-        if (h && (h.object.userData.book || h.object.userData.use)) { const s2 = hits.find((o) => !o.object.userData.book && !o.object.userData.use); if (s2 && s2.distance - h.distance < 0.7) h = s2; }
+        if (h && (h.object.userData.book || h.object.userData.use)) { const s2 = hits.find((o) => !o.object.userData.book && !o.object.userData.use); if (s2 && s2.distance - h.distance < 1.3) h = s2; }
         if (!h) return null;
         if (h.object.userData.book) return { book: h.object.userData.book, dist: h.distance };
         if (h.object.userData.inner) return { inner: h.object.userData.inner, innerRu: h.object.userData.innerRu, dist: h.distance };
@@ -2177,6 +2177,7 @@ function placeUseHits(placed, type) {
         const kind = m._grp && USE_MODS[type + '/' + m.name]; if (!kind) return;
         box.setFromObject(m._grp); if (box.isEmpty()) return; box.getCenter(c); box.getSize(sz);
         const hit = new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.3, sz.x), Math.max(0.3, sz.y), Math.max(0.3, sz.z)), new THREE.MeshBasicMaterial());
+        const hh = Math.min(sz.y, 1.25); c.y = box.min.y + hh / 2; hit.geometry.dispose(); hit.geometry = new THREE.BoxGeometry(Math.max(0.3, sz.x), Math.max(0.3, hh), Math.max(0.3, sz.z));
         hit.visible = false; hit.userData.use = kind; room.worldToLocal(c); hit.position.copy(c); room.add(hit);
     });
 }

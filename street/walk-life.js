@@ -438,11 +438,11 @@ const LIFE = (() => {
                 break; }
             case 'sneak': {
                 // телефон на коленях под партой; иногда настороженно поглядывает на учителя
-                const look = (T % 9) < 1.1; arm(J, 'L', -0.5, -0.14, -1.7); arm(J, 'R', -0.55, -0.18, -1.65 + Math.sin(T * 0.8) * 0.03);
-                headX = look ? 0.05 : 0.5; J.spine.rotation.x += 0.18; canLook = false; break; }
+                const look = (T % 9) < 1.1; arm(J, 'L', -0.7, -0.18, -1.45); arm(J, 'R', -0.75, -0.22, -1.45 + Math.sin(T * 0.8) * 0.03);
+                headX = look ? 0.05 : 0.45; J.spine.rotation.x += 0.1; canLook = false; break; }
             case 'piano': {
-                if (ch.playing) { const a = T * 7; canLook = false; arm(J, 'L', -0.95 + Math.sin(a * 0.9) * 0.05, 0.16 + Math.sin(T * 1.7) * 0.12, -0.8 + Math.max(0, Math.sin(a)) * 0.14); arm(J, 'R', -0.95 + Math.sin(a * 1.1 + 1) * 0.05, 0.16 + Math.sin(T * 2.3 + 1) * 0.12, -0.8 + Math.max(0, Math.sin(a * 1.3 + 2)) * 0.14); J.spine.rotation.x += 0.12 + Math.sin(T * 1.3) * 0.03; headX = 0.16 + Math.sin(T * 2.2) * 0.05; }
-                else { arm(J, 'L', -0.9, 0.1, -0.85 + Math.sin(T * 0.7) * 0.02); arm(J, 'R', -0.9, 0.1, -0.85); J.spine.rotation.x += 0.08; headX = 0.1; }
+                if (ch.playing) { const a = T * 7; canLook = false; arm(J, 'L', -0.6 + Math.sin(a * 0.9) * 0.04, 0.15 + Math.sin(T * 1.7) * 0.1, -1.55 + Math.max(0, Math.sin(a)) * 0.12); arm(J, 'R', -0.6 + Math.sin(a * 1.1 + 1) * 0.04, 0.15 + Math.sin(T * 2.3 + 1) * 0.1, -1.55 + Math.max(0, Math.sin(a * 1.3 + 2)) * 0.12); J.spine.rotation.x += 0.12 + Math.sin(T * 1.3) * 0.03; headX = 0.16 + Math.sin(T * 2.2) * 0.05; }
+                else { arm(J, 'L', -0.6, 0.15, -1.55 + Math.sin(T * 0.7) * 0.02); arm(J, 'R', -0.6, 0.15, -1.55); headX = 0.15; }
                 break; }
             case 'wave': break;
             case 'play': { arm(J, 'L', -0.82 + Math.sin(T * 7) * 0.05, 0.14 + Math.sin(T * 9.3) * 0.08, -0.72); arm(J, 'R', -0.82, 0.1, -0.72 + Math.max(0, Math.sin(T * 13)) * 0.18); J.spine.rotation.x += 0.14; headX = 0.08; canLook = false; if (T % 9 < 0.6) { J.spine.rotation.x -= 0.1; headX = -0.15; } break; }
@@ -758,7 +758,7 @@ const LIFE = (() => {
         const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.125, 0.062), new THREE.MeshBasicMaterial({ map: t })); sc.mats.push(scr.material);
         scr.rotation.z = Math.PI / 2; scr.position.z = 0.0065;
         const hold = new THREE.Group(); hold.rotation.x = Math.PI / 2 + 0.5; hold.position.set(0, -0.04, 0.035); hold.add(scr); ch.held.R.add(hold);
-        ch.held.R.scale.setScalar(1.35); ch.held.R.rotation.x = -0.9; // телефон крупнее и экраном к лицу — сбоку видно аниме
+        ch.held.R.scale.setScalar(1.35); // телефон крупнее — видно, что там аниме
     }
     function nextChannel(tex) { const sc = S.screens.find((s) => s.t === tex) || S.screens[0]; if (!sc) return null; sc.prog = PROGS[(PROGS.indexOf(sc.prog) + 1) % PROGS.length]; sc.since = S.t || 0.001; sc.until = 10 + Math.random() * 8; return PROG_NAME[sc.prog]; }
     const TICK = ['今日の天気は晴れ、のち雨', '東京で桜が満開に', '新しい駅が開業しました', 'ラーメンの日、全国で行列', '週末は花火大会'];
