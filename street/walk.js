@@ -1558,7 +1558,9 @@ function buildRoom(b, color, type) {
     });
     // места у двери и на стенах для предметов
     spots.push({ kind: 'door', x: ROOM.doorX - 1.0, y: 0, z: ROOM.d / 2 - 0.6, ry: 0 });
-    ['left', 'right', 'back', 'front'].forEach((wall) => freeWallSegments(wall, used).forEach((sg) => { const p = wallPoint(wall, (sg[0] + sg[1]) / 2, 0, 0.05); spots.push({ kind: 'wall', x: p.x, y: 0, z: p.z, ry: p.ry }); for (let t = sg[0] + 0.5; t < sg[1] - 0.4; t += 1.1) { const q = wallPoint(wall, t, 0, 0.55); spots.push({ kind: 'floor', x: q.x, y: 0, z: q.z, ry: q.ry }); } }));
+    // настенные предметы (окно, часы, картина…) бронируют свой кусок стены — записки и плакаты на него уже не лягут
+    let wallNeed = objs.filter((s) => { const mt = propMeta(s.text) || {}; return (mt.inside || mt.spot) === 'wall' && propFor(s.text); }).length;
+    ['left', 'right', 'back', 'front'].forEach((wall) => freeWallSegments(wall, used).forEach((sg) => { const p = wallPoint(wall, (sg[0] + sg[1]) / 2, 0, 0.05); if (sg[1] - sg[0] >= 1.2) { spots.push({ kind: 'wall', x: p.x, y: 0, z: p.z, ry: p.ry }); if (wallNeed > 0) { wallNeed--; const mid = (sg[0] + sg[1]) / 2; used[wall].push([mid - 0.7, mid + 0.7]); } } for (let t = sg[0] + 0.5; t < sg[1] - 0.4; t += 1.1) { const q = wallPoint(wall, t, 0, 0.55); spots.push({ kind: 'floor', x: q.x, y: 0, z: q.z, ry: q.ry }); } }));
     // слова без предмета — на поверхности типа комнаты по свободным стенам
     let wi = 0;
     const surfaceOn = (wall, y, step, make) => { freeWallSegments(wall, used).forEach((sg) => { for (let t = sg[0] + step / 2; t < sg[1] - step / 2 && wi < rest.length; t += step) { const sgn = rest[wi++]; const p = wallPoint(wall, t, y, 0.02); const m = make(sgn); m.position.set(p.x, p.y, p.z); m.rotation.y = p.ry; m.rotation.z = (hashStr(sgn.text) % 7 - 3) * 0.01; m.userData.sign = sgn; room.add(m); sgn.strip = m; inside.strips.push(m); } }); };
@@ -2190,7 +2192,7 @@ function voiceLine(ch, line, force) {
 function pickAt(x, y, d) { return pick(x, y, d); }
 function tvNext(m) {
     const n = LIFE.nextChannel(m.userData.canvasTex || m.material.map); if (!n) return;
-    if (n[0] === 'アニメ' && ANITV.ensure()) setTimeout(() => toast('📺 アニメ — ' + (ANITV.title ? '«' + ANITV.title + '»' : 'аниме') + (ANITV.mine ? ' · сцена из вашего словаря' : '')), 900);
+    if (n[0] === 'アニメ' && ANITV.ensure()) setTimeout(() => { const r = ANITV.resumed; toast(r ? '📺 «' + r.title + '» · серия ' + r.ep + ' — с того места, где вы остановились' : '📺 アニメ — ' + (ANITV.title ? '«' + ANITV.title + '»' : 'аниме') + (ANITV.mine ? ' · сцена из вашего словаря' : '')); }, 900);
     else toast('📺 ' + n[0] + ' — ' + n[1]);
 }
 // газета на столе (котацу, тябудай, столик кафе) — одна на комнату

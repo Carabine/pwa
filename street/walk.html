@@ -4234,7 +4234,43 @@ const BOOKS = (() => {
 const ANITV = (() => {
     const OK = location.protocol !== 'file:';
     const STARTER = [["kaa-tatakau.mp4","Attack on Titan"],["kaa-boku.mp4","Tokyo Ghoul"],["kaa-katsu.mp4","Attack on Titan"],["kaa-keikaku.mp4","Death Note"],["kaa-akuma.mp4","Chainsaw Man"],["kaa-saikyou.mp4","Jujutsu Kaisen"],["kaa-shinzou.mp4","Chainsaw Man"],["kaa-kuru.mp4","My Hero Academia"],["kaa-daijoubu.mp4","My Hero Academia"],["kaa-imouto.mp4","Demon Slayer"],["kaa-tasukeru.mp4","Jujutsu Kaisen"],["kaa-nakama.mp4","Attack on Titan"],["clean-shigoto.mp4","Spy x Family"],["kaa-shumi.mp4","One-Punch Man"],["kaa-ningen.mp4","Frieren"],["kaa-tomodachi.mp4","Jujutsu Kaisen"],["kaa-yume.mp4","One Piece"],["kaa-akirameru.mp4","Frieren"],["kaa-mahou.mp4","Frieren"],["kaa-yuusha.mp4","Frieren"],["kaa-kyojin.mp4","Attack on Titan"],["kaa-oni.mp4","Jujutsu Kaisen"],["kaa-namae.mp4","Jujutsu Kaisen"],["kaa-suki.mp4","Frieren"],["kaa-arigatou.mp4","Bocchi the Rock!"],["kaa-iku.mp4","Frieren"],["kaa-matsu.mp4","Frieren"],["kaa-ganbaru.mp4","Jujutsu Kaisen"],["kaa-tabi.mp4","Frieren"],["kaa-jiyuu.mp4","Jujutsu Kaisen"],["kaa-au.mp4","One Piece"],["kaa-sekai.mp4","Frieren"],["kaa-chikara.mp4","Jujutsu Kaisen"],["kaa-sensei.mp4","Frieren"],["kaa-senpai.mp4","Jujutsu Kaisen"],["kaa-neko.mp4","Natsume Yuujinchou"],["kaa-tsuki.mp4","Demon Slayer"],["kaa-tsuyoi.mp4","Frieren"],["kaa-genki.mp4","Jujutsu Kaisen"],["kaa-tobu.mp4","Frieren"],["kaa-kokoro.mp4","Jujutsu Kaisen"],["kaa-warau.mp4","Bocchi the Rock!"],["kaa-gomen.mp4","Jujutsu Kaisen"],["kaa-wakaru.mp4","Frieren"],["kaa-taberu.mp4","Jujutsu Kaisen"],["kaa-mizu.mp4","Demon Slayer"],["kaa-hi.mp4","Demon Slayer"],["kaa-sora.mp4","Frieren"],["kaa-gakkou.mp4","Jujutsu Kaisen"],["kaa-wasureru.mp4","Frieren"]];
-    let list = null, vid = null, tex = null, idx = 0, cur = null, loading = null;
+    let list = null, vid = null, tex = null, idx = 0, cur = null, loading = null, hls = null, hlsLoading = null;
+    const lsJ = (k) => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+    const api = (p) => fetch('/api/v1/' + p).then((r) => (r.ok ? r.json() : null)).then((j) => j && j.data).catch(() => null);
+    // где пользователь остановился в плеере: тайтл, серия, секунда и дорожка (источник) — из того же localStorage
+    function lastWatch() {
+        const lw = lsJ('animei:lastWatch'); if (!lw || !lw.id) return null;
+        if (lw.updatedAt && Date.now() - lw.updatedAt > 60 * 864e5) return null;
+        let best = null, track = null; const pre = 'animei:watchPos:' + lw.id + ':';
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!k || !k.startsWith(pre)) continue; const v = lsJ(k); if (v && (!best || (v.updatedAt || 0) > (best.updatedAt || 0))) { best = v; track = k.slice(pre.length); } }
+        return { id: String(lw.id), title: lw.title || lw.name || '', ep: Number((best && best.epNum) || lw.epNum || 1), time: Number((best && best.time != null ? best.time : lw.time) || 0), track, season: best ? best.seasonIndex || 0 : 0 };
+    }
+    // поток той же серии через те же ручки, что и плеер (все публичные, ссылки на /proxy того же сайта)
+    async function resolveResume(lw) {
+        const info = await api('catalog/anime/' + encodeURIComponent(lw.id)); const trs = (info && info.translations) || [];
+        if (!trs.length) return null;
+        const jp = (t) => t.type === 'subtitles' || /sub|субтитр|crunchyroll/i.test(String(t.id) + ' ' + (t.title || ''));
+        const own = lw.track ? trs.find((t) => String(t.id) === lw.track) : null;
+        const order = (own ? [own] : []).concat(trs.filter((t) => t !== own && !/dub/.test(String(t.id)) && jp(t)), trs.filter((t) => t !== own && !/dub/.test(String(t.id)) && !jp(t)));
+        for (const t of order.slice(0, 3)) {
+            let url = null, direct = false;
+            if (t.provider === 'kickassanime') { const d = await api('catalog/kickassanime-stream?shikimoriId=' + encodeURIComponent(lw.id) + '&ep=' + lw.ep + '&sub=en'); url = d && (d.auto || Object.values(d.qualities || {})[0]); }
+            else if (t.provider === 'animejoy') { const d = await api('catalog/animejoy-stream?shikimoriId=' + encodeURIComponent(lw.id) + '&ep=' + lw.ep); url = d && d.video; direct = true; }
+            else if (t.provider === 'megaplay') { const d = await api('catalog/megaplay-stream?mal=' + encodeURIComponent(t.malId) + '&ep=' + lw.ep + '&type=sub'); url = d && d.hls; }
+            else if (!t.provider && t.mediaId) {
+                const e = await api('catalog/episodes?mediaType=' + encodeURIComponent(t.mediaType) + '&mediaId=' + encodeURIComponent(t.mediaId) + '&mediaHash=' + encodeURIComponent(t.mediaHash));
+                const same = ((e && e.episodes) || []).filter((x) => Number(x.number) === lw.ep), ep = same[Math.min(lw.season || 0, same.length - 1)] || same[0];
+                if (ep) { const d = await api('catalog/stream?type=seria&id=' + encodeURIComponent(ep.id) + '&hash=' + encodeURIComponent(ep.hash)); url = d && (d.master || d.hls); }
+            }
+            if (url) return { url, direct, title: lw.title, ep: lw.ep, time: lw.time, resume: true };
+        }
+        return null;
+    }
+    function loadHls() {
+        if (window.Hls) return Promise.resolve(window.Hls);
+        if (!hlsLoading) hlsLoading = new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = '../libs/hls/hls.min.js'; sc.onload = () => res(window.Hls); sc.onerror = rej; document.head.appendChild(sc); });
+        return hlsLoading;
+    }
     async function mineList() {
         try {
             if (typeof source === 'undefined' || source !== 'real') return [];
@@ -4256,17 +4292,36 @@ const ANITV = (() => {
         } catch (e) { return []; }
     }
     function load() {
-        if (!loading) loading = mineList().then((mine) => {
-            const st = STARTER.map(([f, a]) => ({ url: '../media/starter/' + f, title: a, mine: false })).sort(() => Math.random() - 0.5);
-            list = mine.sort(() => Math.random() - 0.5).concat(st); return list;
-        });
+        if (!loading) {
+            const lw = lastWatch();
+            loading = Promise.all([mineList(), lw ? resolveResume(lw).catch(() => null) : null]).then(([mine, res]) => {
+                const st = STARTER.map(([f, a]) => ({ url: '../media/starter/' + f, title: a, mine: false })).sort(() => Math.random() - 0.5);
+                list = (res ? [res] : []).concat(mine.sort(() => Math.random() - 0.5), st); return list;
+            });
+        }
         return loading;
+    }
+    async function play(it) {
+        if (hls) { try { hls.destroy(); } catch (e) { /* уже */ } hls = null; }
+        cur = it;
+        if (it.resume && !it.direct && !vid.canPlayType('application/vnd.apple.mpegurl')) {
+            const Hls = await loadHls().catch(() => null);
+            if (!Hls || !Hls.isSupported()) { setTimeout(next, 100); return; }
+            hls = new Hls({ startPosition: it.time > 5 ? it.time : -1, maxBufferLength: 20, maxMaxBufferLength: 40,
+                fragLoadPolicy: { default: { maxTimeToFirstByteMs: 20000, maxLoadTimeMs: 60000, timeoutRetry: { maxNumRetry: 3, retryDelayMs: 1000, maxRetryDelayMs: 4000 }, errorRetry: { maxNumRetry: 4, retryDelayMs: 1000, maxRetryDelayMs: 8000 } } } });
+            hls.on(Hls.Events.ERROR, (e, d) => { if (d && d.fatal) { try { hls.destroy(); } catch (x) { /* уже */ } hls = null; setTimeout(next, 300); } });
+            hls.loadSource(it.url); hls.attachMedia(vid);
+        } else {
+            vid.src = it.url;
+            if (it.time > 5) vid.addEventListener('loadedmetadata', () => { try { vid.currentTime = it.time; } catch (e) { /* ок */ } }, { once: true });
+        }
+        const p = vid.play(); if (p && p.catch) p.catch(() => { /* автозапуск без звука почти всегда разрешён */ });
     }
     function next() {
         if (!vid || !list || !list.length) return;
-        cur = list[idx++ % list.length];
-        vid.src = cur.url;
-        const p = vid.play(); if (p && p.catch) p.catch(() => { /* автозапуск без звука почти всегда разрешён */ });
+        let it = list[idx++ % list.length];
+        if (it.resume && idx > 1) it = list[idx++ % list.length] || it; // своё аниме — один раз, дальше клипы
+        play(it);
     }
     // текстура видео (или null, если видео недоступно) — один раз на страницу
     function ensure() {
@@ -4281,8 +4336,8 @@ const ANITV = (() => {
         return tex;
     }
     function pause() { if (vid && !vid.paused) vid.pause(); }
-    function resume() { if (vid && vid.paused && vid.src) { const p = vid.play(); if (p && p.catch) p.catch(() => {}); } }
-    return { ensure, pause, resume, next, get title() { return cur ? cur.title : ''; }, get mine() { return !!(cur && cur.mine); } };
+    function resume() { if (vid && vid.paused && (vid.src || hls)) { const p = vid.play(); if (p && p.catch) p.catch(() => {}); } }
+    return { ensure, pause, resume, next, get title() { return cur ? cur.title : ''; }, get mine() { return !!(cur && cur.mine); }, get resumed() { return cur && cur.resume ? cur : null; } };
 })();
 
 // Расширенный каталог предметов-слов: встраивается в walk.js на месте /*__PROPS_EXTRA__*/ (см. build-walk.mjs).
@@ -5635,7 +5690,9 @@ function buildRoom(b, color, type) {
     });
     // места у двери и на стенах для предметов
     spots.push({ kind: 'door', x: ROOM.doorX - 1.0, y: 0, z: ROOM.d / 2 - 0.6, ry: 0 });
-    ['left', 'right', 'back', 'front'].forEach((wall) => freeWallSegments(wall, used).forEach((sg) => { const p = wallPoint(wall, (sg[0] + sg[1]) / 2, 0, 0.05); spots.push({ kind: 'wall', x: p.x, y: 0, z: p.z, ry: p.ry }); for (let t = sg[0] + 0.5; t < sg[1] - 0.4; t += 1.1) { const q = wallPoint(wall, t, 0, 0.55); spots.push({ kind: 'floor', x: q.x, y: 0, z: q.z, ry: q.ry }); } }));
+    // настенные предметы (окно, часы, картина…) бронируют свой кусок стены — записки и плакаты на него уже не лягут
+    let wallNeed = objs.filter((s) => { const mt = propMeta(s.text) || {}; return (mt.inside || mt.spot) === 'wall' && propFor(s.text); }).length;
+    ['left', 'right', 'back', 'front'].forEach((wall) => freeWallSegments(wall, used).forEach((sg) => { const p = wallPoint(wall, (sg[0] + sg[1]) / 2, 0, 0.05); if (sg[1] - sg[0] >= 1.2) { spots.push({ kind: 'wall', x: p.x, y: 0, z: p.z, ry: p.ry }); if (wallNeed > 0) { wallNeed--; const mid = (sg[0] + sg[1]) / 2; used[wall].push([mid - 0.7, mid + 0.7]); } } for (let t = sg[0] + 0.5; t < sg[1] - 0.4; t += 1.1) { const q = wallPoint(wall, t, 0, 0.55); spots.push({ kind: 'floor', x: q.x, y: 0, z: q.z, ry: q.ry }); } }));
     // слова без предмета — на поверхности типа комнаты по свободным стенам
     let wi = 0;
     const surfaceOn = (wall, y, step, make) => { freeWallSegments(wall, used).forEach((sg) => { for (let t = sg[0] + step / 2; t < sg[1] - step / 2 && wi < rest.length; t += step) { const sgn = rest[wi++]; const p = wallPoint(wall, t, y, 0.02); const m = make(sgn); m.position.set(p.x, p.y, p.z); m.rotation.y = p.ry; m.rotation.z = (hashStr(sgn.text) % 7 - 3) * 0.01; m.userData.sign = sgn; room.add(m); sgn.strip = m; inside.strips.push(m); } }); };
@@ -6267,7 +6324,7 @@ function voiceLine(ch, line, force) {
 function pickAt(x, y, d) { return pick(x, y, d); }
 function tvNext(m) {
     const n = LIFE.nextChannel(m.userData.canvasTex || m.material.map); if (!n) return;
-    if (n[0] === 'アニメ' && ANITV.ensure()) setTimeout(() => toast('📺 アニメ — ' + (ANITV.title ? '«' + ANITV.title + '»' : 'аниме') + (ANITV.mine ? ' · сцена из вашего словаря' : '')), 900);
+    if (n[0] === 'アニメ' && ANITV.ensure()) setTimeout(() => { const r = ANITV.resumed; toast(r ? '📺 «' + r.title + '» · серия ' + r.ep + ' — с того места, где вы остановились' : '📺 アニメ — ' + (ANITV.title ? '«' + ANITV.title + '»' : 'аниме') + (ANITV.mine ? ' · сцена из вашего словаря' : '')); }, 900);
     else toast('📺 ' + n[0] + ' — ' + n[1]);
 }
 // газета на столе (котацу, тябудай, столик кафе) — одна на комнату
