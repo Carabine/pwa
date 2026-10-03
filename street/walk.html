@@ -1059,6 +1059,7 @@ function buildWorld() {
     BL.forEach((bk, bi) => withTheme(bk.th, () => { if (th.festival) FESTIVAL.build(world, bk); if (th.temple) TEMPLE.build(world, bk, false); }));
     buildEndGate();
     useTheme(BL[0].th);
+    clearDoorways(world);
     mergeStatic(world);
 }
 function texPuddlesInverse(seed) {
@@ -3547,6 +3548,7 @@ const TALK = (() => {
         });
     }
     function update() {
+        if (locked() && uiOpen()) document.exitPointerLock();
         if (WRITE.open_ && WRITE.at !== inside.on) WRITE.close();
         if (!inside.on && PAPER.on) PAPER.close();
         if (MAIL.on && !MAIL.near()) MAIL.close();
@@ -4714,6 +4716,20 @@ const ANITV = (() => {
 function propMeta(text) { return PROP_META[text] || null; }
 function propFor(text) { return PROP_BUILDERS[text] || null; }
 // предмет встаёт рядом с дверью своего квартала (зонты у входа, бочки у идзакаи, кот на ящиках), если дверей нет — у стены
+function clearDoorways(group) {
+    if (!doors.length) return;
+    const box = new THREE.Box3(), sz = new THREE.Vector3(), kill = [];
+    group.children.forEach((o) => {
+        if (o.userData.door || o.isLight || o.isLine) return;
+        const p = o.position; if (p.y > 1.4 || Math.abs(p.x) < 0.4) return;
+        const side = p.x > 0 ? 1 : -1;
+        const d = doors.find((dd) => { const u = dd.userData.door, w2 = u.w2 || W2; return u.side === side && Math.abs(p.z - u.z) < 0.9 && Math.abs(p.x) > w2 - 1.8 && Math.abs(p.x) < w2 - 0.14; });
+        if (!d) return;
+        box.setFromObject(o); box.getSize(sz); if (Math.max(sz.x, sz.z) > 1.9) return; // ларьки и большие постройки не трогаем
+        kill.push(o);
+    });
+    kill.forEach((o) => { group.remove(o); for (let i = colliders.street.length - 1; i >= 0; i--) if (colliders.street[i].obj === o) colliders.street.splice(i, 1); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); }); });
+}
 function placeStreetProp(sign, b) {
     const mt = propMeta(sign.text) || {};
     const ds = doors.filter((d) => d.userData.door.z <= b.z0 && d.userData.door.z > b.z1).sort((x, y) => y.userData.door.z - x.userData.door.z);
@@ -4726,7 +4742,8 @@ function placeStreetProp(sign, b) {
     // место занято декором, прохожим или другим предметом — сдвигаем вдоль улицы
     const half = BIG_PROPS.has(sign.text) ? 2.2 : 0.8;
     const x = sign.side * (W2 - (BIG_PROPS.has(sign.text) ? 1.45 : 0.7));
-    const busy = (z) => { const x0 = x - half, x1 = x + half, z0 = z - half, z1 = z + half; const hit = (c) => !(x1 <= c.x0 || x0 >= c.x1 || z1 <= c.z0 || z0 >= c.z1); return colliders.street.some(hit) || blockers.some(hit); };
+    const doorGap = BIG_PROPS.has(sign.text) ? half + 0.55 : 0.85;
+    const busy = (z) => { const x0 = x - half, x1 = x + half, z0 = z - half, z1 = z + half; const hit = (c) => !(x1 <= c.x0 || x0 >= c.x1 || z1 <= c.z0 || z0 >= c.z1); return colliders.street.some(hit) || blockers.some(hit) || doors.some((d) => d.userData.door.side === sign.side && Math.abs(z - d.userData.door.z) < doorGap); };
     if (busy(sign.z)) { const z0 = sign.z; let found = false; for (let d = 0.8; d <= 8 && !found; d += 0.8) for (const dir of [-1, 1]) { const z = z0 + dir * d; if (z <= b.z0 - 1 && z >= b.z1 + 1 && !busy(z)) { sign.z = z; found = true; break; } } }
 }
 function buildProp(sign, group) {
@@ -4952,7 +4969,7 @@ function decorateBuilding(side, b, z, len, rnd) {
     const meter = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.3, 0.25), lamb('#9a9aa4')); meter.position.set(inward(0.1), 0.9 + rnd() * 0.6, z - len + 2.3); world.add(meter);
     // стойка-меню у двери и хлам у стены
     if (b.shop && !b.shutter) {
-        const dz = z - len + 1.5 + 0.9;
+        const dz = z - len + 1.5 + 1.2; // стойка-меню сбоку от двери, не на проходе
         const bd = new THREE.Group();
         // А-образная стойка: две створки наклонены и сходятся сверху, не пересекаясь
         if (!boardAtlas) { const ar = mulberry32(hashStr(th.id) + 6); boardAtlas = makeAtlas(24, 64, 96, () => texBoard(ar), { side: THREE.DoubleSide }); }
@@ -5009,8 +5026,8 @@ function innerDoorTex(jp, ru) {
 function buildInnerDoor(spec) {
     const { d } = ROOM, x = ROOM.innerX;
     const dm = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.1), new THREE.MeshBasicMaterial({ map: innerDoorTex(spec[1], spec[2]) }));
-    dm.position.set(x, 1.05, d / 2 - 0.105); dm.rotation.y = Math.PI; dm.userData.inner = spec[0]; dm.userData.innerRu = spec[2]; room.add(dm);
-    const fr = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.3, 0.08), lamb('#1a1410')); fr.position.set(x, 1.15, d / 2 - 0.06); room.add(fr);
+    dm.position.set(x, 1.05, -d / 2 + 0.105); dm.userData.inner = spec[0]; dm.userData.innerRu = spec[2]; room.add(dm);
+    const fr = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.3, 0.08), lamb('#1a1410')); fr.position.set(x, 1.15, -d / 2 + 0.06); room.add(fr);
 }
 // пройти во вторую комнату и вернуться обратно
 function enterInner(t2) {
@@ -5030,7 +5047,7 @@ function backToParent() {
     fade(() => {
         inside.door = parent; buildRoom(b, parent.userData.door.color, parent.userData.door.type); LIFE.onEnter();
         const x = ROOM.innerX != null ? ROOM.innerX : ROOM.doorX - 0.5;
-        camera.position.set(x, 1.6, ROOM.d / 2 - 1.1); yaw = tYaw = 0; pitch = tPitch = 0; vel.set(0, 0, 0); hideHint(); document.getElementById('exit').textContent = '← На улицу';
+        camera.position.set(x, 1.6, ROOM.innerX != null ? -ROOM.d / 2 + 1.1 : ROOM.d / 2 - 1.1); yaw = tYaw = ROOM.innerX != null ? Math.PI : 0; pitch = tPitch = 0; vel.set(0, 0, 0); hideHint(); document.getElementById('exit').textContent = '← На улицу';
         { const [jp, ru] = String(ROOM_NAMES[parent.userData.door.type] || '').split(' · '); banner(jp || '', (ru || '') + ' · ' + b.q.name); }
     });
 } // размеры текущей комнаты, задаются генератором
@@ -5181,7 +5198,7 @@ function placeModule(mod, grid, rnd, used) {
             if (len > along - 0.4) continue;
             let t = mod.fill ? (wall === 'back' ? 0 : -along / 2 + 0.2 + len / 2) : (mod.rule === 'corner' ? (rnd() < 0.5 ? -along / 2 + 0.2 + len / 2 : along / 2 - 0.2 - len / 2) : (-along / 2 + 0.3 + len / 2 + rnd() * (along - 0.6 - len)));
             if (wall === 'front' && Math.abs(t - doorX) < len / 2 + 1.0) continue; // не перекрывать вход
-            if (wall === 'front' && ROOM.innerX != null && Math.abs(t - ROOM.innerX) < len / 2 + 0.9) continue; // и внутреннюю дверь
+            if (wall === 'back' && ROOM.innerX != null && Math.abs(t - ROOM.innerX) < len / 2 + 0.9) continue; // и дверь во вторую комнату
             ry = WALL_RY[wall];
             if (wall === 'back') { x = t; z = -D / 2 + mod.d / 2; fw = len; fd = mod.d; }
             else if (wall === 'front') { x = t; z = D / 2 - mod.d / 2; fw = len; fd = mod.d; }
@@ -5215,7 +5232,7 @@ function freeWallSegments(wall, used) {
     const along = (wall === 'back' || wall === 'front') ? W : D;
     const occ = used[wall].slice().sort((p, q) => p[0] - q[0]);
     if (wall === 'front') occ.push([doorX - 0.8, doorX + 0.8]);
-    if (wall === 'front' && ROOM.innerX != null) occ.push([ROOM.innerX - 0.8, ROOM.innerX + 0.8]);
+    if (wall === 'back' && ROOM.innerX != null) occ.push([ROOM.innerX - 0.8, ROOM.innerX + 0.8]);
     occ.sort((p, q) => p[0] - q[0]);
     const segs = []; let cur = -along / 2 + 0.3;
     occ.forEach((o) => { if (o[0] - 0.2 > cur) segs.push([cur, o[0] - 0.2]); cur = Math.max(cur, o[1] + 0.2); });
@@ -5370,7 +5387,7 @@ function buildRoom(b, color, type) {
     grid.mark(ROOM.doorX - 1.4, ROOM.d / 2 - 2.6, ROOM.doorX + 1.4, ROOM.d / 2); // зона входа всегда свободна
     const innerSpec = !(inside.door && inside.door.userData.door.parentDoor) && INNER[type];
     ROOM.innerX = innerSpec ? (ROOM.doorX >= 0 ? -(ROOM.w / 2 - 1.15) : ROOM.w / 2 - 1.15) : null;
-    if (innerSpec) { grid.mark(ROOM.innerX - 0.95, ROOM.d / 2 - 2.2, ROOM.innerX + 0.95, ROOM.d / 2); buildInnerDoor(innerSpec); }
+    if (innerSpec) { grid.mark(ROOM.innerX - 0.95, -ROOM.d / 2, ROOM.innerX + 0.95, -ROOM.d / 2 + 2.0); buildInnerDoor(innerSpec); }
     const used = { back: [], left: [], right: [], front: [] };
     const spots = [], placed = [];
     const mods = catalog(type, rnd).sort((p, q) => (q.first ? 1 : 0) - (p.first ? 1 : 0));
@@ -5833,12 +5850,15 @@ function inJoyZone(e) { const r = joyEl.getBoundingClientRect(); const cx = r.le
 // ПК: клик захватывает мышь (pointer lock), поворот без зажатой кнопки, Esc отпускает; клик при захвате — по прицелу в центре
 const FINE = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const locked = () => document.pointerLockElement === canvas;
+// открыто окно (разговор, газета, книга, доска, отзыв, настройки) — мышью управляем окном, а не камерой
+const uiOpen = () => !!(TALK.open || PAPER.on || BOOKS.on || MAIL.on || WRITE.open_ || document.getElementById('panel').classList.contains('open'));
 document.addEventListener('pointerlockchange', () => { document.getElementById('cross').classList.toggle('on', locked()); if (!locked()) lookVel.x = lookVel.y = 0; });
 document.addEventListener('mousemove', (e) => { if (!locked()) return; tYaw -= e.movementX * LOOK_K * 0.55; tPitch = clamp(tPitch - e.movementY * LOOK_K * 0.5, -1, 1); lookVel.x = lookVel.y = 0; });
 canvas.addEventListener('pointerdown', (e) => {
     audio.resume();
     if (FINE && e.pointerType === 'mouse' && e.button === 0) {
         if (locked()) { tap(innerWidth / 2, innerHeight / 2); return; }
+        if (uiOpen()) { tap(e.clientX, e.clientY); return; }
         { try { canvas.requestPointerLock(); } catch (err) { /* не поддерживается — остаётся перетаскивание */ } return; }
     }
     if (!joy.active && inJoyZone(e)) {

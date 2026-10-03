@@ -621,6 +621,7 @@ const TALK = (() => {
         });
     }
     function update() {
+        if (locked() && uiOpen()) document.exitPointerLock();
         if (WRITE.open_ && WRITE.at !== inside.on) WRITE.close();
         if (!inside.on && PAPER.on) PAPER.close();
         if (MAIL.on && !MAIL.near()) MAIL.close();
