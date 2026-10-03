@@ -161,11 +161,20 @@ const TALK = (() => {
         el.querySelector('.rl').textContent = (cur.sub || '') + (cur.kind === 'order' && score.all ? (cur.sub ? ' · ' : '') + 'заказов верно: ' + score.ok + ' из ' + score.all : '');
     }
     // ---- шаг: реплика персонажа в ленту, задание, варианты ответа ----
+    let showSeq = 0;
     function show(line, opts, task) {
         if (!cur) return;
         const e = ui(); e.classList.add('on'); acts.hidden = true; head();
         furiLoad([line[0]].concat(opts.map((o) => o.jp)));
+        const box0 = e.querySelector('.opts'); box0.innerHTML = ''; e.querySelector('.task').hidden = true;
+        const log = e.querySelector('.log'), ty = document.createElement('div'); ty.className = 'm c typing'; ty.innerHTML = '<i></i><i></i><i></i>'; log.appendChild(ty);
+        const my = ++showSeq, wait = Math.min(1150, 280 + String(line[0]).length * 24);
         if (cur.ch && typeof voiceLine === 'function') voiceLine(cur.ch, line, true);
+        if (cur.ch && !cur.ch.cat) { cur.ch.faceUntil = LIFE.S.t + 30; cur.ch.talkUntil = LIFE.S.t + 1.6; }
+        setTimeout(() => { ty.remove(); if (my === showSeq && cur) showNow(line, opts, task); }, wait);
+    }
+    function showNow(line, opts, task) {
+        const e = ui();
         msg('c', line[0], line[1]);
         e.querySelector('.task').innerHTML = task || ''; e.querySelector('.task').hidden = !task;
         const box = e.querySelector('.opts'); box.innerHTML = '';
@@ -180,8 +189,9 @@ const TALK = (() => {
         if (cur.ch && !cur.ch.cat) { cur.ch.faceUntil = LIFE.S.t + 30; cur.ch.talkUntil = LIFE.S.t + 1.6; } // реплика — в ленте окна, пузырь над головой не дублируем
         hideHint();
     }
-    const end = (line) => { show(line, []); cur.ended = true; setTimeout(() => { if (cur && cur.ended) close(); }, 1900); };
+    const end = (line) => { show(line, []); cur.ended = true; setTimeout(() => { if (cur && cur.ended) close(); }, 2900); };
     function close() {
+        showSeq++;
         if (!el) return; el.classList.remove('on');
         if (cur && cur.ch) cur.ch.faceUntil = 0;
         cur = null; lastKey = '';
@@ -195,7 +205,7 @@ const TALK = (() => {
     // реплика из аниме, откуда слово взято (у слов из плеера есть sentence)
     const lineOf = (w) => { const s = String(w.sentence || ''); const k = jpOf(w); return s.length > k.length + 2 && s.length < 70 && k && s.includes(k) ? s : ''; };
     const markGood = (txt) => [...el.querySelectorAll('.op')].forEach((bb) => { if (bb.querySelector('b').dataset.furi === txt) bb.classList.add('good'); });
-    function answerWith(ok, line, after) { setTimeout(() => show(line, sample(ok ? NEXT_OK : NEXT_BAD, 2).map(([j, r]) => ({ jp: j, ru: r, go: after }))), 650); }
+    function answerWith(ok, line, after) { scored(ok); setTimeout(() => show(line, sample(ok ? NEXT_OK : NEXT_BAD, 2).map(([j, r]) => ({ jp: j, ru: r, go: after }))), 650); }
     // «как по-японски?»: показываем перевод, выбираем слово
     function quizHow(w, after) {
         const opts = shuffle([w].concat(distractors(w, 3, jpOf))).map((x) => ({ jp: jpOf(x), kana: x.kana, go: (b) => {
@@ -430,7 +440,7 @@ const TALK = (() => {
             let idx = list.map((_, i) => i).filter((i) => !used.has(i)); if (!idx.length) { used.clear(); idx = list.map((_, i) => i); }
             const i = pick(idx); used.add(i); const [say, answers] = list[i];
             if (group === 'sleep') return show(say, answers.map(([j, r, rep]) => ({ jp: j, ru: r, go: () => end(rep) })));
-            show(say, sample(answers, Math.min(3, answers.length)).map(([j, r, rep]) => ({ jp: j, ru: r, go: () => show(rep, sample(REACT, 2).map(([rj, rr]) => ({ jp: rj, ru: rr, go: () => (P && Math.random() < 0.45 ? show(pick(P.quirk), sample(REACT, 2).map(([qj, qr]) => ({ jp: qj, ru: qr, go: () => afterTopic(first) }))) : afterTopic(first)) }))) })));
+            show(say, sample(answers, Math.min(3, answers.length)).map(([j, r, rep]) => ({ jp: j, ru: r, go: () => show((usePT && remember(ch, P, j, r, i), chime(), rep), sample(REACT, 2).map(([rj, rr]) => ({ jp: rj, ru: rr, go: () => (P && Math.random() < 0.45 ? show(pick(P.quirk), sample(REACT, 2).map(([qj, qr]) => ({ jp: qj, ru: qr, go: () => afterTopic(first) }))) : afterTopic(first)) }))) })));
         };
         if (group === 'sleep') return topic(true);
         const g = greetLines(group, meet, ch);
@@ -439,8 +449,10 @@ const TALK = (() => {
         const introLine = () => { const l0 = P.intro(P.name), l = [l0[0], l0[1].split(P.name).join(P.ruName)]; if (!myWord) return l; const m = meaning(myWord); return [l[0] + '私は' + jpOf(myWord) + 'です。', l[1] + (m ? ' Я — ' + m + ' (' + jpOf(myWord) + ').' : '')]; };
         const recall = () => (meet && ch._lastWord && pool().includes(ch._lastWord) && Math.random() < 0.7 ? quiz(ch._lastWord, pick(RECALL)(jpOf(ch._lastWord)), () => topic(true)) : topic(true));
         const intro = () => (P && !meet ? show(introLine(), [['よろしくお願いします！', 'Очень приятно!'], ['こちらこそ、よろしく！', 'Взаимно!']].map(([j, r]) => ({ jp: j, ru: r, go: () => topic(true) }))) : recall());
-        const md = P && CASUAL.has(P.key) && Math.random() < 0.45 ? moodOf(ch)[2] : null;
-        show(md ? [say[0] + md[0], say[1] + ' ' + md[1]] : say, sample(g.me, 2).map(([j, r]) => ({ jp: j, ru: r, go: intro })));
+        const md = P && CASUAL.has(P.key) && !(P.key === 'foodie' && moodOf(ch)[0] === '腹ぺこ') && Math.random() < 0.45 ? moodOf(ch)[2] : null;
+        const ctxo = group !== 'sleep' && role !== 'sneaker' ? contextOpener(ch, P) : null;
+        if (ctxo) return show(ctxo[0], ctxo[1].map(([j, r]) => ({ jp: j, ru: r, go: intro })));
+        show(md ? [say[0] + md[0], say[1] + ' ' + md[1]] : say, sample(g.me, 2 + (Math.random() < 0.3 ? 1 : 0)).map(([j, r]) => ({ jp: j, ru: r, go: intro })));
     }
     // ---- заказ у ятай ----
     // «Попробовать» — только еда и напитки (не люди и не вещи из идзакаи)
@@ -488,12 +500,52 @@ const TALK = (() => {
         audio.resume();
         const dur = audio.playSong(s.id);
         if (!dur) toast(audio.enabled ? 'Коснитесь экрана — включится звук' : 'Звук выключен — включите его кнопкой вверху');
-        ch.playing = true; pianoCh = ch;
+        ch.playing = true; pianoCh = ch; note('piano', s.jp);
         LIFE.say(ch, ['♪ 「' + s.jp + '」', '♪ ' + s.ru], 2.6, LIFE.S.t);
         setTimeout(() => {
             if (pianoCh !== ch) return; ch.playing = false; pianoCh = null;
             if (ch.root.parent && inside.on) LIFE.say(ch, pick([['ご清聴ありがとうございました。', 'Спасибо, что послушали.'], ['どうだった？', 'Ну как?'], ['ちょっと間違えちゃった、えへへ。', 'Чуть сбился, хе-хе.']]), 2.8, LIFE.S.t);
         }, Math.max(5, dur || 8) * 1000);
+    }
+    // ---- живость: недавние события, память об ответах, реплики соседей ----
+    const recent = [];
+    let streak = 0;
+    function note(kind, data) { recent.push({ kind, data, t: Date.now() }); if (recent.length > 12) recent.shift(); }
+    function scored(ok) { streak = ok ? streak + 1 : 0; if (streak === 3) note('streak'); }
+    const MEM_KEY = 'street:mem:v1';
+    const memAll = () => { try { return JSON.parse(localStorage.getItem(MEM_KEY) || '{}') || {}; } catch (e) { return {}; } };
+    const memKey = (ch, P) => (P ? P.name : '?') + '|' + (ch.role || '');
+    function remember(ch, P, a, ar, i) { if (!P) return; const m = memAll(); m[memKey(ch, P)] = { a, ar, i, t: Date.now() }; const keys = Object.keys(m); if (keys.length > 80) delete m[keys[0]]; try { localStorage.setItem(MEM_KEY, JSON.stringify(m)); } catch (e) { /* место */ } }
+    // реплика по поводу того, что игрок недавно делал (или что вокруг): [строка, ответы] или null
+    function contextOpener(ch, P) {
+        const now = Date.now(), seen = ch._seenEv || (ch._seenEv = new Set());
+        const ev = recent.slice().reverse().find((x) => now - x.t < 10 * 60e3 && !seen.has(x));
+        const yes = [['うん、そうなんだ！', 'Ага, так и есть!'], ['えへへ、まあね。', 'Хе-хе, ну да.']], no = [['ちょっとだけね。', 'Совсем чуть-чуть.'], ['見てたの？', 'Ты видел?']];
+        if (ev && Math.random() < 0.6) {
+            seen.add(ev); const d = ev.data;
+            if (ev.kind === 'piano') return [['さっきのピアノ、聞こえた？「' + d + '」だったね。', 'Слышал пианино? Это была «' + d + '».'], [['うん、きれいだった！', 'Да, красиво!'], ['頼んだのは私です。', 'Это я попросил сыграть.']]];
+            if (ev.kind === 'gacha') return [['ガチャで「' + d + '」が出たんだって？いいなあ！', 'Говорят, тебе в гаче выпало «' + d + '»? Завидую!'], [['ラッキーでした！', 'Повезло!'], ['もう一回やりたい！', 'Хочу ещё разок!']]];
+            if (ev.kind === 'book') return [['「' + d + '」を読んでたでしょ？面白かった？', 'Ты ведь читал «' + d + '»? Интересно было?'], [['とても面白かった！', 'Очень интересно!'], ['ちょっと難しかった。', 'Немного трудно.']]];
+            if (ev.kind === 'board') return [['黒板の「' + d + '」、上手に書けてたよ！', '«' + d + '» на доске — красиво написал!'], yes.concat(no.slice(1))];
+            if (ev.kind === 'kanpai') return [['さっき「乾杯！」って言ってたね。楽しそう！', 'Ты тут кричал «Кампай!» — весело у вас!'], [['みんなで飲みました！', 'Выпили все вместе!'], ['ちょっと飲みすぎたかも…', 'Кажется, перебрал…']]];
+            if (ev.kind === 'ramen') return [['ラーメン、どうだった？', 'Ну как рамэн?'], [['最高でした！', 'Божественно!'], ['ちょっと熱かった。', 'Горячеват был.']]];
+            if (ev.kind === 'streak') return [['最近、日本語がすごく上手になったね！', 'Ты в последнее время здорово подтянул японский!'], [['ありがとう！毎日やってます。', 'Спасибо! Занимаюсь каждый день.'], ['まだまだです。', 'Мне ещё далеко.']]];
+        }
+        const h = new Date().getHours();
+        if ((h >= 23 || h < 5) && Math.random() < 0.18) return [['こんな時間まで勉強？えらいね。', 'Учишься в такой час? Молодец.'], [['眠れなくて…', 'Не спится…'], ['夜の方が集中できるんです。', 'Ночью лучше думается.']]];
+        if (!inside.on && typeof opts !== 'undefined' && opts.rain && Math.random() < 0.2) return [['雨、なかなかやまないね。', 'Дождь всё не кончается.'], [['傘を持ってきてよかった。', 'Хорошо, что взял зонт.'], ['雨の町も好きです。', 'Мне нравится город под дождём.']]];
+        // помнит, что вы ему отвечали в прошлый раз (даже в другой день)
+        const m = P && memAll()[memKey(ch, P)];
+        if (m && Math.random() < 0.5) { const u = usedPT.get(ch) || new Set(); if (m.i != null) u.add(m.i); usedPT.set(ch, u); /* ту же тему второй раз не спросит */ return [['そういえば、前に「' + m.a + '」って言ってたよね。', 'Кстати, ты как-то сказал: «' + m.ar + '».'], [['覚えててくれたんだ！', 'Ты запомнил!'], ['よく覚えてるね！', 'Ну и память у тебя!']]]; }
+        return null;
+    }
+    // иногда в разговор вклинивается сосед
+    const CHIME = [['えー、本当？', 'Да ну?'], ['私もそう思う！', 'Я тоже так думаю!'], ['あはは！', 'Ахаха!'], ['いいなあ。', 'Завидую.'], ['何の話？', 'О чём это вы?']];
+    function chime() {
+        if (!cur || !cur.ch || Math.random() > 0.22) return;
+        const me = cur.ch, p = me.root.getWorldPosition(new THREE.Vector3());
+        const others = (inside.on ? LIFE.S.room : LIFE.S.loose).filter((c) => c !== me && !c.cat && c.root.parent && c.root.getWorldPosition(new THREE.Vector3()).distanceTo(p) < 4);
+        if (others.length) setTimeout(() => LIFE.say(pick(others), pick(CHIME), 2.2, LIFE.S.t), 900);
     }
     // ---- разработчик: рассказывает, что делает, и принимает отзывы ----
     function devTalk(ch) {
@@ -514,6 +566,7 @@ const TALK = (() => {
         const w = pickWord(); if (!w) { toast('Капсулы пусты — добавьте в словарь хотя бы 4 слова'); return; }
         audio.ding(); if (typeof buzz === 'function') buzz(20);
         const k = kanaOf(w);
+        note('gacha', jpOf(w));
         setTimeout(() => { banner('🎁 ' + jpOf(w), (k ? k + ' — ' : '') + meaning(w)); speak(k || jpOf(w)); }, 500);
     }
     // ---- интерактивные вещи в комнатах ----
@@ -523,6 +576,7 @@ const TALK = (() => {
     function use(kind) {
         if (performance.now() - useAt < 1500) return; useAt = performance.now(); close();
         const room = LIFE.S.room, sayV = (c, l, d) => { if (!c) return; LIFE.say(c, l, d || 2.8, LIFE.S.t); if (typeof voiceLine === 'function') voiceLine(c, l, true); };
+        if (kind === 'kanpai' || kind === 'ramen') note(kind);
         if (kind === 'kanpai') {
             const guests = room.filter((c) => !c.cat && ['chef', 'waiter', 'cook'].indexOf(c.role) < 0);
             guests.forEach((c, i) => setTimeout(() => LIFE.say(c, ['乾杯！', 'Будем!', 'cheers'], 2.2, LIFE.S.t), 200 + i * 140));
@@ -650,5 +704,5 @@ const TALK = (() => {
         const k = { Digit2: 1, Digit3: 2, Digit4: 3, Numpad2: 1, Numpad3: 2, Numpad4: 3 }[e.code];
         if (k != null && actList[k] && !acts.hidden) { actList[k].fn(); lastKey = ''; }
     });
-    return { talk, order, close, pickChar, update, gacha, nap, use, get open() { return !!cur; } };
+    return { talk, order, close, pickChar, update, gacha, nap, use, note, get open() { return !!cur; } };
 })();

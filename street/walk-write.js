@@ -100,6 +100,7 @@ const WRITE = (() => {
         msg((clean ? 'Без единой ошибки! ' : 'Готово! ') + w.kanji + (w.kana && w.kana !== w.kanji ? ' — ' + w.kana : ''), 'ok');
         board.setEnabled(false); if (typeof audio !== 'undefined') audio.ding();
         if (typeof chalkOnBoard === 'function') chalkOnBoard(cur.recs, w);
+        if (typeof TALK !== 'undefined' && TALK.note) TALK.note('board', w.kanji);
         el.querySelector('.prog').innerHTML = cur.chars.map((c) => '<span class="done">' + c + '</span>').join('');
         // учитель хвалит
         const t = cur.teacher || (LIFE.S.room || []).find((c) => c.role === 'teacher');

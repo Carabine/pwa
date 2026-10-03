@@ -197,7 +197,7 @@ const BOOKS = (() => {
         if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
         if (typeof hideHint === 'function') hideHint();
         if (!b) { book = null; library(); return; }
-        book = b; view = 0;
+        book = b; view = 0; if (typeof TALK !== 'undefined' && TALK.note) TALK.note('book', b.title);
         // варианты ответа перемешиваем при каждом открытии (в сказках верный стоял первым)
         (b.questions || []).forEach((q) => { const right = q.options[q.answer]; q.options = q.options.slice().sort(() => Math.random() - 0.5); q.answer = q.options.indexOf(right); });
         if (b.classic && !b.titleT) { render(); await furiClassic(b); if (book === b) render(); return; }

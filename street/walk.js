@@ -2135,7 +2135,7 @@ function ttsPlay(text, o) {
     o = o || {};
     const t = String(text || '').replace(/[「」（）()…♪]/g, ' ').replace(/\s+/g, ' ').trim();
     if (!t || !/[぀-ヿ㐀-鿿]/.test(t)) return null;
-    const a = new Audio(TTS_API + '?text=' + encodeURIComponent(t) + '&v=' + (o.male ? 'm' : 'f') + '&s=' + (o.style || 'norm'));
+    const a = new Audio(TTS_API + '?text=' + encodeURIComponent(t) + '&v=' + (o.male ? 'm' : 'f') + '&s=' + (o.style || 'norm') + '&k=' + (o.k || 0));
     a.volume = Math.max(0, Math.min(1, o.volume == null ? 0.95 : o.volume)); a.preload = 'auto';
     const t0 = performance.now();
     // фоновая реплика, которая генерировалась слишком долго, уже не к месту — молчим
@@ -2144,7 +2144,7 @@ function ttsPlay(text, o) {
     return a;
 }
 const KID_ROLES = new Set(['student', 'sneaker', 'sleeper', 'pianist', 'student1r', 'gamer']);
-function voiceOpts(ch) { const o = ch.o || {}; return { male: !o.fem, style: KID_ROLES.has(ch.role) ? 'kid' : (o.old || o.hairStyle === 'bald' ? 'old' : 'norm') }; }
+function voiceOpts(ch) { const o = ch.o || {}; return { k: hashStr(String(ch.seed || ch.role || 'x')) % 8, male: !o.fem, style: KID_ROLES.has(ch.role) ? 'kid' : (o.old || o.hairStyle === 'bald' ? 'old' : 'norm') }; }
 function voiceLine(ch, line, force) {
     try {
         if (!voicesOn() || !line || !line[0] || ch.cat) return;
@@ -2154,7 +2154,7 @@ function voiceLine(ch, line, force) {
         if (force) { if (talkAudio) talkAudio.pause(); if (ambAudio) ambAudio.pause(); talkAudio = ttsPlay(line[0], Object.assign(vo, { volume: 0.95 })); return; }
         const now = performance.now(); if (now - voiceLast < 2500 || (talkAudio && !talkAudio.paused && !talkAudio.ended) || TALK.open) return; voiceLast = now;
         if (ambAudio && !ambAudio.paused && !ambAudio.ended) return;
-        ambAudio = ttsPlay(line[0], Object.assign(vo, { volume: Math.max(0.15, 0.7 * (1 - d / 7)), late: 3500 }));
+        ambAudio = ttsPlay(line[0], Object.assign(vo, { volume: Math.max(0.15, 0.7 * (1 - d / 7)), late: 5000 }));
     } catch (e) { /* без звука */ }
 }
 // для модулей, где имя pick занято (диалоги): тот же луч из точки экрана
