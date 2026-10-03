@@ -282,7 +282,7 @@ const BOOKS = (() => {
         };
         step();
     }
-    function stopRead() { if (reading && reading.a) reading.a.pause(); const was = !!reading; reading = null; if (was && el && book) { el.querySelectorAll('p.s.now').forEach((p) => p.classList.remove('now')); const b = el.querySelector('[data-tg="read"]'); if (b) { b.classList.remove('on'); b.textContent = '▶ Вслух'; } } }
+    function stopRead() { if (reading && reading.a) { reading.a._cancel = true; reading.a.pause(); } const was = !!reading; reading = null; if (was && el && book) { el.querySelectorAll('p.s.now').forEach((p) => p.classList.remove('now')); const b = el.querySelector('[data-tg="read"]'); if (b) { b.classList.remove('on'); b.textContent = '▶ Вслух'; } } }
 
     async function open(th, b) {
         const e = ui(); e.classList.add('on'); if (th) theme = th;

@@ -181,7 +181,7 @@ const TALK = (() => {
         opts.forEach((o, i) => {
             const b = document.createElement('button'); b.className = 'op';
             b.innerHTML = (FINE ? '<kbd>' + (i + 1) + '</kbd>' : '') + '<span>' + furiTag('b', o.jp, o.kana && o.kana !== o.jp ? o.kana : null) + (o.ru ? '<small>' + esc(o.ru) + '</small>' : '') + '</span>';
-            b.addEventListener('click', () => { if (box.dataset.busy || !cur) return; box.dataset.busy = '1'; buzz(8); if (o.say !== false) msg('p', o.jp, o.ru, o.kana && o.kana !== o.jp ? o.kana : null); o.go(b); });
+            b.addEventListener('click', () => { if (box.dataset.busy || !cur) return; box.dataset.busy = '1'; buzz(8); if (typeof stopVoice === 'function') stopVoice(); if (o.say !== false) msg('p', o.jp, o.ru, o.kana && o.kana !== o.jp ? o.kana : null); o.go(b); });
             box.appendChild(b);
         });
         delete box.dataset.busy;
@@ -191,7 +191,7 @@ const TALK = (() => {
     }
     const end = (line) => { show(line, []); cur.ended = true; setTimeout(() => { if (cur && cur.ended) close(); }, 2900); };
     function close() {
-        showSeq++;
+        showSeq++; if (typeof stopVoice === 'function') stopVoice();
         if (!el) return; el.classList.remove('on');
         if (cur && cur.ch) cur.ch.faceUntil = 0;
         cur = null; lastKey = '';
