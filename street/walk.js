@@ -1079,9 +1079,11 @@ function decorateBuilding(side, b, z, len, rnd) {
     if (!posterAtlas) { const ar = mulberry32(hashStr(th.id) + 5); posterAtlas = makeAtlas(32, 64, 90, () => texPoster(ar)); }
     for (let i = 0; i < np; i++) { const p = posterAtlas.plane(0.45, 0.64, rnd); p.position.set(inward(0.015 + i * 0.006), 1.55 + (i % 2) * 0.4 + rnd() * 0.1, z - 0.5 - i * 0.7 - rnd() * 0.15); p.rotation.y = -side * Math.PI / 2; p.rotation.z = (rnd() - 0.5) * 0.06; world.add(p); }
     // балконы и бельё (верхние этажи)
-    if (b.floors > 2 && rnd() < (th.id === 'yokocho' ? 0.3 : 0.55)) {
-        const fl = 1 + Math.floor(rnd() * (b.floors - 1));
-        const bw = Math.min(len - 0.6, 1.6 + rnd() * 2.2), bz = z - 0.3 - rnd() * Math.max(0.1, len - bw - 0.6) - bw / 2;
+    // балкон не ставим туда, где на этой стене висит вывеска (раньше вывеска «влезала» в балкон)
+    const signClash = (fl0, bz0, bw0) => { const y0 = fl0 * th.floorH - 0.2, y1 = fl0 * th.floorH + 1.7; return blocks.some((bk) => bk.signs.some((s) => { if (s.side !== side || s.isProp) return false; const sz0 = s.kind === 'vsign' ? s.z - 0.45 : s.z - (s.len || 0.6) - 0.2, sz1 = s.kind === 'vsign' ? s.z + 0.45 : s.z + 0.2; const sy0 = s.y0 != null ? s.y0 : (s.y || 0) - 0.5, sy1 = s.y1 != null ? s.y1 : sy0 + (s.hh || 1); return sz1 > bz0 - bw0 / 2 && sz0 < bz0 + bw0 / 2 && sy1 > y0 && sy0 < y1; })); };
+    let fl = 0, bw = 0, bz = 0;
+    if (b.floors > 2 && rnd() < (th.id === 'yokocho' ? 0.3 : 0.55)) for (let tries = 0; tries < 4; tries++) { fl = 1 + Math.floor(rnd() * (b.floors - 1)); bw = Math.min(len - 0.6, 1.6 + rnd() * 2.2); bz = z - 0.3 - rnd() * Math.max(0.1, len - bw - 0.6) - bw / 2; if (!signClash(fl, bz, bw)) break; fl = 0; }
+    if (fl > 0) {
         const slab = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.1, bw), lamb(mix(b.color, '#ffffff', 0.06))); slab.position.set(inward(0.45), fl * th.floorH + 0.05, bz); world.add(slab);
         const rail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.9, bw), lamb('#2a2a30')); rail.position.set(inward(0.88), fl * th.floorH + 0.55, bz); world.add(rail);
         for (let k = 0; k < Math.floor(bw / 0.25); k++) { const bar = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.9, 0.02), lamb('#3a3a44')); bar.position.set(inward(0.88), fl * th.floorH + 0.55, bz - bw / 2 + 0.12 + k * 0.25); world.add(bar); }
