@@ -438,7 +438,7 @@ const LIFE = (() => {
                 break; }
             case 'sneak': {
                 // телефон на коленях под партой; иногда настороженно поглядывает на учителя
-                const look = (T % 9) < 1.1; arm(J, 'L', -0.7, -0.18, -1.45); arm(J, 'R', -0.75, -0.22, -1.45 + Math.sin(T * 0.8) * 0.03);
+                const look = (T % 9) < 1.1; arm(J, 'L', -0.25, 0.12, -0.9); arm(J, 'R', -0.75, -0.22, -1.45 + Math.sin(T * 0.8) * 0.03);
                 headX = look ? 0.05 : 0.45; J.spine.rotation.x += 0.1; canLook = false; break; }
             case 'piano': {
                 if (ch.playing) { const a = T * 7; canLook = false; arm(J, 'L', -0.6 + Math.sin(a * 0.9) * 0.04, 0.15 + Math.sin(T * 1.7) * 0.1, -1.55 + Math.max(0, Math.sin(a)) * 0.12); arm(J, 'R', -0.6 + Math.sin(a * 1.1 + 1) * 0.04, 0.15 + Math.sin(T * 2.3 + 1) * 0.1, -1.55 + Math.max(0, Math.sin(a * 1.3 + 2)) * 0.12); J.spine.rotation.x += 0.12 + Math.sin(T * 1.3) * 0.03; headX = 0.16 + Math.sin(T * 2.2) * 0.05; }
@@ -752,12 +752,14 @@ const LIFE = (() => {
     const PROG_NAME = { anime: ['アニメ', 'Аниме'], news: ['ニュース', 'Новости'], weather: ['天気予報', 'Прогноз погоды'], cook: ['料理番組', 'Кулинарное шоу'], baseball: ['野球中継', 'Бейсбол'], music: ['音楽番組', 'Музыка'] };
     // экран телефона с аниме (тот же «канал» аниме, что и в телевизорах)
     function bindScreen(tex, mat) { const sc = S.screens.find((s) => s.t === tex); if (sc && mat && sc.mats.indexOf(mat) < 0) sc.mats.push(mat); }
+    const PHONE_TURN = Math.PI / 2; // телефон с аниме — горизонтально
     function animeOnPhone(ch) {
         if (!ch || !ch.held || !ch.held.R) return;
         const t = screenTex(); const sc = S.screens[S.screens.length - 1]; sc.prog = 'anime'; sc.until = 1e9;
         const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.125, 0.062), new THREE.MeshBasicMaterial({ map: t })); sc.mats.push(scr.material);
-        scr.rotation.z = Math.PI / 2; scr.position.z = 0.0065;
-        const hold = new THREE.Group(); hold.rotation.x = Math.PI / 2 + 0.5; hold.position.set(0, -0.04, 0.035); hold.add(scr); ch.held.R.add(hold);
+        scr.position.z = 0.0065;
+        const hold = new THREE.Group(); hold.rotation.set(Math.PI / 2 + 0.5, 0, 0); hold.position.set(0, -0.04, 0.035); hold.add(scr); ch.held.R.add(hold);
+        const body = ch.held.R.children.find((o) => o !== hold); if (body) body.rotation.z = PHONE_TURN; // сам телефон тоже горизонтально
         ch.held.R.scale.setScalar(1.35); // телефон крупнее — видно, что там аниме
     }
     function nextChannel(tex) { const sc = S.screens.find((s) => s.t === tex) || S.screens[0]; if (!sc) return null; sc.prog = PROGS[(PROGS.indexOf(sc.prog) + 1) % PROGS.length]; sc.since = S.t || 0.001; sc.until = 10 + Math.random() * 8; return PROG_NAME[sc.prog]; }

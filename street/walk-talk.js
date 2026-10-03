@@ -189,7 +189,8 @@ const TALK = (() => {
         if (cur.ch && !cur.ch.cat) { cur.ch.faceUntil = LIFE.S.t + 30; cur.ch.talkUntil = LIFE.S.t + 1.6; } // реплика — в ленте окна, пузырь над головой не дублируем
         hideHint();
     }
-    const end = (line) => { show(line, []); cur.ended = true; setTimeout(() => { if (cur && cur.ended) close(); }, 2900); };
+    // последняя реплика: окно само закрывается, но не пока курсор над ним (иначе клик уходил в сцену и захватывал мышь)
+    const end = (line) => { show(line, []); cur.ended = true; const tryClose = (n) => setTimeout(() => { if (!cur || !cur.ended) return; if (FINE && el && el.matches(':hover') && n < 20) return tryClose(n + 1); close(); }, n ? 500 : 2900); tryClose(0); };
     function close() {
         showSeq++; if (typeof stopVoice === 'function') stopVoice();
         if (!el) return; el.classList.remove('on');
@@ -415,7 +416,7 @@ const TALK = (() => {
         const P = group === 'sleep' ? null : persona(ch, group);
         const myWord = ch.wordText ? pool().find((x) => jpOf(x) === ch.wordText) || { kanji: ch.wordText, translation: '' } : null;
         const meet = met.get(ch) || 0; met.set(ch, meet + 1);
-        begin({ kind: 'talk', ch, inside: inside.on, icon: '💬', name: P ? P.ruName + ' · ' + P.name : (ROLE_NAME[role] || 'Прохожий'), sub: (myWord ? 'прохожий' : (ROLE_NAME[role] || 'прохожий')) + (P ? ' · ' + P.ru + ' · ' + moodOf(ch)[1] : '') + (meet ? ' · снова встретились' : '') });
+        begin({ kind: 'talk', ch, inside: inside.on, icon: '💬', name: P ? P.ruName + ' · ' + P.name : (ROLE_NAME[role] || 'Прохожий'), sub: (myWord ? 'прохожий' : (ROLE_NAME[role] || 'прохожий')) + (meet ? ' · снова встретились' : '') }); // характер и настроение видно по речи, не по подписи
         const staff = STAFF.has(group);
         const finish = () => end(P && Math.random() < 0.75 ? pick(P.bye) : (staff ? pick(BYE_STAFF) : pick(BYE_THEM)));
         const farewell = (canMore) => {
@@ -487,7 +488,7 @@ const TALK = (() => {
     ];
     let pianoCh = null;
     function pianoMenu(ch, inDialog) {
-        if (!inDialog) { const P = persona(ch, 'study'); begin({ kind: 'talk', ch, inside: inside.on, icon: '🎹', name: P.ruName + ' · ' + P.name, sub: 'пианист · ' + P.ru }); }
+        if (!inDialog) { const P = persona(ch, 'study'); begin({ kind: 'talk', ch, inside: inside.on, icon: '🎹', name: P.ruName + ' · ' + P.name, sub: 'пианист' }); }
         if (ch.playing) return end(['今、弾いてるところだよ。', 'Я же как раз играю.']);
         const opts = sample(SONG_LIST, 3).map((s) => ({ jp: '「' + s.jp + '」をお願いします！', ru: '«' + s.ru + '» — ' + s.d, go: () => {
             show(pick([['いいよ！「' + s.jp + '」ね。', 'Давай! «' + s.ru + '».'], ['はい、「' + s.jp + '」を弾きます。', 'Хорошо, играю «' + s.ru + '».'], ['じゃあ、聞いてね…', 'Тогда слушай…']]), []);
@@ -645,6 +646,7 @@ const TALK = (() => {
             return out;
         }
         const h = pickAt(pt[0], pt[1], inside.on ? 2.8 : 9);
+        if (!inside.on && h && h.door && h.dist < 7.5) out.push({ icon: '🚪', t: 'Войти' + (ROOM_HINT[h.door.userData.door.type] ? ': ' + ROOM_HINT[h.door.userData.door.type] : ''), s: 'door' + h.door.userData.door.z, fn: () => enterRoom(h.door) });
         if (h && h.radio) out.push({ icon: '📻', t: 'Сменить станцию', fn: () => radioNext() });
         if (h && h.tv) out.push({ icon: '📺', t: 'Переключить канал', fn: () => tvNext(h.tv) });
         if (h && h.post) out.push({ icon: '✉', t: 'Написать разработчику', fn: () => { close(); MAIL.open(); } });
@@ -677,7 +679,7 @@ const TALK = (() => {
         });
     }
     function update() {
-        if (locked() && uiOpen()) document.exitPointerLock();
+        if (uiOpen()) { uiSeenAt = performance.now(); if (locked()) document.exitPointerLock(); }
         if (WRITE.open_ && WRITE.at !== inside.on) WRITE.close();
         if (!inside.on && PAPER.on) PAPER.close();
         if (MAIL.on && !MAIL.near()) MAIL.close();

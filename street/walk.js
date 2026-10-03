@@ -1998,6 +1998,7 @@ function inJoyZone(e) { const r = joyEl.getBoundingClientRect(); const cx = r.le
 const FINE = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const locked = () => document.pointerLockElement === canvas;
 // открыто окно (разговор, газета, книга, доска, отзыв, настройки) — мышью управляем окном, а не камерой
+let uiSeenAt = 0;
 const uiOpen = () => !!(TALK.open || PAPER.on || BOOKS.on || MAIL.on || WRITE.open_ || document.getElementById('panel').classList.contains('open'));
 document.addEventListener('pointerlockchange', () => { document.getElementById('cross').classList.toggle('on', locked()); if (!locked()) lookVel.x = lookVel.y = 0; });
 document.addEventListener('mousemove', (e) => { if (!locked()) return; tYaw -= e.movementX * LOOK_K * 0.55; tPitch = clamp(tPitch - e.movementY * LOOK_K * 0.5, -1, 1); lookVel.x = lookVel.y = 0; });
@@ -2005,7 +2006,8 @@ canvas.addEventListener('pointerdown', (e) => {
     audio.resume();
     if (FINE && e.pointerType === 'mouse' && e.button === 0) {
         if (locked()) { tap(innerWidth / 2, innerHeight / 2); return; }
-        if (uiOpen()) { tap(e.clientX, e.clientY); return; }
+        // окно открыто или только что закрылось — клик выбирает под курсором, мышь не захватываем
+        if (uiOpen() || performance.now() - uiSeenAt < 900) { tap(e.clientX, e.clientY); return; }
         { try { canvas.requestPointerLock(); } catch (err) { /* не поддерживается — остаётся перетаскивание */ } return; }
     }
     if (!joy.active && inJoyZone(e)) {
@@ -2049,9 +2051,14 @@ function endPointer(e) {
 window.addEventListener('pointerup', endPointer); window.addEventListener('pointercancel', endPointer);
 canvas.addEventListener('wheel', (e) => { e.preventDefault(); wheelImpulse = clamp(wheelImpulse - e.deltaY * 0.004, -3, 3); }, { passive: false });
 const keys = {};
-window.addEventListener('keydown', (e) => { audio.resume(); keys[e.code] = true; if (e.code === 'Escape') { hideHint(); panel.classList.remove('open'); } if (e.code === 'Space') { e.preventDefault(); toggleWalk(); } if (e.code === 'KeyM') audio.toggle(); });
+window.addEventListener('keydown', (e) => { audio.resume(); keys[e.code] = true; if (e.code === 'Escape') { hideHint(); panel.classList.remove('open'); } if (e.code === 'Space') e.preventDefault(); /* автоходьба по пробелу убрана: персонаж сам «уходил» */ if (e.code === 'KeyM') audio.toggle(); });
 window.addEventListener('keyup', (e) => { keys[e.code] = false; });
 function toggleWalk() { autoWalk = !autoWalk; }
+// отпущенная вне страницы клавиша не должна «залипать» и вести персонажа самого
+const releaseKeys = () => { Object.keys(keys).forEach((k) => { keys[k] = false; }); wheelImpulse = 0; };
+addEventListener('blur', releaseKeys);
+document.addEventListener('visibilitychange', () => { if (document.hidden) releaseKeys(); });
+document.addEventListener('pointerlockchange', () => { if (!document.pointerLockElement) releaseKeys(); });
 // гироскоп: телефон как окно в улицу (на iOS нужно разрешение по тапу)
 async function toggleGyro(btn) {
     if (gyro) { window.removeEventListener('deviceorientation', gyro.fn); gyro = null; btn.classList.remove('on'); saveSet({ gyro: false }); return; }
@@ -2153,7 +2160,7 @@ function voicesOn() { return voicesPref && audio.enabled; }
 // нейроголос с сервера: женский/мужской, тон под возраст (дети выше, старики ниже); повтор фразы — из кэша
 function ttsPlay(text, o) {
     o = o || {};
-    const t = String(text || '').replace(/[「」（）()…♪]/g, ' ').replace(/\s+/g, ' ').trim();
+    const t = String(text || '').replace(/[「」（）()…♪＿]/g, ' ').replace(/\s+/g, ' ').trim();
     if (!t || !/[぀-ヿ㐀-鿿]/.test(t)) return null;
     const a = new Audio(TTS_API + '?text=' + encodeURIComponent(t) + '&v=' + (o.male ? 'm' : 'f') + '&s=' + (o.style || 'norm') + '&k=' + (o.k || 0));
     a.volume = Math.max(0, Math.min(1, o.volume == null ? 0.95 : o.volume)); a.preload = 'auto';
@@ -2250,6 +2257,26 @@ function showDoorHint(door) {
     hintEl.classList.add('on');
 }
 function hideHint() { if (!hover.sign && !hover.door) return; hover.sign = null; hover.door = null; hover.sticky = 0; hintEl.classList.remove('on'); }
+// ближайшая дверь мягко подсвечена: пятно света у порога и сияние на двери — видно, что сюда можно войти
+let doorGlow = null, doorGlowFrame = 0;
+function updateDoorGlow(t) {
+    if (!doorGlow) {
+        doorGlow = new THREE.Group();
+        const floorG = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.4), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color('#ffd9a0'), transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false }));
+        floorG.rotation.x = -Math.PI / 2; floorG.position.y = 0.03; doorGlow.add(floorG);
+        const doorG = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2.6), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color('#ffe2b8'), transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false }));
+        doorG.position.y = 1.1; doorGlow.add(doorG); doorGlow.userData.parts = [floorG, doorG]; scene.add(doorGlow);
+    }
+    if (inside.on) { doorGlow.visible = false; return; }
+    if ((doorGlowFrame++ % 8) === 0) {
+        const c = camera.position; let best = null, bd = 6.5;
+        doors.forEach((d) => { const u = d.userData.door, x = u.side * ((u.w2 || W2) - 0.01), dd = Math.hypot(c.x - x, c.z - u.z); if (dd < bd) { bd = dd; best = d; } });
+        doorGlow.userData.door = best;
+        if (best) { const u = best.userData.door, w2 = u.w2 || W2; const [fl, dg] = doorGlow.userData.parts; fl.position.set(u.side * (w2 - 0.8), 0.03, u.z); dg.position.set(u.side * (w2 - 0.03), 1.1, u.z); dg.rotation.y = -u.side * Math.PI / 2; const col = new THREE.Color(u.color || '#ffd9a0').lerp(new THREE.Color('#ffffff'), 0.4); fl.material.color.copy(col); dg.material.color.copy(col); }
+    }
+    doorGlow.visible = !!doorGlow.userData.door;
+    if (doorGlow.visible) { const k = 0.5 + 0.5 * Math.sin(t * 2.4); doorGlow.userData.parts[0].material.opacity = 0.25 + 0.25 * k; doorGlow.userData.parts[1].material.opacity = 0.12 + 0.16 * k; }
+}
 function updateHover(now) {
     if ((hover.frame++ % 4) !== 0) return;
     let pt = null;
@@ -2453,7 +2480,7 @@ function frame(now) {
     FESTIVAL.update(t, dt); TEMPLE.update(t, dt); // сами решают: новые вспышки — только на Мацури, листья — только на Сандо
     TALK.update();
     if (inside.on && radio.led && radio.g && radio.g.parent) radio.led.material.color.setHSL(0.03, 1, 0.35 + 0.25 * (Math.sin(t * 3.2) * 0.5 + 0.5));
-    updateLabels(t); updateHover(now);
+    updateLabels(t); updateHover(now); updateDoorGlow(t);
     const bi = ensureBlocks();
     if (bi !== hudBlock) updateHud();
     if (opts.bloom) composer.render(); else renderer.render(scene, camera);

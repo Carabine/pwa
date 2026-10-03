@@ -364,7 +364,7 @@
     <div class="opts grid"><button class="opt" data-music="city">Ночной город</button><button class="opt" data-music="snow">Снег над крышами</button><button class="opt" data-music="train">Ночной поезд</button><button class="opt" data-music="tea">Чайный дом</button><button class="opt" data-music="stars">Звёзды</button><button class="opt" data-music="harbor">Гавань</button><button class="opt" data-music="radio">Радио за стеной</button><button class="opt" data-music="calm">Тихий вечер</button><button class="opt" data-music="lane">Переулок</button><button class="opt" data-music="lofi">Lo-fi</button></div>
     <h4>Звук и вид</h4>
     <div class="opts tg"><button class="opt" data-voices><span>Голоса прохожих</span><i></i></button><button class="opt" data-rain><span>Дождь</span><i></i></button><button class="opt" data-gyro><span>Гироскоп</span><i></i></button></div>
-    <p class="credits">Голоса: VOICEVOX:春日部つむぎ, VOICEVOX:冥鳴ひまり, VOICEVOX:小夜/SAYO, VOICEVOX:四国めたん, VOICEVOX:玄野武宏, VOICEVOX:青山龍星, VOICEVOX:雀松朱司, VOICEVOX:剣崎雌雄, VOICEVOX:ずんだもん, VOICEVOX:雨晴はう, VOICEVOX:白上虎太郎, VOICEVOX:ちび式じい, VOICEVOX:麒ヶ島宗麟, VOICEVOX:九州そら</p>
+    <p class="credits">Голоса: VOICEVOX:春日部つむぎ, VOICEVOX:四国めたん, VOICEVOX:九州そら, VOICEVOX:雨晴はう, VOICEVOX:玄野武宏, VOICEVOX:青山龍星, VOICEVOX:雀松朱司, VOICEVOX:白上虎太郎, VOICEVOX:麒ヶ島宗麟</p>
     </div>
 </div>
 <div id="hint">
@@ -1662,7 +1662,7 @@ const LIFE = (() => {
                 break; }
             case 'sneak': {
                 // телефон на коленях под партой; иногда настороженно поглядывает на учителя
-                const look = (T % 9) < 1.1; arm(J, 'L', -0.7, -0.18, -1.45); arm(J, 'R', -0.75, -0.22, -1.45 + Math.sin(T * 0.8) * 0.03);
+                const look = (T % 9) < 1.1; arm(J, 'L', -0.25, 0.12, -0.9); arm(J, 'R', -0.75, -0.22, -1.45 + Math.sin(T * 0.8) * 0.03);
                 headX = look ? 0.05 : 0.45; J.spine.rotation.x += 0.1; canLook = false; break; }
             case 'piano': {
                 if (ch.playing) { const a = T * 7; canLook = false; arm(J, 'L', -0.6 + Math.sin(a * 0.9) * 0.04, 0.15 + Math.sin(T * 1.7) * 0.1, -1.55 + Math.max(0, Math.sin(a)) * 0.12); arm(J, 'R', -0.6 + Math.sin(a * 1.1 + 1) * 0.04, 0.15 + Math.sin(T * 2.3 + 1) * 0.1, -1.55 + Math.max(0, Math.sin(a * 1.3 + 2)) * 0.12); J.spine.rotation.x += 0.12 + Math.sin(T * 1.3) * 0.03; headX = 0.16 + Math.sin(T * 2.2) * 0.05; }
@@ -1976,12 +1976,14 @@ const LIFE = (() => {
     const PROG_NAME = { anime: ['アニメ', 'Аниме'], news: ['ニュース', 'Новости'], weather: ['天気予報', 'Прогноз погоды'], cook: ['料理番組', 'Кулинарное шоу'], baseball: ['野球中継', 'Бейсбол'], music: ['音楽番組', 'Музыка'] };
     // экран телефона с аниме (тот же «канал» аниме, что и в телевизорах)
     function bindScreen(tex, mat) { const sc = S.screens.find((s) => s.t === tex); if (sc && mat && sc.mats.indexOf(mat) < 0) sc.mats.push(mat); }
+    const PHONE_TURN = Math.PI / 2; // телефон с аниме — горизонтально
     function animeOnPhone(ch) {
         if (!ch || !ch.held || !ch.held.R) return;
         const t = screenTex(); const sc = S.screens[S.screens.length - 1]; sc.prog = 'anime'; sc.until = 1e9;
         const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.125, 0.062), new THREE.MeshBasicMaterial({ map: t })); sc.mats.push(scr.material);
-        scr.rotation.z = Math.PI / 2; scr.position.z = 0.0065;
-        const hold = new THREE.Group(); hold.rotation.x = Math.PI / 2 + 0.5; hold.position.set(0, -0.04, 0.035); hold.add(scr); ch.held.R.add(hold);
+        scr.position.z = 0.0065;
+        const hold = new THREE.Group(); hold.rotation.set(Math.PI / 2 + 0.5, 0, 0); hold.position.set(0, -0.04, 0.035); hold.add(scr); ch.held.R.add(hold);
+        const body = ch.held.R.children.find((o) => o !== hold); if (body) body.rotation.z = PHONE_TURN; // сам телефон тоже горизонтально
         ch.held.R.scale.setScalar(1.35); // телефон крупнее — видно, что там аниме
     }
     function nextChannel(tex) { const sc = S.screens.find((s) => s.t === tex) || S.screens[0]; if (!sc) return null; sc.prog = PROGS[(PROGS.indexOf(sc.prog) + 1) % PROGS.length]; sc.since = S.t || 0.001; sc.until = 10 + Math.random() * 8; return PROG_NAME[sc.prog]; }
@@ -3145,7 +3147,8 @@ const TALK = (() => {
         if (cur.ch && !cur.ch.cat) { cur.ch.faceUntil = LIFE.S.t + 30; cur.ch.talkUntil = LIFE.S.t + 1.6; } // реплика — в ленте окна, пузырь над головой не дублируем
         hideHint();
     }
-    const end = (line) => { show(line, []); cur.ended = true; setTimeout(() => { if (cur && cur.ended) close(); }, 2900); };
+    // последняя реплика: окно само закрывается, но не пока курсор над ним (иначе клик уходил в сцену и захватывал мышь)
+    const end = (line) => { show(line, []); cur.ended = true; const tryClose = (n) => setTimeout(() => { if (!cur || !cur.ended) return; if (FINE && el && el.matches(':hover') && n < 20) return tryClose(n + 1); close(); }, n ? 500 : 2900); tryClose(0); };
     function close() {
         showSeq++; if (typeof stopVoice === 'function') stopVoice();
         if (!el) return; el.classList.remove('on');
@@ -3371,7 +3374,7 @@ const TALK = (() => {
         const P = group === 'sleep' ? null : persona(ch, group);
         const myWord = ch.wordText ? pool().find((x) => jpOf(x) === ch.wordText) || { kanji: ch.wordText, translation: '' } : null;
         const meet = met.get(ch) || 0; met.set(ch, meet + 1);
-        begin({ kind: 'talk', ch, inside: inside.on, icon: '💬', name: P ? P.ruName + ' · ' + P.name : (ROLE_NAME[role] || 'Прохожий'), sub: (myWord ? 'прохожий' : (ROLE_NAME[role] || 'прохожий')) + (P ? ' · ' + P.ru + ' · ' + moodOf(ch)[1] : '') + (meet ? ' · снова встретились' : '') });
+        begin({ kind: 'talk', ch, inside: inside.on, icon: '💬', name: P ? P.ruName + ' · ' + P.name : (ROLE_NAME[role] || 'Прохожий'), sub: (myWord ? 'прохожий' : (ROLE_NAME[role] || 'прохожий')) + (meet ? ' · снова встретились' : '') }); // характер и настроение видно по речи, не по подписи
         const staff = STAFF.has(group);
         const finish = () => end(P && Math.random() < 0.75 ? pick(P.bye) : (staff ? pick(BYE_STAFF) : pick(BYE_THEM)));
         const farewell = (canMore) => {
@@ -3443,7 +3446,7 @@ const TALK = (() => {
     ];
     let pianoCh = null;
     function pianoMenu(ch, inDialog) {
-        if (!inDialog) { const P = persona(ch, 'study'); begin({ kind: 'talk', ch, inside: inside.on, icon: '🎹', name: P.ruName + ' · ' + P.name, sub: 'пианист · ' + P.ru }); }
+        if (!inDialog) { const P = persona(ch, 'study'); begin({ kind: 'talk', ch, inside: inside.on, icon: '🎹', name: P.ruName + ' · ' + P.name, sub: 'пианист' }); }
         if (ch.playing) return end(['今、弾いてるところだよ。', 'Я же как раз играю.']);
         const opts = sample(SONG_LIST, 3).map((s) => ({ jp: '「' + s.jp + '」をお願いします！', ru: '«' + s.ru + '» — ' + s.d, go: () => {
             show(pick([['いいよ！「' + s.jp + '」ね。', 'Давай! «' + s.ru + '».'], ['はい、「' + s.jp + '」を弾きます。', 'Хорошо, играю «' + s.ru + '».'], ['じゃあ、聞いてね…', 'Тогда слушай…']]), []);
@@ -3601,6 +3604,7 @@ const TALK = (() => {
             return out;
         }
         const h = pickAt(pt[0], pt[1], inside.on ? 2.8 : 9);
+        if (!inside.on && h && h.door && h.dist < 7.5) out.push({ icon: '🚪', t: 'Войти' + (ROOM_HINT[h.door.userData.door.type] ? ': ' + ROOM_HINT[h.door.userData.door.type] : ''), s: 'door' + h.door.userData.door.z, fn: () => enterRoom(h.door) });
         if (h && h.radio) out.push({ icon: '📻', t: 'Сменить станцию', fn: () => radioNext() });
         if (h && h.tv) out.push({ icon: '📺', t: 'Переключить канал', fn: () => tvNext(h.tv) });
         if (h && h.post) out.push({ icon: '✉', t: 'Написать разработчику', fn: () => { close(); MAIL.open(); } });
@@ -3633,7 +3637,7 @@ const TALK = (() => {
         });
     }
     function update() {
-        if (locked() && uiOpen()) document.exitPointerLock();
+        if (uiOpen()) { uiSeenAt = performance.now(); if (locked()) document.exitPointerLock(); }
         if (WRITE.open_ && WRITE.at !== inside.on) WRITE.close();
         if (!inside.on && PAPER.on) PAPER.close();
         if (MAIL.on && !MAIL.near()) MAIL.close();
@@ -6052,6 +6056,7 @@ function inJoyZone(e) { const r = joyEl.getBoundingClientRect(); const cx = r.le
 const FINE = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const locked = () => document.pointerLockElement === canvas;
 // открыто окно (разговор, газета, книга, доска, отзыв, настройки) — мышью управляем окном, а не камерой
+let uiSeenAt = 0;
 const uiOpen = () => !!(TALK.open || PAPER.on || BOOKS.on || MAIL.on || WRITE.open_ || document.getElementById('panel').classList.contains('open'));
 document.addEventListener('pointerlockchange', () => { document.getElementById('cross').classList.toggle('on', locked()); if (!locked()) lookVel.x = lookVel.y = 0; });
 document.addEventListener('mousemove', (e) => { if (!locked()) return; tYaw -= e.movementX * LOOK_K * 0.55; tPitch = clamp(tPitch - e.movementY * LOOK_K * 0.5, -1, 1); lookVel.x = lookVel.y = 0; });
@@ -6059,7 +6064,8 @@ canvas.addEventListener('pointerdown', (e) => {
     audio.resume();
     if (FINE && e.pointerType === 'mouse' && e.button === 0) {
         if (locked()) { tap(innerWidth / 2, innerHeight / 2); return; }
-        if (uiOpen()) { tap(e.clientX, e.clientY); return; }
+        // окно открыто или только что закрылось — клик выбирает под курсором, мышь не захватываем
+        if (uiOpen() || performance.now() - uiSeenAt < 900) { tap(e.clientX, e.clientY); return; }
         { try { canvas.requestPointerLock(); } catch (err) { /* не поддерживается — остаётся перетаскивание */ } return; }
     }
     if (!joy.active && inJoyZone(e)) {
@@ -6103,9 +6109,14 @@ function endPointer(e) {
 window.addEventListener('pointerup', endPointer); window.addEventListener('pointercancel', endPointer);
 canvas.addEventListener('wheel', (e) => { e.preventDefault(); wheelImpulse = clamp(wheelImpulse - e.deltaY * 0.004, -3, 3); }, { passive: false });
 const keys = {};
-window.addEventListener('keydown', (e) => { audio.resume(); keys[e.code] = true; if (e.code === 'Escape') { hideHint(); panel.classList.remove('open'); } if (e.code === 'Space') { e.preventDefault(); toggleWalk(); } if (e.code === 'KeyM') audio.toggle(); });
+window.addEventListener('keydown', (e) => { audio.resume(); keys[e.code] = true; if (e.code === 'Escape') { hideHint(); panel.classList.remove('open'); } if (e.code === 'Space') e.preventDefault(); /* автоходьба по пробелу убрана: персонаж сам «уходил» */ if (e.code === 'KeyM') audio.toggle(); });
 window.addEventListener('keyup', (e) => { keys[e.code] = false; });
 function toggleWalk() { autoWalk = !autoWalk; }
+// отпущенная вне страницы клавиша не должна «залипать» и вести персонажа самого
+const releaseKeys = () => { Object.keys(keys).forEach((k) => { keys[k] = false; }); wheelImpulse = 0; };
+addEventListener('blur', releaseKeys);
+document.addEventListener('visibilitychange', () => { if (document.hidden) releaseKeys(); });
+document.addEventListener('pointerlockchange', () => { if (!document.pointerLockElement) releaseKeys(); });
 // гироскоп: телефон как окно в улицу (на iOS нужно разрешение по тапу)
 async function toggleGyro(btn) {
     if (gyro) { window.removeEventListener('deviceorientation', gyro.fn); gyro = null; btn.classList.remove('on'); saveSet({ gyro: false }); return; }
@@ -6207,7 +6218,7 @@ function voicesOn() { return voicesPref && audio.enabled; }
 // нейроголос с сервера: женский/мужской, тон под возраст (дети выше, старики ниже); повтор фразы — из кэша
 function ttsPlay(text, o) {
     o = o || {};
-    const t = String(text || '').replace(/[「」（）()…♪]/g, ' ').replace(/\s+/g, ' ').trim();
+    const t = String(text || '').replace(/[「」（）()…♪＿]/g, ' ').replace(/\s+/g, ' ').trim();
     if (!t || !/[぀-ヿ㐀-鿿]/.test(t)) return null;
     const a = new Audio(TTS_API + '?text=' + encodeURIComponent(t) + '&v=' + (o.male ? 'm' : 'f') + '&s=' + (o.style || 'norm') + '&k=' + (o.k || 0));
     a.volume = Math.max(0, Math.min(1, o.volume == null ? 0.95 : o.volume)); a.preload = 'auto';
@@ -6304,6 +6315,26 @@ function showDoorHint(door) {
     hintEl.classList.add('on');
 }
 function hideHint() { if (!hover.sign && !hover.door) return; hover.sign = null; hover.door = null; hover.sticky = 0; hintEl.classList.remove('on'); }
+// ближайшая дверь мягко подсвечена: пятно света у порога и сияние на двери — видно, что сюда можно войти
+let doorGlow = null, doorGlowFrame = 0;
+function updateDoorGlow(t) {
+    if (!doorGlow) {
+        doorGlow = new THREE.Group();
+        const floorG = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.4), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color('#ffd9a0'), transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false }));
+        floorG.rotation.x = -Math.PI / 2; floorG.position.y = 0.03; doorGlow.add(floorG);
+        const doorG = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2.6), new THREE.MeshBasicMaterial({ map: discTex, color: new THREE.Color('#ffe2b8'), transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false }));
+        doorG.position.y = 1.1; doorGlow.add(doorG); doorGlow.userData.parts = [floorG, doorG]; scene.add(doorGlow);
+    }
+    if (inside.on) { doorGlow.visible = false; return; }
+    if ((doorGlowFrame++ % 8) === 0) {
+        const c = camera.position; let best = null, bd = 6.5;
+        doors.forEach((d) => { const u = d.userData.door, x = u.side * ((u.w2 || W2) - 0.01), dd = Math.hypot(c.x - x, c.z - u.z); if (dd < bd) { bd = dd; best = d; } });
+        doorGlow.userData.door = best;
+        if (best) { const u = best.userData.door, w2 = u.w2 || W2; const [fl, dg] = doorGlow.userData.parts; fl.position.set(u.side * (w2 - 0.8), 0.03, u.z); dg.position.set(u.side * (w2 - 0.03), 1.1, u.z); dg.rotation.y = -u.side * Math.PI / 2; const col = new THREE.Color(u.color || '#ffd9a0').lerp(new THREE.Color('#ffffff'), 0.4); fl.material.color.copy(col); dg.material.color.copy(col); }
+    }
+    doorGlow.visible = !!doorGlow.userData.door;
+    if (doorGlow.visible) { const k = 0.5 + 0.5 * Math.sin(t * 2.4); doorGlow.userData.parts[0].material.opacity = 0.25 + 0.25 * k; doorGlow.userData.parts[1].material.opacity = 0.12 + 0.16 * k; }
+}
 function updateHover(now) {
     if ((hover.frame++ % 4) !== 0) return;
     let pt = null;
@@ -6507,7 +6538,7 @@ function frame(now) {
     FESTIVAL.update(t, dt); TEMPLE.update(t, dt); // сами решают: новые вспышки — только на Мацури, листья — только на Сандо
     TALK.update();
     if (inside.on && radio.led && radio.g && radio.g.parent) radio.led.material.color.setHSL(0.03, 1, 0.35 + 0.25 * (Math.sin(t * 3.2) * 0.5 + 0.5));
-    updateLabels(t); updateHover(now);
+    updateLabels(t); updateHover(now); updateDoorGlow(t);
     const bi = ensureBlocks();
     if (bi !== hudBlock) updateHud();
     if (opts.bloom) composer.render(); else renderer.render(scene, camera);
