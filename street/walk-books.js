@@ -51,7 +51,93 @@ const BOOKS = (() => {
             { q: '太郎はだれを助けましたか？', tr: 'Кого спас Таро?', options: ['亀', '鶴', '犬'], answer: 0 },
             { q: '箱を開けると、どうなりましたか？', tr: 'Что случилось, когда он открыл шкатулку?', options: ['おじいさんになった', '子どもになった', '鶴になった'], answer: 0 },
         ] },
+        { id: 'issun', title: '一寸法師', titleTr: 'Иссумбоси — мальчик с вершок', classic: true, sentences: [
+            ['むかし、とても小さな男の子がいました。名前は一寸法師です。', 'Давным-давно жил очень маленький мальчик по имени Иссумбоси.'],
+            ['一寸法師は、おわんの船に乗って、都へ行きました。', 'Иссумбоси поплыл в столицу в лодке из чашки.'],
+            ['はしをかいにして、川を進みました。', 'Вместо весла он грёб палочкой для еды.'],
+            ['都で、一寸法師はお姫様の家で働くことになりました。', 'В столице он стал служить в доме принцессы.'],
+            ['ある日、大きな鬼がお姫様をさらおうとしました。', 'Однажды огромный демон захотел похитить принцессу.'],
+            ['一寸法師は針の刀で、鬼のおなかの中で戦いました。', 'Иссумбоси сражался мечом-иголкой прямо в животе у демона.'],
+            ['鬼は「いたい！」と泣いて、逃げていきました。', 'Демон заплакал «Больно!» и убежал.'],
+            ['鬼が落とした小づちを振ると、一寸法師は大きくなりました。', 'Иссумбоси взмахнул молоточком, который обронил демон, — и вырос.'],
+            ['一寸法師とお姫様は、幸せに暮らしました。', 'Иссумбоси и принцесса жили долго и счастливо.'],
+        ], questions: [
+            { q: '一寸法師は何に乗って都へ行きましたか？', tr: 'На чём Иссумбоси поплыл в столицу?', options: ['おわん', '馬', '電車'], answer: 0 },
+            { q: '一寸法師の刀は何でしたか？', tr: 'Чем был меч Иссумбоси?', options: ['針', 'はし', '木の枝'], answer: 0 },
+        ] },
+        { id: 'kasajizo', title: 'かさじぞう', titleTr: 'Шляпы для Дзидзо', classic: true, sentences: [
+            ['雪の多い村に、やさしいおじいさんとおばあさんが住んでいました。', 'В снежной деревне жили добрые дедушка и бабушка.'],
+            ['お正月のもちを買うお金がありませんでした。', 'У них не было денег на новогодние моти.'],
+            ['おじいさんは、かさを作って町へ売りに行きました。', 'Дедушка сплёл соломенные шляпы и пошёл продавать их в город.'],
+            ['でも、かさは一つも売れませんでした。', 'Но не продал ни одной.'],
+            ['帰り道、雪の中に六人のおじぞうさまが立っていました。', 'По дороге домой в снегу стояли шесть статуй Дзидзо.'],
+            ['おじいさんは、おじぞうさまの頭にかさをかぶせてあげました。', 'Дедушка надел им на головы свои шляпы.'],
+            ['かさが一つ足りなかったので、自分の手ぬぐいをかぶせました。', 'Одной шляпы не хватило — и он отдал своё полотенце.'],
+            ['その夜、外から「よいしょ、よいしょ」と声が聞こえました。', 'Ночью снаружи послышалось: «Ёйсё, ёйсё».'],
+            ['戸を開けると、おもちや野菜がたくさん置いてありました。', 'Они открыли дверь — а там гора моти и овощей.'],
+            ['おじぞうさまからのお礼だったのです。', 'Это Дзидзо пришли отблагодарить.'],
+        ], questions: [
+            { q: 'おじいさんは町で何を売りましたか？', tr: 'Что дедушка продавал в городе?', options: ['かさ', 'おもち', '野菜'], answer: 0 },
+            { q: 'おじぞうさまは何人いましたか？', tr: 'Сколько было статуй Дзидзо?', options: ['六人', '三人', '十人'], answer: 0 },
+        ] },
+        { id: 'nezumi', title: 'ねずみの嫁入り', titleTr: 'Свадьба мышки', classic: true, sentences: [
+            ['ねずみのお父さんは、娘を一番強い人と結婚させたいと思いました。', 'Отец-мышь хотел выдать дочь за самого сильного на свете.'],
+            ['「一番強いのは、お日さまだ。」', '«Сильнее всех — солнце».'],
+            ['でも、お日さまは「雲のほうが強いよ。私をかくすから」と言いました。', 'Но солнце сказало: «Облако сильнее — оно меня закрывает».'],
+            ['雲は「風のほうが強いよ。私をとばすから」と言いました。', 'Облако сказало: «Ветер сильнее — он меня уносит».'],
+            ['風は「かべのほうが強いよ。私を止めるから」と言いました。', 'Ветер сказал: «Стена сильнее — она меня останавливает».'],
+            ['かべは「ねずみのほうが強いよ。私に穴をあけるから」と言いました。', 'Стена сказала: «Мышь сильнее — она прогрызает во мне дыры».'],
+            ['「なんだ、一番強いのはねずみだったのか！」', '«Вот как! Сильнее всех — мышь!»'],
+            ['娘は、となりの元気なねずみと結婚しました。', 'И дочь вышла замуж за бойкого мышонка-соседа.'],
+        ], questions: [
+            { q: 'お日さまより強いのは何ですか？', tr: 'Кто сильнее солнца?', options: ['雲', '風', 'かべ'], answer: 0 },
+            { q: '娘はだれと結婚しましたか？', tr: 'За кого вышла замуж дочь?', options: ['ねずみ', 'お日さま', 'かべ'], answer: 0 },
+        ] },
+        { id: 'konbini', title: 'コンビニの夜', titleTr: 'Ночь в комбини', classic: true, story: true, sentences: [
+            ['夜十一時、ぼくはコンビニでアルバイトをしています。', 'В одиннадцать вечера я подрабатываю в комбини.'],
+            ['毎晩、同じおばあさんが牛乳を買いに来ます。', 'Каждый вечер одна и та же бабушка приходит за молоком.'],
+            ['「こんばんは。今日も寒いですね。」とおばあさんは笑います。', '«Добрый вечер. Сегодня опять холодно», — улыбается бабушка.'],
+            ['でも、今日は来ませんでした。', 'Но сегодня она не пришла.'],
+            ['ぼくは少し心配になりました。', 'Я немного забеспокоился.'],
+            ['次の日、おばあさんが小さな袋を持って来ました。', 'На следующий день бабушка пришла с маленьким пакетом.'],
+            ['「昨日は孫が来ていたの。これ、おみやげよ。」', '«Вчера приезжал внук. Это тебе гостинец».'],
+            ['袋の中には、あたたかいたい焼きが入っていました。', 'В пакете лежала тёплая тайяки.'],
+            ['その夜のコンビニは、いつもより明るく見えました。', 'В ту ночь комбини казался светлее обычного.'],
+        ], questions: [
+            { q: 'おばあさんは毎晩何を買いますか？', tr: 'Что бабушка покупает каждый вечер?', options: ['牛乳', 'パン', 'お茶'], answer: 0 },
+            { q: '袋の中に何がありましたか？', tr: 'Что было в пакете?', options: ['たい焼き', '牛乳', '手紙'], answer: 0 },
+        ] },
+        { id: 'ame', title: '雨の日の猫', titleTr: 'Кошка в дождливый день', classic: true, story: true, sentences: [
+            ['雨の日、駅の前で小さな猫を見つけました。', 'В дождливый день у станции я нашла маленького котёнка.'],
+            ['猫はぬれて、ふるえていました。', 'Он промок и дрожал.'],
+            ['私はかさを猫の上にさしてあげました。', 'Я раскрыла над ним зонт.'],
+            ['すると、猫は私のあとをついてきました。', 'И котёнок пошёл за мной.'],
+            ['家に着くと、猫はドアの前で「にゃあ」と鳴きました。', 'У дома он мяукнул под дверью.'],
+            ['母は「しかたないね」と言って、タオルを持ってきました。', 'Мама сказала «Что поделаешь» и принесла полотенце.'],
+            ['猫の名前は「アメ」にしました。', 'Котёнка назвали «Амэ» — «Дождик».'],
+            ['今では、アメは家で一番えらい顔をしています。', 'Теперь у Амэ самый важный вид во всём доме.'],
+        ], questions: [
+            { q: '猫はどこにいましたか？', tr: 'Где был котёнок?', options: ['駅の前', '学校', '公園'], answer: 0 },
+            { q: '猫の名前は何ですか？', tr: 'Как зовут котёнка?', options: ['アメ', 'ユキ', 'タマ'], answer: 0 },
+        ] },
+        { id: 'ramen1', title: '初めてのラーメン', titleTr: 'Мой первый рамэн', classic: true, story: true, sentences: [
+            ['日本に来て、初めてラーメン屋に入りました。', 'Приехав в Японию, я впервые зашёл в рамэнную.'],
+            ['店の前に、食券を買う機械がありました。', 'У входа стоял автомат с талонами на еду.'],
+            ['ボタンが多くて、どれを押せばいいか分かりませんでした。', 'Кнопок было много, и я не понимал, какую нажать.'],
+            ['後ろのお兄さんが「これがおすすめですよ」と教えてくれました。', 'Парень сзади подсказал: «Вот эта — самая вкусная».'],
+            ['カウンターに座ると、すぐにラーメンが来ました。', 'Едва я сел за стойку, принесли рамэн.'],
+            ['店の人たちは、みんな大きな音で食べていました。', 'Все вокруг громко хлюпали.'],
+            ['ぼくも少しはずかしかったけど、まねしてみました。', 'Мне было неловко, но я попробовал так же.'],
+            ['熱いスープが、とてもおいしかったです。', 'Горячий бульон был очень вкусным.'],
+            ['帰るとき、店の人に「ごちそうさまでした！」と言いました。', 'Уходя, я сказал повару: «Спасибо, было очень вкусно!»'],
+        ], questions: [
+            { q: '食券はどこで買いますか？', tr: 'Где покупают талон на еду?', options: ['機械', 'カウンター', '駅'], answer: 0 },
+            { q: 'だれがおすすめを教えてくれましたか？', tr: 'Кто подсказал, что выбрать?', options: ['後ろのお兄さん', '店の人', '友達'], answer: 0 },
+        ] },
     ].map((b) => Object.assign(b, { sentences: b.sentences.map(([ja, tr]) => ({ ja, tr })) }));
+    // обложки: свой цвет и значок у каждой книги
+    const COVER = { momotaro: ['#f4a6a0', '#c8505a', '🍑'], tsuru: ['#e8eef4', '#7a90a8', '🕊'], urashima: ['#8ac8d8', '#2a6a8a', '🐢'], issun: ['#f0d080', '#b0802a', '🥢'], kasajizo: ['#f4f0e8', '#8a7a6a', '⛄'], nezumi: ['#e0d4f0', '#7a6aa8', '🐭'], konbini: ['#a8d8f0', '#2a7ab8', '🏪'], ame: ['#b8c8e0', '#4a5a8a', '☔'], ramen1: ['#f4c890', '#c8602a', '🍜'] };
+    const coverOf = (b, i) => COVER[b.id] || [['#ffd6e8', '#c8508a'], ['#d6f0e0', '#3a8a5a'], ['#fff0c8', '#b8862a'], ['#dcd6ff', '#5a4ab8']][i % 4].concat(['📗']);
 
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const KJ = /[㐀-鿿々〆ヶ]/;
@@ -74,6 +160,7 @@ const BOOKS = (() => {
     let el = null, book = null, view = 0, theme = 'street', furiOn = true, trOn = false, reading = null, busy = false;
     function ui() {
         if (el) return el;
+        if (!document.getElementById('book-font')) { const l = document.createElement('link'); l.id = 'book-font'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&display=swap'; document.head.appendChild(l); }
         el = document.createElement('div'); el.id = 'book';
         el.innerHTML = '<div class="bh"><button class="b-lib" aria-label="Библиотека">‹</button><div class="bt"></div><button class="b-x" aria-label="Закрыть">×</button></div><div class="bb"></div><div class="bf"></div><div class="tip" hidden></div>';
         document.body.appendChild(el);
@@ -96,14 +183,18 @@ const BOOKS = (() => {
         const e = ui(); e.classList.remove('reader'); e.querySelector('.b-lib').hidden = true;
         e.querySelector('.bt').innerHTML = '<b>Книжная полка</b><small>короткие рассказы для чтения</small>';
         const mine = lsGet();
+        const dark = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = (v) => Math.round(v * (1 - k)).toString(16).padStart(2, '0'); return '#' + f(n >> 16) + f((n >> 8) & 255) + f(n & 255); };
+        const cover = (b, attr, i, note) => { const [bg, ink, ic] = coverOf(b, i); return '<button class="cover" ' + attr + ' style="--bg:' + bg + ';--bg2:' + dark(bg, 0.28) + ';--ink:' + ink + '"><span class="spine"></span><span class="ct">' + esc(b.title) + '</span><span class="ci">' + ic + '</span><span class="cs">' + esc(b.titleTr || '') + '</span>' + (note ? '<span class="cn">' + esc(note) + '</span>' : '') + '</button>'; };
+        const shelf = (title, inner) => inner ? '<section class="shelf"><h5>' + title + '</h5><div class="row">' + inner + '</div></section>' : '';
         e.querySelector('.bb').innerHTML = '<div class="lib">'
-            + '<button class="bk-card new" data-act="new"><span class="ic">✨</span><b>Новая история из ваших слов</b><small>' + (busy ? 'Пишу историю… обычно 20–40 секунд' : 'ИИ напишет короткий рассказ с вашими словами — на ' + esc(THEME_RU[theme] || 'улице') + '') + '</small></button>'
-            + mine.map((b, i) => '<button class="bk-card" data-mine="' + i + '"><span class="ic">📗</span><b>' + esc(b.title) + '</b><small>' + esc(b.titleTr || '') + (b.used && b.used.length ? ' · ваших слов: ' + b.used.length : '') + '</small></button>').join('')
-            + CLASSICS.map((b, i) => '<button class="bk-card classic" data-classic="' + i + '"><span class="ic">📜</span><b>' + esc(b.title) + '</b><small>' + esc(b.titleTr) + ' · сказка</small></button>').join('')
+            + '<button class="bk-new' + (busy ? ' busy' : '') + '" data-act="new"><span class="ic">✨</span><span><b>Новая история из ваших слов</b><small>' + (busy ? 'Пишу историю… обычно 20–40 секунд' : 'ИИ напишет короткий рассказ с вашими словами — о ' + esc(THEME_RU[theme] || 'ночной улице')) + '</small></span></button>'
+            + shelf('Ваши истории', mine.map((b, i) => cover(b, 'data-mine="' + i + '"', i, b.used && b.used.length ? 'ваших слов: ' + b.used.length : '')).join(''))
+            + shelf('Рассказы улицы', CLASSICS.map((b, i) => (b.story ? cover(b, 'data-classic="' + i + '"', i, '') : '')).join(''))
+            + shelf('Японские сказки', CLASSICS.map((b, i) => (b.classic && !b.story ? cover(b, 'data-classic="' + i + '"', i, '') : '')).join(''))
             + '</div><div class="msg"></div>';
         e.querySelector('.bf').innerHTML = '';
     }
-    const THEME_RU = { street: 'ночной улице', school: 'вечерней школе', izakaya: 'идзакае', cafe: 'кафе', home: 'квартире', shop: 'аниме-магазине', festival: 'фестивале', shrine: 'у храма', books: 'книжной лавке', ramen: 'рамэнной', arcade: 'игровом зале', dev: 'комнате разработчика' };
+    const THEME_RU = { street: 'ночной улице', school: 'вечерней школе', izakaya: 'идзакае', cafe: 'кафе', home: 'квартире', shop: 'аниме-магазине', festival: 'фестивале', shrine: 'храме', books: 'книжной лавке', ramen: 'рамэнной', arcade: 'игровом зале', dev: 'разработчике' };
     const say = (t, kind) => { const m = el.querySelector('.bb .msg'); if (m) { m.textContent = t || ''; m.className = 'msg' + (kind ? ' ' + kind : ''); } };
     function pickWords() {
         const P = myWords(), rank = (w) => ({ due: 0, worn: 0, warm: 1, new: 1.5, lit: 3 }[w._state] ?? 1.5) + Math.random() * 2;
@@ -112,7 +203,7 @@ const BOOKS = (() => {
     async function generate() {
         if (busy) return;
         const words = pickWords(); if (words.length < 3) { say('Добавьте в словарь хотя бы 3 слова — из них получится рассказ.', 'err'); return; }
-        busy = true; library(); el.querySelector('.bk-card.new').classList.add('busy');
+        busy = true; library();
         try {
             const r = await fetch(API + 'street/story', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ words, theme, lang: 'ru' }) });
             if (r.status === 429) throw new Error('Слишком много новых историй за час — почитайте пока готовые.');
@@ -149,13 +240,14 @@ const BOOKS = (() => {
         const title = book.titleT && book.titleT.length && furiOn ? book.titleT.map((t) => ruby(t.s, t.r)).join('') : esc(book.title);
         e.querySelector('.bt').innerHTML = '<b>' + title + '</b><small>' + esc(book.titleTr || '') + '</small>';
         const wm = wordMap();
-        e.querySelector('.bb').innerHTML = '<div class="spread">' + sp[view].map((pg) => '<div class="page">' + (pg === 'quiz' ? quizHtml() : pg.map(([s, i]) => sentHtml(s, i, wm)).join('')) + '</div>').join('') + '</div>';
+        const all = pages(), first = wide() ? view * 2 : view;
+        e.querySelector('.bb').innerHTML = '<div class="spread">' + sp[view].map((pg, k) => '<div class="page">' + (pg === 'quiz' ? quizHtml() : pg.map(([s, i]) => sentHtml(s, i, wm)).join('')) + '<span class="pn">' + (first + k + 1) + '</span></div>').join('') + '</div>';
         e.querySelector('.bf').innerHTML = '<button class="nav" data-turn="-1"' + (view ? '' : ' disabled') + '>‹</button>'
             + '<button class="tg' + (furiOn ? ' on' : '') + '" data-tg="furi">あ</button><button class="tg' + (trOn ? ' on' : '') + '" data-tg="tr">Перевод</button><button class="tg' + (reading ? ' on' : '') + '" data-tg="read">' + (reading ? '■ Стоп' : '▶ Вслух') + '</button>'
-            + '<span class="pg">' + (view + 1) + ' / ' + sp.length + '</span><button class="nav" data-turn="1"' + (view < sp.length - 1 ? '' : ' disabled') + '>›</button>';
+            + '<span class="pg">' + (sp[view].length > 1 ? (first + 1) + '–' + (first + 2) : first + 1) + ' из ' + all.length + '</span><button class="nav" data-turn="1"' + (view < sp.length - 1 ? '' : ' disabled') + '>›</button>';
         hideTip();
     }
-    function turn(d) { const n = spreads().length; const v = Math.max(0, Math.min(n - 1, view + d)); if (v === view) return; stopRead(); view = v; const bb = el.querySelector('.bb'); bb.classList.remove('flip'); void bb.offsetWidth; bb.classList.add('flip'); render(); }
+    function turn(d) { const n = spreads().length; const v = Math.max(0, Math.min(n - 1, view + d)); if (v === view) return; stopRead(); view = v; const bb = el.querySelector('.bb'); bb.classList.remove('flip', 'back'); void bb.offsetWidth; bb.classList.add('flip'); if (d < 0) bb.classList.add('back'); render(); }
     function hideTip() { const t = el && el.querySelector('.tip'); if (t) t.hidden = true; }
     function showTip(node, html) { const t = el.querySelector('.tip'); t.innerHTML = html; t.hidden = false; const r = node.getBoundingClientRect(), er = el.getBoundingClientRect(); t.style.left = Math.max(8, Math.min(er.width - 220, r.left - er.left + r.width / 2 - 100)) + 'px'; t.style.top = (r.top - er.top - t.offsetHeight - 8 < 40 ? r.bottom - er.top + 8 : r.top - er.top - t.offsetHeight - 8) + 'px'; }
     function onClick(ev) {
