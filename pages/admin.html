@@ -664,9 +664,25 @@
             var c = h.overall === 'ok' ? 'ok' : (h.overall === 'warn' ? 'off' : 'bad');
             return '<span class="src__dot src__dot--' + c + '" title="' + esc(dt(h.at) + ': ок ' + h.ok + '/' + h.total) + '" style="display:inline-block;margin-right:4px"></span>';
         }).join('');
+        // Список по тайтлам и история — под кнопкой: сводки сверху обычно хватает.
+        var open = false;
+        try { open = localStorage.getItem('animei:admin:syncOpen') === '1'; } catch (e) { /* ок */ }
         el.className = '';
-        el.innerHTML = head + '<div class="srcgrp"><div class="srcgrp__head">Последний прогон</div>' + rows + '</div>' +
-            (hist ? '<p class="srcsum" style="color:var(--muted)">История прогонов (новые слева): ' + hist + '</p>' : '');
+        el.innerHTML = head +
+            '<button class="btn btn--small" id="syncMore" type="button" aria-expanded="' + open + '">' +
+                (open ? 'Скрыть подробности' : 'Подробности · ' + fmt((sy.results || []).length) + ' проверок') + '</button>' +
+            '<div id="syncDetails"' + (open ? '' : ' hidden') + '>' +
+                '<div class="srcgrp"><div class="srcgrp__head">Последний прогон</div>' + rows + '</div>' +
+                (hist ? '<p class="srcsum" style="color:var(--muted)">История прогонов (новые слева): ' + hist + '</p>' : '') +
+            '</div>';
+        document.getElementById('syncMore').addEventListener('click', function () {
+            var box = document.getElementById('syncDetails');
+            var show = box.hidden;
+            box.hidden = !show;
+            this.setAttribute('aria-expanded', String(show));
+            this.textContent = show ? 'Скрыть подробности' : 'Подробности · ' + fmt((sy.results || []).length) + ' проверок';
+            try { localStorage.setItem('animei:admin:syncOpen', show ? '1' : '0'); } catch (e) { /* ок */ }
+        });
     }
 
     // ---------- Источники ----------
