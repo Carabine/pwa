@@ -87,6 +87,11 @@
     // Публичный трекер действий: window.animeiTrack('save_word', '食べる')
     window.animeiTrack = function (event, detail) {
         if (!event) return;
+        // Объект в деталях раньше уходил как «[object Object]» (JP News) — пишем
+        // его читаемо: «id=… level=…».
+        if (detail && typeof detail === 'object') {
+            detail = Object.keys(detail).map(function (k) { return k + '=' + detail[k]; }).join(' ');
+        }
         send(String(event).slice(0, 40), String(detail || '-').slice(0, 200) || '-');
     };
 

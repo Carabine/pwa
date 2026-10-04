@@ -195,7 +195,14 @@
         cta_companion_header: 'кнопка «расширение»', cta_support_header: 'кнопка «поддержка»',
         cta_privacy_header: 'кнопка «политика»', demo_to_study: 'из демо в приложение',
         demo_play: 'включил демо', demo_word_click: 'клик по слову в демо',
-        demo_word_saved: 'сохранил слово из демо'
+        demo_word_saved: 'сохранил слово из демо',
+        // Подписи, добавленные 04.10.2026 (события шли без них):
+        human: 'живой человек (служебное)', learn_lang: 'язык изучения',
+        offline_all: 'скачать всё для офлайна', word_freeze: 'заморозка слова', words_delete: 'удалил слова',
+        kanji_session: 'прописи: занятие', kanji_write: 'прописи: иероглиф',
+        news_open: 'открыл JP News', news_story: 'читал историю', news_done: 'дочитал историю',
+        news_quiz: 'тест к истории', news_word_saved: 'слово из новости',
+        subs_segments: 'сабы: кусочный сдвиг', subs_refsync: 'сабы: синк по источнику'
     };
     var PAGE_LABELS = {
         'app/index': 'главная', 'app/catalog': 'каталог', 'app/player': 'плеер',
@@ -205,11 +212,38 @@
         'app/stats': 'статистика', 'landing/index': 'лендинг',
         'app/progress': 'прогресс', 'app/apps': 'приложения', 'app/deck-study': 'колода', 'app/reset': 'сброс пароля',
         'landing/webapp': 'лендинг · веб', 'landing/companion': 'лендинг · расширение',
-        'landing/support': 'лендинг · поддержка', 'landing/privacy': 'лендинг · политика'
+        'landing/support': 'лендинг · поддержка', 'landing/privacy': 'лендинг · политика',
+        'app/news': 'JP News', 'app/news-story': 'JP News · история', 'app/kanji': 'прописи',
+        'app/street/walk': 'улица слов'
     };
+    var KANJI_GO = { review: 'повторение', learn: 'новые иероглифы' };
+    var KANJI_SCOPE = { all: 'все слова', deck: 'колода' };
+    // Настройки (js/settings.js DEFAULTS + язык интерфейса) — по-человечески.
+    var SETTING_LABELS = {
+        theme: 'тема', subSize: 'размер субтитров', playerTranslation: 'перевод в субтитрах',
+        autoSyncSubs: 'автоподгон субтитров', autopause: 'пауза после реплики', loopClips: 'повтор клипов',
+        newPerDay: 'новых карточек в день', studyTranscription: 'транскрипция',
+        studySentenceRomaji: 'ромадзи над фразой', studyAutoplayClip: 'автозапуск клипа',
+        learnLang: 'язык изучения', language: 'язык интерфейса'
+    };
+    var SETTING_VALUES = {
+        'true': 'вкл', 'false': 'выкл', kana: 'кана', romaji: 'ромадзи', dark: 'тёмная', light: 'светлая',
+        system: 'как в системе', sm: 'мелкий', md: 'средний', lg: 'крупный', ja: 'японский', en: 'английский',
+        ru: 'русский', uk: 'украинский'
+    };
+    var KANJI_GRADE = { easy: 'легко', good: 'хорошо', hard: 'трудно', again: 'не вышло' };
     // Реферер-приложения приходят именем пакета — показываем по-человечески.
+    // Метки ?r=rd-<код> из _promo/posts/reddit-ladder.md → имя сабреддита.
+    var REDDIT_SUBS = {
+        novice: 'LearnJapaneseNovice', learnjapanese: 'LearnJapanese', sideproject: 'SideProject',
+        webdev: 'webdev', javascript: 'javascript', pwa: 'PWA', jpres: 'JapaneseResources', ajatt: 'ajatt',
+        refold: 'Refold', anki: 'Anki', iib: 'InternetIsBeautiful', wanikani: 'WaniKani',
+        abu: 'alphaandbetausers', ih: 'indiehackers', languagelearning: 'languagelearning'
+    };
     function srcName(src) {
         var s = String(src || '').replace(/^www\./, '');
+        var rd = s.match(/^reddit_(.+)$/);
+        if (rd) return 'reddit · r/' + (REDDIT_SUBS[rd[1]] || rd[1]);
         if (/googlequicksearchbox|^com\.google\.android/.test(s)) return 'google app';
         if (/telegram/.test(s)) return 'telegram';
         if (/^(android-app|com|org)\./.test(s)) return s.split('.').slice(-1)[0];
@@ -271,7 +305,36 @@
             case 'leave': return PAGE_LABELS[p] ? 'со страницы «' + PAGE_LABELS[p] + '»' : '';
             case 'return': return 'через ' + awayText(p);
             case 'auth':
-                return { login: 'вошёл', register: 'зарегистрировался', logout: 'вышел' }[p] || p;
+                return { login: 'вошёл', register: 'зарегистрировался', logout: 'вышел',
+                    forgot_request: 'запросил сброс пароля', forgot_done: 'сбросил пароль' }[p] || p;
+            case 'install':
+                return { installed: 'приложение установлено', click: 'нажал «установить»', accepted: 'согласился установить',
+                    dismissed: 'отказался от установки', dismiss: 'закрыл предложение установить' }[p] || p;
+            case 'explain':
+                return { player: 'из плеера', player_cue: 'из списка реплик' }[p] || (p === '-' ? '' : p);
+            case 'episode_deck': {
+                var me = p.match(/^(anime_)?(open|created):(\d+)$/);
+                if (!me) return p;
+                var whole = me[1] ? ' (по всему аниме)' : '';
+                return me[2] === 'open' ? 'открыл подбор колоды' + whole + ': ' + me[3] + ' сл.' : 'собрал колоду' + whole + ': ' + me[3] + ' сл.';
+            }
+            case 'learn_lang': return { ja: 'японский', en: 'английский' }[p] || p;
+            case 'kanji_session': {
+                var mk = p.split(':');
+                return (KANJI_GO[mk[1]] || mk[1] || '') + (mk[0] ? ' (' + (KANJI_SCOPE[mk[0]] || mk[0]) + ')' : '');
+            }
+            case 'kanji_write': return KANJI_GRADE[p] || p;
+            case 'word_freeze': return p === 'on' ? 'заморозил слово' : 'разморозил слово';
+            case 'words_delete': return 'удалил ' + p + ' сл.';
+            case 'offline_all': return 'начал скачивать всё для офлайна';
+            case 'subs_segments': case 'subs_refsync': return p + ' кус.';
+            case 'news_open': return p === '-' || p === '[object Object]' ? '' : 'выпуск ' + p;
+            case 'news_story': case 'news_done': case 'news_quiz': case 'news_word_saved':
+                return p === '[object Object]' ? '' : p;   // до 04.10.2026 детали терялись
+            case 'setting': {
+                var i = p.indexOf(':'), k = i < 0 ? p : p.slice(0, i), v = i < 0 ? '' : p.slice(i + 1);
+                return (SETTING_LABELS[k] || k) + (v ? ' → ' + (SETTING_VALUES[v] || v) : '');
+            }
             case 'session_card':
                 if (p.indexOf('home_shown') === 0) return 'увидел итог сессии на главной (' + (p.split(':')[1] || '?') + ' слов)';
                 if (p.indexOf('player_shown') === 0) return 'увидел итог сессии в плеере (' + (p.split(':')[1] || '?') + ' слов)';
@@ -553,7 +616,10 @@
             case 'subs_precise': return { icon: '🎚', text: detailText({ event: ev, page: p }) };
             case 'save_word': return { icon: '💾', text: 'сохранил слово ' + p, key: 'save' };
             case 'known_word': return { icon: '✅', text: 'отметил «уже знаю»: ' + p, key: 'known' };
-            case 'explain': return { icon: '💡', text: 'открыл разбор' + (p && p !== '-' ? ': ' + p : '') };
+            case 'explain': {
+                var ex = detailText({ event: ev, page: p });
+                return { icon: '💡', text: 'открыл разбор' + (ex ? ' ' + ex : '') };
+            }
             case 'tts': return { icon: '🔊', text: 'озвучил карточку' };
             case 'clip_recut': return { icon: '✂️', text: 'пересобрал клип' };
             case 'search': return { icon: '🔎', text: 'искал ' + detailText({ event: ev, page: p }) };
@@ -567,14 +633,27 @@
                 if (/_shown/.test(p)) return null;  // показ карточки, а не действие (старые данные)
                 return { icon: '🧾', text: detailText({ event: ev, page: p }), dim: true };
             case 'beginner_deck': return { icon: '🌱', text: 'колода новичка: ' + detailText({ event: ev, page: p }) };
-            case 'episode_deck': return { icon: '🗂', text: 'колода из серии: ' + p };
+            case 'episode_deck': return { icon: '🗂', text: 'колода из серии: ' + detailText({ event: ev, page: p }) };
             case 'deck': return { icon: '🗂', text: detailText({ event: ev, page: p }) };
             case 'words_bulk': return { icon: '✏️', text: detailText({ event: ev, page: p }) };
             case 'anki_export': return { icon: '📤', text: detailText({ event: ev, page: p }) };
             case 'known_import': return { icon: '📥', text: detailText({ event: ev, page: p }) };
             case 'auth': return { icon: '🔑', text: detailText({ event: ev, page: p }) };
-            case 'setting': return { icon: '⚙️', text: 'настройка: ' + p };
+            case 'setting': return { icon: '⚙️', text: 'настройка: ' + detailText({ event: ev, page: p }) };
             case 'password_change': return { icon: '🔑', text: 'сменил пароль' };
+            case 'human': return null;           // служебная отметка «не бот», не действие
+            case 'news_open': case 'news_story': case 'news_done': case 'news_quiz': case 'news_word_saved': {
+                var nd = detailText({ event: ev, page: p });
+                return { icon: '📰', text: EVENT_LABELS[ev] + (nd ? ': ' + nd : '') };
+            }
+            case 'kanji_session': case 'kanji_write':
+                return { icon: '✍️', text: EVENT_LABELS[ev] + ' — ' + detailText({ event: ev, page: p }) };
+            case 'word_freeze': return { icon: '❄️', text: detailText({ event: ev, page: p }) };
+            case 'words_delete': return { icon: '🗑', text: detailText({ event: ev, page: p }) };
+            case 'install': return { icon: '📲', text: detailText({ event: ev, page: p }) };
+            case 'learn_lang': return { icon: '🌐', text: 'выбрал язык изучения: ' + detailText({ event: ev, page: p }) };
+            case 'subs_segments': case 'subs_refsync':
+                return { icon: '🎚', text: EVENT_LABELS[ev] + ' (' + detailText({ event: ev, page: p }) + ')', dim: true };
             case 'leave': return { icon: '🚪', text: 'вышел из приложения' + (PAGE_LABELS[p] ? ' (' + PAGE_LABELS[p] + ')' : '') };
             case 'return': return { icon: '↩', text: 'вернулся через ' + awayText(p), dim: true };
             case 'offline': return { icon: '📴', text: p === 'on' ? 'потерял сеть' : 'сеть вернулась', warn: p === 'on' };

@@ -252,7 +252,7 @@
                 if (typeof markDone === 'function') markDone(saveBtn, C.tr('popup.saved'));
                 else saveBtn.textContent = C.tr('popup.saved');
                 if (typeof showSnackbarOnce === 'function') showSnackbarOnce('savedWord', C.tr('popup.savedSnack'), { type: 'success' });
-                if (typeof animeiTrack === 'function') animeiTrack('news_word_saved', { word: base });
+                if (typeof animeiTrack === 'function') animeiTrack('news_word_saved', base);
             } catch (err) {
                 saveBtn.disabled = false;
                 saveBtn.textContent = '★ ' + C.tr('popup.save');
@@ -448,7 +448,7 @@
         renderVocab(el('rd-vocab'));
         el('rd-finish').addEventListener('click', () => finishStory(score, qs.length));
         box.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        if (typeof animeiTrack === 'function') animeiTrack('news_quiz', { id: state.story.id, level: state.level, score, total: qs.length });
+        if (typeof animeiTrack === 'function') animeiTrack('news_quiz', score + '/' + qs.length + ' · ' + storyLabel());
     }
 
     function renderVocab(box) {
@@ -496,7 +496,7 @@
     function finishStory(score, total) {
         C.markDone(state.story.id, { level: state.level, score, total });
         if (typeof showSnackbar === 'function') showSnackbar(C.tr('news.finished'), { type: 'success' });
-        if (typeof animeiTrack === 'function') animeiTrack('news_done', { id: state.story.id, level: state.level });
+        if (typeof animeiTrack === 'function') animeiTrack('news_done', storyLabel());
         location.href = './news.html' + (state.story.date ? '?date=' + state.story.date : '');
     }
 
@@ -540,7 +540,14 @@
         el('rd-word').querySelector('.news-sheet__x').addEventListener('click', () => wordLayer && wordLayer.close());
         el('rd-explain').querySelector('.explain-modal__close').addEventListener('click', () => explainLayer && explainLayer.close());
         if (!(await aiOn())) bar.querySelector('.rd-sbar__explain').hidden = true;
-        if (typeof animeiTrack === 'function') animeiTrack('news_story', { id: state.story.id, level: state.level });
+        if (typeof animeiTrack === 'function') animeiTrack('news_story', storyLabel());
+    }
+
+    // Для статистики: «уровень · заголовок» — в админке видно, что читали.
+    function storyLabel() {
+        let title = '';
+        try { title = lv().title.text || ''; } catch { /* нет заголовка уровня */ }
+        return state.level + ' · ' + (title || state.story.id).slice(0, 60);
     }
 
     async function aiOn() {

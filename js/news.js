@@ -142,7 +142,7 @@
         renderHead();
         renderStories();
         renderNav();
-        if (typeof animeiTrack === 'function') animeiTrack('news_open', { date: state.edition && state.edition.date });
+        if (typeof animeiTrack === 'function') animeiTrack('news_open', (state.edition && state.edition.date) || '-');
     }
 
     document.addEventListener('DOMContentLoaded', init);

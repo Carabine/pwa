@@ -571,6 +571,19 @@
                 '</span><span class="v n">' + fmt(val(x)) + '</span></div>';
         }).join('');
     }
+    // Метки ?r=rd-<код> → имя сабреддита (как в stats-view.js)
+    var REDDIT_SUBS = {
+        novice: 'LearnJapaneseNovice', learnjapanese: 'LearnJapanese', sideproject: 'SideProject',
+        webdev: 'webdev', javascript: 'javascript', pwa: 'PWA', jpres: 'JapaneseResources', ajatt: 'ajatt',
+        refold: 'Refold', anki: 'Anki', iib: 'InternetIsBeautiful', wanikani: 'WaniKani',
+        abu: 'alphaandbetausers', ih: 'indiehackers', languagelearning: 'languagelearning'
+    };
+    function srcLabel(src) {
+        var s = String(src || '').replace(/^www\./, '');
+        var rd = s.match(/^reddit_(.+)$/);
+        if (rd) return 'r/' + (REDDIT_SUBS[rd[1]] || rd[1]);
+        return s.replace(/\.com$/, '');
+    }
     function loadPulse() {
         fetch(apiBase + '/api/v1/stats/pulse?' + keyQ(), { headers: authHeaders() }).then(requireKey).then(function (d) {
             var dd = d.today - d.yesterday, dw = d.week - d.prevWeek;
@@ -598,7 +611,7 @@
                     '</span><span class="v n">' + fmt(a.people) + (a.today ? ' · ' + fmt(a.today) : '') + '</span></div>';
             }).join('') : '<div class="row"><span class="l fnt">пока пусто</span></div>';
             document.getElementById('pSources').innerHTML = meterRows(d.topSources || [],
-                function (x) { return x.source.replace(/^www\./, '').replace(/\.com$/, ''); }, function (x) { return x.people; });
+                function (x) { return srcLabel(x.source); }, function (x) { return x.people; });
             document.getElementById('pPeople').innerHTML = d.accounts.length ? d.accounts.map(function (u) {
                 return '<div class="row"><span class="l">' + esc(shortMail(u.email)) + '</span><span class="m">' +
                     fmt(u.words) + ' сл' + (u.seconds7d >= 60 ? ' · ' + dur(u.seconds7d) : '') +
