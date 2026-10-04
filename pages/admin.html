@@ -289,6 +289,10 @@
             <div id="ovHealth" class="msg">Загрузка…</div>
         </div>
         <div class="box">
+            <div class="box__h">Внешние сервисы <span id="ovExtSum"></span></div>
+            <div id="ovExt" class="msg">Загрузка…</div>
+        </div>
+        <div class="box">
             <div class="box__h">Источники <span id="ovSourcesSum"></span>
                 <button class="btn btn--small" id="srcRefresh" type="button">проверить</button></div>
             <div id="ovSources" class="msg">Загрузка…</div>
@@ -453,9 +457,37 @@
             }
 
             renderSync(d.sync);
+            renderExternal(d.external || []);
 
         }).catch(function () {});
     }
+    // ---------- Внешние сервисы: отказы Shikimori и ИИ-провайдеров за 24 ч ----------
+    // limit — ответили «слишком часто» (429), error — 5xx/сеть, lost — запрос так и
+    // не удался даже после повторов и запасного провайдера.
+    var EXT_NAMES = { shikimori: 'Shikimori', groq: 'Groq', gemini: 'Gemini', openrouter: 'OpenRouter', ollama: 'Ollama' };
+    function extName(s) { return EXT_NAMES[s] || s; }
+    function renderExternal(list) {
+        var el = document.getElementById('ovExt');
+        if (!list.length) {
+            el.textContent = 'за сутки ни одного отказа';
+            foldSum('Ext', 'без отказов', true);
+            return;
+        }
+        var lost = list.filter(function (x) { return x.lost; });
+        var limits = list.reduce(function (a, x) { return a + x.limit + x.error; }, 0);
+        if (lost.length) {
+            var t = lost.map(function (x) { return extName(x.service) + ': ' + x.lost + ' не удалось'; }).join(', ');
+            foldSum('Ext', t, false, 'внешние сервисы: ' + t);
+        } else {
+            foldSum('Ext', 'отказов ' + limits + ', повторы спасли', true);
+        }
+        el.outerHTML = '<div id="ovExt">' + tbl('<tr><th>Сервис</th><th>429</th><th>сбои</th><th>не удалось</th><th>последний</th></tr>' +
+            list.map(function (x) {
+                return '<tr><td>' + esc(extName(x.service)) + '</td><td>' + fmt(x.limit) + '</td><td>' + fmt(x.error) +
+                    '</td><td' + (x.lost ? ' style="color:var(--bad)"' : '') + '>' + fmt(x.lost) + '</td><td>' + dt(x.last) + '</td></tr>';
+            }).join('')) + '</div>';
+    }
+
     // ---------- Сейчас на сайте ----------
     // Живые вкладки: клиент пингует раз в минуту, сервер помнит последние 2.5 мин.
     var ONLINE_PAGES = {
@@ -748,7 +780,7 @@
 
     // Статус системы: три подсистемы → плашка в шапке + три строки в обзоре.
     var sysState = {};
-    var SYS_NAMES = { Health: 'Сервер, база', Sources: 'Источники', Sync: 'Синк сабов' };
+    var SYS_NAMES = { Health: 'Сервер, база', Ext: 'Внешние сервисы', Sources: 'Источники', Sync: 'Синк сабов' };
     function foldSum(name, text, ok, problem) {
         var sum = document.getElementById('ov' + name + 'Sum');
         if (sum) { sum.textContent = '· ' + text; sum.style.color = ok ? 'var(--muted)' : 'var(--bad)'; }
@@ -756,7 +788,7 @@
         renderStatus();
     }
     function renderStatus() {
-        var names = ['Health', 'Sources', 'Sync'];
+        var names = ['Health', 'Ext', 'Sources', 'Sync'];
         var known = names.filter(function (n) { return sysState[n]; });
         var bad = known.filter(function (n) { return !sysState[n].ok; });
         var level = bad.length ? (sysState.Health && !sysState.Health.ok ? 'bad' : 'warn') : (known.length === names.length ? 'ok' : '');
