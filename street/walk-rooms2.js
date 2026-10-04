@@ -109,7 +109,7 @@
     const roadmapTex = () => cv(512, 340, (c, w, h) => {
         c.fillStyle = '#f8f8f4'; c.fillRect(0, 0, w, h); c.strokeStyle = '#c8c8cc'; c.lineWidth = 8; c.strokeRect(4, 4, w - 8, h - 8);
         c.fillStyle = '#2a3a8a'; c.font = '900 34px ' + UI; c.fillText('ROADMAP ✦ улица', 24, 52);
-        const items = [['✓', 'пианист и газета', '#2a8a4a'], ['✓', 'аниме-магазин', '#2a8a4a'], ['✓', 'квизы по всем словам', '#2a8a4a'], ['…', 'книги, которые можно читать', '#c8322a'], ['…', 'дома в две комнаты', '#c8322a'], ['?', 'ваша идея → 目安箱', '#7c6af8']];
+        const items = [['✓', 'пианист и газета', '#2a8a4a'], ['✓', 'аниме-магазин', '#2a8a4a'], ['✓', 'квизы по всем словам', '#2a8a4a'], ['✓', 'книги и рассказы', '#2a8a4a'], ['…', 'новые кварталы', '#c8322a'], ['?', 'ваша идея → 目安箱', '#7c6af8']];
         c.font = '600 25px ' + UI; items.forEach(([m, t, col], i) => { c.fillStyle = col; c.fillText(m, 30, 100 + i * 40); c.fillStyle = '#2a2a30'; c.fillText(t, 66, 100 + i * 40); });
         c.fillStyle = '#ffd23f'; c.fillRect(380, 230, 110, 90); c.fillStyle = '#5a4a1a'; c.font = '600 16px ' + UI; c.fillText('не забыть:', 390, 256); c.fillText('поспать 💤', 390, 282);
     });
@@ -159,7 +159,9 @@
                 // кресло
                 B(g, 0.52, 0.08, 0.5, '#2a2a3a', 0, 0.47, z0 + 0.82); B(g, 0.5, 0.62, 0.07, '#2a2a3a', 0, 0.82, z0 + 1.06); CY(g, 0.03, 0.03, 0.4, '#555', 0, 0.23, z0 + 0.82, 6);
                 light(g, 0x7c9cff, 0.9, 3.2, 0, 1.3, z0 + 0.4);
-                this.seats = [{ x: 0, z: z0 + 0.8, yaw: Math.PI, y: 0.51, pose: 'sit', acts: ['type'], role: 'dev', p: 1 }];
+                this.seats = [{ x: 0, z: z0 + 0.8, yaw: Math.PI, y: 0.51, pose: 'sit', acts: ['type'], role: 'dev', p: 1, fem: false,
+                    // разработчик всегда один и тот же: парень в тёмном худи и очках
+                    look: { fem: false, skin: '#f3d6bd', hair: '#16161c', hairStyle: 'short', eye: '#5a3420', top: '#2a2d3a', pants: '#1e2028', mouth: 'smile', blush: false, glasses: true, seed: 42 } }];
             } },
             // доска с планами
             { name: 'roadmap', rule: 'wall', walls: ['left', 'right'], w: 1.9, d: 0.1, h: 1.4, solid: false, build(g) {
