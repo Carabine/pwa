@@ -108,6 +108,10 @@ const PROVIDERS = {
         intro: true,
         audioLang: 'ja',
         autoSyncable: false,
+        // …зато свои EN-сабы под свой монтаж: японские выравниваем по ним кусками
+        // (subtitles/align-ref). У MegaPlay монтаж не как у ТВ-файлов из архива —
+        // сдвиг меняется по ходу серии (Dragon Ball Kai: −2 → −134 → −194с).
+        refSync: true,
         syncIntroEnd: true,
         // Мягкие английские сабы плеера — слоем поверх чистой картинки.
         overlaySubs: true,
@@ -168,6 +172,7 @@ const state = {
     provider: 'kodik',     // источник текущей дорожки: 'kodik' | 'megaplay'
     megaMal: null,         // MAL id для MegaPlay-дорожки (оригинальное аудио)
     megaIntro: null,       // { start, end } интро потока MegaPlay — помогает автосинку
+    megaSubUrl: null,      // EN-сабы MegaPlay (наш /proxy/seg) — эталон для синка японских (refSync)
     cues: [],
     activeCueIndex: -1,
     offset: 0,
@@ -1097,6 +1102,7 @@ async function selectEpisode(index) {
             state.qualities = prov.qualities ? (res.data.qualities || {}) : {};
             state.masterUrl = prov.qualities ? (res.data.auto || null) : null;
             state.megaIntro = prov.intro ? (res.data.intro || null) : null;
+            state.megaSubUrl = prov.refSync ? (res.data.subtitle || null) : null;
             state.pendingSeek = null;
             let url;
             if (prov.qualities) {
@@ -1786,8 +1792,9 @@ function autoSyncEligible() {
     if (window.AnimeiSettings && window.AnimeiSettings.get('autoSyncSubs') === false) return false;
     // Английский текст берётся с того же KAA, что и видео, — тайминги совпадают.
     if (state.enMode) return false;
-    // Несинкуемые источники (megaplay) — см. maybeAutoSync.
-    if (PROVIDERS[state.provider]?.autoSyncable === false) return false;
+    // Несинкуемые по звуку источники (megaplay) — см. maybeAutoSync; синк по их
+    // собственным субтитрам (refSync) при этом идёт.
+    if (PROVIDERS[state.provider]?.autoSyncable === false && !refSyncReady()) return false;
     const key = offsetStorageKey();
     if (state.autoSyncKey === key) return false;
     if (localStorage.getItem(key) !== null) return false;
@@ -1816,8 +1823,9 @@ async function autoSyncOnce() {
     if (localStorage.getItem(key) !== null) { state.autoSyncKey = key; setSyncing(false); return; }
     // autoSyncable:false (megaplay): alass не может вытащить аудио с их CDN
     // (extractWav упирается в таймаут ~110с) → автосинк только зря держит баннер
-    // «синхронизация» пару минут и всё равно ничего не находит. Пропускаем: для
-    // японской дорожки синк делает кнопка «Не совпадают?» (точный подбор по звуку).
+    // «синхронизация» пару минут и всё равно ничего не находит. Если у источника
+    // есть свои субтитры — выравниваем по ним (доли секунды), иначе пропускаем.
+    if (refSyncReady()) { await refSyncOnce(key); return; }
     if (PROVIDERS[state.provider]?.autoSyncable === false) { state.autoSyncKey = key; setSyncing(false); return; }
     // Английский режим: текст и видео с одного источника (KAA), синк не нужен.
     if (state.enMode) { state.autoSyncKey = key; setSyncing(false); return; }
@@ -1927,6 +1935,32 @@ async function autoSyncOnce() {
 // ставит расчёт в очередь (звук всей серии + проверка Whisper'ом, 1–3 мин), и
 // мы опрашиваем его, пока зритель на этой серии. Только японская речь: куски
 // сервер проверяет по японскому тексту реплик.
+// Синк по субтитрам самого источника (MegaPlay): японские реплики выравниваются
+// по его EN-сабам на сервере, ответ — куски сдвига, как у maybeSegments.
+function refSyncReady() {
+    return !!(PROVIDERS[state.provider]?.refSync && state.megaSubUrl);
+}
+async function refSyncOnce(key) {
+    state.autoSyncKey = key;
+    const all = state.cues.filter((c) => Number.isFinite(c.start)).slice(0, 1500);
+    if (all.length < 30) { setSyncing(false); return; }
+    setSyncing(true);
+    try {
+        const { data: res } = await client.post('subtitles/align-ref', {
+            refUrl: state.megaSubUrl,
+            starts: all.map((c) => c.start),
+            ends: all.map((c) => (Number.isFinite(c.end) ? c.end : c.start + 2)),
+        }, { timeout: 30000, silentErrors: true });
+        const segs = res.data && res.data.segments;
+        if (offsetStorageKey() !== key || localStorage.getItem(key) !== null) return;
+        if (Array.isArray(segs) && segs.length) {
+            applySegments(key, segs);
+            if (window.animeiTrack) animeiTrack('subs_refsync', String(segs.length));
+        }
+    } catch { /* не вышло — сабы остаются как есть, кнопка «Не совпадают?» на месте */ }
+    finally { setSyncing(false); }
+}
+
 async function maybeSegments() {
     const key = offsetStorageKey();
     if (state.segKey === key) return;

@@ -464,7 +464,7 @@
     // ---------- Внешние сервисы: отказы Shikimori и ИИ-провайдеров за 24 ч ----------
     // limit — ответили «слишком часто» (429), error — 5xx/сеть, lost — запрос так и
     // не удался даже после повторов и запасного провайдера.
-    var EXT_NAMES = { shikimori: 'Shikimori', groq: 'Groq', gemini: 'Gemini', openrouter: 'OpenRouter', ollama: 'Ollama' };
+    var EXT_NAMES = { shikimori: 'Shikimori', groq: 'Groq', gemini: 'Gemini', mistral: 'Mistral', openrouter: 'OpenRouter', ollama: 'Ollama' };
     function extName(s) { return EXT_NAMES[s] || s; }
     function renderExternal(list) {
         var el = document.getElementById('ovExt');
