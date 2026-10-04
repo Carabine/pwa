@@ -245,6 +245,9 @@
         var s = String(src || '').replace(/^www\./, '');
         var rd = s.match(/^reddit_(.+)$/);
         if (rd) return 'reddit · r/' + (REDDIT_SUBS[rd[1]] || rd[1]);
+        // ?r=seo-<страница> — кнопка на SEO-странице лендинга (/en/anime/<тайтл>/, /en/phrases/…)
+        var seo = s.match(/^seo-(.+)$/);
+        if (seo) return 'SEO · ' + seo[1].replace(/^phrase-/, 'фраза ').replace(/-hub$/, ' (список)');
         if (/googlequicksearchbox|^com\.google\.android/.test(s)) return 'google app';
         if (/telegram/.test(s)) return 'telegram';
         if (/^(android-app|com|org)\./.test(s)) return s.split('.').slice(-1)[0];

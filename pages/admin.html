@@ -582,6 +582,8 @@
         var s = String(src || '').replace(/^www\./, '');
         var rd = s.match(/^reddit_(.+)$/);
         if (rd) return 'r/' + (REDDIT_SUBS[rd[1]] || rd[1]);
+        var seo = s.match(/^seo-(.+)$/);
+        if (seo) return 'SEO · ' + seo[1].replace(/^phrase-/, 'фраза ').replace(/-hub$/, ' (список)');
         return s.replace(/\.com$/, '');
     }
     function loadPulse() {
