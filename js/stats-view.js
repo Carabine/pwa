@@ -202,7 +202,8 @@
         kanji_session: 'прописи: занятие', kanji_write: 'прописи: иероглиф',
         news_open: 'открыл JP News', news_story: 'читал историю', news_done: 'дочитал историю',
         news_quiz: 'тест к истории', news_word_saved: 'слово из новости',
-        subs_segments: 'сабы: кусочный сдвиг', subs_refsync: 'сабы: синк по источнику'
+        subs_segments: 'сабы: кусочный сдвиг', subs_refsync: 'сабы: синк по источнику',
+        word_open: 'открыл слово', word_skip: 'закрыл слово без сохранения'
     };
     var PAGE_LABELS = {
         'app/index': 'главная', 'app/catalog': 'каталог', 'app/player': 'плеер',
@@ -615,6 +616,8 @@
             case 'autosync': return { icon: '🎚', text: 'подгонял субтитры: ' + detailText({ event: ev, page: p }) };
             case 'subs_precise': return { icon: '🎚', text: detailText({ event: ev, page: p }) };
             case 'save_word': return { icon: '💾', text: 'сохранил слово ' + p, key: 'save' };
+            case 'word_open': return { icon: '👆', text: 'открыл слово ' + p, dim: true };
+            case 'word_skip': return { icon: '↩', text: 'закрыл слово ' + p + ' без сохранения', dim: true };
             case 'known_word': return { icon: '✅', text: 'отметил «уже знаю»: ' + p, key: 'known' };
             case 'explain': {
                 var ex = detailText({ event: ev, page: p });

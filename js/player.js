@@ -3021,6 +3021,7 @@ popupKnown?.addEventListener('click', () => {
         markKnownEverywhere(base);
         updateCoverage();
         updateKnownBtn(base);
+        if (state.popupContext) state.popupContext.outcome = 'known';
         if (window.animeiTrack) window.animeiTrack('known_word', base);
         showSnackbar(t('popup.knownAdded'), { duration: 2500 });
         closeWordPopup();
@@ -3033,12 +3034,22 @@ popupKnown?.addEventListener('click', () => {
 let popupLayer = null;
 function markPopupOpen() {
     if (popupLayer) return;
-    popupLayer = AnimeiBack.open(() => { popupLayer = null; popup.hidden = true; });
+    popupLayer = AnimeiBack.open(() => { popupLayer = null; popup.hidden = true; notePopupClosed(); });
 }
 function closeWordPopup() {
     if (popup.hidden) return;
     if (popupLayer) AnimeiBack.close(popupLayer);
-    else popup.hidden = true;
+    else { popup.hidden = true; notePopupClosed(); }
+}
+// Воронка «нажал на слово → сохранил»: 04.10.2026 из плеера за 10 дней не
+// сохранили ни одного слова поштучно, и было непонятно, где обрыв — не находят
+// слова или открывают и закрывают. word_open — открыл карточку слова,
+// word_skip — закрыл, ничего не сделав (не сохранил и не «уже знаю»).
+function notePopupClosed() {
+    const ctx = state.popupContext;
+    if (!ctx || !ctx.tok || ctx.outcome) return;
+    ctx.outcome = 'closed';
+    if (window.animeiTrack) window.animeiTrack('word_skip', ctx.tok.base);
 }
 
 // Узнаём один раз, настроен ли на сервере ИИ; если нет — кнопки разбора не будет
@@ -3057,7 +3068,10 @@ async function openWordPopup(tok, cue, event) {
     video.pause();
 
     popup.classList.remove('word-popup--sentence');
+    // Карточку другого слова открыли поверх — прошлое считается закрытым без действия
+    notePopupClosed();
     state.popupContext = { tok, cue, dict: null, event };
+    if (window.animeiTrack) window.animeiTrack('word_open', tok.base);
 
     popupWord.textContent = tok.base;
     updateKnownBtn(tok.base);
@@ -3477,6 +3491,7 @@ popupSave.addEventListener('click', async () => {
         // процент покрытия серии: маленькое видимое вознаграждение за клик.
         markKnownEverywhere(ctx.tok.base);
         updateCoverage();
+        ctx.outcome = 'saved';
         if (window.animeiTrack) window.animeiTrack('save_word', ctx.tok.base);
         rememberSessionWord(savedWord);
         // Подтверждение — на самой кнопке; куда попадёт слово — один раз.
