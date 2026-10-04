@@ -379,6 +379,7 @@
 <div id="rotate"><div class="ph"></div><div class="t">Коснитесь — улица развернётся во весь экран</div><div class="sub">Гулять удобнее, держа телефон горизонтально</div><button type="button" id="rotate-skip">Остаться вертикально</button></div>
 <div id="nowebgl"><div class="msg"></div><div class="why"></div><a href="#" onclick="location.reload(); return false;">Попробовать ещё раз</a></div>
 <script>if (/[?&]src=sample\b/.test(location.search)) document.write('<script src="./sample-words.js"><\/script>'); else if (location.protocol === 'file:') document.write('<script src="./words-busyd.js"><\/script>');</script>
+<script src="../js/stats.js" defer></script>
 <script src="./street-data.js"></script>
 <script type="module" onerror="window.__streetFail && window.__streetFail('Не загрузилась 3D-библиотека — похоже, проблема с сетью.', 'модули Three.js не загрузились')">
 /* Улица слов — 3D-прогулка. Three.js, процедурная геометрия, вывески как canvas-текстуры.

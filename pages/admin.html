@@ -263,6 +263,11 @@
         </div>
 
         <div class="box">
+            <div class="box__h">Приложения · 7д<span class="r">людей · сегодня</span></div>
+            <div id="pApps"><div class="msg">…</div></div>
+        </div>
+
+        <div class="box">
             <div class="box__h">Аккаунты <b id="pAccN"></b><span class="r">слова · время 7д · тайтл</span></div>
             <div id="pPeople"><div class="msg">Загрузка…</div></div>
         </div>
@@ -494,7 +499,9 @@
         'app/index': 'главная', 'app/catalog': 'каталог', 'app/player': 'плеер', 'app/watch': 'свой файл',
         'app/words': 'словарь', 'app/study': 'повторение', 'app/deck-study': 'колода', 'app/custom-study': 'своя учёба',
         'app/beginner': 'для новичка', 'app/progress': 'прогресс', 'app/settings': 'настройки',
-        'app/login': 'вход', 'app/feedback': 'отзыв', 'landing/index': 'лендинг'
+        'app/login': 'вход', 'app/feedback': 'отзыв', 'landing/index': 'лендинг',
+        'app/apps': 'приложения', 'app/kanji': 'прописи', 'app/street/walk': 'улица слов',
+        'app/news': 'JP News', 'app/news-story': 'JP News'
     };
     function pageName(p) { return ONLINE_PAGES[p] || p; }
     function devShort(ua) {
@@ -584,6 +591,12 @@
             if (d.dayKeys) document.getElementById('pChartFrom').textContent = d.dayKeys[0].slice(8) + '.' + d.dayKeys[0].slice(5, 7);
             document.getElementById('pTitles').innerHTML = meterRows(d.topTitles || [],
                 function (x) { return x.title; }, function (x) { return x.people; });
+            // Приложения: люди за 7 дней (полоса) и сегодня; нули показываем — это ответ.
+            var apps = d.apps || [], appMax = Math.max.apply(null, apps.map(function (a) { return a.people; }).concat([1]));
+            document.getElementById('pApps').innerHTML = apps.length ? apps.map(function (a) {
+                return '<div class="row meter" style="--w:' + Math.round(a.people / appMax * 100) + '%"><span class="l">' + esc(a.app) +
+                    '</span><span class="v n">' + fmt(a.people) + (a.today ? ' · ' + fmt(a.today) : '') + '</span></div>';
+            }).join('') : '<div class="row"><span class="l fnt">пока пусто</span></div>';
             document.getElementById('pSources').innerHTML = meterRows(d.topSources || [],
                 function (x) { return x.source.replace(/^www\./, '').replace(/\.com$/, ''); }, function (x) { return x.people; });
             document.getElementById('pPeople').innerHTML = d.accounts.length ? d.accounts.map(function (u) {

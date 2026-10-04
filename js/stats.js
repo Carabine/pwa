@@ -90,9 +90,21 @@
         send(String(event).slice(0, 40), String(detail || '-').slice(0, 200) || '-');
     };
 
-    // Авто-хит открытия страницы: /pages/catalog.html -> app/catalog
-    var file = (location.pathname.split('/').pop() || 'index.html').replace('.html', '');
-    send('page', 'app/' + (file || 'index'));
+    // Авто-хит открытия страницы: /pages/catalog.html -> app/catalog. Приложения
+    // в своих папках — по папке: /kanji/ -> app/kanji, /street/walk.html ->
+    // app/street/walk (иначе Прописи писались бы как главная, app/index).
+    function pageName() {
+        var parts = location.pathname.split('/').filter(Boolean);
+        var last = location.pathname.slice(-1) === '/' ? '' : (parts.pop() || '');
+        var file = last.replace('.html', '');
+        var dir = parts[parts.length - 1] || '';
+        if (dir && dir !== 'pages' && dir !== 'app') {
+            return 'app/' + dir + (file && file !== 'index' ? '/' + file : '');
+        }
+        return 'app/' + (file || 'index');
+    }
+    var PAGE = pageName();
+    send('page', PAGE);
 
     // Короткие метки вместо utm_source: ?r=lj в ссылке не выглядит рекламным
     // хвостом, а в панели разворачивается в понятное имя площадки. Неизвестный
@@ -144,9 +156,9 @@
     function ping() {
         if (automated || isOwnerDevice() || document.visibilityState !== 'visible') return;
         lastPing = Date.now();
-        var body = { visitorId: visitorId, page: 'app/' + (file || 'index') };
+        var body = { visitorId: visitorId, page: PAGE };
         // В плеере — что смотрит (плеер пишет тайтл в заголовок вкладки).
-        if (file === 'player') body.title = String(document.title || '').replace(/\s*—\s*Animei\s*$/, '').slice(0, 80);
+        if (PAGE === 'app/player') body.title = String(document.title || '').replace(/\s*—\s*Animei\s*$/, '').slice(0, 80);
         var uid = currentUserId();
         if (uid) body.userId = uid;
         fetch(domain + '/api/v1/stats/ping', {
@@ -190,7 +202,7 @@
         if (document.visibilityState === 'hidden') {
             if (Date.now() - navAt < NAV_GRACE_MS) return;
             hiddenAt = Date.now();
-            send('leave', 'app/' + (file || 'index'));
+            send('leave', PAGE);
             return;
         }
         if (hiddenAt) {
