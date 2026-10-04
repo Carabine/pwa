@@ -215,8 +215,12 @@
         const r = e.reason;
         // axios-ошибки запросов (4xx/5xx) — это не про воспроизведение, их видно в логах сервера.
         if (!r || r.isAxiosError || jsErrors >= 3) return;
-        jsErrors += 1;
         const msg = (r && r.message) || String(r);
+        // Браузер пропустил анимацию перехода между страницами (@view-transition в
+        // motion.css) — отклоняет своё же обещание. Зрителю ничем не мешает, а в
+        // «Сбоях плеера» висело как ошибка (04.10: Android Chrome 146, Kimetsu ep1).
+        if (/^Transition was (skipped|aborted)/.test(msg)) { e.preventDefault(); return; }
+        jsErrors += 1;
         note('rejection', msg.slice(0, 160));
         sentKinds.delete('js_error');
         report('js_error', 'unhandled rejection: ' + msg + (r && r.stack ? '\n' + r.stack.slice(0, 300) : ''));

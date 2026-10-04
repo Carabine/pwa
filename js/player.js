@@ -172,7 +172,8 @@ const state = {
     provider: 'kodik',     // источник текущей дорожки: 'kodik' | 'megaplay'
     megaMal: null,         // MAL id для MegaPlay-дорожки (оригинальное аудио)
     megaIntro: null,       // { start, end } интро потока MegaPlay — помогает автосинку
-    megaSubUrl: null,      // EN-сабы MegaPlay (наш /proxy/seg) — эталон для синка японских (refSync)
+    megaSubUrl: null,
+    fallbackEpNumber: null,  // серия, на которой остаёмся при автопереходе на другую дорожку      // EN-сабы MegaPlay (наш /proxy/seg) — эталон для синка японских (refSync)
     cues: [],
     activeCueIndex: -1,
     offset: 0,
@@ -711,6 +712,15 @@ function populateEpisodes(restoreSaved, keepCurrent) {
         return;
     }
 
+    // Автопереход на другую дорожку после ошибки потока — остаёмся на той же серии
+    // (сохранённая серия у каждой дорожки своя, у новой её обычно нет → была бы 1-я).
+    if (state.fallbackEpNumber != null) {
+        const want = state.fallbackEpNumber;
+        state.fallbackEpNumber = null;
+        const i = state.episodes.findIndex((e) => Number(e.number) === Number(want));
+        if (i >= 0) { selectEpisode(i); return; }
+    }
+
     const saved = parseInt(localStorage.getItem(epStorageKey()), 10);
     const epIndex = restoreSaved && Number.isInteger(saved) && saved < state.episodes.length ? saved : 0;
     selectEpisode(epIndex);
@@ -1121,13 +1131,16 @@ async function selectEpisode(index) {
             state.syncPromise = maybeAutoSync();
         } catch (err) {
             console.error(err);
-            // Английский режим: у этой серии дубляжа на выбранном источнике нет
-            // (наличие проверяется по первой серии) — пробуем следующую дорожку,
-            // а не оставляем зрителя с ошибкой.
+            // Серия не загрузилась с этого источника — пробуем следующую дорожку той же
+            // серии, а не оставляем зрителя с ошибкой. Английский режим: дубляжа нет
+            // (наличие проверяется по первой серии). Остальные: у AnimeJoy прямые файлы
+            // есть только у свежих тайтлов — у архивных дорожка по умолчанию отдавала 404
+            // (04.10.2026: Shigatsu wa Kimi no Uso, RU-интерфейс).
             const cur = currentSubOption();
             const idx = state.subOptions.indexOf(cur);
-            if (state.enMode && idx >= 0 && idx + 1 < state.subOptions.length && !isStaleGen(gen)) {
-                showSnackbar(t('player.enFallbackTrack'), { duration: 5000 });
+            if (idx >= 0 && idx + 1 < state.subOptions.length && !isStaleGen(gen)) {
+                showSnackbar(t(state.enMode ? 'player.enFallbackTrack' : 'player.trackFallback'), { duration: 5000 });
+                state.fallbackEpNumber = ep.number;
                 await selectTranslation(idx + 1);
                 return;
             }
