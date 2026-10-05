@@ -8,6 +8,24 @@
 
     var KEY = 'animei:visitorId';
     var visitorId = localStorage.getItem(KEY);
+    // id посетителя из ссылки лендинга (&vid=…, см. landing/js/stats.js): Safari на
+    // iOS не всегда отдаёт приложению localStorage лендинга. Берём только если
+    // своего id ещё нет — чужой vid из пересланной ссылки не перебьёт свой. Из
+    // адреса убираем сразу, чтобы дальше по ссылкам он не уходил.
+    var vidParam = null;
+    try {
+        var q = new URLSearchParams(location.search);
+        vidParam = q.get('vid');
+        if (vidParam !== null) {
+            q.delete('vid');
+            var rest = q.toString();
+            history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
+        }
+    } catch (e) { /* старый браузер — без переноса */ }
+    if (!visitorId && vidParam && /^[a-z0-9-]{8,64}$/i.test(vidParam)) {
+        visitorId = vidParam;
+        localStorage.setItem(KEY, visitorId);
+    }
     if (!visitorId) {
         visitorId = (window.crypto && crypto.randomUUID)
             ? crypto.randomUUID()
