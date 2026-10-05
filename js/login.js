@@ -8,15 +8,17 @@ function setText(selector, text) {
 
 function applyAuthMode() {
     const isLogin = authMode === 'login';
-    setText('#auth-title', t(isLogin ? 'auth.loginTitle' : 'auth.registerTitle'));
-    setText('#auth-subtitle', t(isLogin ? 'auth.loginSubtitle' : 'auth.registerSubtitle'));
+    setText('#auth-title', t(isLogin ? 'auth.loginTitleShort' : 'auth.registerTitle'));
+    setText('#auth-subtitle', t(isLogin ? 'auth.loginSubtitle' : 'auth.registerSubtitle'));   // старый закэшированный HTML
     setText('#submit-btn', t(isLogin ? 'auth.signIn' : 'auth.signUp'));
-    setText('#toggle-mode', t(isLogin ? 'auth.toRegister' : 'auth.toLogin'));
+    setText('#toggle-mode', t(isLogin ? 'auth.toRegisterShort' : 'auth.toLoginShort'));
     const pw = document.getElementById('password');
     if (pw) pw.autocomplete = isLogin ? 'current-password' : 'new-password';
     // «Забыли пароль?» — только в режиме входа: при регистрации забывать нечего.
     const forgot = document.getElementById('forgot-link');
     if (forgot) forgot.hidden = !isLogin;
+    const dot = document.getElementById('links-dot');
+    if (dot) dot.hidden = !isLogin;
     renderGoogleButton();   // «Sign in with» ↔ «Sign up with»
 }
 

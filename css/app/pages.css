@@ -1354,3 +1354,64 @@
 .oauth__or::before,
 .oauth__or::after { content: ""; flex: 1; height: 1px; background: var(--border, rgba(255,255,255,.1)); }
 
+/* ---- Вход, вариант A (05.10.2026): без карточки, логотип-плитка, поля без
+   видимых подписей, Google под формой, ссылки одной строкой ---- */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+.login-form--min {
+    max-width: 360px;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+}
+.login-form__mark {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 16px;
+    border-radius: 15px;
+    display: grid;
+    place-items: center;
+    font: 700 26px 'Noto Sans JP', sans-serif;
+    color: #fff;
+    background: linear-gradient(135deg, #7c8cff, #5b4ce0);
+    box-shadow: 0 10px 30px rgba(124, 140, 255, 0.35);
+}
+.login-form--min .login-form__title { font-size: 26px; margin-bottom: 24px; }
+.login-form--min .form-group { margin-bottom: 12px; }
+.login-form--min input { height: 48px; }
+.login-form--min #submit-btn { margin-top: 4px; }
+.login-form--min .oauth { margin: 20px 0 0; }
+.login-form--min .oauth__or { margin: 0 0 16px; }
+.login-form__links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 22px;
+    font-size: 14px;
+}
+.login-form__links .login-form__forgot,
+.login-form__links .login-form__toggle {
+    display: inline;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    color: var(--primary-hover);
+    white-space: nowrap;
+}
+.login-form__dot { color: var(--text-dim); }
+.login-form__dot[hidden] { display: none; }
+.login-form--min .login-form__back { margin-top: 20px; color: var(--text-dim); }
+
+.login-form__links [hidden] { display: none; }
