@@ -50,8 +50,17 @@
                 }
             }
             if (lang !== 'ru') document.write('<scr' + 'ipt src="../js/i18n/' + lang + '.js" defer></scr' + 'ipt>');
+            // Тексты в разметке русские: на другом языке форма мелькала по-русски и
+            // переводилась на глазах. Прячем её (место занято), пока login.js не
+            // применит перевод; страховка — показать через 2 с в любом случае.
+            if (lang !== 'ru') {
+                var root = document.documentElement;
+                root.classList.add('i18n-pending');
+                setTimeout(function () { root.classList.remove('i18n-pending'); }, 2000);
+            }
         })();
     </script>
+    <style>html.i18n-pending .login-form { visibility: hidden; }</style>
 </head>
 <body>
 <div class="app">

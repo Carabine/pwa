@@ -136,6 +136,9 @@ async function submitAuth() {
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();               // уже вошёл — уводит на главную
     applyAuthMode();
+    // Перевод применён — показываем форму (см. i18n-pending в <head> login.html)
+    if (typeof applyI18n === 'function') applyI18n();
+    document.documentElement.classList.remove('i18n-pending');
     initGoogleLogin();
     document.getElementById('google-btn')?.addEventListener('click', startGoogleLogin);
 
