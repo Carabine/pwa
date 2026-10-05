@@ -2444,7 +2444,11 @@ function maybeWordHint() {
     const close = tip.querySelector('.word-hint__x');
     close.setAttribute('aria-label', t('aria.close'));
     // Крестик — «понял, больше не показывай»
-    close.addEventListener('click', (e) => { e.stopPropagation(); markWordHintDone(); });
+    close.addEventListener('click', (e) => {
+        e.stopPropagation();
+        markWordHintDone();
+        if (window.animeiTrack) window.animeiTrack('hint', 'word:close');
+    });
     // В <body>, а не в строку под видео: та обрезает всё, что выходит за её край.
     // В полноэкранном режиме — внутрь видео-обёртки (иначе не видно поверх кадра).
     const host = document.fullscreenElement || document.body;
@@ -2457,6 +2461,9 @@ function maybeWordHint() {
     tip.style.top = (r.top - hb.top - tip.offsetHeight - 10) + 'px';
     tip.style.setProperty('--arrow', (r.left - hb.left + r.width / 2 - left) + 'px');
     const timer = setTimeout(hideWordHint, 8000);
+    // Показы подсказок пишем (их ≤3 на устройство): без них не понять, видел ли
+    // человек подсказку и всё равно не нажал. Нажатие — уже word_open.
+    if (window.animeiTrack) window.animeiTrack('hint', 'word:shown');
     // прокрутили или повернули экран — облачко уехало бы от слова. Только тот
     // скролл, что двигает слово: автопрокрутка списка реплик сюда не относится.
     const onMove = (e) => {

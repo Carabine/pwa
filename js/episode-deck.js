@@ -745,13 +745,13 @@
         if (e.key === 'Escape' && !overlay.hidden) closeModal();
     });
 
-    // Подсказка «Авто-колода» (05.10.2026): кто смотрит уже ~3 мин и ни разу не
+    // Подсказка «Авто-колода» (05.10.2026): кто смотрит уже ~8 мин и ни разу не
     // открывал авто-колоду, видит под кнопкой ту же тёмную карточку, что и
     // «нажми на слово» (player.js). Только когда кнопка на экране и ничего другого
     // не открыто; живёт 10 с, до 2 показов; нажал кнопку или крестик — никогда.
     const DECK_HINT_KEY = 'animei:deckHint';   // 'done' или число показов
     const DECK_HINT_MAX = 2;
-    const DECK_HINT_AFTER = 180;               // с реального просмотра на этой странице
+    const DECK_HINT_AFTER = 480;               // с реального просмотра на этой странице
     const video = document.getElementById('video');
     let deckHintShown = false, deckHintHide = null, deckWatched = 0, deckLastT = null;
 
@@ -789,7 +789,11 @@
         tip.querySelector('small').textContent = t('edeck.hintSub');
         const close = tip.querySelector('.word-hint__x');
         close.setAttribute('aria-label', t('aria.close'));
-        close.addEventListener('click', (e) => { e.stopPropagation(); markDeckHintDone(); });
+        close.addEventListener('click', (e) => {
+            e.stopPropagation();
+            markDeckHintDone();
+            if (window.animeiTrack) window.animeiTrack('hint', 'deck:close');
+        });
         document.body.appendChild(tip);
         // Карточка едет за кнопкой каждый кадр: на телефоне строка с репликой
         // над списком меняет высоту (1–2 строки) и кнопка прыгает на 25–40 px,
@@ -813,6 +817,8 @@
             btn.classList.remove('deck-hint-ring');
         };
         timer = setTimeout(hideDeckHint, 10000);
+        // нажатие на кнопку уже пишется как episode_deck open:N
+        if (window.animeiTrack) window.animeiTrack('hint', 'deck:shown');
         place();   // после deckHintHide: place может сразу же убрать карточку
     }
 

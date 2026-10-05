@@ -203,7 +203,8 @@
         news_open: 'открыл JP News', news_story: 'читал историю', news_done: 'дочитал историю',
         news_quiz: 'тест к истории', news_word_saved: 'слово из новости',
         subs_segments: 'сабы: кусочный сдвиг', subs_refsync: 'сабы: синк по источнику',
-        word_open: 'открыл слово', word_skip: 'закрыл слово без сохранения'
+        word_open: 'открыл слово', word_skip: 'закрыл слово без сохранения',
+        hint: 'подсказка в плеере'
     };
     var PAGE_LABELS = {
         'app/index': 'главная', 'app/catalog': 'каталог', 'app/player': 'плеер',
@@ -254,6 +255,11 @@
         return s.replace(/\.com$/, '');
     }
     var STUDY_LABELS = { srs: 'повторение', cram: 'зубрёжка' };
+    // Подсказки в плеере (v0.0.696): показ и крестик; нажатие видно по word_open / episode_deck
+    var HINT_LABELS = {
+        'word:shown': 'увидел подсказку «нажми на слово»', 'word:close': 'закрыл подсказку «нажми на слово»',
+        'deck:shown': 'увидел подсказку «Авто-колода»', 'deck:close': 'закрыл подсказку «Авто-колода»'
+    };
 
     function esc(s) {
         return String(s).replace(/[&<>"]/g, function (c) {
@@ -323,6 +329,7 @@
                 var whole = me[1] ? ' (по всему аниме)' : '';
                 return me[2] === 'open' ? 'открыл подбор колоды' + whole + ': ' + me[3] + ' сл.' : 'собрал колоду' + whole + ': ' + me[3] + ' сл.';
             }
+            case 'hint': return HINT_LABELS[p] || p;
             case 'learn_lang': return { ja: 'японский', en: 'английский' }[p] || p;
             case 'kanji_session': {
                 var mk = p.split(':');
@@ -575,7 +582,7 @@
     // Шаги, которые относятся к текущему просмотру — рисуем с отступом.
     var UNDER_WATCH = {
         voiceover: 1, subs_missing: 1, subs_precise: 1, autosync: 1,
-        video_error: 1, resume: 1, episode_end: 1, explain: 1, tts: 1, clip_recut: 1
+        video_error: 1, resume: 1, episode_end: 1, explain: 1, tts: 1, clip_recut: 1, hint: 1
     };
 
     function mmss(sec) {
@@ -621,6 +628,7 @@
             case 'subs_precise': return { icon: '🎚', text: detailText({ event: ev, page: p }) };
             case 'save_word': return { icon: '💾', text: 'сохранил слово ' + p, key: 'save' };
             case 'word_open': return { icon: '👆', text: 'открыл слово ' + p, dim: true };
+            case 'hint': return { icon: '💬', text: HINT_LABELS[p] || 'подсказка: ' + p, dim: true };
             case 'word_skip': return { icon: '↩', text: 'закрыл слово ' + p + ' без сохранения', dim: true };
             case 'known_word': return { icon: '✅', text: 'отметил «уже знаю»: ' + p, key: 'known' };
             case 'explain': {
