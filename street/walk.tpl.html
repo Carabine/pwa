@@ -309,6 +309,18 @@
         @supports not selector(::-webkit-scrollbar) { #talk .log, #talk .opts, #panel .pb, #write, #book .bb, #book .shelf .row { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.25) transparent; } #paper .body, #book .page { scrollbar-width: thin; scrollbar-color: rgba(80,50,20,0.3) transparent; } }
         /* лента диалога мягко растворяется сверху */
         #talk .log { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22px); mask-image: linear-gradient(to bottom, transparent 0, #000 22px); }
+        #sample-offer { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 74px); transform: translateX(-50%); width: min(400px, calc(100vw - 32px)); z-index: 30; padding: 16px 16px 14px; border-radius: 16px; background: rgba(14,14,24,0.9); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset, 0 16px 40px rgba(0,0,0,0.6); color: #fff; animation: so-in .35s ease-out; }
+        #sample-offer[hidden], #sample-chip[hidden] { display: none; }
+        #sample-offer .so-t { display: block; font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+        #sample-offer .so-p { margin: 0 0 12px; font-size: 13px; line-height: 1.4; color: rgba(255,255,255,0.72); }
+        #sample-offer .so-acts { display: flex; gap: 8px; }
+        #sample-offer .so-acts .btn { padding: 10px 14px; font-size: 13px; }
+        #sample-offer .so-acts #so-go { flex: 1; }
+        #sample-offer .so-acts #so-no { font-size: 13px; padding: 10px 14px; }
+        @keyframes so-in { from { opacity: 0; transform: translate(-50%, -6px); } to { opacity: 1; transform: translateX(-50%); } }
+        #sample-chip { align-self: flex-start; margin-top: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(10,10,20,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset; color: rgba(255,255,255,0.85); font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+        #sample-chip u { text-decoration: none; color: #a5b4fc; }
+        body.loading #sample-offer, body.loading #sample-chip { visibility: hidden; }
         #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 14px; letter-spacing: 0.04em; pointer-events: none; z-index: 40; transition: opacity .4s; }
     </style>
     <script>
@@ -334,6 +346,7 @@
     <div class="q">
         <div class="name"><span id="q-emoji"></span><span id="q-name"></span></div>
         <div class="sub" id="q-sub"></div>
+        <a id="sample-chip" href="#" hidden>Тестовая колода · <u>к своим словам</u></a>
     </div>
 </div>
 <div id="dots"></div>
@@ -373,6 +386,12 @@
     <div class="hb"><span id="h-state" class="state"></span><button class="btn small" id="h-review">Повторить</button><span id="h-key" class="key">R</span></div>
 </div>
 <div id="toast"></div>
+<!-- Своих слов мало — улица почти тёмная: предлагаем погулять по тестовой колоде (walk.js, sampleOffer) -->
+<div id="sample-offer" hidden>
+    <b class="so-t"></b>
+    <p class="so-p"></p>
+    <div class="so-acts"><button class="btn" id="so-go">Посмотреть тестовую колоду</button><button class="btn ghost" id="so-no">Остаться</button></div>
+</div>
 <div id="fps"></div>
 <div id="loading">Зажигаем вывески…</div>
 <div id="place"><div class="jp"></div><div class="ru"></div></div>

@@ -2381,13 +2381,44 @@ const rainBtn = panel.querySelector('[data-rain]'); rainBtn.hidden = false; rain
 rainBtn.addEventListener('click', () => { opts.rain = !opts.rain; saveSet({ rain: opts.rain }); rainBtn.classList.toggle('on', opts.rain); if (rain) rain.visible = opts.rain; });
 const reflBtn = { classList: { remove() {}, toggle() {} } }; // кнопки отражений больше нет
 
+// ---- тестовая колода для почти пустого словаря ----
+// Улица — по вывеске на слово; у новичка их 0–15, и улица выглядит мёртвой.
+// Предлагаем погулять по тестовой колоде (снимок словаря автора, sample-words.js,
+// ~670 вывесок во всех состояниях). «Остаться» — больше не предлагаем, пока
+// слов так же мало (ключ помнит, при скольких отказался).
+const SAMPLE_OFFER_KEY = 'street:sampleOffer';
+const SAMPLE_OFFER_BELOW = 20;
+function sampleOffer(n) {
+    if (n >= SAMPLE_OFFER_BELOW) return;
+    let declined = null;
+    try { declined = localStorage.getItem(SAMPLE_OFFER_KEY); } catch (e) { /* приватный режим */ }
+    if (declined !== null && n <= Number(declined) + 4) return;
+    const el = document.getElementById('sample-offer');
+    el.querySelector('.so-t').textContent = n ? 'Твоя улица пока почти пустая' : 'У тебя пока нет своих слов';
+    el.querySelector('.so-p').textContent = (n
+        ? 'Каждое сохранённое слово — своя вывеска, а у тебя их ' + n + '. '
+        : 'Сейчас горит встроенный набор. ')
+        + 'Загляни на улицу с тестовой колодой: больше 600 слов — выученные, на повторении, новые.';
+    el.hidden = false;
+    if (document.pointerLockElement) document.exitPointerLock();
+    document.getElementById('so-go').onclick = () => { const u = new URL(location.href); u.searchParams.set('src', 'sample'); location.href = u.toString(); };
+    document.getElementById('so-no').onclick = () => { el.hidden = true; try { localStorage.setItem(SAMPLE_OFFER_KEY, String(n)); } catch (e) { /* ок */ } };
+}
+// в тестовой колоде — метка сверху и путь назад к своим словам
+if (SAMPLE) {
+    const chip = document.getElementById('sample-chip');
+    chip.hidden = false;
+    chip.addEventListener('click', (e) => { e.preventDefault(); const u = new URL(location.href); u.searchParams.delete('src'); saveSet({ source: 'real' }); location.href = u.toString(); });
+}
+
 // ---- загрузка ----
 // японский шрифт: первая постройка ждёт его (не дольше 1,5 с) — раньше улица строилась дважды
 const fontReady = (document.fonts && document.fonts.load) ? Promise.race([document.fonts.load('700 20px "Noto Sans JP"').then((l) => l.length > 0).catch(() => false), new Promise((r) => setTimeout(() => r(false), 1500))]) : Promise.resolve(true);
 let builtBeforeFont = false;
 function load() {
     data = source === 'real' ? D.loadReal() : D.buildDemo();
-    if (source === 'real' && !data.words.length) { toast('В этом браузере нет слов — показан встроенный набор'); data = D.buildDemo(); source = 'demo'; }
+    const ownCount = source === 'real' ? data.words.length : -1;
+    if (source === 'real' && !data.words.length) { data = D.buildDemo(); source = 'demo'; }
     const go = () => {
         data.words.forEach((w) => { w._state = D.wordState(w, data, today); w._color = colorFor(w); });
         quarters = D.buildQuarters(data, 60);
@@ -2396,6 +2427,7 @@ function load() {
         camera.position.set(0, 1.6, 2); yaw = tYaw = 0; pitch = tPitch = 0.02; vel.set(0, 0, 0);
         ensureBlocks(); updateHud(true); document.body.classList.remove('loading');
         { const tj = THEME_JP[th.id] || ['', '']; const bi = blockAt(camera.position.z); banner(tj[0], tj[1] + (blocks[bi] ? ' · ' + blocks[bi].q.name : '')); }
+        if (ownCount >= 0) sampleOffer(ownCount);
     };
     const run = () => fontReady.then((ok) => { if (!ok) builtBeforeFont = true; go(); });
     if (source === 'real' || data.source === 'owner') Promise.all([D.loadJlpt(), fontReady]).then(([m]) => { jlptMap = m || {}; run(); }); else run();
