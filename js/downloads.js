@@ -7,8 +7,8 @@
 //    cacheMediaFromUrl (video-store.js) сам регистрирует каждый файл через
 //    AnimeiDownloads.track, так что видны и докачка из учёбы, и прогрев после
 //    сохранения слова;
-//  • значок в шапке рядом со значком «Нет сети» — пока что-то грузится; по тапу
-//    окно со списком;
+//  • окно со списком — из настроек («Офлайн-доступ»); значка в шапке нет:
+//    фоновая докачка идёт молча;
 //  • разборы: сервер считает их сам при сохранении слова, а сюда забираем уже
 //    готовые пачкой (POST /explain/cached — без обращения к ИИ и без траты
 //    лимита «Разобрать»);
@@ -30,7 +30,7 @@
     function emit() {
         if (renderQueued) return;
         renderQueued = true;
-        requestAnimationFrame(() => { renderQueued = false; renderChip(); renderSheet(); });
+        requestAnimationFrame(() => { renderQueued = false; renderSheet(); });
     }
 
     function prune() {
@@ -267,60 +267,9 @@
         if (e.detail && e.detail.online) { scheduleExplains(1000); }
     });
 
-    // ---------- Значок в шапке ----------
-    const DL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><polyline points="7 10 12 15 17 10"/><path d="M5 20h14"/></svg>';
-    let chip = null;
-
-    function ensureChip() {
-        if (chip && chip.isConnected) return chip;
-        chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = 'offline-chip dl-chip';
-        chip.innerHTML = '<span class="offline-chip__ico dl-chip__ico"></span><span class="dl-chip__count"></span>';
-        chip.addEventListener('click', openSheet);
-        const right = document.querySelector('.header__right');
-        const anchor = right && (right.querySelector('.offline-chip:not(.dl-chip)') || right.querySelector('.profile-wrap'));
-        if (right && anchor) right.insertBefore(chip, anchor);
-        else if (right) right.appendChild(chip);
-        else return null;
-        return chip;
-    }
-
-    // Значок — только пока что-то РЕАЛЬНО качается: появляется, если работа
-    // длится дольше SHOW_DELAY (короткие фоновые проверки — например, «нет ли
-    // готовых разборов» при каждом запуске — его не дёргают), и уходит сразу,
-    // как всё скачано, без галочки «готово».
-    const SHOW_DELAY = 800;
-    let showTimer = null;
-    function renderChip() {
-        const n = activeCount();
-        if (n > 0 && !(chip && chip.isConnected)) {
-            if (!showTimer) showTimer = setTimeout(() => { showTimer = null; if (activeCount()) renderChipNow(); }, SHOW_DELAY);
-            return;
-        }
-        renderChipNow();
-    }
-    function renderChipNow() {
-        const n = activeCount();
-        if (n > 0) {
-            const el = ensureChip();
-            if (!el) return;
-            const paused = !online();
-            el.classList.toggle('is-busy', !paused);
-            el.classList.toggle('is-done', false);
-            el.classList.toggle('is-paused', paused);
-            el.querySelector('.dl-chip__ico').innerHTML = DL_ICON;
-            el.querySelector('.dl-chip__count').textContent = String(n);
-            const label = tt('dl.title', 'Загрузки для офлайна') + ': ' + n + (paused ? ' — ' + tt('dl.state.paused', 'ждёт сеть') : '');
-            el.title = label;
-            el.setAttribute('aria-label', label);
-        } else {
-            // Всё скачано — значок уходит сразу (окно, если открыто, остаётся).
-            clearTimeout(showTimer);
-            showTimer = null;
-            if (chip) { chip.remove(); chip = null; }
-        }
-    }
+    // Значка в шапке нет (v0.0.693): фоновая докачка мелькала им на каждом
+    // запуске и ломала шапку на телефоне. Список загрузок открывается из
+    // настроек (блок «Офлайн-доступ», AnimeiDownloads.open).
 
     // ---------- Окно со списком ----------
     let sheet = null;          // { overlay, body, modal }

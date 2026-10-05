@@ -160,6 +160,7 @@ window.I18N_UK = {
         'settings.offline.all': '✓ Усе вже на пристрої — повторення працює без мережі',
         'settings.offline.btn': 'Завантажити все',
         'settings.offline.stop': 'Зупинити',
+        'settings.offline.list': 'Список завантажень',
         'settings.offline.progress': 'Завантажено {done} з {total}',
         'settings.offline.phase.clips': 'відео',
         'settings.offline.phase.audio': 'звук',

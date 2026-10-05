@@ -164,6 +164,7 @@ const I18N = {
         'settings.offline.all': '✓ Всё уже на устройстве — повторение работает без сети',
         'settings.offline.btn': 'Загрузить всё',
         'settings.offline.stop': 'Остановить',
+        'settings.offline.list': 'Список загрузок',
         'settings.offline.progress': 'Загружено {done} из {total}',
         'settings.offline.phase.clips': 'видео',
         'settings.offline.phase.audio': 'звук',

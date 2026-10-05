@@ -479,33 +479,8 @@ a[href$="watch.html"] {
 
 /* ========== ЗАГРУЗКИ ДЛЯ ОФЛАЙНА (js/downloads.js) ==========
 
-   Тот же значок в шапке, что «Нет сети», — рядом с ним, пока что-то качается:
-   стрелка с бегущим кольцом и число в работе. По тапу — окно со списком.
-   Число не прячем и на узком экране: без него значок непонятен. */
-.dl-chip { gap: 5px; padding: 0 9px 0 7px; }
-.dl-chip__ico { position: relative; width: 18px; height: 18px; align-items: center; justify-content: center; }
-.dl-chip__ico svg { width: 13px; height: 13px; }
-.dl-chip__count { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text); }
-.dl-chip.is-busy .dl-chip__ico::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    border: 2px solid var(--border);
-    border-top-color: var(--primary);
-    animation: dl-spin 0.9s linear infinite;
-}
-.dl-chip.is-busy .dl-chip__ico { color: var(--primary); }
-.dl-chip.is-paused .dl-chip__ico { color: var(--text-dim); }
-.dl-chip.is-done .dl-chip__ico { color: var(--success); }
-@keyframes dl-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) {
-    .dl-chip.is-busy .dl-chip__ico::before { animation: none; border-top-color: var(--border); }
-}
-@media (max-width: 560px) {
-    .dl-chip { padding: 0 8px 0 6px; }
-}
-
+   Окно со списком загрузок (из настроек). Значка в шапке больше нет (v0.0.693):
+   фоновая докачка мелькала им и ломала шапку на телефоне. */
 .dl-sheet { max-width: 460px; }
 .dl-sheet__body { max-height: min(60dvh, 520px); overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
 .dl-sheet__sub { margin: 0 0 10px; color: var(--text-muted); font-size: 13px; line-height: 1.45; }

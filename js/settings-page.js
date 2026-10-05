@@ -285,6 +285,8 @@
         renderStatus();
     });
     stopBtn.addEventListener('click', () => D.cancelAll());
+    // Значка загрузок в шапке нет — список открывается отсюда
+    document.getElementById('offline-list')?.addEventListener('click', () => D.open());
 
     // Уход со страницы обрывает загрузку — предупреждаем, пока она идёт.
     window.addEventListener('beforeunload', (e) => {

@@ -160,6 +160,7 @@ window.I18N_EN = {
         'settings.offline.all': '✓ Everything is on this device — reviews work offline',
         'settings.offline.btn': 'Download all',
         'settings.offline.stop': 'Stop',
+        'settings.offline.list': 'Downloads list',
         'settings.offline.progress': 'Downloaded {done} of {total}',
         'settings.offline.phase.clips': 'videos',
         'settings.offline.phase.audio': 'audio',
