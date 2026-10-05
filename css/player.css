@@ -4108,36 +4108,73 @@ body.is-en #reading-toggle {
     color: var(--text-muted);
 }
 
-/* Подсказка «нажми на слово» (v0.0.690): облачко над словом в строке под видео
-   + мягкое кольцо вокруг слова. Не ловит нажатия — само слово под ним кликается. */
+/* Подсказка «нажми на слово» (v0.0.692): тёмная карточка с жестом над словом в
+   строке под видео + мягкое кольцо вокруг слова. Нажатия ловит только крестик —
+   само слово под карточкой кликается. */
 .word-hint {
     position: absolute;
     z-index: 60;
-    padding: 6px 11px;
-    border-radius: 10px;
-    background: #a5b4fc;
-    color: #0b0b14;
-    font: 600 12.5px/1.25 Inter, system-ui, sans-serif;
+    display: flex;
+    align-items: center;
+    padding: 9px 6px 9px 10px;
+    border-radius: 12px;
+    background: #1d1d2c;
+    border: 1px solid rgba(165, 180, 252, 0.18);
+    color: #ececf6;
+    font-family: Inter, system-ui, sans-serif;
     white-space: nowrap;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
     pointer-events: none;
-    animation: word-hint-in 0.25s ease-out;
+    animation: word-hint-in 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 .word-hint::after {
     content: "";
     position: absolute;
     left: var(--arrow, 50%);
     bottom: -6px;
-    margin-left: -6px;
-    border: 6px solid transparent;
-    border-bottom: 0;
-    border-top-color: #a5b4fc;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    background: #1d1d2c;
+    border-right: 1px solid rgba(165, 180, 252, 0.18);
+    border-bottom: 1px solid rgba(165, 180, 252, 0.18);
+    transform: rotate(45deg);
 }
+.word-hint__ic {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+    border-radius: 50%;
+    background: rgba(129, 140, 248, 0.16);
+    color: #a5b4fc;
+}
+.word-hint__tx { display: flex; flex-direction: column; gap: 1px; }
+.word-hint__tx b { font-size: 13.5px; font-weight: 650; line-height: 1.25; color: #fff; }
+.word-hint__tx small { font-size: 12px; line-height: 1.25; color: #9d9db8; }
+.word-hint__x {
+    pointer-events: auto;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    margin-left: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #8b8ba6;
+    cursor: pointer;
+}
+.word-hint__x:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 .tok--hint {
     border-radius: 6px;
     animation: word-hint-ring 1.6s ease-out 2;
 }
-@keyframes word-hint-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes word-hint-in { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes word-hint-ring {
     0% { box-shadow: 0 0 0 0 rgba(165, 180, 252, 0.55); }
     100% { box-shadow: 0 0 0 9px rgba(165, 180, 252, 0); }

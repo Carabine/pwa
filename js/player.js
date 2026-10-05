@@ -2398,7 +2398,7 @@ function updateNowCue(idx) {
 // 04–05.10.2026 новички почти не нажимали на слова в субтитрах (на видео у них
 // английские сабы, японская строка — ниже). Облачко над словом в строке под
 // видео: в паузу (человек как раз читает) или раз через ~20 с просмотра. Само
-// исчезает (6 с / смена реплики), не перекрывает нажатия, не больше 3 показов,
+// исчезает (8 с / смена реплики; крестик — навсегда), не перекрывает нажатия, не больше 3 показов,
 // после первого открытого слова — никогда.
 const WORD_HINT_KEY = 'animei:wordHint';   // 'done' или число показов
 const WORD_HINT_MAX = 3;
@@ -2428,7 +2428,15 @@ function maybeWordHint() {
     const tip = document.createElement('div');
     tip.className = 'word-hint';
     tip.setAttribute('role', 'status');
-    tip.textContent = t('player.wordHint');
+    tip.innerHTML = '<span class="word-hint__ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M12 10.5V9a1.5 1.5 0 0 1 3 0v2"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.5a6 6 0 0 1-5-2.7L4 15a1.5 1.5 0 0 1 2.5-1.7L9 16"/></svg></span>'
+        + '<span class="word-hint__tx"><b></b><small></small></span>'
+        + '<button type="button" class="word-hint__x"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>';
+    tip.querySelector('b').textContent = t('player.wordHint');
+    tip.querySelector('small').textContent = t('player.wordHintSub');
+    const close = tip.querySelector('.word-hint__x');
+    close.setAttribute('aria-label', t('aria.close'));
+    // Крестик — «понял, больше не показывай»
+    close.addEventListener('click', (e) => { e.stopPropagation(); markWordHintDone(); });
     // В <body>, а не в строку под видео: та обрезает всё, что выходит за её край.
     // В полноэкранном режиме — внутрь видео-обёртки (иначе не видно поверх кадра).
     const host = document.fullscreenElement || document.body;
@@ -2440,7 +2448,7 @@ function maybeWordHint() {
     tip.style.left = left + 'px';
     tip.style.top = (r.top - hb.top - tip.offsetHeight - 10) + 'px';
     tip.style.setProperty('--arrow', (r.left - hb.left + r.width / 2 - left) + 'px');
-    const timer = setTimeout(hideWordHint, 6000);
+    const timer = setTimeout(hideWordHint, 8000);
     // прокрутили или повернули экран — облачко уехало бы от слова
     const onMove = () => hideWordHint();
     window.addEventListener('scroll', onMove, { passive: true, capture: true, once: true });
