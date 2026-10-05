@@ -1339,3 +1339,18 @@
     .words-bulkbar__btn { padding: 0 10px; }
     .words-bulkbar { gap: 4px; padding: 8px 6px; }
 }
+
+/* Вход через Google над формой: официальная кнопка + разделитель «или» */
+.oauth { margin: 4px 0 18px; }
+.oauth__btn { display: flex; justify-content: center; min-height: 44px; }
+.oauth__or {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+    color: var(--text-muted, #8a8aa0);
+    font-size: 0.85rem;
+}
+.oauth__or::before,
+.oauth__or::after { content: ""; flex: 1; height: 1px; background: var(--border, rgba(255,255,255,.1)); }
+

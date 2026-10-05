@@ -68,6 +68,11 @@
         <div class="login-form">
             <h2 class="login-form__title" id="auth-title">Welcome back</h2>
             <p class="login-form__subtitle" id="auth-subtitle">Sign in to continue learning</p>
+            <!-- Вход через Google: блок показывается, только если на сервере задан Client ID -->
+            <div class="oauth" id="google-login" hidden>
+                <div class="oauth__btn" id="google-btn"></div>
+                <div class="oauth__or"><span data-i18n="auth.or">или</span></div>
+            </div>
             <form id="auth-form">
                 <div class="form-group">
                     <label for="email" data-i18n="auth.email">Email</label>

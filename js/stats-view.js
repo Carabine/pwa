@@ -310,7 +310,8 @@
             case 'return': return 'через ' + awayText(p);
             case 'auth':
                 return { login: 'вошёл', register: 'зарегистрировался', logout: 'вышел',
-                    forgot_request: 'запросил сброс пароля', forgot_done: 'сбросил пароль' }[p] || p;
+                    forgot_request: 'запросил сброс пароля', forgot_done: 'сбросил пароль',
+                    login_google: 'вошёл через Google', register_google: 'зарегистрировался через Google' }[p] || p;
             case 'install':
                 return { installed: 'приложение установлено', click: 'нажал «установить»', accepted: 'согласился установить',
                     dismissed: 'отказался от установки', dismiss: 'закрыл предложение установить' }[p] || p;

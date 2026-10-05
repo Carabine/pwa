@@ -17,6 +17,70 @@ function applyAuthMode() {
     // «Забыли пароль?» — только в режиме входа: при регистрации забывать нечего.
     const forgot = document.getElementById('forgot-link');
     if (forgot) forgot.hidden = !isLogin;
+    renderGoogleButton();   // «Sign in with» ↔ «Sign up with»
+}
+
+// ---------- Вход через Google (Google Identity Services) ----------
+// Кнопка появляется, только если на сервере задан Client ID (GET auth/config).
+// Google отдаёт ID-токен; сервер проверяет его получателя и подпись и находит
+// или заводит аккаунт по подтверждённой почте. Дальше — как обычный вход.
+let googleReady = false;
+let googleSubmitting = false;
+async function initGoogleLogin() {
+    let cid = null;
+    try {
+        const { data } = await client.get(domain + '/api/v1/auth/config', { authorization: false, silentErrors: true });
+        cid = data && data.googleClientId;
+    } catch { return; }
+    if (!cid) return;
+    const loaded = await new Promise((resolve) => {
+        const s = document.createElement('script');
+        s.src = 'https://accounts.google.com/gsi/client';
+        s.async = true;
+        s.onload = () => resolve(true);
+        s.onerror = () => resolve(false);
+        document.head.appendChild(s);
+    });
+    if (!loaded || !window.google?.accounts?.id) return;
+    google.accounts.id.initialize({ client_id: cid, callback: onGoogleCredential, ux_mode: 'popup', auto_select: false });
+    googleReady = true;
+    document.getElementById('google-login').hidden = false;
+    renderGoogleButton();
+}
+
+function renderGoogleButton() {
+    const slot = document.getElementById('google-btn');
+    if (!googleReady || !slot) return;
+    slot.innerHTML = '';
+    google.accounts.id.renderButton(slot, {
+        theme: 'filled_black',
+        size: 'large',
+        shape: 'pill',
+        text: authMode === 'login' ? 'signin_with' : 'signup_with',
+        width: Math.min(400, slot.clientWidth || 320),
+        locale: document.documentElement.lang || 'en',
+    });
+}
+
+async function onGoogleCredential(resp) {
+    if (googleSubmitting || authSubmitting || !resp || !resp.credential) return;
+    googleSubmitting = true;
+    const slot = document.getElementById('google-btn');
+    formMessage(slot, '');
+    try {
+        const { data } = await client.post(domain + '/api/v1/auth/oauth',
+            { provider: 'google', idToken: resp.credential }, { authorization: false, silentErrors: true });
+        setRefreshedTokens(data);
+        // Как при обычном входе: следы прошлого аккаунта — вон, гостевые слова — в аккаунт
+        clearAccountScopedState();
+        if (data.email) localStorage.setItem('animei:email', data.email);
+        await syncGuestWordsToAccount();
+        if (window.animeiTrack) animeiTrack('auth', data.created ? 'register_google' : 'login_google');
+        window.location.href = '../index.html';
+    } catch (err) {
+        formMessage(slot, err?.response?.data?.code ? errorText(err) : t('auth.googleError'));
+        googleSubmitting = false;
+    }
 }
 
 let authSubmitting = false;
@@ -69,6 +133,7 @@ async function submitAuth() {
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();               // уже вошёл — уводит на главную
     applyAuthMode();
+    initGoogleLogin();
 
     document.getElementById('auth-form').addEventListener('submit', (e) => {
         e.preventDefault();

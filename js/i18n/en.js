@@ -196,6 +196,8 @@ window.I18N_EN = {
         'auth.success': "You're signed in",
         'auth.error': 'Something went wrong — check your email and password',
         'auth.forgot': 'Forgot your password?',
+        'auth.or': 'or',
+        'auth.googleError': "Couldn't sign in with Google — please try again",
         'reset.title': 'Password recovery',
         'reset.subtitle': 'We will email you a link to set a new password',
         'reset.send': 'Send the link',
