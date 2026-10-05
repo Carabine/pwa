@@ -19,17 +19,20 @@ function applyAuthMode() {
     if (forgot) forgot.hidden = !isLogin;
     const dot = document.getElementById('links-dot');
     if (dot) dot.hidden = !isLogin;
-    renderGoogleButton();   // «Sign in with» ↔ «Sign up with»
 }
 
-// ---------- Вход через Google (Google Identity Services) ----------
-// Кнопка появляется, только если на сервере задан Client ID (GET auth/config).
-// Google отдаёт ID-токен; сервер проверяет его получателя и подпись и находит
-// или заводит аккаунт по подтверждённой почте. Дальше — как обычный вход.
-let googleReady = false;
+// ---------- Вход через Google ----------
+// Кнопка — своя (готова сразу, на языке интерфейса, в стиле формы). Готовая
+// кнопка Google (renderButton) рисовалась в два этапа: пустая оболочка, потом
+// персональная «Sign in as … » с почтой и аватаркой — на глазах у пользователя,
+// и это не отключается. По нажатию — стандартное окно выбора аккаунта Google
+// (token client), access-токен уходит на сервер; тот проверяет, что токен выдан
+// именно нашему клиенту (aud), и находит или заводит аккаунт по почте.
+let googleTokenClient = null;
 let googleSubmitting = false;
 async function initGoogleLogin() {
     const box = document.getElementById('google-login');
+    const btn = document.getElementById('google-btn');
     const off = () => { if (box) box.hidden = true; };
     let cid = null;
     try {
@@ -37,6 +40,8 @@ async function initGoogleLogin() {
         cid = data && data.googleClientId;
     } catch { off(); return; }
     if (!cid) { off(); return; }
+    // Скрипт Google грузим заранее: окно входа должно открыться прямо в обработчике
+    // нажатия, иначе браузер посчитает его навязанным и заблокирует.
     const loaded = await new Promise((resolve) => {
         const s = document.createElement('script');
         s.src = 'https://accounts.google.com/gsi/client';
@@ -45,36 +50,29 @@ async function initGoogleLogin() {
         s.onerror = () => resolve(false);
         document.head.appendChild(s);
     });
-    if (!loaded || !window.google?.accounts?.id) { off(); return; }
-    google.accounts.id.initialize({ client_id: cid, callback: onGoogleCredential, ux_mode: 'popup', auto_select: false });
-    googleReady = true;
-    renderGoogleButton();
-}
-
-function renderGoogleButton() {
-    const slot = document.getElementById('google-btn');
-    if (!googleReady || !slot) return;
-    slot.innerHTML = '';
-    google.accounts.id.renderButton(slot, {
-        theme: 'filled_black',
-        size: 'large',
-        shape: 'pill',
-        text: authMode === 'login' ? 'signin_with' : 'signup_with',
-        width: Math.min(400, slot.clientWidth || 320),
-        // язык интерфейса, а не <html lang>: тот на старте ещё «en», и кнопка
-        // сначала рисовалась по-английски, а потом переводилась на глазах
-        locale: typeof getLang === 'function' ? getLang() : (document.documentElement.lang || 'en'),
+    if (!loaded || !window.google?.accounts?.oauth2) { off(); return; }
+    googleTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: cid,
+        scope: 'openid email profile',
+        callback: onGoogleToken,
+        error_callback: () => { googleSubmitting = false; },   // окно закрыли — просто ничего
     });
+    if (btn) btn.disabled = false;
 }
 
-async function onGoogleCredential(resp) {
-    if (googleSubmitting || authSubmitting || !resp || !resp.credential) return;
+function startGoogleLogin() {
+    if (!googleTokenClient || googleSubmitting || authSubmitting) return;
     googleSubmitting = true;
-    const slot = document.getElementById('google-btn');
-    formMessage(slot, '');
+    formMessage(document.getElementById('google-btn'), '');
+    googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+}
+
+async function onGoogleToken(resp) {
+    const btn = document.getElementById('google-btn');
+    if (!resp || resp.error || !resp.access_token) { googleSubmitting = false; return; }
     try {
         const { data } = await client.post(domain + '/api/v1/auth/oauth',
-            { provider: 'google', idToken: resp.credential }, { authorization: false, silentErrors: true });
+            { provider: 'google', accessToken: resp.access_token }, { authorization: false, silentErrors: true });
         setRefreshedTokens(data);
         // Как при обычном входе: следы прошлого аккаунта — вон, гостевые слова — в аккаунт
         clearAccountScopedState();
@@ -83,7 +81,7 @@ async function onGoogleCredential(resp) {
         if (window.animeiTrack) animeiTrack('auth', data.created ? 'register_google' : 'login_google');
         window.location.href = '../index.html';
     } catch (err) {
-        formMessage(slot, err?.response?.data?.code ? errorText(err) : t('auth.googleError'));
+        formMessage(btn, err?.response?.data?.code ? errorText(err) : t('auth.googleError'));
         googleSubmitting = false;
     }
 }
@@ -139,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAuth();               // уже вошёл — уводит на главную
     applyAuthMode();
     initGoogleLogin();
+    document.getElementById('google-btn')?.addEventListener('click', startGoogleLogin);
 
     document.getElementById('auth-form').addEventListener('submit', (e) => {
         e.preventDefault();

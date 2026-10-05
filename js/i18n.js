@@ -201,6 +201,7 @@ const I18N = {
         'auth.error': 'Не получилось — проверь почту и пароль',
         'auth.forgot': 'Забыли пароль?',
         'auth.or': 'или',
+        'auth.google': 'Войти через Google',
         'auth.googleError': 'Не получилось войти через Google — попробуй ещё раз',
         'auth.loginTitleShort': 'Вход в Animei',
         'auth.toRegisterShort': 'Создать аккаунт',

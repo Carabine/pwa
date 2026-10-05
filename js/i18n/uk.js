@@ -197,6 +197,7 @@ window.I18N_UK = {
         'auth.error': 'Не вдалося — перевір пошту й пароль',
         'auth.forgot': 'Забули пароль?',
         'auth.or': 'або',
+        'auth.google': 'Увійти через Google',
         'auth.googleError': 'Не вдалося увійти через Google — спробуй ще раз',
         'auth.loginTitleShort': 'Вхід в Animei',
         'auth.toRegisterShort': 'Створити акаунт',

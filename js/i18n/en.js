@@ -197,6 +197,7 @@ window.I18N_EN = {
         'auth.error': 'Something went wrong — check your email and password',
         'auth.forgot': 'Forgot your password?',
         'auth.or': 'or',
+        'auth.google': 'Continue with Google',
         'auth.googleError': "Couldn't sign in with Google — please try again",
         'auth.loginTitleShort': 'Sign in to Animei',
         'auth.toRegisterShort': 'Create account',

@@ -1,7 +1,7 @@
 // Версия приложения — единый источник. Бампится вместе с CACHE_NAME в
 // service-worker.js при каждом деплое (последнее число). Формат v0.0.N —
 // показывается в футере сайдбара, чтобы визуально валидировать, что деплой доехал.
-const APP_VERSION = 'v0.0.685';
+const APP_VERSION = 'v0.0.686';
 
 // Путь от корня приложения (/app/), одинаково работающий с главной и с
 // подстраниц /app/pages/*. Относительный путь, собранный без этой поправки,
@@ -1465,7 +1465,11 @@ function renderAuthState() {
             // нажатие. Сообщение показывает уже новая страница (см.
             // showPendingLogoutToast).
             try { localStorage.setItem('animei:loggedOut', '1'); } catch { /* приватный режим */ }
-            window.location.reload();
+            // После выхода — на главную приложения, а не остаться на той же
+            // странице (слова/настройки без аккаунта выглядят как поломка).
+            // Адрес главной — от адреса самого app.js: работает с любой вложенности.
+            const appJs = document.querySelector('script[src*="js/app.js"]');
+            window.location.href = appJs ? new URL('../index.html', appJs.src).href : '/app/';
         });
     }
 }

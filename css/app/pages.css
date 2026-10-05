@@ -1427,4 +1427,27 @@
     border: 1px solid var(--border);
 }
 .oauth[hidden] { display: none; }
+/* Своя кнопка «Войти через Google» (v0.0.686): готова сразу, ничего не
+   перерисовывается; оформление — как у полей формы. */
+.oauth__google {
+    width: 100%;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition);
+}
+.oauth__google svg { flex: none; }
+.oauth__google:disabled { cursor: default; opacity: 0.85; }
+@media (hover: hover) and (pointer: fine) {
+    .oauth__google:not(:disabled):hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.18); }
+}
 
