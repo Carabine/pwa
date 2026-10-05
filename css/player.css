@@ -4107,3 +4107,43 @@ body.is-en #reading-toggle {
     font-size: 13px;
     color: var(--text-muted);
 }
+
+/* Подсказка «нажми на слово» (v0.0.690): облачко над словом в строке под видео
+   + мягкое кольцо вокруг слова. Не ловит нажатия — само слово под ним кликается. */
+.word-hint {
+    position: absolute;
+    z-index: 60;
+    padding: 6px 11px;
+    border-radius: 10px;
+    background: #a5b4fc;
+    color: #0b0b14;
+    font: 600 12.5px/1.25 Inter, system-ui, sans-serif;
+    white-space: nowrap;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+    animation: word-hint-in 0.25s ease-out;
+}
+.word-hint::after {
+    content: "";
+    position: absolute;
+    left: var(--arrow, 50%);
+    bottom: -6px;
+    margin-left: -6px;
+    border: 6px solid transparent;
+    border-bottom: 0;
+    border-top-color: #a5b4fc;
+}
+.tok--hint {
+    border-radius: 6px;
+    animation: word-hint-ring 1.6s ease-out 2;
+}
+@keyframes word-hint-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes word-hint-ring {
+    0% { box-shadow: 0 0 0 0 rgba(165, 180, 252, 0.55); }
+    100% { box-shadow: 0 0 0 9px rgba(165, 180, 252, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .word-hint, .tok--hint { animation: none; }
+    .tok--hint { box-shadow: 0 0 0 2px rgba(165, 180, 252, 0.6); }
+}
+

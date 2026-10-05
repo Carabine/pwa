@@ -308,6 +308,7 @@ window.I18N_EN = {
         'subs.foreignEn': 'The English text comes from another source — timing may drift from the video. If so, shift the subtitles via "Subtitles out of sync?".',
         'player.enFallbackTrack': 'This episode has no dub on the first source — switching to the second.',
         'player.trackFallback': "This episode didn't load from this source — switching to another track.",
+        'player.wordHint': 'Tap a word to see what it means',
         'subs.notFoundEn': 'No English subtitles for this episode 😔 You can still watch without them',
         'player.enFallback': 'This title has no English track — these are Japanese subtitles. Frieren, Demon Slayer, Dandadan, Attack on Titan and Death Note have an English dub.',
         'beginner.enOnly': 'Starter decks are Japanese-only for now. In English mode, start with an episode: open an anime with an English dub and tap words in the subtitles.',

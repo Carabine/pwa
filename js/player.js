@@ -2380,6 +2380,7 @@ function updateNowCue(idx) {
         return;
     }
     nowCueIdx = idx;
+    hideWordHint();   // облачко привязано к слову прошлой реплики
     const cue = state.cues[idx];
     // Кнопку ИИ-разбора прячем, если в реплике нет разбираемых слов (музыка «♪»,
     // звуки, пустая строка) — разбирать нечего.
@@ -2392,6 +2393,78 @@ function updateNowCue(idx) {
     nowCueRu.textContent = cue.translation || '';
     nowCueRu.style.display = (cue.translation && state.showRu) ? '' : 'none';
 }
+
+// ---------- Подсказка «нажми на слово» ----------
+// 04–05.10.2026 новички почти не нажимали на слова в субтитрах (на видео у них
+// английские сабы, японская строка — ниже). Облачко над словом в строке под
+// видео: в паузу (человек как раз читает) или раз через ~20 с просмотра. Само
+// исчезает (6 с / смена реплики), не перекрывает нажатия, не больше 3 показов,
+// после первого открытого слова — никогда.
+const WORD_HINT_KEY = 'animei:wordHint';   // 'done' или число показов
+const WORD_HINT_MAX = 3;
+var wordHintShown = false;      // за эту страницу уже показывали (var: updateNowCue выше может позвать hideWordHint раньше этих строк)
+var wordHintHide = null;
+var wordHintWatched = 0, wordHintLastT = null;
+function wordHintState() {
+    try { return localStorage.getItem(WORD_HINT_KEY); } catch { return 'done'; }
+}
+function hideWordHint() {
+    if (wordHintHide) { wordHintHide(); wordHintHide = null; }
+}
+function markWordHintDone() {
+    hideWordHint();
+    try { localStorage.setItem(WORD_HINT_KEY, 'done'); } catch { /* приватный режим */ }
+}
+function maybeWordHint() {
+    if (wordHintShown || nowCue.hidden || !popup.hidden) return;
+    const st = wordHintState();
+    if (st === 'done' || Number(st) >= WORD_HINT_MAX) return;
+    const words = [...nowCueJp.querySelectorAll('.tok--learnable:not(.tok--known)')];
+    const el = words.find((w) => /[一-龯]/.test(w.dataset.base || w.textContent)) || words[0];
+    if (!el) return;
+    wordHintShown = true;
+    try { localStorage.setItem(WORD_HINT_KEY, String((Number(st) || 0) + 1)); } catch { /* ок */ }
+    el.classList.add('tok--hint');
+    const tip = document.createElement('div');
+    tip.className = 'word-hint';
+    tip.setAttribute('role', 'status');
+    tip.textContent = t('player.wordHint');
+    // В <body>, а не в строку под видео: та обрезает всё, что выходит за её край.
+    // В полноэкранном режиме — внутрь видео-обёртки (иначе не видно поверх кадра).
+    const host = document.fullscreenElement || document.body;
+    host.appendChild(tip);
+    const hb = host === document.body ? { left: -scrollX, top: -scrollY } : host.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const maxLeft = (host === document.body ? document.documentElement.clientWidth : hb.width) - tip.offsetWidth - 6;
+    const left = Math.max(6, Math.min(maxLeft, r.left - hb.left + r.width / 2 - tip.offsetWidth / 2));
+    tip.style.left = left + 'px';
+    tip.style.top = (r.top - hb.top - tip.offsetHeight - 10) + 'px';
+    tip.style.setProperty('--arrow', (r.left - hb.left + r.width / 2 - left) + 'px');
+    const timer = setTimeout(hideWordHint, 6000);
+    // прокрутили или повернули экран — облачко уехало бы от слова
+    const onMove = () => hideWordHint();
+    window.addEventListener('scroll', onMove, { passive: true, capture: true, once: true });
+    window.addEventListener('resize', onMove, { once: true });
+    wordHintHide = () => {
+        clearTimeout(timer);
+        window.removeEventListener('scroll', onMove, { capture: true });
+        window.removeEventListener('resize', onMove);
+        tip.remove();
+        el.classList.remove('tok--hint');
+    };
+}
+// пауза — момент, когда человек читает строку
+video.addEventListener('pause', () => { if (video.currentTime > 2) setTimeout(maybeWordHint, 250); });
+// или ~20 с реального просмотра (без перемоток)
+video.addEventListener('timeupdate', () => {
+    const tNow = video.currentTime;
+    if (wordHintLastT !== null && !video.paused) {
+        const d = tNow - wordHintLastT;
+        if (d > 0 && d < 2) wordHintWatched += d;
+    }
+    wordHintLastT = tNow;
+    if (!wordHintShown && wordHintWatched >= 20) maybeWordHint();
+});
 
 // Есть ли в реплике разбираемые (кликабельные) слова.
 function cueHasWords(cue) {
@@ -3068,6 +3141,7 @@ async function openWordPopup(tok, cue, event) {
     video.pause();
 
     popup.classList.remove('word-popup--sentence');
+    markWordHintDone();   // нашёл, что слова нажимаются, — подсказка больше не нужна
     // Карточку другого слова открыли поверх — прошлое считается закрытым без действия
     notePopupClosed();
     state.popupContext = { tok, cue, dict: null, event };
