@@ -29,12 +29,14 @@ function applyAuthMode() {
 let googleReady = false;
 let googleSubmitting = false;
 async function initGoogleLogin() {
+    const box = document.getElementById('google-login');
+    const off = () => { if (box) box.hidden = true; };
     let cid = null;
     try {
         const { data } = await client.get(domain + '/api/v1/auth/config', { authorization: false, silentErrors: true });
         cid = data && data.googleClientId;
-    } catch { return; }
-    if (!cid) return;
+    } catch { off(); return; }
+    if (!cid) { off(); return; }
     const loaded = await new Promise((resolve) => {
         const s = document.createElement('script');
         s.src = 'https://accounts.google.com/gsi/client';
@@ -43,10 +45,9 @@ async function initGoogleLogin() {
         s.onerror = () => resolve(false);
         document.head.appendChild(s);
     });
-    if (!loaded || !window.google?.accounts?.id) return;
+    if (!loaded || !window.google?.accounts?.id) { off(); return; }
     google.accounts.id.initialize({ client_id: cid, callback: onGoogleCredential, ux_mode: 'popup', auto_select: false });
     googleReady = true;
-    document.getElementById('google-login').hidden = false;
     renderGoogleButton();
 }
 
@@ -60,7 +61,9 @@ function renderGoogleButton() {
         shape: 'pill',
         text: authMode === 'login' ? 'signin_with' : 'signup_with',
         width: Math.min(400, slot.clientWidth || 320),
-        locale: document.documentElement.lang || 'en',
+        // язык интерфейса, а не <html lang>: тот на старте ещё «en», и кнопка
+        // сначала рисовалась по-английски, а потом переводилась на глазах
+        locale: typeof getLang === 'function' ? getLang() : (document.documentElement.lang || 'en'),
     });
 }
 

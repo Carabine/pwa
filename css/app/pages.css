@@ -1415,3 +1415,16 @@
 .login-form--min .login-form__back { margin-top: 20px; color: var(--text-dim); }
 
 .login-form__links [hidden] { display: none; }
+/* Пока скрипт Google не нарисовал кнопку — тихая заглушка того же размера и
+   формы: появление кнопки ничего не сдвигает. */
+.oauth__btn { min-height: 44px; }
+.oauth__btn:empty {
+    height: 44px;
+    max-width: 400px;
+    margin: 0 auto;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+}
+.oauth[hidden] { display: none; }
+

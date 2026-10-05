@@ -87,8 +87,9 @@
                 </div>
                 <button type="submit" id="submit-btn" class="btn btn--primary btn--block">Войти</button>
             </form>
-            <!-- Вход через Google: блок показывается, только если на сервере задан Client ID -->
-            <div class="oauth" id="google-login" hidden>
+            <!-- Вход через Google: место под кнопку занято сразу (заглушка той же формы),
+                 чтобы появление кнопки не сдвигало страницу; прячется, если Google выключен -->
+            <div class="oauth" id="google-login">
                 <div class="oauth__or"><span data-i18n="auth.or">или</span></div>
                 <div class="oauth__btn" id="google-btn"></div>
             </div>
