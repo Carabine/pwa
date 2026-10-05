@@ -4174,13 +4174,24 @@ body.is-en #reading-toggle {
     border-radius: 6px;
     animation: word-hint-ring 1.6s ease-out 2;
 }
+/* Та же карточка под кнопкой «Авто-колода» (episode-deck.js): стрелка сверху */
+.word-hint--below { animation-name: word-hint-in-below; }
+.word-hint--below::after {
+    bottom: auto;
+    top: -6px;
+    border: 0;
+    border-left: 1px solid rgba(165, 180, 252, 0.18);
+    border-top: 1px solid rgba(165, 180, 252, 0.18);
+}
+.deck-hint-ring { animation: word-hint-ring 1.6s ease-out 2; }
+@keyframes word-hint-in-below { from { opacity: 0; transform: translateY(-6px) scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes word-hint-in { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes word-hint-ring {
     0% { box-shadow: 0 0 0 0 rgba(165, 180, 252, 0.55); }
     100% { box-shadow: 0 0 0 9px rgba(165, 180, 252, 0); }
 }
 @media (prefers-reduced-motion: reduce) {
-    .word-hint, .tok--hint { animation: none; }
+    .word-hint, .tok--hint, .deck-hint-ring { animation: none; }
     .tok--hint { box-shadow: 0 0 0 2px rgba(165, 180, 252, 0.6); }
 }
 

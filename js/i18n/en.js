@@ -320,6 +320,8 @@ window.I18N_EN = {
         'subs.wrong.title': 'Subtitles don’t match the audio? Sync precisely',
         'edeck.label': 'Cards',
         'edeck.btn': 'Auto-deck',
+        'edeck.hint': 'Make a deck from this episode',
+        'edeck.hintSub': 'its easy words, straight to flashcards',
         'edeck.btn.title': 'Build a deck from easy words of this episode or the whole anime',
         'edeck.title': 'Auto-deck',
         'edeck.sub': 'Easy words (N5–N4) from this episode. Uncheck the ones you don’t need.',

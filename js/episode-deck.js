@@ -744,4 +744,88 @@
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !overlay.hidden) closeModal();
     });
+
+    // Подсказка «Авто-колода» (05.10.2026): кто смотрит уже ~3 мин и ни разу не
+    // открывал авто-колоду, видит под кнопкой ту же тёмную карточку, что и
+    // «нажми на слово» (player.js). Только когда кнопка на экране и ничего другого
+    // не открыто; живёт 10 с, до 2 показов; нажал кнопку или крестик — никогда.
+    const DECK_HINT_KEY = 'animei:deckHint';   // 'done' или число показов
+    const DECK_HINT_MAX = 2;
+    const DECK_HINT_AFTER = 180;               // с реального просмотра на этой странице
+    const video = document.getElementById('video');
+    let deckHintShown = false, deckHintHide = null, deckWatched = 0, deckLastT = null;
+
+    function deckHintState() {
+        try { return localStorage.getItem(DECK_HINT_KEY); } catch { return 'done'; }
+    }
+    function hideDeckHint() {
+        if (deckHintHide) { deckHintHide(); deckHintHide = null; }
+    }
+    function markDeckHintDone() {
+        hideDeckHint();
+        try { localStorage.setItem(DECK_HINT_KEY, 'done'); } catch { /* приватный режим */ }
+    }
+    function maybeDeckHint() {
+        if (deckHintShown || wrap.hidden || !overlay.hidden || document.fullscreenElement) return;
+        const st = deckHintState();
+        if (st === 'done' || Number(st) >= DECK_HINT_MAX) { deckHintShown = true; return; }
+        // не наслаивать на подсказку слова и открытую карточку слова
+        const wordPopup = document.getElementById('word-popup');
+        if (document.querySelector('.word-hint') || (wordPopup && !wordPopup.hidden)) return;
+        // кнопка должна быть видна целиком и под ней — место для карточки
+        const r = btn.getBoundingClientRect();
+        if (!r.width || r.top < 0 || r.bottom + 90 > window.innerHeight) return;
+
+        deckHintShown = true;
+        try { localStorage.setItem(DECK_HINT_KEY, String((Number(st) || 0) + 1)); } catch { /* ок */ }
+        btn.classList.add('deck-hint-ring');
+        const tip = document.createElement('div');
+        tip.className = 'word-hint word-hint--below';
+        tip.setAttribute('role', 'status');
+        tip.innerHTML = '<span class="word-hint__ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="13" height="14" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v11"/></svg></span>'
+            + '<span class="word-hint__tx"><b></b><small></small></span>'
+            + '<button type="button" class="word-hint__x"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>';
+        tip.querySelector('b').textContent = t('edeck.hint');
+        tip.querySelector('small').textContent = t('edeck.hintSub');
+        const close = tip.querySelector('.word-hint__x');
+        close.setAttribute('aria-label', t('aria.close'));
+        close.addEventListener('click', (e) => { e.stopPropagation(); markDeckHintDone(); });
+        document.body.appendChild(tip);
+        // Карточка едет за кнопкой каждый кадр: на телефоне строка с репликой
+        // над списком меняет высоту (1–2 строки) и кнопка прыгает на 25–40 px,
+        // плюс страницу может листать не окно, а контейнер. Кнопка ушла с
+        // экрана — убираем.
+        let raf = 0, timer = 0;
+        const place = () => {
+            const b = btn.getBoundingClientRect();
+            if (!b.width || b.top < 0 || b.bottom + tip.offsetHeight + 10 > window.innerHeight) { hideDeckHint(); return; }
+            const maxLeft = document.documentElement.clientWidth - tip.offsetWidth - 6;
+            const left = Math.max(6, Math.min(maxLeft, b.left + b.width / 2 - tip.offsetWidth / 2));
+            tip.style.left = (left + scrollX) + 'px';
+            tip.style.top = (b.bottom + scrollY + 10) + 'px';
+            tip.style.setProperty('--arrow', (b.left + b.width / 2 - left) + 'px');
+            raf = requestAnimationFrame(place);
+        };
+        deckHintHide = () => {
+            clearTimeout(timer);
+            cancelAnimationFrame(raf);
+            tip.remove();
+            btn.classList.remove('deck-hint-ring');
+        };
+        timer = setTimeout(hideDeckHint, 10000);
+        place();   // после deckHintHide: place может сразу же убрать карточку
+    }
+
+    btn.addEventListener('click', markDeckHintDone);
+    if (video) video.addEventListener('timeupdate', () => {
+        if (deckHintShown) return;
+        const tNow = video.currentTime;
+        if (deckLastT !== null && !video.paused) {
+            const d = tNow - deckLastT;
+            if (d > 0 && d < 2) deckWatched += d;   // без перемоток
+        }
+        deckLastT = tNow;
+        // порог набран — пробуем на каждом тике, пока кнопка не окажется на экране
+        if (deckWatched >= DECK_HINT_AFTER) maybeDeckHint();
+    });
 })();
