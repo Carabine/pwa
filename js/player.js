@@ -2478,6 +2478,10 @@ function markWordHintDone() {
 }
 function maybeWordHint() {
     if (wordHintShown || nowCue.hidden || !popup.hidden) return;
+    // Полноэкранный режим — «просто смотрю». На телефоне строки с репликой там
+    // нет вовсе, и облачко висело поверх кадра, указывая в пустоту; на ПК
+    // уезжало за верхний край (06.10.2026). Показ не тратим — дождёмся выхода.
+    if (document.fullscreenElement || video.webkitDisplayingFullscreen) return;
     const st = wordHintState();
     if (st === 'done' || Number(st) >= WORD_HINT_MAX) return;
     const words = [...nowCueJp.querySelectorAll('.tok--learnable:not(.tok--known)')];
@@ -2536,6 +2540,8 @@ function maybeWordHint() {
 }
 // пауза — момент, когда человек читает строку
 video.addEventListener('pause', () => { if (video.currentTime > 2) setTimeout(maybeWordHint, 250); });
+// вход/выход из полноэкранного режима — висящее облачко потеряло своё слово
+document.addEventListener('fullscreenchange', hideWordHint);
 // или ~20 с реального просмотра (без перемоток)
 video.addEventListener('timeupdate', () => {
     const tNow = video.currentTime;
