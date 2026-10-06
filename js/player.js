@@ -173,6 +173,8 @@ const state = {
     megaMal: null,         // MAL id для MegaPlay-дорожки (оригинальное аудио)
     megaIntro: null,       // { start, end } интро потока MegaPlay — помогает автосинку
     megaSubUrl: null,
+    kaaDown: false,        // CDN KickAssAnime лёг в этой сессии — его дорожки заменены MegaPlay (fallbackFromKaa)
+    fallbackSeekTime: null, // позиция, с которой продолжить на дорожке-замене
     fallbackEpNumber: null,  // серия, на которой остаёмся при автопереходе на другую дорожку      // EN-сабы MegaPlay (наш /proxy/seg) — эталон для синка японских (refSync)
     cues: [],
     activeCueIndex: -1,
@@ -460,15 +462,25 @@ function bestBurnedRuTrack() {
         .sort((a, b) => (b.episodeCount || 0) - (a.episodeCount || 0))[0] || null;
 }
 
+// Замена дорожки KAA, когда лёг его CDN: MegaPlay с тем же звуком (японский
+// или английский дубляж) — тоже чистая картинка и мягкие английские сабы.
+function megaplayStandIn(kaaTrack) {
+    const dub = kaaTrack.audio === 'en';
+    return state.translations.find((t) => t.provider === 'megaplay' && (t.audio === 'en') === dub) || null;
+}
+
 function buildSubOptions() {
-    const kaa = state.translations.find((t) => t.provider === 'kickassanime');
+    // CDN KickAssAnime лёг посреди сессии (state.kaaDown) — его место занимает MegaPlay.
+    let kaa = state.translations.find((t) => t.provider === 'kickassanime');
+    if (kaa && state.kaaDown) kaa = megaplayStandIn(kaa);
     const langs = (kaa && kaa.subLangs) || [];
     const opts = [];
 
     // Английский режим: одна дорожка (дубляж или чистое видео KAA) и английские
     // сабы слоем поверх — выбирать тут нечего.
     if (state.enMode) {
-        return state.translations.map((track) => ((track.subLangs || []).includes('en')
+        const tracks = state.kaaDown ? state.translations.filter((t) => t.provider !== 'kickassanime') : state.translations;
+        return tracks.map((track) => ((track.subLangs || []).includes('en')
             ? { lang: 'en', track }
             : { lang: null, track }));
     }
@@ -551,6 +563,31 @@ function renderTranslations() {
         opt.textContent = name + q;
         translationSelect.appendChild(opt);
     });
+}
+
+// CDN KickAssAnime не отдаёт видео (06.10.2026: сегменты 502/висят на всех зеркалах,
+// а плейлист при этом жив — обычный откат «следующая дорожка» не срабатывал, и
+// плеер висел на «Переподключаюсь»). Переходим на MegaPlay с тем же звуком и тем же
+// языком субтитров, с того же места серии. Один раз за сессию: KAA помечается
+// упавшим и из списка дорожек уходит. false — замены нет, решает вызывающий.
+function fallbackFromKaa() {
+    if (state.provider !== 'kickassanime' || state.kaaDown) return false;
+    const cur = currentSubOption();
+    const standIn = cur && megaplayStandIn(cur.track);
+    if (!standIn) return false;
+    const ep = state.episodes[parseInt(episodeSelect.value, 10)];
+    state.kaaDown = true;
+    if (state.hls) state.hls.stopLoad();
+    if (ep) state.fallbackEpNumber = ep.number;
+    if (video.currentTime > 5) state.fallbackSeekTime = video.currentTime;
+    renderTranslations();
+    // Тот же язык (у русских — хоть вшитыми у Kodik), иначе «Оригинал» замены.
+    let i = cur.lang ? state.subOptions.findIndex((o) => o.lang === cur.lang || o.burned === cur.lang) : -1;
+    if (i < 0) i = state.subOptions.findIndex((o) => o.track === standIn && !o.lang);
+    if (i < 0) i = state.subOptions.findIndex((o) => o.track === standIn);
+    showSnackbar(t('player.kaaFallback'), { duration: 6000 });
+    selectTranslation(Math.max(0, i));
+    return true;
 }
 
 async function selectTranslation(index) {
@@ -1080,6 +1117,11 @@ async function selectEpisode(index) {
         && wp.epIndex === index
         && wp.time > 30
         && (!wp.dur || wp.time < wp.dur - 60)) ? wp.time : null;
+    // Подмена упавшего источника посреди просмотра — продолжаем с того же места.
+    if (state.fallbackSeekTime != null) {
+        state.resumeTime = state.fallbackSeekTime;
+        state.fallbackSeekTime = null;
+    }
 
     if (window.animeiTrack) window.animeiTrack('play', (titleRu || titleRomaji || 'аниме') + ' · эп ' + (ep.number ?? index + 1));
     videoLoading.style.display = 'flex';
@@ -1136,6 +1178,7 @@ async function selectEpisode(index) {
             // (наличие проверяется по первой серии). Остальные: у AnimeJoy прямые файлы
             // есть только у свежих тайтлов — у архивных дорожка по умолчанию отдавала 404
             // (04.10.2026: Shigatsu wa Kimi no Uso, RU-интерфейс).
+            if (!isStaleGen(gen) && fallbackFromKaa()) return;
             const cur = currentSubOption();
             const idx = state.subOptions.indexOf(cur);
             if (idx >= 0 && idx + 1 < state.subOptions.length && !isStaleGen(gen)) {
@@ -1280,11 +1323,19 @@ function attachVideo(hlsUrl) {
         // просмотр табличкой «ошибка». Ошибки декодера — recoverMediaError().
         let netRetries = 0;
         let mediaRetries = 0;
+        // 502 на сегмент от нашего прокси = источник не отдал его ни с одного зеркала
+        // (сеть зрителя тут ни при чём). Несколько подряд — CDN KAA лёг, не ждём
+        // минутами ретраев hls.js, а сразу уходим на замену.
+        let upstream502 = 0;
         hls.on(Hls.Events.FRAG_BUFFERED, () => {
             netRetries = 0;
+            upstream502 = 0;
             if (!videoLoading.classList.contains('is-error')) videoLoading.style.display = 'none';
         });
         hls.on(Hls.Events.ERROR, (_, data) => {
+            if (state.hls === hls && state.provider === 'kickassanime' && data.type === Hls.ErrorTypes.NETWORK_ERROR && data.frag
+                && (data.fatal || (data.response?.code === 502 && ++upstream502 >= 3))
+                && fallbackFromKaa()) return;
             if (!data.fatal) return;
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR && netRetries < 6) {
                 netRetries += 1;

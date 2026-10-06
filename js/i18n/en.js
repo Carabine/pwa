@@ -309,6 +309,7 @@ window.I18N_EN = {
         'subs.foreignEn': 'The English text comes from another source — timing may drift from the video. If so, shift the subtitles via "Subtitles out of sync?".',
         'player.enFallbackTrack': 'This episode has no dub on the first source — switching to the second.',
         'player.trackFallback': "This episode didn't load from this source — switching to another track.",
+        'player.kaaFallback': 'The video source is failing — switching to a backup, picking up where you left off.',
         'player.wordHint': 'Tap any word',
         'player.wordHintSub': 'translation, reading and saving to cards',
         'subs.notFoundEn': 'No English subtitles for this episode 😔 You can still watch without them',
