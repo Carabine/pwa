@@ -352,14 +352,18 @@
 
     function moveIn(el, target) {
         if (!el) return;
-        homes.set(el, { parent: el.parentNode, next: el.nextSibling });
+        // Уже перенесён (повторный вход без выхода) — родной дом помним прежний.
+        if (!homes.has(el)) homes.set(el, { parent: el.parentNode, next: el.nextSibling });
         (target || wrap).appendChild(el);
     }
 
     function moveBack(el) {
         const home = homes.get(el);
         if (!el || !home) return;
-        home.parent.insertBefore(el, home.next);
+        // Сосед мог за это время уехать сам (06.10: Chrome 152, выход из fullscreen →
+        // NotFoundError в insertBefore) — тогда просто в конец родного контейнера.
+        const next = home.next && home.next.parentNode === home.parent ? home.next : null;
+        home.parent.insertBefore(el, next);
         homes.delete(el);
     }
 

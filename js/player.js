@@ -1335,7 +1335,10 @@ function attachVideo(hlsUrl) {
         hls.on(Hls.Events.ERROR, (_, data) => {
             if (state.hls === hls && state.provider === 'kickassanime' && data.type === Hls.ErrorTypes.NETWORK_ERROR && data.frag
                 && (data.fatal || (data.response?.code === 502 && ++upstream502 >= 3))
-                && fallbackFromKaa()) return;
+                && fallbackFromKaa()) {
+                data.animeiFallback = true;   // сторож: это не сбой, а сработавший откат
+                return;
+            }
             if (!data.fatal) return;
             if (data.type === Hls.ErrorTypes.NETWORK_ERROR && netRetries < 6) {
                 netRetries += 1;

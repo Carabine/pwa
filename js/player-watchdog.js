@@ -198,7 +198,10 @@
             const text = (d.fatal ? 'FATAL ' : '') + d.type + '/' + d.details + frag + code +
                 (d.error && d.error.message ? ' · ' + d.error.message.slice(0, 120) : '');
             note('hlsError', text);
-            if (d.fatal) report('hls_fatal', text);
+            // Плеер уже ушёл с упавшего KAA на MegaPlay (fallbackFromKaa) — пишем
+            // сам откат, а не «фатальную ошибку» с меткой нового источника.
+            if (d.animeiFallback) report('source_fallback', 'kickassanime → megaplay · ' + text);
+            else if (d.fatal) report('hls_fatal', text);
         });
     }
 
