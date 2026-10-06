@@ -149,6 +149,17 @@ const PROVIDERS = {
         burnLang: 'en',
         pictureSub: null,
     },
+    // Третий источник чистой картинки (перезаливка Crunchyroll): японский звук или
+    // английский дубляж; мягкие субтитры CR на выбранном языке (en, ru, …) слоем
+    // поверх. Ключи потока разворачивает наш /proxy/key. Последний в цепочке отката.
+    uniquestream: {
+        endpoint: 'catalog/uniquestream-stream',
+        params: (ep) => ({ shikimoriId, ep: ep.number, sub: state.subLang || 'en',
+            ...(state.audioWant ? { audio: state.audioWant } : {}) }),
+        streamUrl: (d) => d.hls,
+        overlaySubs: true,
+        pictureSub: null,
+    },
 };
 
 const state = {
@@ -173,7 +184,7 @@ const state = {
     megaMal: null,         // MAL id для MegaPlay-дорожки (оригинальное аудио)
     megaIntro: null,       // { start, end } интро потока MegaPlay — помогает автосинку
     megaSubUrl: null,
-    kaaDown: false,        // CDN KickAssAnime лёг в этой сессии — его дорожки заменены MegaPlay (fallbackFromKaa)
+    downProviders: new Set(), // источники, упавшие в этой сессии — их дорожки заменены следующими (fallbackSource)
     fallbackSeekTime: null, // позиция, с которой продолжить на дорожке-замене
     fallbackEpNumber: null,  // серия, на которой остаёмся при автопереходе на другую дорожку      // EN-сабы MegaPlay (наш /proxy/seg) — эталон для синка японских (refSync)
     cues: [],
@@ -458,28 +469,37 @@ function pictureSubLang(tr) {
 // сабовый релиз на 74 серии, и огрызок на 7.
 function bestBurnedRuTrack() {
     return state.translations
-        .filter((t) => t.provider !== 'kickassanime' && pictureSubLang(t) === 'ru')
+        .filter((t) => t.provider !== 'kickassanime' && !isDown(t.provider) && pictureSubLang(t) === 'ru')
         .sort((a, b) => (b.episodeCount || 0) - (a.episodeCount || 0))[0] || null;
 }
 
-// Замена дорожки KAA, когда лёг его CDN: MegaPlay с тем же звуком (японский
-// или английский дубляж) — тоже чистая картинка и мягкие английские сабы.
-function megaplayStandIn(kaaTrack) {
-    const dub = kaaTrack.audio === 'en';
-    return state.translations.find((t) => t.provider === 'megaplay' && (t.audio === 'en') === dub) || null;
+// Цепочка источников чистой картинки: KAA → MegaPlay → UniqueStream. Упал один
+// (CDN не отдаёт видео) — его место занимает следующий живой с тем же звуком
+// (японский или английский дубляж). У всех троих мягкие сабы слоем поверх кадра.
+const STANDIN_ORDER = ['megaplay', 'uniquestream'];
+const FALLBACK_FROM = new Set(['kickassanime', 'megaplay']);
+const isDown = (p) => state.downProviders.has(p);
+function standInFor(track) {
+    const dub = track.audio === 'en';
+    for (const p of STANDIN_ORDER) {
+        if (p === track.provider || isDown(p)) continue;
+        const t = state.translations.find((x) => x.provider === p && (x.audio === 'en') === dub);
+        if (t) return t;
+    }
+    return null;
 }
 
 function buildSubOptions() {
-    // CDN KickAssAnime лёг посреди сессии (state.kaaDown) — его место занимает MegaPlay.
+    // Источник лёг посреди сессии (state.downProviders) — его место занимает следующий.
     let kaa = state.translations.find((t) => t.provider === 'kickassanime');
-    if (kaa && state.kaaDown) kaa = megaplayStandIn(kaa);
+    if (kaa && isDown('kickassanime')) kaa = standInFor(kaa);
     const langs = (kaa && kaa.subLangs) || [];
     const opts = [];
 
     // Английский режим: одна дорожка (дубляж или чистое видео KAA) и английские
     // сабы слоем поверх — выбирать тут нечего.
     if (state.enMode) {
-        const tracks = state.kaaDown ? state.translations.filter((t) => t.provider !== 'kickassanime') : state.translations;
+        const tracks = state.translations.filter((t) => !isDown(t.provider));
         return tracks.map((track) => ((track.subLangs || []).includes('en')
             ? { lang: 'en', track }
             : { lang: null, track }));
@@ -565,19 +585,21 @@ function renderTranslations() {
     });
 }
 
-// CDN KickAssAnime не отдаёт видео (06.10.2026: сегменты 502/висят на всех зеркалах,
+// Источник не отдаёт видео (06.10.2026: CDN KAA сутки 502/висел на всех зеркалах,
 // а плейлист при этом жив — обычный откат «следующая дорожка» не срабатывал, и
-// плеер висел на «Переподключаюсь»). Переходим на MegaPlay с тем же звуком и тем же
-// языком субтитров, с того же места серии. Один раз за сессию: KAA помечается
-// упавшим и из списка дорожек уходит. false — замены нет, решает вызывающий.
-const KAA_START_MS = 25000;
-function fallbackFromKaa(reason) {
-    if (state.provider !== 'kickassanime' || state.kaaDown) return false;
+// плеер висел на «Переподключаюсь»). Переходим на следующий по цепочке
+// (standInFor) с тем же звуком и языком субтитров, с того же места серии.
+// Упавший помечается до конца сессии и уходит из списка дорожек.
+// false — замены нет, решает вызывающий.
+const SOURCE_START_MS = 25000;
+function fallbackSource(reason) {
+    const from = state.provider;
+    if (!FALLBACK_FROM.has(from) || isDown(from)) return false;
     const cur = currentSubOption();
-    const standIn = cur && megaplayStandIn(cur.track);
+    const standIn = cur && standInFor(cur.track);
     if (!standIn) return false;
     const ep = state.episodes[parseInt(episodeSelect.value, 10)];
-    state.kaaDown = true;
+    state.downProviders.add(from);
     if (state.hls) state.hls.stopLoad();
     if (ep) state.fallbackEpNumber = ep.number;
     if (video.currentTime > 5) state.fallbackSeekTime = video.currentTime;
@@ -588,7 +610,7 @@ function fallbackFromKaa(reason) {
     if (i < 0) i = state.subOptions.findIndex((o) => o.track === standIn);
     showSnackbar(t('player.kaaFallback'), { duration: 6000 });
     // Сторож плеера пишет откат в «Сбои плеера» с причиной (player-watchdog.js)
-    document.dispatchEvent(new CustomEvent('animei:source-fallback', { detail: reason || '' }));
+    document.dispatchEvent(new CustomEvent('animei:source-fallback', { detail: from + ' → ' + standIn.provider + ' · ' + (reason || '') }));
     selectTranslation(Math.max(0, i));
     return true;
 }
@@ -1181,7 +1203,7 @@ async function selectEpisode(index) {
             // (наличие проверяется по первой серии). Остальные: у AnimeJoy прямые файлы
             // есть только у свежих тайтлов — у архивных дорожка по умолчанию отдавала 404
             // (04.10.2026: Shigatsu wa Kimi no Uso, RU-интерфейс).
-            if (!isStaleGen(gen) && fallbackFromKaa('поток не выдан: ' + (err && err.message || err))) return;
+            if (!isStaleGen(gen) && fallbackSource('поток не выдан: ' + (err && err.message || err))) return;
             const cur = currentSubOption();
             const idx = state.subOptions.indexOf(cur);
             if (idx >= 0 && idx + 1 < state.subOptions.length && !isStaleGen(gen)) {
@@ -1311,11 +1333,11 @@ function attachVideo(hlsUrl) {
         hls.attachMedia(video);
         // KAA бывает «жив», но первые куски висят без ошибки — тогда не дождаться ни
         // трёх 502, ни отказа hls.js (06.10.2026: зритель ушёл с Tokyo Revengers через
-        // 37 с). Не готово к показу за KAA_START_MS — сразу на замену.
-        if (state.provider === 'kickassanime') {
+        // 37 с). Не готово к показу за SOURCE_START_MS — сразу на замену (MegaPlay тоже бывает «жив», но молчит).
+        if (FALLBACK_FROM.has(state.provider)) {
             setTimeout(() => {
-                if (state.hls === hls && video.readyState < 3) fallbackFromKaa('не стартовал за ' + KAA_START_MS / 1000 + ' с');
-            }, KAA_START_MS);
+                if (state.hls === hls && video.readyState < 3) fallbackSource('не стартовал за ' + SOURCE_START_MS / 1000 + ' с');
+            }, SOURCE_START_MS);
         }
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
             videoLoading.style.display = 'none';
@@ -1344,9 +1366,9 @@ function attachVideo(hlsUrl) {
             if (!videoLoading.classList.contains('is-error')) videoLoading.style.display = 'none';
         });
         hls.on(Hls.Events.ERROR, (_, data) => {
-            if (state.hls === hls && state.provider === 'kickassanime' && data.type === Hls.ErrorTypes.NETWORK_ERROR && data.frag
+            if (state.hls === hls && FALLBACK_FROM.has(state.provider) && data.type === Hls.ErrorTypes.NETWORK_ERROR && data.frag
                 && (data.fatal || (data.response?.code === 502 && ++upstream502 >= 3))
-                && fallbackFromKaa((data.fatal ? 'FATAL ' : '3×502 ') + data.details + (data.frag ? ' ' + data.frag.type + '#' + data.frag.sn : ''))) {
+                && fallbackSource((data.fatal ? 'FATAL ' : '3×502 ') + data.details + (data.frag ? ' ' + data.frag.type + '#' + data.frag.sn : ''))) {
                 data.animeiFallback = true;   // сторож: это не сбой, а сработавший откат
                 return;
             }

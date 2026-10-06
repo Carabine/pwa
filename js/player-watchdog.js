@@ -205,11 +205,12 @@
     }
 
     // ---------- Откат источника (player.js → fallbackFromKaa) ----------
-    // Любой откат KAA → MegaPlay: по ошибкам потока, по таймеру старта, по отказу
-    // выдать поток. Причина — в detail; журнал событий покажет, что было до.
+    // Любой откат по цепочке KAA → MegaPlay → UniqueStream: по ошибкам потока, по
+    // таймеру старта, по отказу выдать поток. «Откуда → куда · причина» — в detail.
     document.addEventListener('animei:source-fallback', (e) => {
         note('fallback', String(e.detail || '').slice(0, 160));
-        report('source_fallback', 'kickassanime → megaplay · ' + (e.detail || ''));
+        sentKinds.delete('source_fallback');   // каждый откат цепочки — свой отчёт
+        report('source_fallback', String(e.detail || ''));
     });
 
     // ---------- JS-ошибки страницы ----------
