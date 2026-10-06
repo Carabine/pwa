@@ -219,7 +219,8 @@
         // Браузер пропустил анимацию перехода между страницами (@view-transition в
         // motion.css) — отклоняет своё же обещание. Зрителю ничем не мешает, а в
         // «Сбоях плеера» висело как ошибка (04.10: Android Chrome 146, Kimetsu ep1).
-        if (/^Transition was (skipped|aborted)/.test(msg)) { e.preventDefault(); return; }
+        // Safari пишет то же иначе: «Skipping view transition because skipTransition()…».
+        if (/^Transition was (skipped|aborted)|^Skipping view transition/.test(msg)) { e.preventDefault(); return; }
         jsErrors += 1;
         note('rejection', msg.slice(0, 160));
         sentKinds.delete('js_error');
