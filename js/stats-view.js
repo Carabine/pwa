@@ -786,7 +786,7 @@
 
     // Одна сессия = один визит: итог одной строкой, краткий путь по страницам,
     // ниже — хронология действий (повторы схлопнуты, открытия страниц приглушены).
-    function renderSession(s, idx) {
+    function renderSession(s, num) {
         var sum = buildDigest(s.events || [], null).join(' · ');
         var sumHtml = sum ? '<div class="session__sum">' + esc(sum) + '</div>' : '';
 
@@ -822,7 +822,11 @@
         var range = fmtDate(s.start) + ' ' + fmtHM(s.start) + '–' +
             (sameDay ? '' : fmtDate(s.end) + ' ') + fmtHM(s.end);
 
-        var dev = s.ua ? uaShort(s.ua) : String(s.visitorId || '—').slice(0, 8);
+        // Устройства визита: сессия больше не рвётся при смене id, и в одном визите
+        // их бывает несколько (телефон в режиме «версия для ПК» шлёт другой UA).
+        var devs = (s.uas && s.uas.length ? s.uas : (s.ua ? [s.ua] : [])).map(uaShort)
+            .filter(function (d, i, a) { return a.indexOf(d) === i; });
+        var dev = devs.length ? devs.join(' + ') : String(s.visitorId || '—').slice(0, 8);
         // Пересказ действий — главное в сессии: по строке на дело, техника
         // свёрнута в пометки. Сырой лог остаётся ниже под спойлером.
         var steps2 = buildSteps(dropShortTrips(s.events), s.end);
@@ -834,12 +838,13 @@
 
         return '<div class="session">' +
             '<div class="session__head">' +
-                '<span class="session__n">Сессия #' + (idx + 1) + '</span>' +
-                '<span class="session__dev" title="' + esc(s.ua || s.visitorId || '') + '">' + esc(dev) + '</span>' +
+                '<span class="session__n">Сессия #' + num + '</span>' +
+                '<span class="session__dev" title="' + esc((s.uas || [s.ua || s.visitorId || '']).join(' | ')) + '">' + esc(dev) + '</span>' +
                 '<span class="session__time">' + range + '</span>' + src +
                 '<span class="session__count">' + steps2.length + ' ' +
                     plural(steps2.length, 'шаг', 'шага', 'шагов') + '</span>' +
             '</div>' + sumHtml + path + storyBlock +
+            (s.truncated ? '<div class="session__path">показаны первые ' + (s.events || []).length + ' из ' + s.count + ' действий</div>' : '') +
             (steps ? '<details class="session__steps"><summary>▸ сырой лог (' + collapsed.length + ')</summary><ul class="tl">' + steps + '</ul></details>' : '') +
             '</div>';
     }
@@ -963,7 +968,9 @@
         gid('visitors').innerHTML = list.map(function (v) {
             var sessions = (v.sessions || []);
             var body = sessions.length
-                ? sessions.map(function (s, si) { return renderSession(s, si); }).join('')
+                // Сессии приходят свежими сверху; номер — по порядку визитов, так что
+                // у верхней он наибольший (раньше верхняя была «#1» — нумерация задом наперёд).
+                ? sessions.map(function (s, si) { return renderSession(s, (v.sessionCount || sessions.length) - si); }).join('')
                 : '<div class="msg">Нет сессий</div>';
 
             // Устройства человека — короткие подписи из уникальных User-Agent'ов
