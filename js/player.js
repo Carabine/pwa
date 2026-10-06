@@ -570,7 +570,8 @@ function renderTranslations() {
 // плеер висел на «Переподключаюсь»). Переходим на MegaPlay с тем же звуком и тем же
 // языком субтитров, с того же места серии. Один раз за сессию: KAA помечается
 // упавшим и из списка дорожек уходит. false — замены нет, решает вызывающий.
-function fallbackFromKaa() {
+const KAA_START_MS = 25000;
+function fallbackFromKaa(reason) {
     if (state.provider !== 'kickassanime' || state.kaaDown) return false;
     const cur = currentSubOption();
     const standIn = cur && megaplayStandIn(cur.track);
@@ -586,6 +587,8 @@ function fallbackFromKaa() {
     if (i < 0) i = state.subOptions.findIndex((o) => o.track === standIn && !o.lang);
     if (i < 0) i = state.subOptions.findIndex((o) => o.track === standIn);
     showSnackbar(t('player.kaaFallback'), { duration: 6000 });
+    // Сторож плеера пишет откат в «Сбои плеера» с причиной (player-watchdog.js)
+    document.dispatchEvent(new CustomEvent('animei:source-fallback', { detail: reason || '' }));
     selectTranslation(Math.max(0, i));
     return true;
 }
@@ -1178,7 +1181,7 @@ async function selectEpisode(index) {
             // (наличие проверяется по первой серии). Остальные: у AnimeJoy прямые файлы
             // есть только у свежих тайтлов — у архивных дорожка по умолчанию отдавала 404
             // (04.10.2026: Shigatsu wa Kimi no Uso, RU-интерфейс).
-            if (!isStaleGen(gen) && fallbackFromKaa()) return;
+            if (!isStaleGen(gen) && fallbackFromKaa('поток не выдан: ' + (err && err.message || err))) return;
             const cur = currentSubOption();
             const idx = state.subOptions.indexOf(cur);
             if (idx >= 0 && idx + 1 < state.subOptions.length && !isStaleGen(gen)) {
@@ -1306,6 +1309,14 @@ function attachVideo(hlsUrl) {
         state.hls = hls;
         hls.loadSource(hlsUrl);
         hls.attachMedia(video);
+        // KAA бывает «жив», но первые куски висят без ошибки — тогда не дождаться ни
+        // трёх 502, ни отказа hls.js (06.10.2026: зритель ушёл с Tokyo Revengers через
+        // 37 с). Не готово к показу за KAA_START_MS — сразу на замену.
+        if (state.provider === 'kickassanime') {
+            setTimeout(() => {
+                if (state.hls === hls && video.readyState < 3) fallbackFromKaa('не стартовал за ' + KAA_START_MS / 1000 + ' с');
+            }, KAA_START_MS);
+        }
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
             videoLoading.style.display = 'none';
             resumeAfterAttach();
@@ -1335,7 +1346,7 @@ function attachVideo(hlsUrl) {
         hls.on(Hls.Events.ERROR, (_, data) => {
             if (state.hls === hls && state.provider === 'kickassanime' && data.type === Hls.ErrorTypes.NETWORK_ERROR && data.frag
                 && (data.fatal || (data.response?.code === 502 && ++upstream502 >= 3))
-                && fallbackFromKaa()) {
+                && fallbackFromKaa((data.fatal ? 'FATAL ' : '3×502 ') + data.details + (data.frag ? ' ' + data.frag.type + '#' + data.frag.sn : ''))) {
                 data.animeiFallback = true;   // сторож: это не сбой, а сработавший откат
                 return;
             }

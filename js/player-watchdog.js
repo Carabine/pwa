@@ -198,12 +198,19 @@
             const text = (d.fatal ? 'FATAL ' : '') + d.type + '/' + d.details + frag + code +
                 (d.error && d.error.message ? ' · ' + d.error.message.slice(0, 120) : '');
             note('hlsError', text);
-            // Плеер уже ушёл с упавшего KAA на MegaPlay (fallbackFromKaa) — пишем
-            // сам откат, а не «фатальную ошибку» с меткой нового источника.
-            if (d.animeiFallback) report('source_fallback', 'kickassanime → megaplay · ' + text);
-            else if (d.fatal) report('hls_fatal', text);
+            // Плеер уже ушёл с упавшего KAA на MegaPlay (fallbackFromKaa) — откат
+            // пишет событие ниже; «фатальной ошибкой» с меткой нового источника не считаем.
+            if (!d.animeiFallback && d.fatal) report('hls_fatal', text);
         });
     }
+
+    // ---------- Откат источника (player.js → fallbackFromKaa) ----------
+    // Любой откат KAA → MegaPlay: по ошибкам потока, по таймеру старта, по отказу
+    // выдать поток. Причина — в detail; журнал событий покажет, что было до.
+    document.addEventListener('animei:source-fallback', (e) => {
+        note('fallback', String(e.detail || '').slice(0, 160));
+        report('source_fallback', 'kickassanime → megaplay · ' + (e.detail || ''));
+    });
 
     // ---------- JS-ошибки страницы ----------
     window.addEventListener('error', (e) => {
