@@ -592,6 +592,58 @@ function renderTranslations() {
 // Упавший помечается до конца сессии и уходит из списка дорожек.
 // false — замены нет, решает вызывающий.
 const SOURCE_START_MS = 25000;
+
+// Сторож старта потока. Отсчёт SOURCE_START_MS идёт только пока вкладка видна:
+// в фоновой вкладке браузер откладывает загрузку медиа (Safari — через
+// ManagedMediaSource, Chrome — deferred load), плейлисты приходят, а куски не
+// запрашиваются вовсе — и прежний таймер за 75 с «списывал» KAA и MegaPlay у
+// зрителей, просто открывших серию в соседней вкладке (09.10.2026: 17 ложных
+// откатов, ни одного /proxy/seg в nginx-логе). Если куски идут, но медленно
+// (Индия, Android: 25 с на 1 МБ), источник не меняем — замены тяжелее
+// (у MegaPlay/UniqueStream куски по 3–4 МБ); вместо этого в «Авто» опускаемся на
+// самый лёгкий уровень и ждём ещё окно.
+function armStartWatch(hls) {
+    if (!FALLBACK_FROM.has(state.provider)) return;
+    let frags = 0;
+    let lowered = false;
+    let timer = null;
+    const onFrag = () => { frags += 1; };
+    const alive = () => state.hls === hls;
+    const stop = () => {
+        clearTimeout(timer);
+        hls.off(Hls.Events.FRAG_LOADED, onFrag);
+        document.removeEventListener('visibilitychange', onVis);
+    };
+    const arm = () => {
+        clearTimeout(timer);
+        timer = setTimeout(check, SOURCE_START_MS);
+    };
+    const onVis = () => {
+        if (!alive()) return stop();
+        if (document.visibilityState === 'visible') arm();
+        else clearTimeout(timer);
+    };
+    function check() {
+        if (!alive() || video.readyState >= 3) return stop();
+        if (document.visibilityState !== 'visible') return;
+        if (frags === 0) {
+            stop();
+            fallbackSource('не стартовал за ' + SOURCE_START_MS / 1000 + ' с');
+            return;
+        }
+        // Куски идут — сеть медленная, а не источник мёртвый.
+        if (!lowered && currentQualityKey() === 'auto' && hls.levels && hls.levels.length > 1 && hls.loadLevel !== 0) {
+            lowered = true;
+            hls.nextAutoLevel = 0;   // подсказка ABR, «Авто» остаётся
+            arm();
+            return;
+        }
+        stop();
+    }
+    hls.on(Hls.Events.FRAG_LOADED, onFrag);
+    document.addEventListener('visibilitychange', onVis);
+    if (document.visibilityState === 'visible') arm();
+}
 function fallbackSource(reason) {
     const from = state.provider;
     if (!FALLBACK_FROM.has(from) || isDown(from)) return false;
@@ -1333,12 +1385,9 @@ function attachVideo(hlsUrl) {
         hls.attachMedia(video);
         // KAA бывает «жив», но первые куски висят без ошибки — тогда не дождаться ни
         // трёх 502, ни отказа hls.js (06.10.2026: зритель ушёл с Tokyo Revengers через
-        // 37 с). Не готово к показу за SOURCE_START_MS — сразу на замену (MegaPlay тоже бывает «жив», но молчит).
-        if (FALLBACK_FROM.has(state.provider)) {
-            setTimeout(() => {
-                if (state.hls === hls && video.readyState < 3) fallbackSource('не стартовал за ' + SOURCE_START_MS / 1000 + ' с');
-            }, SOURCE_START_MS);
-        }
+        // 37 с). Сторож старта (armStartWatch): не готово к показу за SOURCE_START_MS
+        // и ни одного куска — на замену (MegaPlay тоже бывает «жив», но молчит).
+        armStartWatch(hls);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
             videoLoading.style.display = 'none';
             resumeAfterAttach();
