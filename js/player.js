@@ -654,7 +654,10 @@ function fallbackSource(reason) {
     state.downProviders.add(from);
     if (state.hls) state.hls.stopLoad();
     if (ep) state.fallbackEpNumber = ep.number;
-    if (video.currentTime > 5) state.fallbackSeekTime = video.currentTime;
+    // Позиция на замену: где играли; если поток так и не стартовал — ещё не
+    // применённая сохранённая позиция (resumeTime), иначе её затёрла бы загрузка
+    // той же серии на новой дорожке (у неё свой ключ watchPos — там пусто).
+    state.fallbackSeekTime = video.currentTime > 5 ? video.currentTime : (state.resumeTime || null);
     renderTranslations();
     // Тот же язык (у русских — хоть вшитыми у Kodik), иначе «Оригинал» замены.
     let i = cur.lang ? state.subOptions.findIndex((o) => o.lang === cur.lang || o.burned === cur.lang) : -1;
@@ -833,6 +836,7 @@ function populateEpisodes(restoreSaved, keepCurrent) {
         state.fallbackEpNumber = null;
         const i = state.episodes.findIndex((e) => Number(e.number) === Number(want));
         if (i >= 0) { selectEpisode(i); return; }
+        state.fallbackSeekTime = null;   // той серии тут нет — позиция чужая
     }
 
     const saved = parseInt(localStorage.getItem(epStorageKey()), 10);
@@ -994,6 +998,25 @@ function loadWatchPos() {
     // дальше она уже пишется по своей дорожке. Промах на длину интро возможен
     // ровно один раз — это меньшее зло, чем «продолжить» с нуля.
     return lsJson('animei:watchPos:' + shikimoriId);
+}
+
+// Позиция той же серии, сохранённая под ДРУГОЙ дорожкой этого тайтла (самая
+// свежая). Нужна при смене источника — откате или ручной: у новой дорожки свой
+// ключ, и без этого серия начиналась с нуля (жалоба владельца 09.10.2026).
+// Серию сверяем по номеру, не по индексу: у Kodik и MegaPlay списки разные.
+function otherTrackWatchPos(epNum) {
+    const prefix = 'animei:watchPos:' + shikimoriId + ':';
+    let best = null;
+    try {
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (!k || !k.startsWith(prefix) || k === watchPosKey()) continue;
+            const wp = lsJson(k);
+            if (!wp || Number(wp.epNum) !== Number(epNum)) continue;
+            if (!best || (wp.updatedAt || 0) > (best.updatedAt || 0)) best = wp;
+        }
+    } catch { /* localStorage может быть недоступен */ }
+    return best;
 }
 
 function writeWatchPos(epIndex, epNum, time, dur) {
@@ -1189,11 +1212,15 @@ async function selectEpisode(index) {
     // Если для этой серии есть сохранённая позиция — продолжим с неё после
     // загрузки потока. Самое начало и финальные титры не считаем.
     const wp = loadWatchPos();
+    const usable = (p) => p && p.time > 30 && (!p.dur || p.time < p.dur - 60);
     state.resumeTime = (wp
         && wp.seasonIndex === state.seasonIndex
         && wp.epIndex === index
-        && wp.time > 30
-        && (!wp.dur || wp.time < wp.dur - 60)) ? wp.time : null;
+        && usable(wp)) ? wp.time : null;
+    if (state.resumeTime == null) {
+        const other = otherTrackWatchPos(ep.number ?? index + 1);
+        if (usable(other)) state.resumeTime = other.time;
+    }
     // Подмена упавшего источника посреди просмотра — продолжаем с того же места.
     if (state.fallbackSeekTime != null) {
         state.resumeTime = state.fallbackSeekTime;
@@ -3922,6 +3949,10 @@ translationSelect.addEventListener('change', () => {
     const opt = state.subOptions[parseInt(translationSelect.value, 10)];
     // В статистику — только ручная смена дорожки; автовыбор при загрузке не действие.
     if (opt && window.animeiTrack) window.animeiTrack('voiceover', (isJpTrack(opt.track) ? '🇯🇵 ' : '') + (opt.track.title || ''));
+    // Ручная смена источника — та же серия с того же места, как и при откате.
+    const curEp = state.episodes[parseInt(episodeSelect.value, 10)];
+    if (curEp) state.fallbackEpNumber = curEp.number;
+    if (video.currentTime > 5) state.fallbackSeekTime = video.currentTime;
     selectTranslation(parseInt(translationSelect.value, 10));
 });
 episodeSelect.addEventListener('change', () => { selectEpisode(parseInt(episodeSelect.value, 10)); });
