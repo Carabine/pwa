@@ -140,7 +140,7 @@ const PROVIDERS = {
     // видно, что доступно (у них бывает и 1080p, и только 360p).
     kickassanime: {
         endpoint: 'catalog/kickassanime-stream',
-        params: (ep) => ({ shikimoriId, ep: ep.number, sub: state.subLang || 'en',
+        params: (ep) => ({ shikimoriId, ep: ep.number, sub: subFetchLang(),
             // Английский дубляж (режим «учу английский») — тот же мастер, другая
             // аудиодорожка; бэкенд сшивает манифест с ней (?audio=en).
             ...(state.audioWant ? { audio: state.audioWant } : {}) }),
@@ -154,7 +154,7 @@ const PROVIDERS = {
     // поверх. Ключи потока разворачивает наш /proxy/key. Последний в цепочке отката.
     uniquestream: {
         endpoint: 'catalog/uniquestream-stream',
-        params: (ep) => ({ shikimoriId, ep: ep.number, sub: state.subLang || 'en',
+        params: (ep) => ({ shikimoriId, ep: ep.number, sub: subFetchLang(),
             ...(state.audioWant ? { audio: state.audioWant } : {}) }),
         streamUrl: (d) => d.hls,
         overlaySubs: true,
@@ -407,23 +407,59 @@ async function loadOverlaySubs(data, episodeNumber) {
     showSnackbar(t('player.subsLangMissing'), { duration: 6000 });
 }
 
-async function loadHumanSubs(lang, episodeNumber) {
-    clearBurnedSubs();
-    if (!lang) return;
+async function fetchHumanCues(lang, episodeNumber) {
     try {
         const { data: res } = await client.get('subtitles/human', {
             params: { shikimoriId, title: titleRomaji, episode: episodeNumber, lang },
             timeout: 30000,
             silentErrors: true,
         });
-        const cues = res.data?.cues || [];
-        state.burnedCues = cues.map((c) => ({ start: c.s, end: c.e, text: c.text }));
-        if (state.burnedCues.length) videoWrap?.classList.add('has-burned-sub');
-        return state.burnedCues.length;
+        return (res.data?.cues || []).map((c) => ({ start: c.s, end: c.e, text: c.text }));
     } catch (err) {
         console.log('[human-sub]', err.message);
-        return 0;
+        return [];
     }
+}
+
+async function loadHumanSubs(lang, episodeNumber) {
+    clearBurnedSubs();
+    if (!lang) return 0;
+    const url = state.currentVideoUrl;
+    const cues = await fetchHumanCues(lang, episodeNumber);
+    if (state.currentVideoUrl !== url) return 0;   // ушли на другую серию
+    state.burnedCues = cues;
+    if (cues.length) videoWrap?.classList.add('has-burned-sub');
+    return cues.length;
+}
+
+// Украинские машинным переводом (см. buildSubOptions): берём реплики на языке
+// opt.mt — мягкие сабы источника, если пришли на нём, иначе человеческие
+// anime365 — и переводим на бэкенде (/subtitles/mt, кэш общий). Пока идёт
+// перевод, исходник не показываем: русская строка вместо обещанной украинской
+// выглядела бы ошибкой. Перевод не удался — показываем исходник и говорим.
+async function loadMachineSubs(opt, data, episodeNumber) {
+    clearBurnedSubs();
+    const url = state.currentVideoUrl;
+    const from = opt.mt;
+    let src = [];
+    if (data?.subtitle && normSubLang(data.subtitleLang) === from) src = await fetchVttCues(data.subtitle);
+    if (!src.length) src = await fetchHumanCues(from, episodeNumber);
+    if (state.currentVideoUrl !== url) return;
+    if (!src.length) { showSnackbar(t('player.subsLangMissing'), { duration: 6000 }); return; }
+    let out = src;
+    try {
+        const { data: res } = await client.post('subtitles/mt',
+            { from, to: 'uk', texts: src.map((c) => c.text) },
+            { timeout: 60000, silentErrors: true });
+        const tr = res.data?.texts || [];
+        out = src.map((c, i) => ({ ...c, text: tr[i] || c.text }));
+    } catch (err) {
+        console.log('[mt-sub]', err.message);
+        showSnackbar(t('player.mtFailed'), { duration: 6000 });
+    }
+    if (state.currentVideoUrl !== url) return;
+    state.burnedCues = out;
+    videoWrap?.classList.add('has-burned-sub');
 }
 
 // Режим «учу английский» (LearnLang, settings.js): английская дорожка и
@@ -560,6 +596,27 @@ function buildSubOptions() {
             PROVIDERS[t.provider]?.overlaySubs && t.audio !== 'en' && !isDown(t.provider))];
         const ukTrack = chain.find((t) => t && (t.subLangs || []).includes('uk'));
         if (ukTrack) opts.unshift({ lang: 'uk', track: ukTrack });
+        // Украинских нет нигде — машинный перевод готовых субтитров. С русских:
+        // языки близкие, перевод выходит почти дословным, в отличие от en→uk.
+        // Мягкие источника лучше человеческих anime365 — их тайминг под это видео.
+        // Вшитые в картинку русские не годятся: текста у нас нет.
+        else if (!state.humanLangs.includes('uk')) {
+            const soft = (lang) => chain.find((t) => t && (t.subLangs || []).includes(lang));
+            const best = kaa || state.translations[0];
+            const human = (lang) => (best && state.humanLangs.includes(lang)
+                ? { track: best, human: true, overBurned: pictureSubLang(best) } : null);
+            // Порядок: русские самого KAA → русские anime365 поверх KAA → русские
+            // других источников (UniqueStream медленный на холодных сериях, ради
+            // него с KAA не уходим) → то же с английскими.
+            const own = (lang) => kaa && (kaa.subLangs || []).includes(lang);
+            const pick = (own('ru') && { track: kaa, mt: 'ru' })
+                || (human('ru') && { ...human('ru'), mt: 'ru' })
+                || (soft('ru') && { track: soft('ru'), mt: 'ru' })
+                || (own('en') && { track: kaa, mt: 'en' })
+                || (human('en') && { ...human('en'), mt: 'en' })
+                || (soft('en') && { track: soft('en'), mt: 'en' });
+            if (pick) opts.unshift({ lang: 'uk', ...pick });
+        }
     }
 
     // Человеческие субтитры от anime365 (см. бэкенд /subtitles/human) — слоем
@@ -609,7 +666,7 @@ function renderTranslations() {
         }
         else if (o.lang === 'en') name = window.t('subs.langEn') + over;
         else if (o.lang === 'ru') name = window.t('subs.langRu') + over;
-        else if (o.lang === 'uk') name = window.t('subs.langUk') + over;
+        else if (o.lang === 'uk') name = window.t(o.mt ? 'subs.langUkMachine' : 'subs.langUk') + over;
         else if (o.burned === 'ru') {
             // Русские субтитры, но вшитые в картинку — не наш слой. Для
             // пользователя это всё равно «русские», поэтому и называем так,
@@ -1321,7 +1378,8 @@ async function selectEpisode(index) {
             updateQualityUI();
             // Выбранный язык — мягким слоем поверх чистой картинки (KAA);
             // «Оригинал» — ничего не накладываем, показываем как отдал источник.
-            if (currentSubOption()?.human) loadHumanSubs(state.subLang, ep.number);
+            if (currentSubOption()?.mt) loadMachineSubs(currentSubOption(), res.data, ep.number);
+            else if (currentSubOption()?.human) loadHumanSubs(state.subLang, ep.number);
             else if (prov.overlaySubs && state.subLang) loadOverlaySubs(res.data, ep.number);
             state.syncPromise = maybeAutoSync();
         } catch (err) {
@@ -1365,7 +1423,8 @@ async function selectEpisode(index) {
         updateQualityUI();
         // Тот же слой человеческих субтитров, что и у «оригинальных» источников:
         // дорожки Kodik своих мягких сабов не отдают вовсе.
-        if (currentSubOption()?.human) loadHumanSubs(state.subLang, ep.number);
+        if (currentSubOption()?.mt) loadMachineSubs(currentSubOption(), null, ep.number);
+        else if (currentSubOption()?.human) loadHumanSubs(state.subLang, ep.number);
         state.syncPromise = maybeAutoSync();   // видео готово — пробуем автосинк (ждёт ещё и субтитры)
     } catch (err) {
         console.error(err);
@@ -1913,6 +1972,12 @@ function selectedTrack() {
 
 // Выбранный вариант субтитров целиком (не только его дорожка): по нему видно,
 // наш ли это слой поверх видео (human) или мягкие сабы самого источника.
+// Какой язык мягких сабов просить у источника: для машинного перевода — язык
+// ОРИГИНАЛА перевода (русский), а не украинский, которого у источника нет.
+function subFetchLang() {
+    return currentSubOption()?.mt || state.subLang || 'en';
+}
+
 function currentSubOption() {
     const i = parseInt(translationSelect.value, 10);
     if (!state.subOptions.length) return null;
@@ -2852,21 +2917,26 @@ function parseVttCues(text) {
     return out.sort((a, b) => a.start - b.start);
 }
 
+async function fetchVttCues(url) {
+    try {
+        const r = await fetch(apiOrigin() + url);
+        if (!r.ok) return [];
+        // Водяной знак источника («kaa.lt» первой строкой) — не реплика.
+        return parseVttCues(await r.text())
+            .filter((c) => !/^\s*(?:kaa\.(?:lt|to|si)|krussdomi\.com)\s*$/i.test(c.text || ''));
+    } catch (err) {
+        console.log('[burned-sub]', err.message);
+        return [];
+    }
+}
+
 async function loadBurnedSubs(url) {
     clearBurnedSubs();
     if (!url) return;
-    try {
-        const r = await fetch(apiOrigin() + url);
-        if (!r.ok) return;
-        // Водяной знак источника («kaa.lt» первой строкой) — не реплика.
-        state.burnedCues = parseVttCues(await r.text())
-            .filter((c) => !/^\s*(?:kaa\.(?:lt|to|si)|krussdomi\.com)\s*$/i.test(c.text || ''));
-        // Реплики есть — помечаем контейнер, чтобы в полноэкранном режиме CSS
-        // спрятал учебный оверлей и в кадре осталась одна строка текста.
-        if (state.burnedCues.length) videoWrap?.classList.add('has-burned-sub');
-    } catch (err) {
-        console.log('[burned-sub]', err.message);
-    }
+    state.burnedCues = await fetchVttCues(url);
+    // Реплики есть — помечаем контейнер, чтобы в полноэкранном режиме CSS
+    // спрятал учебный оверлей и в кадре осталась одна строка текста.
+    if (state.burnedCues.length) videoWrap?.classList.add('has-burned-sub');
 }
 
 function clearBurnedSubs() {
