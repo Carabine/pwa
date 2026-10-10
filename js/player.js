@@ -578,6 +578,10 @@ function buildSubOptions() {
         opts.push({ lang, track: best, human: true, overBurned: pictureSubLang(best) });
     }
 
+    // Украинский интерфейс: «Українські» первыми, откуда бы они ни пришли.
+    const uk = opts.findIndex((o) => o.lang === 'uk');
+    if (uk > 0) opts.unshift(opts.splice(uk, 1)[0]);
+
     // «Оригинал» — без наложения. Чистая картинка приятнее, но сойдёт любая.
     const orig = kaa || state.translations[0];
     if (orig && !opts.some((o) => o.track === orig && !o.lang)) {
