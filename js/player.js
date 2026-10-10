@@ -379,6 +379,30 @@ async function withHumanLangs(episodeNumber) {
 
 // Человеческие субтитры слоем поверх видео. Тем же механизмом, что и «вжатые»
 // сабы источника (state.burnedCues), — рисуются в кадре и уходят из транскрипта.
+// Коды языков субтитров у источников вразнобой (eng/rus/ru) — к двум буквам.
+function normSubLang(code) {
+    const c = String(code || '').toLowerCase();
+    return ({ eng: 'en', rus: 'ru', jpn: 'ja', ukr: 'uk' })[c] || c.slice(0, 2) || null;
+}
+
+// Мягкие сабы источника на выбранном языке. Набор языков у KAA/UniqueStream
+// меняется от серии к серии (список в селекте — с первой серии), а бэкенд при
+// промахе отдаёт английский файл. Раньше плеер клал его поверх молча — так у
+// «Семьи шпиона 3», серия 6, вместо русских показывались английские (09.10.2026).
+// Теперь язык сверяем: не тот — берём человеческие сабы (anime365), а если и их
+// нет, оставляем что есть и говорим об этом.
+function loadOverlaySubs(data, episodeNumber) {
+    const want = state.subLang;
+    const got = normSubLang(data.subtitleLang);
+    if (!data.subtitle || got === want) { loadBurnedSubs(data.subtitle); return; }
+    if (state.humanLangs.includes(want)) {
+        loadHumanSubs(want, episodeNumber);
+        return;
+    }
+    loadBurnedSubs(data.subtitle);
+    showSnackbar(t('player.subsLangMissing'), { duration: 6000 });
+}
+
 async function loadHumanSubs(lang, episodeNumber) {
     clearBurnedSubs();
     if (!lang) return;
@@ -1273,7 +1297,7 @@ async function selectEpisode(index) {
             // Выбранный язык — мягким слоем поверх чистой картинки (KAA);
             // «Оригинал» — ничего не накладываем, показываем как отдал источник.
             if (currentSubOption()?.human) loadHumanSubs(state.subLang, ep.number);
-            else if (prov.overlaySubs && state.subLang) loadBurnedSubs(res.data.subtitle);
+            else if (prov.overlaySubs && state.subLang) loadOverlaySubs(res.data, ep.number);
             state.syncPromise = maybeAutoSync();
         } catch (err) {
             console.error(err);

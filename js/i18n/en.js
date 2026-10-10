@@ -310,6 +310,7 @@ window.I18N_EN = {
         'player.enFallbackTrack': 'This episode has no dub on the first source — switching to the second.',
         'player.trackFallback': "This episode didn't load from this source — switching to another track.",
         'player.kaaFallback': 'The video source is failing — switching to a backup, picking up where you left off.',
+        'player.subsLangMissing': "This source has no subtitles in the chosen language for this episode — showing what's available.",
         'player.wordHint': 'Tap any word',
         'player.wordHintSub': 'translation, reading and saving to cards',
         'subs.notFoundEn': 'No English subtitles for this episode 😔 You can still watch without them',
