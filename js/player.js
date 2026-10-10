@@ -351,8 +351,11 @@ async function init() {
         // Русские сабы бывают и ВШИТЫМИ (Kodik: lang=null + burned='ru') — для
         // RU/UK-интерфейса это тоже «русские», без этого дефолт съезжал на
         // английские у тайтлов, где у KickAssAnime нет своей русской дорожки.
+        // Украинский интерфейс — украинские, где они есть (пункт есть только тогда).
         const wantSub = (state.enMode || getLang() === 'en') ? 'en' : 'ru';
-        let pref = state.subOptions.findIndex((o) =>
+        let pref = (!state.enMode && getLang() === 'uk')
+            ? state.subOptions.findIndex((o) => o.lang === 'uk') : -1;
+        if (pref < 0) pref = state.subOptions.findIndex((o) =>
             o.lang === wantSub || (wantSub === 'ru' && o.burned === 'ru'));
         if (pref < 0) pref = 0;
         await selectTranslation(pref);
@@ -391,14 +394,15 @@ function normSubLang(code) {
 // «Семьи шпиона 3», серия 6, вместо русских показывались английские (09.10.2026).
 // Теперь язык сверяем: не тот — берём человеческие сабы (anime365), а если и их
 // нет, оставляем что есть и говорим об этом.
-function loadOverlaySubs(data, episodeNumber) {
+// Человеческие пробуем на каждой такой серии: state.humanLangs — с первой
+// серии, а у anime365 набор тоже бывает разным по сериям.
+async function loadOverlaySubs(data, episodeNumber) {
     const want = state.subLang;
     const got = normSubLang(data.subtitleLang);
     if (!data.subtitle || got === want) { loadBurnedSubs(data.subtitle); return; }
-    if (state.humanLangs.includes(want)) {
-        loadHumanSubs(want, episodeNumber);
-        return;
-    }
+    const url = state.currentVideoUrl;
+    if (await loadHumanSubs(want, episodeNumber)) return;
+    if (state.currentVideoUrl !== url) return;   // пока ждали, ушли на другую серию
     loadBurnedSubs(data.subtitle);
     showSnackbar(t('player.subsLangMissing'), { duration: 6000 });
 }
@@ -415,8 +419,10 @@ async function loadHumanSubs(lang, episodeNumber) {
         const cues = res.data?.cues || [];
         state.burnedCues = cues.map((c) => ({ start: c.s, end: c.e, text: c.text }));
         if (state.burnedCues.length) videoWrap?.classList.add('has-burned-sub');
+        return state.burnedCues.length;
     } catch (err) {
         console.log('[human-sub]', err.message);
+        return 0;
     }
 }
 
@@ -543,6 +549,19 @@ function buildSubOptions() {
         if (ru) opts.push({ lang: null, track: ru, burned: 'ru' });
     }
 
+    // Украинские — только при украинском интерфейсе и только там, где они есть
+    // (10.10.2026: мягкие у тайтлов Netflix на KAA/UniqueStream, человеческие
+    // у anime365 — примерно треть популярного каталога). Первыми в списке.
+    // Мягкие ищем по всей цепочке чистой картинки: у KAA их может не быть, а
+    // у UniqueStream — быть.
+    const wantUk = getLang() === 'uk';
+    if (wantUk) {
+        const chain = [kaa, ...state.translations.filter((t) =>
+            PROVIDERS[t.provider]?.overlaySubs && t.audio !== 'en' && !isDown(t.provider))];
+        const ukTrack = chain.find((t) => t && (t.subLangs || []).includes('uk'));
+        if (ukTrack) opts.unshift({ lang: 'uk', track: ukTrack });
+    }
+
     // Человеческие субтитры от anime365 (см. бэкенд /subtitles/human) — слоем
     // поверх ЛЮБОГО источника. Нужны там, где своих мягких сабов у источника
     // нет: у «Семьи шпиона» единственная японская дорожка — AnimeJoy с вшитым
@@ -554,6 +573,7 @@ function buildSubOptions() {
         // Язык уже представлен — своей дорожкой KAA или вшитым в картинку
         // текстом. Второй строкой того же языка поверх первой смысла нет.
         if (opts.some((o) => o.lang === lang || o.burned === lang)) continue;
+        if (lang === 'uk' && !wantUk) continue;
         if (!best) break;
         opts.push({ lang, track: best, human: true, overBurned: pictureSubLang(best) });
     }
@@ -585,6 +605,7 @@ function renderTranslations() {
         }
         else if (o.lang === 'en') name = window.t('subs.langEn') + over;
         else if (o.lang === 'ru') name = window.t('subs.langRu') + over;
+        else if (o.lang === 'uk') name = window.t('subs.langUk') + over;
         else if (o.burned === 'ru') {
             // Русские субтитры, но вшитые в картинку — не наш слой. Для
             // пользователя это всё равно «русские», поэтому и называем так,

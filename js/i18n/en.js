@@ -19,6 +19,7 @@ window.I18N_EN = {
         'player.origJpClean': 'Original (JP, no subs)',
         'subs.langEn': 'English',
         'subs.langRu': 'Russian',
+        'subs.langUk': 'Ukrainian',
         'subs.langRuBurned': 'Russian (baked into video)',
         'subs.langOriginal': 'Original',
         'subs.originalClean': 'Original (no subtitles)',

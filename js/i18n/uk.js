@@ -19,6 +19,7 @@ window.I18N_UK = {
         'player.origJpClean': 'Оригінал (яп., без сабів)',
         'subs.langEn': 'Англійські',
         'subs.langRu': 'Російські',
+        'subs.langUk': 'Українські',
         'subs.langRuBurned': 'Російські (вшиті у відео)',
         'subs.overBurned': ' — поверх вшитих',
         'subs.langOriginal': 'Оригінал',

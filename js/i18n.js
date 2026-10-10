@@ -21,6 +21,7 @@ const I18N = {
         'player.origJpClean': 'Оригинал (яп., без сабов)',
         'subs.langEn': 'Английские',
         'subs.langRu': 'Русские',
+        'subs.langUk': 'Украинские',
         'subs.langRuBurned': 'Русские (вшиты в видео)',
         'subs.langOriginal': 'Оригинал',
         'subs.originalClean': 'Оригинал (без субтитров)',
