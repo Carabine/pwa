@@ -2979,6 +2979,8 @@ function cueTr(cue) {
 function buildTrMap() {
     const map = new Map();
     const b = [...state.burnedCues].sort((x, y) => x.start - y.start);
+    // Окна реплик транскрипта во времени ВИДЕО.
+    const win = state.cues.map((c) => { const off = cueOff(c); return [c.start + off, c.end + off]; });
     // Первый субтитр кадра, который может перекрыть окно, начинающееся в t:
     // длиннее 20 с реплик не бывает.
     const firstFrom = (t) => {
@@ -2990,18 +2992,35 @@ function buildTrMap() {
         }
         return lo;
     };
-    for (const c of state.cues) {
-        const off = cueOff(c);
-        const cs = c.start + off;
-        const ce = c.end + off;
+    // Лучшая пара для окна при сдвиге d слоя кадра (или null) и её перекрытие.
+    const bestFor = ([cs, ce], d) => {
         let best = null;
         let ov = 0;
-        for (let j = firstFrom(cs); j < b.length && b[j].start < ce; j++) {
-            const o = Math.min(ce, b[j].end) - Math.max(cs, b[j].start);
+        for (let j = firstFrom(cs - d); j < b.length && b[j].start + d < ce; j++) {
+            const o = Math.min(ce, b[j].end + d) - Math.max(cs, b[j].start + d);
             if (o > ov) { ov = o; best = b[j]; }
         }
-        if (best) map.set(c, String(best.text || '').replace(/\s*\n\s*/g, ' ').trim());
+        return [best, ov];
+    };
+    // Общий сдвиг слоя относительно транскрипта. Человеческие сабы anime365
+    // идут в сыром времени, а японские — со сдвигом синхронизации: у «Наны»
+    // всего 0.4 с, но русские реплики разбиты иначе японских, и короткой
+    // японской реплике этого хватало, чтобы перекрыться больше с СОСЕДНЕЙ.
+    // Берём сдвиг, при котором наборы совпадают лучше всего (±6 с).
+    let shift = 0;
+    let bestScore = -1;
+    for (let d = -6; d <= 6.001; d += 0.1) {
+        let score = 0;
+        for (const w of win) score += bestFor(w, d)[1];
+        if (score > bestScore + 1e-6 || (Math.abs(score - bestScore) < 1e-6 && Math.abs(d) < Math.abs(shift))) {
+            bestScore = score;
+            shift = d;
+        }
     }
+    state.cues.forEach((c, i) => {
+        const [best] = bestFor(win[i], shift);
+        if (best) map.set(c, String(best.text || '').replace(/\s*\n\s*/g, ' ').trim());
+    });
     return map;
 }
 
