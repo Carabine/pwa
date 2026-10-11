@@ -177,6 +177,7 @@ const state = {
     seasonIndex: 0,
     burnedCues: [],        // субтитры источника, рисуемые поверх видео как «вжатые»
     burnedIndex: -1,
+    burnedLang: null,      // язык субтитров в кадре (null — неизвестен/нет); см. cueTr
     subOptions: [],        // варианты селекта: { lang: 'en'|'ru'|null, track }
     humanLangs: [],        // языки человеческих сабов (anime365) для этой серии
     subLang: null,         // выбранный язык субтитров; null = «оригинал», без наложения
@@ -399,11 +400,11 @@ function normSubLang(code) {
 async function loadOverlaySubs(data, episodeNumber) {
     const want = state.subLang;
     const got = normSubLang(data.subtitleLang);
-    if (!data.subtitle || got === want) { loadBurnedSubs(data.subtitle); return; }
+    if (!data.subtitle || got === want) { loadBurnedSubs(data.subtitle, got); return; }
     const url = state.currentVideoUrl;
     if (await loadHumanSubs(want, episodeNumber)) return;
     if (state.currentVideoUrl !== url) return;   // пока ждали, ушли на другую серию
-    loadBurnedSubs(data.subtitle);
+    loadBurnedSubs(data.subtitle, got);
     showSnackbar(t('player.subsLangMissing'), { duration: 6000 });
 }
 
@@ -428,7 +429,11 @@ async function loadHumanSubs(lang, episodeNumber) {
     const cues = await fetchHumanCues(lang, episodeNumber);
     if (state.currentVideoUrl !== url) return 0;   // ушли на другую серию
     state.burnedCues = cues;
-    if (cues.length) videoWrap?.classList.add('has-burned-sub');
+    if (cues.length) {
+        state.burnedLang = lang;
+        videoWrap?.classList.add('has-burned-sub');
+        refreshTranscriptTr();
+    }
     return cues.length;
 }
 
@@ -447,19 +452,23 @@ async function loadMachineSubs(opt, data, episodeNumber) {
     if (state.currentVideoUrl !== url) return;
     if (!src.length) { showSnackbar(t('player.subsLangMissing'), { duration: 6000 }); return; }
     let out = src;
+    let outLang = from;
     try {
         const { data: res } = await client.post('subtitles/mt',
             { from, to: 'uk', texts: src.map((c) => c.text) },
             { timeout: 60000, silentErrors: true });
         const tr = res.data?.texts || [];
         out = src.map((c, i) => ({ ...c, text: tr[i] || c.text }));
+        if (tr.some(Boolean)) outLang = 'uk';
     } catch (err) {
         console.log('[mt-sub]', err.message);
         showSnackbar(t('player.mtFailed'), { duration: 6000 });
     }
     if (state.currentVideoUrl !== url) return;
     state.burnedCues = out;
+    state.burnedLang = outLang;
     videoWrap?.classList.add('has-burned-sub');
+    refreshTranscriptTr();
 }
 
 // Режим «учу английский» (LearnLang, settings.js): английская дорожка и
@@ -2587,10 +2596,11 @@ function renderTranscript() {
         buildWordCells(cue).forEach(s => jp.appendChild(s));
         div.appendChild(jp);
 
-        if (cue.translation) {
+        const tr = cueTr(cue);
+        if (tr) {
             const ru = document.createElement('div');
             ru.className = 'cue__ru';
-            ru.textContent = cue.translation;
+            ru.textContent = tr;
             div.appendChild(ru);
         }
 
@@ -2667,8 +2677,9 @@ function updateNowCue(idx) {
     // фуриганой, а перевод одной строкой ниже (см. buildWordCells).
     nowCueJp.innerHTML = '';
     buildWordCells(cue).forEach(s => nowCueJp.appendChild(s));
-    nowCueRu.textContent = cue.translation || '';
-    nowCueRu.style.display = (cue.translation && state.showRu) ? '' : 'none';
+    const tr = cueTr(cue);
+    nowCueRu.textContent = tr;
+    nowCueRu.style.display = (tr && state.showRu) ? '' : 'none';
     // Отложенная подсказка «нажми на слово» — только на реплике, которая
     // провисит достаточно, чтобы её прочитать (на быстрых она мелькала и гасла).
     if (wordHintArmed && !video.paused
@@ -2930,17 +2941,80 @@ async function fetchVttCues(url) {
     }
 }
 
-async function loadBurnedSubs(url) {
+async function loadBurnedSubs(url, lang = null) {
     clearBurnedSubs();
     if (!url) return;
     state.burnedCues = await fetchVttCues(url);
     // Реплики есть — помечаем контейнер, чтобы в полноэкранном режиме CSS
     // спрятал учебный оверлей и в кадре осталась одна строка текста.
-    if (state.burnedCues.length) videoWrap?.classList.add('has-burned-sub');
+    if (state.burnedCues.length) {
+        state.burnedLang = lang;
+        videoWrap?.classList.add('has-burned-sub');
+        refreshTranscriptTr();
+    }
+}
+
+// Строка перевода под японской репликой = текст субтитров в кадре, если они на
+// том же языке. Иначе это два разных перевода одной фразы: в кадре — фансаб
+// (или наш машинный перевод русского фансаба), в транскрипте — машинный с
+// японского, и они не совпадали («Вона така гарна.» против «красива людина»,
+// «Нана», 11.10.2026). Реплике транскрипта достаётся субтитр кадра с
+// наибольшим перекрытием по времени ВИДЕО (с учётом сдвига синхронизации).
+// Не нашлось пары — остаётся машинный перевод с японского.
+let trMap = null;
+let trKey = [];
+function cueTr(cue) {
+    if (!cue) return '';
+    if (state.enMode || !state.burnedLang || state.burnedLang !== subsLang() || !state.burnedCues.length) {
+        return cue.translation || '';
+    }
+    const key = [state.burnedCues, state.cues, state.offset, state.segs];
+    if (!trMap || key.some((k, i) => k !== trKey[i])) {
+        trMap = buildTrMap();
+        trKey = key;
+    }
+    return trMap.get(cue) || cue.translation || '';
+}
+
+function buildTrMap() {
+    const map = new Map();
+    const b = [...state.burnedCues].sort((x, y) => x.start - y.start);
+    // Первый субтитр кадра, который может перекрыть окно, начинающееся в t:
+    // длиннее 20 с реплик не бывает.
+    const firstFrom = (t) => {
+        let lo = 0;
+        let hi = b.length;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (b[mid].start < t - 20) lo = mid + 1; else hi = mid;
+        }
+        return lo;
+    };
+    for (const c of state.cues) {
+        const off = cueOff(c);
+        const cs = c.start + off;
+        const ce = c.end + off;
+        let best = null;
+        let ov = 0;
+        for (let j = firstFrom(cs); j < b.length && b[j].start < ce; j++) {
+            const o = Math.min(ce, b[j].end) - Math.max(cs, b[j].start);
+            if (o > ov) { ov = o; best = b[j]; }
+        }
+        if (best) map.set(c, String(best.text || '').replace(/\s*\n\s*/g, ' ').trim());
+    }
+    return map;
+}
+
+// Слой в кадре сменился — перерисовать переводы в транскрипте и под видео.
+function refreshTranscriptTr() {
+    if (!state.cues.length) return;
+    renderTranscript();
+    if (state.activeCueIndex >= 0) updateNowCue(state.activeCueIndex);
 }
 
 function clearBurnedSubs() {
     state.burnedCues = [];
+    state.burnedLang = null;
     state.burnedIndex = -1;
     if (burnedSub) {
         burnedSub.textContent = '';
@@ -3868,7 +3942,7 @@ popupSave.addEventListener('click', async () => {
             romaji: '',
             translation,
             sentence: ctx.cue.text,
-            sentenceTranslation: ctx.cue.translation || '',
+            sentenceTranslation: cueTr(ctx.cue),
             videoStart: Math.max(0, ctx.cue.start + cueOff(ctx.cue)),
             videoEnd: ctx.cue.end + cueOff(ctx.cue),
             videoUrl: state.currentVideoUrl || '',
