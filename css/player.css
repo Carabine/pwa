@@ -4123,6 +4123,9 @@ body.is-en #reading-toggle {
     color: #ececf6;
     font-family: Inter, system-ui, sans-serif;
     white-space: nowrap;
+    /* Узкий экран (320px, en/uk): карточка шире вьюпорта, крестик обрезался —
+       ограничиваем шириной экрана, подзаголовок переносится (12.10.2026). */
+    max-width: calc(100vw - 12px);
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
     pointer-events: none;
     animation: word-hint-in 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.2);
@@ -4151,7 +4154,7 @@ body.is-en #reading-toggle {
     background: rgba(129, 140, 248, 0.16);
     color: #a5b4fc;
 }
-.word-hint__tx { display: flex; flex-direction: column; gap: 1px; }
+.word-hint__tx { display: flex; flex-direction: column; gap: 1px; min-width: 0; white-space: normal; }
 .word-hint__tx b { font-size: 13.5px; font-weight: 650; line-height: 1.25; color: #fff; }
 .word-hint__tx small { font-size: 12px; line-height: 1.25; color: #9d9db8; }
 .word-hint__x {

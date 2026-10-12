@@ -2716,6 +2716,10 @@ function maybeWordHint() {
     // нет вовсе, и облачко висело поверх кадра, указывая в пустоту; на ПК
     // уезжало за верхний край (06.10.2026). Показ не тратим — дождёмся выхода.
     if (document.fullscreenElement || video.webkitDisplayingFullscreen) return;
+    // Кино-режим без настоящего fullscreen (iOS: оверлей .theater, z-index 200)
+    // — облачко из <body> (z-index 60) оказывалось ПОД оверлеем: показ сгорал,
+    // человек ничего не видел (12.10.2026, _pp/hint-states.js).
+    if (document.querySelector('.player-layout.theater')) return;
     const st = wordHintState();
     if (st === 'done' || Number(st) >= WORD_HINT_MAX) return;
     const words = [...nowCueJp.querySelectorAll('.tok--learnable:not(.tok--known)')];

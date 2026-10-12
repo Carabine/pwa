@@ -767,6 +767,8 @@
     }
     function maybeDeckHint() {
         if (deckHintShown || wrap.hidden || !overlay.hidden || document.fullscreenElement) return;
+        // Кино-режим-оверлей (iOS, без fullscreen): карточка в <body> лежит под ним.
+        if (document.querySelector('.player-layout.theater')) return;
         const st = deckHintState();
         if (st === 'done' || Number(st) >= DECK_HINT_MAX) { deckHintShown = true; return; }
         // не наслаивать на подсказку слова и открытую карточку слова
