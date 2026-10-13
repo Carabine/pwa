@@ -1583,6 +1583,15 @@ function attachVideo(hlsUrl) {
                 hls.recoverMediaError();
                 return;
             }
+            // Декодер не ожил после двух попыток (битый сегмент/кодек у KAA: «video
+            // decode error», bufferAppendError) — не хороним просмотр табличкой, а
+            // уходим на замену по той же цепочке, что и при обрыве сети. Раньше
+            // зритель перезагружал страницу сам (Baki 12.10, One Piece на iPhone 13.10).
+            if (state.hls === hls && data.type === Hls.ErrorTypes.MEDIA_ERROR && FALLBACK_FROM.has(state.provider)
+                && fallbackSource('декодер: ' + data.details + (data.error && data.error.message ? ' · ' + data.error.message.slice(0, 80) : ''))) {
+                data.animeiFallback = true;
+                return;
+            }
             // Видео не поднялось даже после ретраев — сигнал о больном источнике.
             if (window.animeiTrack) animeiTrack('video_error', String(data.type || 'unknown'));
             videoLoading.style.display = 'flex';
