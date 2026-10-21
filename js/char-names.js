@@ -26,10 +26,14 @@
     const KANJI = /[一-龯々]/;
     const inText = (name) => (KANJI.test(name) ? name.length >= 2 : /^[ァ-ヿ]{3,}$/.test(name));
 
-    // Индексы токенов реплики, которые попадают на имя персонажа.
+    // Индексы токенов реплики, которые попадают на имя персонажа. Плюс токены,
+    // которые сам MeCab разобрал как имя (tok.name от бэкенда, 名詞・固有名詞・人名):
+    // так имена отсеиваются и когда список Shikimori недоступен.
     function mask(tokens, names) {
         const skip = new Set();
-        if (!names || !names.length || !tokens || !tokens.length) return skip;
+        if (!tokens || !tokens.length) return skip;
+        tokens.forEach((tok, i) => { if (tok.name) skip.add(i); });
+        if (!names || !names.length) return skip;
         const starts = [];
         let text = '';
         for (const tok of tokens) { starts.push(text.length); text += tok.surface || ''; }
@@ -65,7 +69,8 @@
 //    катаканой (アハハ, ハア);
 //  • стоны хираганой с маленькой гласной (はぁ, ぐぅ) и на ぐ (ぐお, ぐわ), повтор
 //    одной буквы, если такого слова нет в словаре (うう; いい, ここ — слова);
-//  • двухбуквенные «глаголы» каной, которых нет в словаре (えむ, いむ, ちる).
+//  • двухбуквенные «глаголы» каной, которых нет в словаре (えむ, いむ, ちる);
+//  • числа со счётным словом (２つ, 3人).
 // inDict(word) → есть ли в словаре; null — словарь ещё не загружен (тогда
 // словарные проверки пропускаем, иначе выкинули бы и する).
 (() => {
@@ -74,6 +79,7 @@
     function isNoise(tok, base, inDict) {
         base = base || tok.base || tok.surface || '';
         const surf = tok.surface || base;
+        if (/^[0-9０-９]/.test(surf)) return true;   // ２つ, 3人 — числа, а не слова
         for (const w of [surf, base]) {
             if (/^[ぁ-ゖァ-ヿー]+[っッ]$/.test(w)) return true;
             if (w.length < 2 && !/[一-龯々]/.test(w)) return true;
