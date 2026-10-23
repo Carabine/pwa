@@ -101,7 +101,8 @@ html, body {
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 8px 12px;
-    margin: 20px 4px 0;
+    /* Воздух сверху и снизу: прижатая к подсказке и сетке строка смотрелась тесно. */
+    margin: 32px 4px 0;
 }
 
 .catalog__heading {
@@ -116,7 +117,7 @@ html, body {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 22px 18px;
-    margin-top: 16px;
+    margin-top: 22px;
 }
 
 @media (max-width: 600px) {
@@ -149,7 +150,10 @@ html, body {
         line-height: 1.45;
     }
     .catalog__bar {
-        margin-top: 12px;
+        margin-top: 22px;
+    }
+    .catalog__grid {
+        margin-top: 16px;
     }
     .catalog-chip {
         padding: 5px 12px;
