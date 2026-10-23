@@ -169,7 +169,11 @@
                     // Токен с чтением базовой формы ценнее (kana карточки будет верной).
                     if (!e.tok.baseReading && tok.baseReading) e.tok = tok;
                     const s = cueScore(cue);
-                    if (s > e.cueScore) { e.cueScore = s; e.cue = cue; e.ep = set; }
+                    // При равной оценке — пример из текущей серии: её только что
+                    // видели, и клип режется из открытого потока без резолва чужой.
+                    if (s > e.cueScore || (s === e.cueScore && set.current && !e.ep.current)) {
+                        e.cueScore = s; e.cue = cue; e.ep = set;
+                    }
                 }
             }
         }
