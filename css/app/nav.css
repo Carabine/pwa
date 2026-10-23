@@ -336,7 +336,7 @@
 
 .sidebar a.active {
     color: var(--primary);
-    background: rgba(124, 140, 248, 0.14);
+    background: rgba(63, 111, 216, 0.14);
 }
 
 .sidebar a.active .nav-icon {
@@ -353,7 +353,7 @@
     letter-spacing: 0.04em;
     line-height: 1;
     color: #fff;
-    background: linear-gradient(135deg, var(--primary), #a78bfa);
+    background: linear-gradient(135deg, var(--primary), #5ba3ec);
     padding: 2px 5px;
     border-radius: 5px;
     pointer-events: none;
@@ -565,7 +565,7 @@
 
     .header__search-input:focus {
         border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(124, 140, 248, .16);
+        box-shadow: 0 0 0 4px rgba(63, 111, 216, .16);
     }
 
     .header__search-toggle {
@@ -637,7 +637,7 @@
 
     .header__search.is-open .header__search-input:focus {
         border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(124, 140, 248, .16);
+        box-shadow: 0 0 0 4px rgba(63, 111, 216, .16);
     }
 }
 

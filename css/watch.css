@@ -36,13 +36,13 @@
 
 .upload-box.dragover {
     border-color: var(--primary);
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(63, 111, 216, 0.05);
     color: var(--text);
 }
 @media (hover: hover) and (pointer: fine) {
     .upload-box:hover {
         border-color: var(--primary);
-        background: rgba(99, 102, 241, 0.05);
+        background: rgba(63, 111, 216, 0.05);
         color: var(--text);
     }
 }
@@ -596,7 +596,7 @@
 }
 
 .sub-segment.active {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(63, 111, 216, 0.1);
     border-left-color: var(--primary);
 }
 

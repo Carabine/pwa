@@ -154,7 +154,7 @@
     font-size: 13px;
     font-weight: 600;
     color: var(--primary-hover);
-    background: rgba(99, 102, 241, 0.14);
+    background: rgba(63, 111, 216, 0.14);
     border-radius: 999px;
     padding: 2px 11px;
     min-width: 26px;
@@ -277,7 +277,7 @@
     font-size: 11px;
     padding: 1px 7px;
     border-radius: 999px;
-    background: rgba(99, 102, 241, 0.14);
+    background: rgba(63, 111, 216, 0.14);
     color: var(--primary-hover);
 }
 
@@ -287,11 +287,11 @@
 
 .words-menu__item.is-on {
     color: var(--primary-hover);
-    background: rgba(99, 102, 241, 0.14);
+    background: rgba(63, 111, 216, 0.14);
 }
 
 @media (hover: hover) and (pointer: fine) {
-    .words-menu__item.is-on:hover { background: rgba(99, 102, 241, 0.2); }
+    .words-menu__item.is-on:hover { background: rgba(63, 111, 216, 0.2); }
 }
 
 .words-list {
@@ -396,7 +396,7 @@
 }
 
 .words-empty__sub .is-hit {
-    background: rgba(124, 140, 248, 0.35);
+    background: rgba(63, 111, 216, 0.35);
     background: color-mix(in srgb, var(--primary) 30%, transparent);
     box-shadow: inset 0 -2px 0 var(--primary);
 }
@@ -651,12 +651,12 @@
     border-color: var(--primary);
 }
 .word-row.is-selected {
-    background: rgba(124, 140, 248, 0.1);
+    background: rgba(63, 111, 216, 0.1);
     box-shadow: inset 2px 0 0 var(--primary);
 }
 .word-card.is-selected {
     border-color: var(--primary);
-    background: rgba(124, 140, 248, 0.08);
+    background: rgba(63, 111, 216, 0.08);
 }
 /* В карточке галочка живёт в углу поверх содержимого. */
 .word-card .word-check {
@@ -703,7 +703,7 @@
     justify-content: center;
     padding: 0 8px;
     border-radius: 999px;
-    background: rgba(99, 102, 241, 0.16);
+    background: rgba(63, 111, 216, 0.16);
     color: var(--primary-hover);
     font-size: 13px;
     font-weight: 600;
@@ -812,7 +812,7 @@
 /* Выбранный формат — как выбранная ячейка палитры колод. */
 .anki-export__opt.is-sel {
     border-color: var(--primary);
-    background: rgba(124, 140, 248, 0.10);
+    background: rgba(63, 111, 216, 0.10);
 }
 @media (hover: hover) and (pointer: fine) {
     .anki-export__opt:hover:not(:disabled) { border-color: var(--primary); }

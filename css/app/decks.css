@@ -67,7 +67,7 @@
     .deck-pick:hover { border-color: var(--primary); }
 }
 /* Фильтр включён — обводка подсвечена, чтобы это было видно без чтения текста. */
-.deck-pick--on { border-color: var(--primary); background: rgba(124, 140, 248, 0.12); }
+.deck-pick--on { border-color: var(--primary); background: rgba(63, 111, 216, 0.12); }
 .deck-pick__emoji { font-size: 16px; line-height: 1; }
 /* Аватарка колоды (портрет главного персонажа тайтла): размер задаётся
    шрифтом контекста, поэтому одна и та же разметка живёт и в пилюле, и в
@@ -419,7 +419,7 @@
 @media (hover: hover) and (pointer: fine) {
     .deck-editor__emoji:hover { transform: translateY(-1px); }
 }
-.deck-editor__emoji.is-sel { border-color: var(--primary); background: rgba(124, 140, 248, 0.14); }
+.deck-editor__emoji.is-sel { border-color: var(--primary); background: rgba(63, 111, 216, 0.14); }
 /* Первая ячейка палитры — аватарка тайтла (у колод серий). */
 .deck-editor__avatar img {
     width: 26px;
@@ -501,7 +501,7 @@
 
 .wfilters__seg.is-on {
     border-color: var(--primary);
-    background: rgba(124, 140, 248, 0.16);
+    background: rgba(63, 111, 216, 0.16);
     color: var(--text);
 }
 

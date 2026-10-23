@@ -138,15 +138,15 @@
 .news-card__ph {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    background: linear-gradient(135deg, var(--primary), #2f55b0);
     opacity: 0.85;
 }
-.news-card__ph[data-cat="science"] { background: linear-gradient(135deg, #0ea5e9, #6366f1); }
+.news-card__ph[data-cat="science"] { background: linear-gradient(135deg, #0ea5e9, #3f6fd8); }
 .news-card__ph[data-cat="business"] { background: linear-gradient(135deg, #f59e0b, #ef4444); }
 .news-card__ph[data-cat="sports"] { background: linear-gradient(135deg, #10b981, #0ea5e9); }
 .news-card__ph[data-cat="weather"] { background: linear-gradient(135deg, #64748b, #0ea5e9); }
 .news-card__ph[data-cat="culture"] { background: linear-gradient(135deg, #ec4899, #8b5cf6); }
-.news-card__ph[data-cat="world"] { background: linear-gradient(135deg, #14b8a6, #6366f1); }
+.news-card__ph[data-cat="world"] { background: linear-gradient(135deg, #14b8a6, #3f6fd8); }
 
 .news-card__body { min-width: 0; }
 .news-card__title {

@@ -25,9 +25,10 @@
     --surface: #13131a;
     --card: #1a1a26;
     --border: #2a2a3a;
-    /* Бренд «Барвинок» (periwinkle): мягкий сине-фиолетовый акцент. */
-    --primary: #7c8cf8;
-    --primary-hover: #b4bcfb;
+    /* Бренд «Ай-иро» (藍色, японский индиго): плотный синий без пастельного свечения.
+       До 24.10.2026 был «барвинок» #7c8cf8 — на тёмном фоне светился и выглядел «ИИ-шно». */
+    --primary: #3f6fd8;
+    --primary-hover: #6b8fe6;
     --success: #10b981;
     --success-hover: #34d399;
     --danger: #f43f5e;
@@ -65,9 +66,9 @@
     --surface: #ffffff;
     --card: #ffffff;
     --border: #e3e7f0;
-    /* Барвинок в светлой теме: сам акцент тот же, hover темнее для читаемости ссылок. */
-    --primary: #7c8cf8;
-    --primary-hover: #4f46e5;
+    /* Ай-иро в светлой теме: сам акцент тот же, hover темнее для читаемости ссылок. */
+    --primary: #3f6fd8;
+    --primary-hover: #2f55b0;
     --success: #059669;
     --success-hover: #10b981;
     --danger: #e11d48;

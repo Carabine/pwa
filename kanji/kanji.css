@@ -53,12 +53,12 @@ body.kj {
     border-radius: 8px;
     display: inline-grid;
     place-items: center;
-    background: linear-gradient(135deg, var(--primary), #a78bfa);
+    background: linear-gradient(135deg, var(--primary), #5ba3ec);
     color: #fff;
     font-family: 'Noto Sans JP', var(--font);
     font-size: 17px;
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(124, 140, 248, 0.35);
+    box-shadow: 0 2px 8px rgba(63, 111, 216, 0.35);
 }
 .kj-top__btn {
     justify-self: end;

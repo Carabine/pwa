@@ -40,11 +40,11 @@
         .app-splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:var(--bg,#0a0a0f);transition:opacity .45s ease}
         .app-splash.is-hiding{opacity:0;pointer-events:none}
         .app-splash__logo{position:relative;width:100px;height:100px;display:flex;align-items:center;justify-content:center;animation:splash-pop .6s cubic-bezier(.2,.9,.3,1.25) both}
-        .app-splash__mark{width:100px;height:100px;border-radius:24%;box-shadow:0 14px 44px -8px rgba(124,140,248,.6);position:relative;z-index:1}
-        .app-splash__glow{position:absolute;inset:-32%;border-radius:50%;background:radial-gradient(circle,rgba(124,140,248,.5),transparent 62%);filter:blur(8px);animation:splash-pulse 1.7s ease-in-out infinite}
-        .app-splash__name{font-family:'Inter',system-ui,sans-serif;font-size:27px;font-weight:700;letter-spacing:-.5px;background:linear-gradient(135deg,#7c8cf8,#b4bcfb);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;opacity:0;animation:splash-in .5s ease .28s forwards}
-        .app-splash__bar{width:128px;height:3px;border-radius:99px;background:rgba(124,140,248,.16);overflow:hidden}
-        .app-splash__bar span{display:block;width:38%;height:100%;border-radius:99px;background:linear-gradient(90deg,#7c8cf8,#b4bcfb);animation:splash-slide 1.15s ease-in-out infinite}
+        .app-splash__mark{width:100px;height:100px;border-radius:24%;box-shadow:0 14px 44px -8px rgba(63,111,216,.6);position:relative;z-index:1}
+        .app-splash__glow{position:absolute;inset:-32%;border-radius:50%;background:radial-gradient(circle,rgba(63,111,216,.5),transparent 62%);filter:blur(8px);animation:splash-pulse 1.7s ease-in-out infinite}
+        .app-splash__name{font-family:'Inter',system-ui,sans-serif;font-size:27px;font-weight:700;letter-spacing:-.5px;background:linear-gradient(135deg,#3f6fd8,#6b8fe6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;opacity:0;animation:splash-in .5s ease .28s forwards}
+        .app-splash__bar{width:128px;height:3px;border-radius:99px;background:rgba(63,111,216,.16);overflow:hidden}
+        .app-splash__bar span{display:block;width:38%;height:100%;border-radius:99px;background:linear-gradient(90deg,#3f6fd8,#6b8fe6);animation:splash-slide 1.15s ease-in-out infinite}
         @keyframes splash-pop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
         @keyframes splash-pulse{0%,100%{transform:scale(.9);opacity:.5}50%{transform:scale(1.18);opacity:.95}}
         @keyframes splash-in{to{opacity:1}}

@@ -28,8 +28,8 @@
     width: 100%;
     max-width: 400px;
     padding: 12px 16px 12px 12px;
-    background: linear-gradient(135deg, rgba(124, 140, 248, 0.10), var(--card) 65%);
-    border: 1px solid rgba(124, 140, 248, 0.45);
+    background: linear-gradient(135deg, rgba(63, 111, 216, 0.10), var(--card) 65%);
+    border: 1px solid rgba(63, 111, 216, 0.45);
     border-radius: var(--radius);
     color: var(--text);
     text-decoration: none;
@@ -40,7 +40,7 @@
     .continue-card:hover {
         border-color: var(--primary);
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.18);
+        box-shadow: 0 8px 24px rgba(63, 111, 216, 0.18);
         color: var(--text);
     }
 }
@@ -73,7 +73,7 @@
     font-weight: 700;
     letter-spacing: 0.6px;
     text-transform: uppercase;
-    color: #7c8cf8;
+    color: #3f6fd8;
 }
 
 .continue-card__title {
@@ -94,8 +94,8 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(124, 140, 248, 0.15);
-    color: #7c8cf8;
+    background: rgba(63, 111, 216, 0.15);
+    color: #3f6fd8;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -676,13 +676,13 @@
     margin-top: 8px;
     padding: 10px 14px;
     border-radius: 12px;
-    background: linear-gradient(135deg, rgba(124, 140, 248, .18), rgba(180, 188, 251, .10));
-    border: 1px solid rgba(124, 140, 248, .35);
+    background: linear-gradient(135deg, rgba(63, 111, 216, .18), rgba(180, 188, 251, .10));
+    border: 1px solid rgba(63, 111, 216, .35);
     color: var(--text);
     font-size: 14px;
     animation: milestone-in .5s cubic-bezier(.2, .9, .3, 1.3) both;
 }
-.week-strip__milestone b { color: var(--primary-hover, #b4bcfb); }
+.week-strip__milestone b { color: var(--primary-hover, #6b8fe6); }
 @keyframes milestone-in {
     from { opacity: 0; transform: translateY(6px) scale(.96); }
     to   { opacity: 1; transform: none; }

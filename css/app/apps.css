@@ -177,7 +177,7 @@
     text-decoration: none;
     transition: transform var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
 }
-.app-card--news { --accent: #7c8cf8; --accent-2: #38bdf8; }
+.app-card--news { --accent: #3f6fd8; --accent-2: #38bdf8; }
 .app-card--kanji { --accent: #f43f5e; --accent-2: #f59e0b; }
 .app-card__icon {
     grid-area: icon;
