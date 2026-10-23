@@ -59,6 +59,10 @@
     let scope = 'episode';     // 'episode' | 'anime'
     let level = '54';          // '5' | '54' | '4'
     let levelTouched = false;
+    // Серия, на которой выбрали «всё аниме». Переключили серию — охват при
+    // следующем открытии снова «эта серия»: иначе колода «не менялась» вместе
+    // с серией (список всего аниме одинаков для любой серии).
+    let animeScopeEp = null;
     let scanning = false;      // идёт скан серий — список пуст не потому, что слов нет
     let scanToken = 0;         // отмена устаревшего скана при переключениях
     const scanCache = new Map();   // '<номер серии>:<язык>' -> cues
@@ -100,8 +104,7 @@
         if (wrap.hidden !== !has) wrap.hidden = !has;
         if (has && autoDeckPending) {
             autoDeckPending = false;
-            scope = 'anime';
-            scopeSeg.querySelectorAll('button').forEach((x) => x.classList.toggle('is-on', x.dataset.scope === 'anime'));
+            setScope('anime');
             setLevel('5', false);
             openModal();
         }
@@ -216,6 +219,11 @@
                 scanCache.set(key, cues);
             }
             if (cues.length) sets.push({ cues, epIndex: i, epNumber, current: false });
+        }
+        // Текущая серия дальше первых SCAN_MAX тоже в счёт — иначе с 9-й серии
+        // «всё аниме» не видело слов той серии, которую смотрят.
+        if (cur >= total && state.cues.length) {
+            sets.push({ cues: state.cues, epIndex: cur, epNumber: epNumberOf(cur), current: true });
         }
         scanEl.hidden = true;
         return sets;
@@ -444,6 +452,10 @@
             return;
         }
         btn.disabled = false;
+        if (scope === 'anime' && animeScopeEp !== epKey()) {
+            setScope('episode');
+            if (!levelTouched) setLevel('54', false);
+        }
         subEl.textContent = t(scope === 'anime' ? 'edeck.sub.anime' : 'edeck.sub');
         fsPortal.attach();
         overlay.hidden = false;
@@ -462,11 +474,18 @@
         levelSeg.querySelectorAll('button').forEach((x) => x.classList.toggle('is-on', x.dataset.level === v));
     }
 
+    function epKey() { return state.seasonIndex + ':' + episodeSelect.value; }
+
+    function setScope(v) {
+        scope = v;
+        animeScopeEp = v === 'anime' ? epKey() : null;
+        scopeSeg.querySelectorAll('button').forEach((x) => x.classList.toggle('is-on', x.dataset.scope === v));
+    }
+
     if (scopeSeg) scopeSeg.addEventListener('click', (e) => {
         const b = e.target.closest('button[data-scope]');
         if (!b || creating || b.dataset.scope === scope) return;
-        scope = b.dataset.scope;
-        scopeSeg.querySelectorAll('button').forEach((x) => x.classList.toggle('is-on', x === b));
+        setScope(b.dataset.scope);
         // Пока уровень не трогали руками, охват задаёт дефолт: серия — N5+N4,
         // всё аниме — N5 (колода «из любимого аниме» задумана для новичка).
         if (!levelTouched) setLevel(scope === 'anime' ? '5' : '54', false);
