@@ -736,6 +736,7 @@ window.I18N_EN = {
         'settings.signedInAs': 'Signed in as',
         'settings.guest': 'Not signed in — settings are stored only in this browser.',
         'settings.login': 'Log in',
+        'settings.guestSync': 'Sign in to keep your words and progress on every device.',
         'settings.logout': 'Log out',
         'settings.changePassword': 'Change password',
         'settings.currentPassword': 'Current password',

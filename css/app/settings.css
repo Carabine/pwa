@@ -254,7 +254,25 @@
 .account-guest {
     font-size: 14px;
     color: var(--text-muted);
-    margin-bottom: 4px;
+    margin: 0 0 4px;
+}
+
+.account-guest__sync {
+    display: block;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+}
+
+/* Компактная кнопка входа: обычная .btn--primary крупная и капсом — в карточке
+   настроек она перетягивала внимание на себя. */
+.account-login {
+    gap: 8px;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 10px;
+    text-transform: none;
+    letter-spacing: 0;
 }
 
 #password-block {

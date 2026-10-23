@@ -735,6 +735,7 @@ window.I18N_UK = {
         'settings.signedInAs': 'Ви увійшли як',
         'settings.guest': 'Ти не увійшов — налаштування зберігаються лише в цьому браузері.',
         'settings.login': 'Увійти',
+        'settings.guestSync': 'Увійди, щоб слова й прогрес були на всіх пристроях.',
         'settings.logout': 'Вийти',
         'settings.changePassword': 'Зміна пароля',
         'settings.currentPassword': 'Поточний пароль',

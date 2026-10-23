@@ -740,6 +740,7 @@ const I18N = {
         'settings.signedInAs': 'Вы вошли как',
         'settings.guest': 'Ты не вошёл — настройки хранятся только в этом браузере.',
         'settings.login': 'Войти',
+        'settings.guestSync': 'Войди, чтобы слова и прогресс были на всех устройствах.',
         'settings.logout': 'Выйти',
         'settings.changePassword': 'Смена пароля',
         'settings.currentPassword': 'Текущий пароль',

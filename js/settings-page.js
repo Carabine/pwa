@@ -148,12 +148,16 @@
             const note = document.createElement('p');
             note.className = 'account-guest';
             note.textContent = t('settings.guest');
+            // Строка пользы под пояснением: зачем входить, а не только «где хранится».
+            const sync = document.createElement('small');
+            sync.className = 'account-guest__sync';
+            sync.textContent = t('settings.guestSync');
             const login = document.createElement('a');
-            login.className = 'btn btn--primary';
+            login.className = 'btn btn--primary account-login';
             login.href = './login.html';
-            login.textContent = t('settings.login');
-            stateEl.appendChild(note);
-            stateEl.appendChild(login);
+            login.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>';
+            login.append(t('settings.login'));
+            stateEl.append(note, sync, login);
         }
     }
 
