@@ -264,15 +264,9 @@
     margin-bottom: 14px;
 }
 
-/* Компактная кнопка входа: обычная .btn--primary крупная и капсом — в карточке
-   настроек она перетягивала внимание на себя. */
+/* Кнопка входа с иконкой: чуть уже обычной .btn. */
 .account-login {
-    gap: 8px;
-    height: 36px;
     padding: 0 16px;
-    border-radius: 10px;
-    text-transform: none;
-    letter-spacing: 0;
 }
 
 #password-block {
