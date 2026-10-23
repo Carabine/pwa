@@ -307,16 +307,170 @@
     grid-column: 1 / -1;
 }
 
+/* Пустая коллекция — «два пути»: смотреть аниме (клип стартовой колоды с
+   подсвеченным словом в субтитрах) или готовая колода новичка (words.js).
+   Поиск, «Выбрать», «⋯» и блок колод пока прячем — им не с чем работать. */
+.dictionary.is-empty .words-toolbar,
+.dictionary.is-empty .deck-hint,
+.dictionary.is-empty .deck-chips,
+.dictionary.is-empty .deck-study {
+    display: none !important;
+}
+/* Пустому состоянию нужна вся ширина, а не колонка сетки/строки списка. */
+.dictionary.is-empty .words-list { display: block; }
+
 .words-empty {
+    max-width: 940px;
+    margin: 12px auto 0;
+}
+
+.words-empty__title {
+    margin: 0 0 18px;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.words-empty__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+/* Английский режим: путь один — вопрос «с чего начнём?» без выбора лишний. */
+.words-empty--single .words-empty__title { display: none; }
+
+.words-empty--single .words-empty__grid {
+    grid-template-columns: minmax(0, 460px);
+    justify-content: center;
+}
+
+.words-empty__opt {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 24px;
+    overflow: hidden;
     background: var(--card);
-    border: 1px dashed var(--border);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
-    max-width: 480px;
+}
+
+.words-empty__cover {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 16 / 8;
+    overflow: hidden;
+    background: var(--surface);
+}
+
+/* Абсолютом: height:100% внутри бокса с aspect-ratio не резолвится, и под
+   кадром оставалась тёмная полоса. */
+.words-empty__cover video {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Строка субтитров на кадре — как в плеере, слово-находка подсвечено. */
+.words-empty__sub {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+    color: #fff;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    text-shadow: 0 1px 3px #000;
+}
+
+.words-empty__sub span {
+    padding: 0 2px;
+    border-radius: 4px;
+}
+
+.words-empty__sub .is-hit {
+    background: rgba(124, 140, 248, 0.35);
+    background: color-mix(in srgb, var(--primary) 30%, transparent);
+    box-shadow: inset 0 -2px 0 var(--primary);
+}
+
+/* Веер из трёх карточек колоды. */
+.words-empty__stack {
+    position: relative;
+    width: 210px;
+    height: 120px;
+}
+
+.words-empty__stack div {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 130px;
+    height: 84px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.words-empty__stack b { font-size: 1.35rem; }
+.words-empty__stack small { color: var(--text-muted); font-size: 0.78rem; }
+.words-empty__stack div:nth-child(1) { left: 0; top: 18px; transform: rotate(-8deg); }
+.words-empty__stack div:nth-child(2) { left: 80px; top: 22px; transform: rotate(7deg); }
+.words-empty__stack div:nth-child(3) { left: 40px; top: 6px; }
+
+.words-empty__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px;
+}
+
+.words-empty__body b { font-size: 1.1rem; }
+
+.words-empty__body p {
+    flex: 1;
+    margin: 0 0 8px;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.words-empty__body .btn { align-self: flex-start; }
+
+.words-empty__import {
+    display: block;
+    margin: 18px auto 0;
+    padding: 4px 8px;
+    background: none;
+    border: 0;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .words-empty__import:hover { color: var(--text); text-decoration: underline; }
+}
+
+@media (max-width: 760px) {
+    .words-empty { margin-top: 4px; }
+    .words-empty__title { font-size: 1.3rem; text-align: left; }
+    .words-empty__grid { grid-template-columns: 1fr; }
+    .words-empty__cover { aspect-ratio: 16 / 7; }
+    .words-empty__body .btn { align-self: stretch; }
 }
 
 .words-nothing {

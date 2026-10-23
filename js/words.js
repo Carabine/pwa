@@ -495,15 +495,54 @@ function renderWords() {
     updateCount(allWords.length);
     updateKnownMenuLabel();
 
+    // Пустая коллекция: инструменты списка и колоды прячем (класс на .dictionary,
+    // см. pages.css) — искать и выбирать пока нечего.
+    wordsListEl.closest('.dictionary')?.classList.toggle('is-empty', allWords.length === 0);
+
     if (allWords.length === 0) {
-        // Пустая коллекция — сразу зовём туда, где слова добавляются
+        // Пустая коллекция — «два пути»: смотреть аниме (слова со сценами) или
+        // начать с готовой колоды новичка. Стартовая колода и импорт известных —
+        // японские, в английском режиме остаётся только первый путь.
+        const jp = !(window.LearnLang && LearnLang.get() === 'en');
+        const [w1, w2, w3] = t('words.empty.cards').split('|');
         wordsListEl.className = 'words-list'
             + (wordsListEl.querySelector('.is-skel') ? ' anim-fade' : '');
         wordsListEl.innerHTML = `
-            <div class="words-empty">
-                <p style="color: var(--text-muted)">${t('words.empty')}</p>
-                <a class="btn btn--primary" href="./catalog.html">${t('words.openCatalog')}</a>
+            <div class="words-empty${jp ? '' : ' words-empty--single'}">
+                <h3 class="words-empty__title">${t('words.empty.title')}</h3>
+                <div class="words-empty__grid">
+                    <div class="words-empty__opt">
+                        <div class="words-empty__cover">
+                            <video src="../media/starter/kaa-tomodachi.mp4#t=2.2" muted loop playsinline preload="metadata"></video>
+                            ${jp ? '<div class="words-empty__sub" aria-hidden="true"><span class="is-hit">友達</span><span>なんだ</span><span>放っとけねえ</span><span>よ！</span></div>' : ''}
+                        </div>
+                        <div class="words-empty__body">
+                            <b>${t('words.empty.watch')}</b>
+                            <p>${t('words.empty.watchText')}</p>
+                            <a class="btn btn--primary" href="./catalog.html">${t('words.openCatalog')}</a>
+                        </div>
+                    </div>
+                    ${jp ? `<div class="words-empty__opt">
+                        <div class="words-empty__cover">
+                            <div class="words-empty__stack" aria-hidden="true">
+                                <div><b>夢</b><small>${w2}</small></div><div><b>魔法</b><small>${w3}</small></div><div><b>友達</b><small>${w1}</small></div>
+                            </div>
+                        </div>
+                        <div class="words-empty__body">
+                            <b>${t('words.empty.deck')}</b>
+                            <p>${t('words.empty.deckText')}</p>
+                            <a class="btn btn--ghost" href="./beginner.html?deck=full">${t('words.empty.deckBtn')}</a>
+                        </div>
+                    </div>` : ''}
+                </div>
+                ${jp ? `<button type="button" class="words-empty__import">${t('words.empty.import')}</button>` : ''}
             </div>`;
+        wordsListEl.querySelector('.words-empty__import')?.addEventListener('click', openKnownImport);
+        // Клип крутится беззвучно, но не при «уменьшить движение» — тогда стоит кадр с 2.2 с.
+        const clip = wordsListEl.querySelector('.words-empty__cover video');
+        if (clip && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            clip.play().catch(() => { /* автозапуск запрещён — остаётся кадр */ });
+        }
         renderBulkBar([]);
         updateListFade();
         return;
