@@ -473,7 +473,7 @@ window.I18N_EN = {
         'starter.added': 'Words added:',
         'starter.addOne': '+ Add to collection',
         'starter.addedOne': '✓ In your collection',
-        'starter.addAll': 'Add the whole deck to your collection',
+        'starter.addAll': 'Save all {words}',
         'starter.fromAnime': 'From the anime:',
 
         'home.due': 'to review',

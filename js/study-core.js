@@ -2379,7 +2379,10 @@
             // уезжали все 50 базовых слов.
             if (deck && collectable && typeof addStarterWords === 'function') {
                 const deckCards = deck.map((w) => w && w._card).filter(Boolean);
-                const allBtn = makeButton(t('starter.addAll'), 'btn btn--primary', async () => {
+                // Короткая подпись с числом («Сохранить все 15 слов»): прежняя
+                // «Добавить всю колоду в коллекцию» ломалась на 2–5 строк.
+                const addAllLabel = t('starter.addAll').replace('{words}', tWords(deckCards.length));
+                const allBtn = makeButton(addAllLabel, 'btn btn--primary done-add-btn', async () => {
                     allBtn.disabled = true;
                     allBtn.textContent = t('popup.saving');
                     try {
@@ -2388,7 +2391,7 @@
                     } catch (err) {
                         console.error(err);
                         allBtn.disabled = false;
-                        allBtn.textContent = t('starter.addAll');
+                        allBtn.textContent = addAllLabel;
                     }
                 });
                 els.buttons.appendChild(allBtn);

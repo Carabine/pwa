@@ -447,6 +447,25 @@
 @keyframes title-settle { from { opacity: 0.5; } }
 @keyframes rise-in { from { opacity: 0; transform: translateY(10px); } }
 
+/* Итог готовой колоды: «Сохранить все N слов» — в одну строку и той же высоты,
+   что «Начать заново» рядом; на узком экране кнопки друг под другом, главная
+   сверху (в ряд по ~170px подпись не влезала и кнопка раздувалась в 5 строк). */
+.main.study .buttons .done-add-btn {
+    white-space: nowrap;
+    min-height: 49px;
+}
+.main.study .buttons:has(.done-add-btn) > button {
+    flex: 1 1 0;          /* две кнопки поровну, а не по длине подписи */
+    max-width: none;      /* общий потолок 220px (buttons.css) тут лишний */
+}
+@media (max-width: 480px) {
+    .main.study .buttons:has(.done-add-btn) {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .main.study .buttons .done-add-btn { order: -1; }
+}
+
 /* Кнопки под карточкой всплывают лёгким каскадом при каждой смене состава
    («Показать ответ» → оценки и обратно на новой карточке). */
 .main.study .buttons > button {

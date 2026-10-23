@@ -477,7 +477,7 @@ const I18N = {
         'starter.added': 'Добавлено слов:',
         'starter.addOne': '+ В коллекцию',
         'starter.addedOne': '✓ В коллекции',
-        'starter.addAll': 'Добавить всю колоду в коллекцию',
+        'starter.addAll': 'Сохранить все {words}',
         'starter.fromAnime': 'Из аниме:',
 
         'home.due': 'к повторению',

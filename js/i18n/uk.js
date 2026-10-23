@@ -473,7 +473,7 @@ window.I18N_UK = {
         'starter.added': 'Додано слів:',
         'starter.addOne': '+ До колекції',
         'starter.addedOne': '✓ У колекції',
-        'starter.addAll': 'Додати всю колоду до колекції',
+        'starter.addAll': 'Зберегти всі {words}',
         'starter.fromAnime': 'З аніме:',
 
         'home.due': 'до повторення',
