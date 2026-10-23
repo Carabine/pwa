@@ -136,7 +136,9 @@ audio {
 .clip-player__play svg {
     width: 24px;
     height: 24px;
-    margin-left: 3px;
+    /* Без margin-left: треугольник в иконке уже смещён вправо внутри своих
+       24×24 (x 8…20.8), центр тяжести и так в центре круга (+0.3px). Прежний
+       margin-left: 3px уводил его ещё на 1.5px — кнопка выглядела кривой. */
 }
 
 @media (hover: hover) and (pointer: fine) {
