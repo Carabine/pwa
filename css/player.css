@@ -1184,6 +1184,35 @@ body.is-en #reading-toggle {
     font-weight: 600;
 }
 
+/* ПК: подсказки раскрываются в ту же строку, что и кнопка (у неё остаётся
+   значок «i»), а не строкой ниже. Под видео всё фиксированной высоты и ужимается
+   только кадр — лишние 26px строки сужали видео (902→855 на 1440×900), и вся
+   раскладка съезжала. Не влезли (узкое окно) — хвост затухает, листается вбок. */
+@media (min-width: 901px) {
+    .hotkeys {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+    .hotkeys__toggle { flex: none; }
+    .hotkeys__toggle.is-open { padding: 3px 5px; }
+    .hotkeys__toggle.is-open > span { display: none; }
+    .hotkeys-hint {
+        margin-top: 0;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+        /* поле под затухание: влезло целиком — гаснет пустота, а не «словарь» */
+        padding-right: 24px;
+        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+                mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+    }
+    .hotkeys-hint::-webkit-scrollbar { display: none; }
+}
+
 /* Мобильные табы «Субтитры / Настройки» — только на узком экране (см. @media). */
 .mobile-tabs { display: none; }
 
