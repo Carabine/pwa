@@ -163,6 +163,7 @@
                     let e = byBase.get(base);
                     if (!e) {
                         e = { base, level: lvl, count: 0, tok, cue, ep: set, cueScore: -1, dict: undefined, translation: '' };
+                        fromDictCache(e);
                         byBase.set(e.base, e);
                     }
                     e.count++;
@@ -244,15 +245,31 @@
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const is429 = (err) => err && err.response && err.response.status === 429;
 
+    // Переводы на время жизни страницы: каждое открытие окна и переключение
+    // охвата/уровня пересобирает кандидатов заново, и без кэша это ~50 запросов
+    // к словарю за раз — несколько щелчков подряд выбирали общий лимит API
+    // (300/мин на IP), и у зрителя отваливались серии и сабы.
+    const dictCache = new Map();   // '<язык>:<слово>' -> dict | null
+    const dictLang = () => ((typeof getLang === 'function') ? getLang() : 'ru');
+
+    function fromDictCache(entry) {
+        const key = dictLang() + ':' + entry.base;
+        if (!dictCache.has(key)) return;
+        entry.dict = dictCache.get(key);
+        entry.translation = buildTranslation(entry.dict);
+    }
+
     async function fetchDict(entry) {
         // silentErrors: непрогретые слова словарь-прокси отдаёт 502, мы их сами
         // ретраим — глобальный снекбар «Словарь не отвечает» тут только пугал.
+        const lang = dictLang();
         const { data: res } = await client.get('dictionary', {
-            params: { q: entry.base, lang: (typeof getLang === 'function') ? getLang() : 'ru' },
+            params: { q: entry.base, lang },
             silentErrors: true,
         });
         entry.dict = (res.data && res.data[0]) || null;
         entry.translation = buildTranslation(entry.dict);
+        dictCache.set(lang + ':' + entry.base, entry.dict);
     }
 
     function readingOf(entry) {
