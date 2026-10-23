@@ -24,14 +24,14 @@ html, body {
        margin:0 auto отключают растягивание, и main съёживается по контенту —
        на ПК сетка схлопывалась в одну колонку. */
     margin: 0 auto;
-    padding: 28px 16px 64px;
+    padding: 16px 16px 64px;
 }
 
 /* ---------- Поиск ---------- */
 .catalog__search {
     position: relative;
     max-width: 620px;
-    margin: 12px auto 4px;
+    margin: 4px auto 0;
 }
 
 .catalog__search-icon {
@@ -71,15 +71,13 @@ html, body {
     box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.16);
 }
 
-/* Пояснение под поиском: что вообще делает каталог (пополнение словаря) */
+/* Пояснение под поиском: что вообще делает каталог (пополнение словаря).
+   Тихая строка без рамки: плашкой она была самым заметным блоком над сеткой
+   и вместе с чипами и заголовком сдвигала аниме к середине экрана. */
 .catalog__hint {
     max-width: 620px;
-    margin: 10px auto 4px;
-    padding: 10px 16px;
-    background: rgba(79, 70, 229, 0.08);
-    border: 1px solid rgba(79, 70, 229, 0.22);
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
+    margin: 8px auto 0;
+    color: var(--text-dim);
     font-size: 13px;
     line-height: 1.5;
     text-align: center;
@@ -96,12 +94,21 @@ html, body {
     line-height: 1.6;
 }
 
-/* ---------- Заголовок раздела ---------- */
+/* ---------- Заголовок раздела + чипы сложности (одна строка) ---------- */
+.catalog__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin: 20px 4px 0;
+}
+
 .catalog__heading {
     font-size: 18px;
     font-weight: 700;
     color: var(--text);
-    margin: 24px 4px 0;
+    margin: 0;
 }
 
 /* ---------- Сетка ---------- */
@@ -136,13 +143,16 @@ html, body {
         left: 16px;
     }
     .catalog__hint {
-        margin: 8px auto 2px;
-        padding: 8px 12px;
+        margin: 6px auto 0;
+        padding: 0 4px;
         font-size: 12px;
         line-height: 1.45;
     }
-    .catalog__heading {
-        margin-top: 14px;
+    .catalog__bar {
+        margin-top: 12px;
+    }
+    .catalog-chip {
+        padding: 5px 12px;
     }
 }
 
@@ -301,13 +311,10 @@ html, body {
     }
 }
 
-/* Чипы фильтра сложности и подборка простых тайтлов */
-/* Отступ сверху не меньше, чем до «Популярного» снизу: с 2px чипы липли к
-   рамке подсказки и читались её продолжением. */
+/* Чипы фильтра сложности и подборка простых тайтлов (живут в .catalog__bar) */
 .catalog__chips {
     display: flex;
     gap: 8px;
-    margin: 14px 0 4px;
 }
 
 .catalog-chip {

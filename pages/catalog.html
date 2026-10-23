@@ -91,12 +91,16 @@
 
         <p class="catalog__hint" data-i18n="catalog.hint">Открой любое аниме и кликай по словам в субтитрах — они попадут в твой словарь и в карточки для изучения.</p>
 
-        <div class="catalog__chips" id="diff-chips">
-            <button type="button" class="catalog-chip catalog-chip--active" data-val="all" data-i18n="catalog.filter.all">Все</button>
-            <button type="button" class="catalog-chip" data-val="easy" data-i18n="catalog.filter.easy">🎓 Полегче</button>
+        <!-- Заголовок и чипы сложности — одной строкой: стопкой они отъедали
+             пол-экрана телефона над сеткой. При поиске заголовок прячется (catalog.js),
+             чипы остаются справа. -->
+        <div class="catalog__bar">
+            <h2 id="heading" class="catalog__heading" data-i18n="catalog.popular">Популярное</h2>
+            <div class="catalog__chips" id="diff-chips">
+                <button type="button" class="catalog-chip catalog-chip--active" data-val="all" data-i18n="catalog.filter.all">Все</button>
+                <button type="button" class="catalog-chip" data-val="easy" data-i18n="catalog.filter.easy">🎓 Полегче</button>
+            </div>
         </div>
-
-        <h2 id="heading" class="catalog__heading" data-i18n="catalog.popular">Популярное</h2>
         <!-- Плейсхолдеры стоят прямо в разметке, а не рисуются скриптом: сетка
              занимает своё место уже в первом кадре, до того как доедет
              catalog.js. Дальше их переписывает renderSkeletons()/карточки. -->
