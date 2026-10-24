@@ -219,6 +219,12 @@
         'app/news': 'JP News', 'app/news-story': 'JP News · история', 'app/kanji': 'прописи',
         'app/street/walk': 'улица слов'
     };
+    // Справочник и блог лендинга шлют полный путь: seo/en/words/omae, seo/blog/x
+    function pageLabel(p) {
+        if (PAGE_LABELS[p]) return PAGE_LABELS[p];
+        var s = String(p).match(/^seo\/(?:en\/)?(.+)$/);
+        return s ? 'справочник · ' + s[1] : p;
+    }
     var KANJI_GO = { review: 'повторение', learn: 'новые иероглифы' };
     var KANJI_SCOPE = { all: 'все слова', deck: 'колода' };
     // Настройки (js/settings.js DEFAULTS + язык интерфейса) — по-человечески.
@@ -272,8 +278,8 @@
     function detailText(item) {
         var p = String(item.page);
         switch (item.event) {
-            case 'page': return PAGE_LABELS[p] || p;
-            case 'session': return 'на странице «' + (PAGE_LABELS[p] || p) + '»';
+            case 'page': return pageLabel(p);
+            case 'session': return 'на странице «' + pageLabel(p) + '»';
             case 'study': return STUDY_LABELS[p] || p;
             case 'srs_review': return p === 'graduated' ? 'закончил сессию повторения' : p;
             case 'search': {
@@ -612,7 +618,7 @@
     // null — шаг не показываем (мусор или показ интерфейса, а не действие).
     function stepOf(ev, p) {
         switch (ev) {
-            case 'page': return { icon: '📄', text: 'перешёл: ' + (PAGE_LABELS[p] || p), page: p, dim: true };
+            case 'page': return { icon: '📄', text: 'перешёл: ' + pageLabel(p), page: p, dim: true };
             case 'play': {
                 var t = p.split(' · эп ')[0], ep = p.split(' · эп ')[1] || '';
                 return { icon: '▶', text: 'включил ' + deent(t) + (ep ? ' · эп ' + ep : ''), watch: true };
