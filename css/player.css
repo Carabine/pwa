@@ -803,8 +803,11 @@ html, body {
 .transcript__header-left {
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: 0 6px;
     min-width: 0;
+    /* «знакомо 45%» шире, чем «0%»: если строке тесно, процент уходит под заголовок,
+       а не обрезает «Субтитры» многоточием */
+    flex-wrap: wrap;
 }
 /* Заголовок «Субтитры» — единственное, что можно ужать: в узкой колонке
    (кино-режим) он уступает место кнопке и обрезается многоточием, а не
@@ -1234,11 +1237,13 @@ body.is-en #reading-toggle {
 /* Шапка субтитров (название «Субтитры», источник и «Не те?»): на ПК показываем —
    через «Не те?» открывается ручной выбор субтитров и точная синхронизация.
    На телефоне (≤900px) её прячем — там её роль берут табы. */
+/* Промежутки 6px, а не 8: в ru/uk «Субтитры · знакомо 0% · Авто-колода · ⋯» не влезали
+   в колонку 338px на 6–7px, и заголовок обрезался до «Субти…» (24.10.2026). */
 .transcript__header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    gap: 8px;
+    gap: 6px;
     padding: 12px 16px;
     border-bottom: 1px solid var(--border);
     font-weight: 600;
@@ -1248,7 +1253,7 @@ body.is-en #reading-toggle {
 .transcript__header-right {
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: 6px;
     /* Кнопки внутри не сжимаются (flex-shrink: 0), поэтому и сама группа
        ужиматься не должна — иначе содержимое вылезает за её край. Место
        уступает левая группа: там есть что обрезать (заголовок). */
@@ -1283,6 +1288,7 @@ body.is-en #reading-toggle {
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    padding-inline: 8px;
 }
 
 .transcript__fix--deck svg {
