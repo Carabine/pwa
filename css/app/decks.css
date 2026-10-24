@@ -395,7 +395,7 @@
 }
 
 .deck-editor__note[hidden] { display: none; }
-.deck-editor__note-ico { color: var(--primary); font-size: 14px; }
+.deck-editor__note-ico { color: var(--primary-text); font-size: 14px; }
 
 .deck-editor__emojis {
     display: grid;

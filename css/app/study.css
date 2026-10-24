@@ -2043,7 +2043,7 @@
 .deck-choice__num {
     font-size: 26px;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--primary-text);
     min-width: 44px;
     text-align: center;
     flex-shrink: 0;

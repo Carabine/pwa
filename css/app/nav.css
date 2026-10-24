@@ -169,7 +169,7 @@
     font-size: 14px;
     font-weight: 700;
     line-height: 1;
-    color: var(--primary);
+    color: var(--primary-text);
 }
 .profile-menu__val {
     margin-left: auto;
@@ -224,7 +224,7 @@
     font-family: 'Noto Sans JP', var(--font);
     font-size: 18px;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--primary-text);
     background: color-mix(in srgb, var(--primary) 18%, var(--card));
 }
 .learn-sheet__glyph--en {
@@ -335,12 +335,12 @@
 }
 
 .sidebar a.active {
-    color: var(--primary);
+    color: var(--primary-text);
     background: rgba(63, 111, 216, 0.14);
 }
 
 .sidebar a.active .nav-icon {
-    color: var(--primary);
+    color: var(--primary-text);
 }
 
 /* Бейдж «NEW» на пункте меню — статичная метка справа от подписи (иконку

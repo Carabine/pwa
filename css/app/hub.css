@@ -73,7 +73,7 @@
     font-weight: 700;
     letter-spacing: 0.6px;
     text-transform: uppercase;
-    color: #3f6fd8;
+    color: var(--primary-text);
 }
 
 .continue-card__title {
@@ -95,7 +95,7 @@
     height: 40px;
     border-radius: 50%;
     background: rgba(63, 111, 216, 0.15);
-    color: #3f6fd8;
+    color: var(--primary-text);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -224,7 +224,7 @@
     font-weight: 700;
     letter-spacing: .6px;
     text-transform: uppercase;
-    color: var(--primary);
+    color: var(--primary-text);
 }
 
 .daily-plan__headline {
@@ -433,7 +433,7 @@
 
 .mini-card__icon { display: flex; flex-shrink: 0; color: var(--text-dim); }
 @media (hover: hover) and (pointer: fine) {
-    .mini-card:hover .mini-card__icon { color: var(--primary); }
+    .mini-card:hover .mini-card__icon { color: var(--primary-text); }
 }
 .mini-card__label { min-width: 0; }
 

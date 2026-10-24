@@ -588,7 +588,7 @@
 }
 
 .word-row__frozen {
-    color: var(--primary);
+    color: var(--primary-text);
     font-size: 13px;
 }
 

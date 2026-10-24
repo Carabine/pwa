@@ -64,7 +64,7 @@
     letter-spacing: 0.04em;
 }
 
-.prg-tile--accent .prg-tile__value { color: var(--primary); }
+.prg-tile--accent .prg-tile__value { color: var(--primary-text); }
 .prg-tile--streak .prg-tile__value { color: var(--warning); }
 
 .prg-section {
