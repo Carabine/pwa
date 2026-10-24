@@ -36,6 +36,14 @@
         const id = params.get('id') || '';
         const wantLevel = params.get('level');
         if (C.LEVELS.includes(wantLevel)) { state.level = wantLevel; C.setLevel(wantLevel); }
+        // Одна новость — один адрес для поиска: ?level=… и прочие метки Google считал дублями
+        // без канонической (GSC, 24.10.2026).
+        if (id && !document.querySelector('link[rel="canonical"]')) {
+            const link = document.createElement('link');
+            link.rel = 'canonical';
+            link.href = new URL('news-story.html?id=' + encodeURIComponent(id), location.href).href;
+            document.head.appendChild(link);
+        }
         const { data: res } = await client.get('news/story/' + encodeURIComponent(id), { params: { lang: C.lang() }, silentErrors: true });
         state.story = res.data;
     }
