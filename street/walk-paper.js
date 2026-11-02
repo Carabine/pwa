@@ -16,7 +16,7 @@ const PAPER = (() => {
     function ui() {
         if (el) return el;
         el = document.createElement('div'); el.id = 'paper';
-        el.innerHTML = '<div class="mh"><div class="t">アニメイ新聞</div><div class="d"></div><button class="tx" aria-label="Закрыть">×</button></div>'
+        el.innerHTML = '<div class="mh"><div class="t">アニメイ新聞</div><div class="d"></div><button class="tx" aria-label="' + T('Закрыть') + '">×</button></div>'
             + '<div class="body"></div>'
             + '<div class="row"><button class="b-tr">Перевод</button><button class="b-next">Другая новость</button><a class="b-open" target="_blank" rel="noopener">Целиком ↗</a></div>';
         document.body.appendChild(el);
@@ -56,7 +56,7 @@ const PAPER = (() => {
         const tr = (s.tr && s.tr.ru && s.tr.ru.levels && s.tr.ru.levels[key]) || {};
         const sent = lv.sentences || [];
         const voc = (s.vocab || []).filter((v) => v.word && v.gloss).slice(0, 6);
-        el.querySelector('.body').innerHTML = '<span class="cat">' + esc(CAT[s.category] || 'Новости') + '</span>'
+        el.querySelector('.body').innerHTML = '<span class="cat">' + esc(T(CAT[s.category] || 'Новости')) + '</span>'
             + '<h3>' + furi(lv.title && lv.title.tokens, lv.title && lv.title.text) + '</h3>'
             + (tr.title ? '<div class="ttr">' + esc(tr.title) + '</div>' : '')
             + sent.map((x, i) => '<p data-i="' + i + '">' + furi(x.tokens, x.text) + (tr.sentences && tr.sentences[i] ? '<span class="ru">' + esc(tr.sentences[i]) + '</span>' : '') + '</p>').join('')
@@ -88,7 +88,7 @@ const MAIL = (() => {
     function ui() {
         if (el) return el;
         el = document.createElement('div'); el.id = 'mail';
-        el.innerHTML = '<div class="mh"><div class="t">目安箱 · отзыв разработчику</div><button class="tx" aria-label="Закрыть">×</button></div>'
+        el.innerHTML = '<div class="mh"><div class="t">目安箱 · ' + T('отзыв разработчику') + '</div><button class="tx" aria-label="' + T('Закрыть') + '">×</button></div>'
             + '<p class="lead">Что понравилось, что сломалось, чего не хватает? Разработчик читает каждое письмо.</p>'
             + '<textarea maxlength="2000" placeholder="Ваше письмо…"></textarea><div class="st"></div>'
             + '<div class="row"><button class="b-send">Отправить ✉</button></div>';

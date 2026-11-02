@@ -162,7 +162,7 @@ const BOOKS = (() => {
         if (el) return el;
         if (!document.getElementById('book-font')) { const l = document.createElement('link'); l.id = 'book-font'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&display=swap'; document.head.appendChild(l); }
         el = document.createElement('div'); el.id = 'book';
-        el.innerHTML = '<div class="bh"><button class="b-lib" aria-label="Библиотека">‹</button><div class="bt"></div><button class="b-x" aria-label="Закрыть">×</button></div><div class="bb"></div><div class="bf"></div><div class="tip" hidden></div>';
+        el.innerHTML = '<div class="bh"><button class="b-lib" aria-label="' + T('Библиотека') + '">‹</button><div class="bt"></div><button class="b-x" aria-label="' + T('Закрыть') + '">×</button></div><div class="bb"></div><div class="bf"></div><div class="tip" hidden></div>';
         document.body.appendChild(el);
         el.querySelector('.b-x').addEventListener('click', close);
         el.querySelector('.b-lib').addEventListener('click', () => { stopRead(); book = null; library(); });
@@ -181,7 +181,7 @@ const BOOKS = (() => {
     // ---------- библиотека ----------
     function library() {
         const e = ui(); e.classList.remove('reader'); e.querySelector('.b-lib').hidden = true;
-        e.querySelector('.bt').innerHTML = '<b>Книжная полка</b><small>короткие рассказы для чтения</small>';
+        e.querySelector('.bt').innerHTML = '<b>' + T('Книжная полка') + '</b><small>' + T('короткие рассказы для чтения') + '</small>';
         const mine = lsGet();
         const dark = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = (v) => Math.round(v * (1 - k)).toString(16).padStart(2, '0'); return '#' + f(n >> 16) + f((n >> 8) & 255) + f(n & 255); };
         const cover = (b, attr, i, note) => { const [bg, ink, ic] = coverOf(b, i); return '<button class="cover" ' + attr + ' style="--bg:' + bg + ';--bg2:' + dark(bg, 0.28) + ';--ink:' + ink + '"><span class="spine"></span><span class="ct">' + esc(b.title) + '</span><span class="ci">' + ic + '</span><span class="cs">' + esc(b.titleTr || '') + '</span>' + (note ? '<span class="cn">' + esc(note) + '</span>' : '') + '</button>'; };

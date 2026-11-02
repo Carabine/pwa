@@ -13,14 +13,14 @@
     <style>
         #joy { position: absolute; left: 22px; bottom: calc(env(safe-area-inset-bottom, 0px) + 196px); width: 110px; height: 110px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.28); background: rgba(10,10,20,0.3); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); pointer-events: none; opacity: .55; transition: opacity .2s; }
         #joy.on { opacity: 1; border-color: rgba(255,255,255,0.5); }
-        #joy-knob { position: absolute; left: 33px; top: 33px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.8); box-shadow: 0 0 16px rgba(124,140,248,0.9); transition: transform .05s; }
+        #joy-knob { position: absolute; left: 33px; top: 33px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.8); box-shadow: 0 0 16px rgba(63,111,216,0.9); transition: transform .05s; }
         #joy.run #joy-knob { background: #ffb35a; box-shadow: 0 0 18px rgba(255,150,60,0.95); }
         #joy::before { content: ''; position: absolute; inset: 14px; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.18); }
         @media (hover: hover) and (pointer: fine) { #joy { display: none; } }
         .hint .d { display: none; } @media (hover: hover) and (pointer: fine) { .hint .m { display: none; } .hint .d { display: inline; } }
         html body .hud.bottom #music, html body .hud.bottom #gear { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
         html body .hud.bottom #music { font-size: 22px; } html body .hud.bottom #gear { font-size: 16px; }
-        #music.on { color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 16px rgba(124,140,248,0.7); }
+        #music.on { color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 16px rgba(63,111,216,0.7); }
         #music:not(.on) { color: rgba(255,255,255,0.45); background-image: linear-gradient(135deg, transparent 46%, rgba(255,255,255,0.55) 47%, rgba(255,255,255,0.55) 53%, transparent 54%); }
         html body .hud.bottom #music svg, html body .hud.bottom #gear svg { display: block; flex: none; }
         /* телефон: подсказка слова — в правом верхнем углу, название места — слева под названием квартала */
@@ -29,7 +29,7 @@
             html body #hint.on { transform: translate(0, 0); }
             html body #h-kanji { font-size: 24px; }
         }
-        #walk.on { background: linear-gradient(135deg, #8d9bff, #6a7af0); box-shadow: 0 6px 22px rgba(124,140,248,0.45); }
+        #walk.on { background: linear-gradient(135deg, #3f6fd8, #6b8fe6); box-shadow: 0 6px 22px rgba(63,111,216,0.45); }
         .hint { font-size: 11px; color: var(--muted); font-weight: 500; }
         #fps { position: absolute; left: 10px; bottom: 6px; font: 11px monospace; color: #0f0; }
         #fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity .32s; }
@@ -239,7 +239,7 @@
         #panel .opts.seg .opt.on { background: var(--accent); }
         #panel .opts.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
         #panel .opts.grid .opt { border-radius: 10px; padding: 9px 10px; font-size: 12.5px; line-height: 1.2; text-align: left; }
-        #panel .opts.grid .opt.on { box-shadow: 0 0 12px rgba(124,140,248,0.5); }
+        #panel .opts.grid .opt.on { box-shadow: 0 0 12px rgba(63,111,216,0.5); }
         #panel .opts.tg { display: flex; flex-direction: column; gap: 0; }
         #panel .opts.tg .opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: none; box-shadow: none; border-radius: 0; padding: 9px 2px; font-size: 13.5px; font-weight: 500; text-align: left; }
         #panel .opts.tg .opt + .opt { border-top: 1px solid rgba(255,255,255,0.07); }
@@ -319,7 +319,7 @@
         #sample-offer .so-acts #so-no { font-size: 13px; padding: 10px 14px; }
         @keyframes so-in { from { opacity: 0; transform: translate(-50%, -6px); } to { opacity: 1; transform: translateX(-50%); } }
         #sample-chip { align-self: flex-start; margin-top: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(10,10,20,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset; color: rgba(255,255,255,0.85); font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap; }
-        #sample-chip u { text-decoration: none; color: #a5b4fc; }
+        #sample-chip u { text-decoration: none; color: #a3bcf2; }
         body.loading #sample-offer, body.loading #sample-chip { visibility: hidden; }
         #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 14px; letter-spacing: 0.04em; pointer-events: none; z-index: 40; transition: opacity .4s; }
     </style>
@@ -377,7 +377,7 @@
     <div class="opts grid"><button class="opt" data-music="city">Ночной город</button><button class="opt" data-music="snow">Снег над крышами</button><button class="opt" data-music="train">Ночной поезд</button><button class="opt" data-music="tea">Чайный дом</button><button class="opt" data-music="stars">Звёзды</button><button class="opt" data-music="harbor">Гавань</button><button class="opt" data-music="radio">Радио за стеной</button><button class="opt" data-music="calm">Тихий вечер</button><button class="opt" data-music="lane">Переулок</button><button class="opt" data-music="lofi">Lo-fi</button></div>
     <h4>Звук и вид</h4>
     <div class="opts tg"><button class="opt" data-voices><span>Голоса прохожих</span><i></i></button><button class="opt" data-rain><span>Дождь</span><i></i></button><button class="opt" data-gyro><span>Гироскоп</span><i></i></button></div>
-    <p class="credits">Голоса: VOICEVOX:春日部つむぎ, VOICEVOX:四国めたん, VOICEVOX:九州そら, VOICEVOX:雨晴はう, VOICEVOX:玄野武宏, VOICEVOX:青山龍星, VOICEVOX:雀松朱司, VOICEVOX:白上虎太郎, VOICEVOX:麒ヶ島宗麟</p>
+    <p class="credits"><span>Голоса:</span> VOICEVOX:春日部つむぎ, VOICEVOX:四国めたん, VOICEVOX:九州そら, VOICEVOX:雨晴はう, VOICEVOX:玄野武宏, VOICEVOX:青山龍星, VOICEVOX:雀松朱司, VOICEVOX:白上虎太郎, VOICEVOX:麒ヶ島宗麟</p>
     </div>
 </div>
 <div id="hint">
@@ -398,8 +398,9 @@
 <div id="rotate"><div class="ph"></div><div class="t">Коснитесь — улица развернётся во весь экран</div><div class="sub">Гулять удобнее, держа телефон горизонтально</div><button type="button" id="rotate-skip">Остаться вертикально</button></div>
 <div id="nowebgl"><div class="msg"></div><div class="why"></div><a href="#" onclick="location.reload(); return false;">Попробовать ещё раз</a></div>
 <script>if (/[?&]src=sample\b/.test(location.search)) document.write('<script src="./sample-words.js"><\/script>'); else if (location.protocol === 'file:') document.write('<script src="./words-busyd.js"><\/script>');</script>
+<script src="./street-i18n.js"></script>
 <script src="./street-data.js"></script>
-<script type="module" onerror="window.__streetFail && window.__streetFail('Не загрузилась 3D-библиотека — похоже, проблема с сетью.', 'модули Three.js не загрузились')">
+<script type="module" onerror="window.__streetFail && window.__streetFail('Не загрузилась 3D-библиотека — похоже, проблема с сетью.', 'Three.js')">
 /* Улица слов — 3D-прогулка. Three.js, процедурная геометрия, вывески как canvas-текстуры.
  * Улица тянется вдоль -z, кварталы (колоды) идут один за другим и разделены арками.
  * Строятся только кварталы рядом с камерой (±1), остальные освобождаются.
@@ -753,7 +754,8 @@ const ORD = ['Первый', 'Второй', 'Третий', 'Четвёртый
 function districtName(seed, used) {
     const rnd = mulberry32(seed);
     for (let tries = 0; tries < 20; tries++) {
-        const nm = rnd() < 0.18 ? ORD[Math.floor(rnd() * ORD.length)] + ' квартал' : NAME_A[Math.floor(rnd() * NAME_A.length)] + ' ' + NAME_B[Math.floor(rnd() * NAME_B.length)];
+        const NL = window.SL_NAMES || { ord: ORD, a: NAME_A, b: NAME_B, q: ' квартал' };
+        const nm = rnd() < 0.18 ? NL.ord[Math.floor(rnd() * NL.ord.length)] + NL.q : NL.a[Math.floor(rnd() * NL.a.length)] + ' ' + NL.b[Math.floor(rnd() * NL.b.length)];
         if (!used.has(nm)) { used.add(nm); return nm; }
     }
     return NAME_A[seed % NAME_A.length] + ' ' + NAME_B[seed % NAME_B.length];
@@ -932,7 +934,7 @@ const dynSigns = []; // мигающие и зажигающиеся
 let skyMesh = null, skyTheme = '', endGateZ = -1e9, endShown = 0;
 // сколько ещё выучить до следующего «открытия» (каждые 25 слов)
 const nextUnlock = () => { const lit = data && data.words ? litCount() : 0; return { lit, need: Math.max(1, Math.ceil((lit + 1) / 25) * 25 - lit) }; };
-const plural3 = (n, a, b, c) => { const m = n % 10, h = n % 100; return (m === 1 && h !== 11) ? a : (m >= 2 && m <= 4 && (h < 12 || h > 14)) ? b : c; };
+const plural3 = (n, a, b, c) => { const l = window.SL_PLURAL && SL_PLURAL(n, a); if (l) return l; const m = n % 10, h = n % 100; return (m === 1 && h !== 11) ? a : (m >= 2 && m <= 4 && (h < 12 || h > 14)) ? b : c; };
 // конец коридора: опущенная решётка с табличкой — дальше пока закрыто
 // красный почтовый ящик (ポスト) у начала улицы: «✉ Написать нам» — отзыв уходит в админку
 const postMeshes = [];
@@ -964,9 +966,9 @@ function buildEndGate() {
     const c = document.createElement('canvas'); c.width = 1024; c.height = 400; const cg = c.getContext('2d');
     cg.fillStyle = '#1c1814'; cg.fillRect(0, 0, 1024, 400); cg.strokeStyle = '#c8a050'; cg.lineWidth = 10; cg.strokeRect(14, 14, 996, 372);
     cg.fillStyle = '#ffb35a'; cg.textAlign = 'center'; cg.font = '900 92px ' + JP; cg.fillText('この先、準備中', 512, 128);
-    cg.fillStyle = '#f4ecd8'; cg.font = '700 46px ' + UI; cg.fillText('Дальше пока закрыто', 512, 210);
-    cg.font = '500 38px ' + UI; cg.fillText('Выучите ещё ' + need + ' ' + plural3(need, 'слово', 'слова', 'слов'), 512, 290);
-    cg.fillText('— и откроется новый квартал', 512, 342);
+    cg.fillStyle = '#f4ecd8'; cg.font = '700 46px ' + UI; cg.fillText(T('Дальше пока закрыто'), 512, 210);
+    cg.font = '500 38px ' + UI; cg.fillText(T('Выучите ещё {n} {w}', { n: need, w: plural3(need, 'слово', 'слова', 'слов') }), 512, 290);
+    cg.fillText(T('— и откроется новый квартал'), 512, 342);
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.02), new THREE.MeshBasicMaterial({ map: makeTex(c), fog: true, color: new THREE.Color(0.82, 0.82, 0.82) })); // приглушена, чтобы свечение не выжигало текст sign.position.set(0, 2.0, z + 0.06); world.add(sign);
     [-1, 1].forEach((k) => { const cone = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.55, 12), lamb('#e8601a')); cone.position.set(k * 1.6, 0.27, z + 0.7); world.add(cone); });
     const lamp = new THREE.PointLight(0xffd8a0, 2.2, 7, 1.6); lamp.position.set(0, 3.6, z + 1.5); world.add(lamp);
@@ -1095,7 +1097,7 @@ function buildWorld() {
         [-1, 1].forEach((side) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.25, 4.2, 0.25), post); p.position.set(side * (W2 - 0.35), 2.1, z); world.add(p); addCollider(p, null, 0.2); });
         const beam = new THREE.Mesh(new THREE.BoxGeometry(th.W - 0.4, 0.25, 0.25), post); beam.position.set(0, 4.2, z); world.add(beam);
         const tube = new THREE.Mesh(new THREE.BoxGeometry(th.W - 0.4, 0.06, 0.06), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(col, '#ffffff', 0.4)) })); tube.position.set(0, 4.05, z + 0.14); world.add(tube);
-        const name = next ? next.q.name : 'Конец улицы';
+        const name = next ? next.q.name : T('Конец улицы');
         const gt = texGate(name, '', col);
         const gw = Math.min(th.W - 0.8, 4.4);
         const sign = new THREE.Mesh(new THREE.PlaneGeometry(gw, gw / 4), new THREE.MeshBasicMaterial({ map: gt, transparent: true }));
@@ -2215,7 +2217,7 @@ const LIFE = (() => {
 const ROOMX = (() => {
     const types = ['oneroom', 'washitsu', 'loft', 'ramen', 'cafe', 'books', 'arcade'];
     const names = { oneroom: 'ワンルーム · однушка студента', washitsu: '和室 · японская комната', loft: 'ロフト · лофт', ramen: 'ラーメン屋 · рамэнная', cafe: '喫茶店 · кафе', books: '本屋 · книжный', arcade: 'ゲーセン · игровой зал' };
-    const hints = { oneroom: 'Однушка', washitsu: 'Японская комната', loft: 'Лофт', ramen: 'Рамэнная', cafe: 'Кафе', books: 'Книжный', arcade: 'Игровой зал' };
+    const hints = { oneroom: T('Однушка'), washitsu: T('Японская комната'), loft: T('Лофт'), ramen: T('Рамэнная'), cafe: T('Кафе'), books: T('Книжный'), arcade: T('Игровой зал') };
     // какие предметы-слова уместны (по старым типам) и на чём висят слова без предмета
     const alias = { oneroom: 'home', washitsu: 'home', loft: 'home', ramen: 'izakaya', cafe: 'home', books: 'class', arcade: 'konbini' };
     const surf = { oneroom: 'home', washitsu: 'home', loft: 'home', ramen: 'izakaya', cafe: 'home', books: 'konbini', arcade: 'konbini' };
@@ -2522,7 +2524,7 @@ const ROOMX = (() => {
     const T = ['dev', 'animeshop', 'bedroom'];
     ROOMX.types.push(...T);
     Object.assign(ROOMX.names, { bedroom: '寝室 · спальня', dev: '開発室 · комната разработчика', animeshop: 'アニメショップ · аниме-магазин' });
-    Object.assign(ROOMX.hints, { bedroom: 'Спальня', dev: 'Комната разработчика', animeshop: 'Аниме-магазин' });
+    Object.assign(ROOMX.hints, { bedroom: window.T('Спальня'), dev: window.T('Комната разработчика'), animeshop: window.T('Аниме-магазин') });
     Object.assign(ROOMX.alias, { bedroom: 'home', dev: 'class', animeshop: 'konbini' });
     Object.assign(ROOMX.surf, { bedroom: 'home', dev: 'home', animeshop: 'konbini' });
     Object.assign(ROOMX.size, {
@@ -3156,7 +3158,7 @@ const TALK = (() => {
     function head() {
         el.querySelector('.av').textContent = cur.icon || '💬';
         el.querySelector('.nm').textContent = cur.name;
-        el.querySelector('.rl').textContent = (cur.sub || '') + (cur.kind === 'order' && score.all ? (cur.sub ? ' · ' : '') + 'заказов верно: ' + score.ok + ' из ' + score.all : '');
+        el.querySelector('.rl').textContent = (cur.sub || '') + (cur.kind === 'order' && score.all ? (cur.sub ? ' · ' : '') + T('заказов верно: {a} из {b}', { a: score.ok, b: score.all }) : '');
     }
     // ---- шаг: реплика персонажа в ленту, задание, варианты ответа ----
     let showSeq = 0;
@@ -3459,7 +3461,7 @@ const TALK = (() => {
     const canTaste = (w) => { const m = propMeta(jpOf(w)); return EATABLE.has(jpOf(w)) || !!(m && ['dish', 'fruit', 'veg', 'fishy', 'can', 'bottle', 'jar'].indexOf(m.arch) >= 0); };
     const FOODISH = (w) => { const m = propMeta(jpOf(w)); return !!m && (m.where.indexOf('izakaya') >= 0 || m.where.indexOf('konbini') >= 0); };
     function order(stall) {
-        const ch = stall.ch; if (!ch || pool().length < 4) { toast('Нужно хотя бы 4 слова с переводом'); return; }
+        const ch = stall.ch; if (!ch || pool().length < 4) { toast(T('Нужно хотя бы 4 слова с переводом')); return; }
         begin({ kind: 'order', ch, stall, inside: false, icon: '🍢', name: 'Продавец', sub: stall.food });
         const round = (first) => {
             const w = pickWord(FOODISH); if (!w) return close();
@@ -3498,7 +3500,7 @@ const TALK = (() => {
     function playPiano(ch, s) {
         audio.resume();
         const dur = audio.playSong(s.id);
-        if (!dur) toast(audio.enabled ? 'Коснитесь экрана — включится звук' : 'Звук выключен — включите его кнопкой вверху');
+        if (!dur) toast(audio.enabled ? T('Коснитесь экрана — включится звук') : T('Звук выключен — включите его кнопкой вверху'));
         ch.playing = true; pianoCh = ch; note('piano', s.jp);
         LIFE.say(ch, ['♪ 「' + s.jp + '」', '♪ ' + s.ru], 2.6, LIFE.S.t);
         setTimeout(() => {
@@ -3562,14 +3564,14 @@ const TALK = (() => {
     let gachaAt = 0;
     function gacha() {
         if (performance.now() - gachaAt < 1500) return; gachaAt = performance.now();
-        const w = pickWord(); if (!w) { toast('Капсулы пусты — добавьте в словарь хотя бы 4 слова'); return; }
+        const w = pickWord(); if (!w) { toast(T('Капсулы пусты — добавьте в словарь хотя бы 4 слова')); return; }
         audio.ding(); if (typeof buzz === 'function') buzz(20);
         const k = kanaOf(w);
         note('gacha', jpOf(w));
         setTimeout(() => { banner('🎁 ' + jpOf(w), (k ? k + ' — ' : '') + meaning(w)); speak(k || jpOf(w)); }, 500);
     }
     // ---- интерактивные вещи в комнатах ----
-    const USE_LABEL = { kanpai: ['🍻', 'Крикнуть «乾杯!»'], buy: ['🛒', 'Купить что-нибудь'], ramen: ['🍜', 'Заказать рамэн'], claw: ['🕹', 'Сыграть в UFO-кэтчер'], study: ['✍', 'Позаниматься за столом'] };
+    const USE_LABEL = { kanpai: ['🍻', T('Крикнуть «乾杯!»')], buy: ['🛒', T('Купить что-нибудь')], ramen: ['🍜', T('Заказать рамэн')], claw: ['🕹', T('Сыграть в UFO-кэтчер')], study: ['✍', T('Позаниматься за столом')] };
     const SHOP = [['おにぎり', 'онигири', 150, '百五十円'], ['お茶', 'бутылку чая', 130, '百三十円'], ['肉まん', 'никуман', 180, '百八十円'], ['プリン', 'пудинг', 200, '二百円'], ['からあげ', 'караагэ', 250, '二百五十円']];
     let useAt = 0;
     function use(kind) {
@@ -3579,19 +3581,19 @@ const TALK = (() => {
         if (kind === 'kanpai') {
             const guests = room.filter((c) => !c.cat && ['chef', 'waiter', 'cook'].indexOf(c.role) < 0);
             guests.forEach((c, i) => setTimeout(() => LIFE.say(c, ['乾杯！', 'Будем!', 'cheers'], 2.2, LIFE.S.t), 200 + i * 140));
-            speak('かんぱい！'); audio.ding(); toast('🍻 乾杯！ — «Кампай!» · ' + (guests.length ? 'гости подняли кружки' : 'вы подняли кружку'));
+            speak('かんぱい！'); audio.ding(); toast('🍻 乾杯！ — «Кампай!» · ' + (guests.length ? T('гости подняли кружки') : T('вы подняли кружку')));
         } else if (kind === 'buy') {
             const it = pick(SHOP), clerk = room.find((c) => c.role === 'clerk');
             sayV(clerk, ['いらっしゃいませ！' + it[0] + '、' + it[3] + 'です。', 'Добро пожаловать! ' + it[1] + ' — ' + it[2] + ' иен.'], 3.2);
             if (!clerk) speak(it[0] + '、' + it[3]);
-            setTimeout(() => { toast('🛒 Куплено: ' + it[0] + ' (' + it[1] + ') — ' + it[2] + ' 円'); audio.ding(); }, 1200);
+            setTimeout(() => { toast(T('🛒 Куплено: ') + it[0] + ' (' + it[1] + ') — ' + it[2] + ' 円'); audio.ding(); }, 1200);
         } else if (kind === 'ramen') {
             const chef = room.find((c) => c.role === 'ramenChef' || c.role === 'chef');
             sayV(chef, ['へい、らっしゃい！ラーメン一丁！', 'Заходи! Один рамэн!'], 2.6); if (!chef) speak('ラーメン一丁！');
-            setTimeout(() => { sayV(chef, ['お待ち！熱いから気をつけて！', 'Готово! Осторожно, горячо!'], 2.8); audio.ding(); toast('🍜 Рамэн готов — いただきます！'); }, 3200);
+            setTimeout(() => { sayV(chef, ['お待ち！熱いから気をつけて！', 'Готово! Осторожно, горячо!'], 2.8); audio.ding(); toast(T('🍜 Рамэн готов — いただきます！')); }, 3200);
         } else if (kind === 'claw') {
-            audio.ding(); toast('🕹 Лапа опускается…');
-            setTimeout(() => { const w = Math.random() < 0.4 ? pickWord() : null; if (w) { banner('🧸 ' + jpOf(w), 'Выигрыш! Плюшевое «' + meaning(w) + '»' + (kanaOf(w) ? ' · ' + kanaOf(w) : '')); audio.ding(); speak(kanaOf(w) || jpOf(w)); } else toast(pick(['😿 Почти! Лапа соскользнула…', '😿 Мимо! Ещё разок?', '😿 Игрушка выскользнула в последний момент'])); }, 1600);
+            audio.ding(); toast(T('🕹 Лапа опускается…'));
+            setTimeout(() => { const w = Math.random() < 0.4 ? pickWord() : null; if (w) { banner('🧸 ' + jpOf(w), T('Выигрыш! Плюшевое «{m}»', { m: meaning(w) }) + (kanaOf(w) ? ' · ' + kanaOf(w) : '')); audio.ding(); speak(kanaOf(w) || jpOf(w)); } else toast(T(pick(['😿 Почти! Лапа соскользнула…', '😿 Мимо! Ещё разок?', '😿 Игрушка выскользнула в последний момент']))); }, 1600);
         } else if (kind === 'study') { WRITE.open(null); }
     }
     // ---- кровать: прилечь на минутку ----
@@ -3600,7 +3602,7 @@ const TALK = (() => {
         if (performance.now() - napAt < 4000) return; napAt = performance.now(); close();
         const el2 = document.getElementById('fade'); el2.classList.add('on');
         speak('おやすみなさい');
-        setTimeout(() => { el2.classList.remove('on'); banner('おはよう！', pick(['Пять минут сна — и снова за слова', 'Бодрость восстановлена', 'Приснилось, что вы говорите по-японски'])); if (typeof audio !== 'undefined') audio.ding(); }, 1800);
+        setTimeout(() => { el2.classList.remove('on'); banner('おはよう！', T(pick(['Пять минут сна — и снова за слова', 'Бодрость восстановлена', 'Приснилось, что вы говорите по-японски']))); if (typeof audio !== 'undefined') audio.ding(); }, 1800);
     }
     // ---- предметы: попробовать еду ----
     function taste(w) {
@@ -3636,33 +3638,33 @@ const TALK = (() => {
         }
         if (hc && hc.dist < (inside.on ? 3.8 : 3.6)) {
             const ch = hc.ch, stall = !inside.on && FESTIVAL.stalls ? FESTIVAL.stalls.find((s) => s.ch === ch) : null;
-            if (stall) out.push({ icon: '🍢', t: 'Заказать', fn: () => order(stall) }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
-            else if (ch.role === 'dev') out.push({ icon: '✉', t: 'Оставить отзыв', fn: () => { close(); MAIL.open(); } }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
-            else if (ch.role === 'pianist' && !ch.playing) out.push({ icon: '🎹', t: 'Попросить сыграть', fn: () => pianoMenu(ch) }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
-            else if (ch.cat) out.push({ icon: '🐾', t: 'Погладить кота', fn: () => talk(ch) });
-            else out.push({ icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
+            if (stall) out.push({ icon: '🍢', t: T('Заказать'), fn: () => order(stall) }, { icon: '💬', t: T('Поговорить'), fn: () => talk(ch) });
+            else if (ch.role === 'dev') out.push({ icon: '✉', t: T('Оставить отзыв'), fn: () => { close(); MAIL.open(); } }, { icon: '💬', t: T('Поговорить'), fn: () => talk(ch) });
+            else if (ch.role === 'pianist' && !ch.playing) out.push({ icon: '🎹', t: T('Попросить сыграть'), fn: () => pianoMenu(ch) }, { icon: '💬', t: T('Поговорить'), fn: () => talk(ch) });
+            else if (ch.cat) out.push({ icon: '🐾', t: T('Погладить кота'), fn: () => talk(ch) });
+            else out.push({ icon: '💬', t: T('Поговорить'), fn: () => talk(ch) });
             return out;
         }
         const h = pickAt(pt[0], pt[1], inside.on ? 2.8 : 9);
-        if (!inside.on && h && h.door && h.dist < 7.5) out.push({ icon: '🚪', t: 'Войти' + (ROOM_HINT[h.door.userData.door.type] ? ': ' + ROOM_HINT[h.door.userData.door.type] : ''), s: 'door' + h.door.userData.door.z, fn: () => enterRoom(h.door) });
-        if (h && h.radio) out.push({ icon: '📻', t: 'Сменить станцию', fn: () => radioNext() });
-        if (h && h.tv) out.push({ icon: '📺', t: 'Переключить канал', fn: () => tvNext(h.tv) });
-        if (h && h.post) out.push({ icon: '✉', t: 'Написать разработчику', fn: () => { close(); MAIL.open(); } });
-        if (h && h.gacha) out.push({ icon: '🎰', t: 'Крутить гачу', fn: () => gacha() });
-        if (h && h.inner && h.dist < 4.5) out.push({ icon: '🚪', t: 'Пройти: ' + h.innerRu, fn: () => enterInner(h.inner) });
-        if (h && h.bed && h.dist < 3) out.push({ icon: '😴', t: 'Прилечь', fn: () => nap() });
+        if (!inside.on && h && h.door && h.dist < 7.5) out.push({ icon: '🚪', t: T('Войти') + (ROOM_HINT[h.door.userData.door.type] ? ': ' + ROOM_HINT[h.door.userData.door.type] : ''), s: 'door' + h.door.userData.door.z, fn: () => enterRoom(h.door) });
+        if (h && h.radio) out.push({ icon: '📻', t: T('Сменить станцию'), fn: () => radioNext() });
+        if (h && h.tv) out.push({ icon: '📺', t: T('Переключить канал'), fn: () => tvNext(h.tv) });
+        if (h && h.post) out.push({ icon: '✉', t: T('Написать разработчику'), fn: () => { close(); MAIL.open(); } });
+        if (h && h.gacha) out.push({ icon: '🎰', t: T('Крутить гачу'), fn: () => gacha() });
+        if (h && h.inner && h.dist < 4.5) out.push({ icon: '🚪', t: T('Пройти: ') + h.innerRu, fn: () => enterInner(h.inner) });
+        if (h && h.bed && h.dist < 3) out.push({ icon: '😴', t: T('Прилечь'), fn: () => nap() });
         if (h && h.use && h.dist < 3.2 && USE_LABEL[h.use]) out.push({ icon: USE_LABEL[h.use][0], t: USE_LABEL[h.use][1], fn: () => use(h.use) });
-        if (h && h.book && h.dist < 3.2) out.push({ icon: '📖', t: 'Почитать книгу', fn: () => { close(); BOOKS.open(ROOM_THEME[inside.door && inside.door.userData.door.type] || 'street'); } });
-        if (h && h.paper) out.push({ icon: '📰', t: 'Читать газету', fn: () => { close(); PAPER.open(); } });
+        if (h && h.book && h.dist < 3.2) out.push({ icon: '📖', t: T('Почитать книгу'), fn: () => { close(); BOOKS.open(ROOM_THEME[inside.door && inside.door.userData.door.type] || 'street'); } });
+        if (h && h.paper) out.push({ icon: '📰', t: T('Читать газету'), fn: () => { close(); PAPER.open(); } });
         if (h && h.sign && h.sign.word && !h.sign.deco) {
             const sg = h.sign, w = sg.word, id = String(w.id || jpOf(w));
-            out.push({ icon: '🔊', t: 'Произнести', s: id, fn: () => speak(w.kana || jpOf(w)) });
-            if (sg.state !== 'lit') out.push({ icon: '✨', t: 'Повторить', s: id, fn: () => reviewSign(sg) });
-            if (inside.on && canTaste(w)) out.push({ icon: '🥢', t: 'Попробовать', s: id, fn: () => taste(w) });
+            out.push({ icon: '🔊', t: T('Произнести'), s: id, fn: () => speak(w.kana || jpOf(w)) });
+            if (sg.state !== 'lit') out.push({ icon: '✨', t: T('Повторить'), s: id, fn: () => reviewSign(sg) });
+            if (inside.on && canTaste(w)) out.push({ icon: '🥢', t: T('Попробовать'), s: id, fn: () => taste(w) });
         }
         if (inside.on && inside.door && inside.door.userData.door.type === 'class') {
             let bd = null; room.traverse((o) => { if (!bd && o.userData && o.userData.board) bd = o; });
-            if (bd) { _p.set((pt[0] / innerWidth) * 2 - 1, -(pt[1] / innerHeight) * 2 + 1); _ray.setFromCamera(_p, camera); _ray.far = 8; if (_ray.intersectObject(bd, false).length) out.push({ icon: '✍', t: 'Написать на доске', fn: () => { close(); WRITE.open(null); } }); }
+            if (bd) { _p.set((pt[0] / innerWidth) * 2 - 1, -(pt[1] / innerHeight) * 2 + 1); _ray.setFromCamera(_p, camera); _ray.far = 8; if (_ray.intersectObject(bd, false).length) out.push({ icon: '✍', t: T('Написать на доске'), fn: () => { close(); WRITE.open(null); } }); }
         }
         return out;
     }
@@ -3737,7 +3739,7 @@ const WRITE = (() => {
     function ui() {
         if (el) return el;
         el = document.createElement('div'); el.id = 'write';
-        el.innerHTML = '<div class="th"><div class="av">✍</div><div class="tt"><div class="nm">Доска</div><div class="rl">напиши слово по порядку черт</div></div><button class="tx" aria-label="Закрыть">×</button></div>'
+        el.innerHTML = '<div class="th"><div class="av">✍</div><div class="tt"><div class="nm">' + T('Доска') + '</div><div class="rl">' + T('напиши слово по порядку черт') + '</div></div><button class="tx" aria-label="Закрыть">×</button></div>'
             + '<div class="card"><div class="kana"></div><div class="mean"></div><div class="prog"></div></div>'
             + '<div class="bd"><div class="host"></div></div><div class="msg"></div>'
             + '<div class="row"><button class="b-show">▶ Порядок черт</button><button class="b-ghost">Обводка</button><button class="b-next">Другое слово</button></div>';
@@ -3837,7 +3839,7 @@ const PAPER = (() => {
     function ui() {
         if (el) return el;
         el = document.createElement('div'); el.id = 'paper';
-        el.innerHTML = '<div class="mh"><div class="t">アニメイ新聞</div><div class="d"></div><button class="tx" aria-label="Закрыть">×</button></div>'
+        el.innerHTML = '<div class="mh"><div class="t">アニメイ新聞</div><div class="d"></div><button class="tx" aria-label="' + T('Закрыть') + '">×</button></div>'
             + '<div class="body"></div>'
             + '<div class="row"><button class="b-tr">Перевод</button><button class="b-next">Другая новость</button><a class="b-open" target="_blank" rel="noopener">Целиком ↗</a></div>';
         document.body.appendChild(el);
@@ -3877,7 +3879,7 @@ const PAPER = (() => {
         const tr = (s.tr && s.tr.ru && s.tr.ru.levels && s.tr.ru.levels[key]) || {};
         const sent = lv.sentences || [];
         const voc = (s.vocab || []).filter((v) => v.word && v.gloss).slice(0, 6);
-        el.querySelector('.body').innerHTML = '<span class="cat">' + esc(CAT[s.category] || 'Новости') + '</span>'
+        el.querySelector('.body').innerHTML = '<span class="cat">' + esc(T(CAT[s.category] || 'Новости')) + '</span>'
             + '<h3>' + furi(lv.title && lv.title.tokens, lv.title && lv.title.text) + '</h3>'
             + (tr.title ? '<div class="ttr">' + esc(tr.title) + '</div>' : '')
             + sent.map((x, i) => '<p data-i="' + i + '">' + furi(x.tokens, x.text) + (tr.sentences && tr.sentences[i] ? '<span class="ru">' + esc(tr.sentences[i]) + '</span>' : '') + '</p>').join('')
@@ -3909,7 +3911,7 @@ const MAIL = (() => {
     function ui() {
         if (el) return el;
         el = document.createElement('div'); el.id = 'mail';
-        el.innerHTML = '<div class="mh"><div class="t">目安箱 · отзыв разработчику</div><button class="tx" aria-label="Закрыть">×</button></div>'
+        el.innerHTML = '<div class="mh"><div class="t">目安箱 · ' + T('отзыв разработчику') + '</div><button class="tx" aria-label="' + T('Закрыть') + '">×</button></div>'
             + '<p class="lead">Что понравилось, что сломалось, чего не хватает? Разработчик читает каждое письмо.</p>'
             + '<textarea maxlength="2000" placeholder="Ваше письмо…"></textarea><div class="st"></div>'
             + '<div class="row"><button class="b-send">Отправить ✉</button></div>';
@@ -4110,7 +4112,7 @@ const BOOKS = (() => {
         if (el) return el;
         if (!document.getElementById('book-font')) { const l = document.createElement('link'); l.id = 'book-font'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&display=swap'; document.head.appendChild(l); }
         el = document.createElement('div'); el.id = 'book';
-        el.innerHTML = '<div class="bh"><button class="b-lib" aria-label="Библиотека">‹</button><div class="bt"></div><button class="b-x" aria-label="Закрыть">×</button></div><div class="bb"></div><div class="bf"></div><div class="tip" hidden></div>';
+        el.innerHTML = '<div class="bh"><button class="b-lib" aria-label="' + T('Библиотека') + '">‹</button><div class="bt"></div><button class="b-x" aria-label="' + T('Закрыть') + '">×</button></div><div class="bb"></div><div class="bf"></div><div class="tip" hidden></div>';
         document.body.appendChild(el);
         el.querySelector('.b-x').addEventListener('click', close);
         el.querySelector('.b-lib').addEventListener('click', () => { stopRead(); book = null; library(); });
@@ -4129,7 +4131,7 @@ const BOOKS = (() => {
     // ---------- библиотека ----------
     function library() {
         const e = ui(); e.classList.remove('reader'); e.querySelector('.b-lib').hidden = true;
-        e.querySelector('.bt').innerHTML = '<b>Книжная полка</b><small>короткие рассказы для чтения</small>';
+        e.querySelector('.bt').innerHTML = '<b>' + T('Книжная полка') + '</b><small>' + T('короткие рассказы для чтения') + '</small>';
         const mine = lsGet();
         const dark = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = (v) => Math.round(v * (1 - k)).toString(16).padStart(2, '0'); return '#' + f(n >> 16) + f((n >> 8) & 255) + f(n & 255); };
         const cover = (b, attr, i, note) => { const [bg, ink, ic] = coverOf(b, i); return '<button class="cover" ' + attr + ' style="--bg:' + bg + ';--bg2:' + dark(bg, 0.28) + ';--ink:' + ink + '"><span class="spine"></span><span class="ct">' + esc(b.title) + '</span><span class="ci">' + ic + '</span><span class="cs">' + esc(b.titleTr || '') + '</span>' + (note ? '<span class="cn">' + esc(note) + '</span>' : '') + '</button>'; };
@@ -5295,7 +5297,7 @@ const room = new THREE.Group(); room.visible = false; scene.add(room);
 const inside = { on: false, block: null, strips: [], lights: [], saved: null, door: null, steam: [] };
 const ROOM = { w: 7.6, d: 11.5, h: 3.2, doorX: 1.4, innerX: null };
 // вторая комната за внутренней дверью: [тип, надпись, куда ведёт]
-const INNER = { home: ['bedroom', '寝室', 'спальня'], loft: ['bedroom', '寝室', 'спальня'], washitsu: ['bedroom', '寝室', 'спальня'], izakaya: ['washitsu', '座敷', 'отдельный зал'], class: ['books', '図書室', 'школьная библиотека'], animeshop: ['arcade', '２階', 'игровой этаж'] };
+const INNER = { home: ['bedroom', '寝室', T('спальня')], loft: ['bedroom', '寝室', T('спальня')], washitsu: ['bedroom', '寝室', T('спальня')], izakaya: ['washitsu', '座敷', T('отдельный зал')], class: ['books', '図書室', T('школьная библиотека')], animeshop: ['arcade', '２階', T('игровой этаж')] };
 function innerDoorTex(jp, ru) {
     const c = document.createElement('canvas'); c.width = 256; c.height = 540; const g = c.getContext('2d');
     g.fillStyle = '#c8a878'; g.fillRect(0, 0, 256, 540); g.strokeStyle = '#7a5a36'; g.lineWidth = 10; g.strokeRect(5, 5, 246, 530);
@@ -5319,7 +5321,7 @@ function enterInner(t2) {
     fade(() => {
         inside.door = { userData: { door: Object.assign({}, parent.userData.door, { type: t2, z: parent.userData.door.z + 0.37, parentDoor: parent }) } };
         buildRoom(b, parent.userData.door.color, t2); LIFE.onEnter();
-        camera.position.set(ROOM.doorX - 0.5, 1.6, ROOM.d / 2 - 1.1); yaw = tYaw = 0.1; pitch = tPitch = 0; vel.set(0, 0, 0); hideHint(); document.getElementById('exit').textContent = '← Назад';
+        camera.position.set(ROOM.doorX - 0.5, 1.6, ROOM.d / 2 - 1.1); yaw = tYaw = 0.1; pitch = tPitch = 0; vel.set(0, 0, 0); hideHint(); document.getElementById('exit').textContent = T('← Назад');
         { const [jp, ru] = String(ROOM_NAMES[t2] || '').split(' · '); banner(spec[1] || jp || '', (spec[2] || ru || '') + ' · ' + b.q.name); }
     });
 }
@@ -5329,12 +5331,12 @@ function backToParent() {
     fade(() => {
         inside.door = parent; buildRoom(b, parent.userData.door.color, parent.userData.door.type); LIFE.onEnter();
         const x = ROOM.innerX != null ? ROOM.innerX : ROOM.doorX - 0.5;
-        camera.position.set(x, 1.6, ROOM.innerX != null ? -ROOM.d / 2 + 1.1 : ROOM.d / 2 - 1.1); yaw = tYaw = ROOM.innerX != null ? Math.PI : 0; pitch = tPitch = 0; vel.set(0, 0, 0); hideHint(); document.getElementById('exit').textContent = '← На улицу';
+        camera.position.set(x, 1.6, ROOM.innerX != null ? -ROOM.d / 2 + 1.1 : ROOM.d / 2 - 1.1); yaw = tYaw = ROOM.innerX != null ? Math.PI : 0; pitch = tPitch = 0; vel.set(0, 0, 0); hideHint(); document.getElementById('exit').textContent = T('← На улицу');
         { const [jp, ru] = String(ROOM_NAMES[parent.userData.door.type] || '').split(' · '); banner(jp || '', (ru || '') + ' · ' + b.q.name); }
     });
 } // размеры текущей комнаты, задаются генератором
 const ROOM_TYPES = ['izakaya', 'konbini', 'class', 'home'];
-const ROOM_NAMES = { izakaya: '居酒屋 · идзакая', konbini: 'コンビニ · комбини', class: '塾 · вечерняя школа', home: '部屋 · квартира' };
+const ROOM_NAMES = { izakaya: '居酒屋 · ' + T('идзакая'), konbini: 'コンビニ · ' + T('комбини'), class: '塾 · ' + T('вечерняя школа'), home: '部屋 · ' + T('квартира') };
 ROOM_TYPES.push(...ROOMX.types); Object.assign(ROOM_NAMES, ROOMX.names);
 const _plaques = new Map();
 function texPlaque(ch) { if (_plaques.has(ch)) return _plaques.get(ch); const t = texPlaque0(ch); t.userData.shareable = true; t.userData.shared = true; _plaques.set(ch, t); return t; }
@@ -5768,7 +5770,7 @@ function placeRadio(free) {
 const radio = { g: null, led: null, needle: null };
 const RADIO_ROOMS = new Set(['home', 'oneroom', 'washitsu', 'loft', 'izakaya', 'ramen', 'cafe']); // в комбини, классе, книжном и игровом зале радио нет
 function radioNext() { const v = audio.nextStation(); toast('📻 ' + (STATION_NAMES[v] || v)); document.querySelectorAll('#panel [data-music]').forEach((x) => x.classList.toggle('on', x.dataset.music === v)); if (radio.needle) radio.needle.position.x = 0.04 + (audio.stationIndex() / 9) * 0.1; }
-const STATION_NAMES = { city: 'Ночной город', snow: 'Снег над крышами', train: 'Ночной поезд', tea: 'Чайный дом', stars: 'Звёзды', harbor: 'Гавань', radio: 'Радио за стеной', calm: 'Тихий вечер', lane: 'Переулок', lofi: 'Lo-fi' };
+const STATION_NAMES = { city: T('Ночной город'), snow: T('Снег над крышами'), train: T('Ночной поезд'), tea: T('Чайный дом'), stars: T('Звёзды'), harbor: T('Гавань'), radio: T('Радио за стеной'), calm: T('Тихий вечер'), lane: T('Переулок'), lofi: 'Lo-fi' };
 let fading = false;
 function enterRoom(door) {
     if (fading || inside.on) return;
@@ -6125,7 +6127,7 @@ const audio = (() => {
         setMotion(k) { if (motionGain && ctx) { motionGain._lfo.gain.setTargetAtTime(Math.min(1, k) * 0.04, ctx.currentTime, 0.1); } },
         playSong, stopSong,
         ding() { if (!ctx || !enabled || !master) return; const w = ctx.currentTime; [N.C5, N.E5, N.G5, 1046.5].forEach((f, i) => keys(ctx, f, w + i * 0.08, 0.6, 0.05, master)); },
-        toggle() { enabled = !enabled; saveSet({ music2: enabled }); btn.classList.toggle('on', enabled); if (!enabled) { stop(); if (ctx) ctx.suspend(); } else this.resume(); toast(enabled ? 'Звук включён' : 'Звук выключен'); },
+        toggle() { enabled = !enabled; saveSet({ music2: enabled }); btn.classList.toggle('on', enabled); if (!enabled) { stop(); if (ctx) ctx.suspend(); } else this.resume(); toast(enabled ? T('Звук включён') : T('Звук выключен')); },
         get enabled() { return enabled; },
         get state() { return ctx ? ctx.state : 'none'; },
         // уровень на выходе (для проверок): RMS за 50 мс
@@ -6219,7 +6221,7 @@ document.addEventListener('pointerlockchange', () => { if (!document.pointerLock
 // гироскоп: телефон как окно в улицу (на iOS нужно разрешение по тапу)
 async function toggleGyro(btn) {
     if (gyro) { window.removeEventListener('deviceorientation', gyro.fn); gyro = null; btn.classList.remove('on'); saveSet({ gyro: false }); return; }
-    try { if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') { const r = await DeviceOrientationEvent.requestPermission(); if (r !== 'granted') { toast('Нет доступа к датчикам'); return; } } } catch (err) { toast('Нет доступа к датчикам'); return; }
+    try { if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') { const r = await DeviceOrientationEvent.requestPermission(); if (r !== 'granted') { toast(T('Нет доступа к датчикам')); return; } } } catch (err) { toast(T('Нет доступа к датчикам')); return; }
     gyro = { base: null, fn: null };
     gyro.fn = (e) => {
         if (e.alpha == null) return;
@@ -6228,7 +6230,7 @@ async function toggleGyro(btn) {
         let da = al - gyro.base.a; if (da > Math.PI) da -= Math.PI * 2; if (da < -Math.PI) da += Math.PI * 2;
         tYaw = gyro.base.yaw + da; tPitch = clamp(gyro.base.pitch + (bt - gyro.base.b) * 0.9, -1, 1);
     };
-    window.addEventListener('deviceorientation', gyro.fn); btn.classList.add('on'); saveSet({ gyro: true }); toast('Поворачивай телефон, чтобы осмотреться');
+    window.addEventListener('deviceorientation', gyro.fn); btn.classList.add('on'); saveSet({ gyro: true }); toast(T('Поворачивай телефон, чтобы осмотреться'));
 }
 const gyroBtn = document.querySelector('#panel [data-gyro]');
 if (gyroBtn) { gyroBtn.hidden = !('DeviceOrientationEvent' in window) || !('ontouchstart' in window); gyroBtn.addEventListener('click', () => toggleGyro(gyroBtn)); }
@@ -6245,18 +6247,18 @@ function tap(x, y) {
     if (h.tv) { buzz(10); tvNext(h.tv); return; }
     if (h.paper) { buzz(10); TALK.close(); PAPER.open(); return; }
     if (h.gacha) { if (h.dist < 3) { buzz(12); TALK.gacha(); } return; }
-    if (h.inner) { if (h.dist < 4.5) { buzz(15); enterInner(h.inner); } else toast('Подойдите ближе к двери'); return; }
+    if (h.inner) { if (h.dist < 4.5) { buzz(15); enterInner(h.inner); } else toast(T('Подойдите ближе к двери')); return; }
     if (h.bed) { if (h.dist < 3) { buzz(10); TALK.nap(); } return; }
     if (h.use) { if (h.dist < 3.2) { buzz(10); TALK.use(h.use); } return; }
     if (h.book) { if (h.dist < 3.2) { buzz(10); TALK.close(); BOOKS.open(ROOM_THEME[inside.door && inside.door.userData.door.type] || 'street'); } return; }
-    if (h.post) { if (h.dist < 6) { buzz(10); TALK.close(); MAIL.open(); } else toast('Подойдите ближе к почтовому ящику'); return; }
-    if (h.door) { if (h.dist < 7) { buzz(15); enterRoom(h.door); } else toast('Подойди ближе к двери'); return; }
+    if (h.post) { if (h.dist < 6) { buzz(10); TALK.close(); MAIL.open(); } else toast(T('Подойдите ближе к почтовому ящику')); return; }
+    if (h.door) { if (h.dist < 7) { buzz(15); enterRoom(h.door); } else toast(T('Подойди ближе к двери')); return; }
     buzz(10); showHint(h.sign, true);
 }
 
 // ---- подсказка сверху: наведение (прицел / курсор) или тап, без модалки ----
-const STATE_LABEL = { lit: 'выучено', warm: 'учу', new: 'новое', due: 'пора повторить', worn: 'забывается' };
-const ROOM_HINT = { izakaya: 'Идзакая', konbini: 'Комбини', class: 'Вечерняя школа', home: 'Квартира' }; Object.assign(ROOM_HINT, ROOMX.hints); Object.assign(ROOM_HINT, ROOMX.hints);
+const STATE_LABEL = { lit: T('выучено'), warm: T('учу'), new: T('новое'), due: T('пора повторить'), worn: T('забывается') };
+const ROOM_HINT = { izakaya: T('Идзакая'), konbini: T('Комбини'), class: T('Вечерняя школа'), home: T('Квартира') }; Object.assign(ROOM_HINT, ROOMX.hints); Object.assign(ROOM_HINT, ROOMX.hints);
 const hintEl = document.getElementById('hint');
 const hover = { sign: null, door: null, sticky: 0, lastMouse: null, frame: 0, gazeKey: null, gazeT: 0 };
 // телефон: подсказка по взгляду — что в центре экрана (до 7 м), то и подписываем, после короткой задержки
@@ -6347,8 +6349,8 @@ function voiceLine(ch, line, force) {
 function pickAt(x, y, d) { return pick(x, y, d); }
 function tvNext(m) {
     const n = LIFE.nextChannel(m.userData.canvasTex || m.material.map); if (!n) return;
-    if (n[0] === 'アニメ' && ANITV.ensure()) setTimeout(() => { const r = ANITV.resumed; toast(r ? '📺 «' + r.title + '» · серия ' + r.ep + ' — с того места, где вы остановились' : '📺 アニメ — ' + (ANITV.title ? '«' + ANITV.title + '»' : 'аниме') + (ANITV.mine ? ' · сцена из вашего словаря' : '')); }, 900);
-    else toast('📺 ' + n[0] + ' — ' + n[1]);
+    if (n[0] === 'アニメ' && ANITV.ensure()) setTimeout(() => { const r = ANITV.resumed; toast(r ? T('📺 «{t}» · серия {ep} — с того места, где вы остановились', { t: r.title, ep: r.ep }) : '📺 アニメ — ' + (ANITV.title ? '«' + ANITV.title + '»' : T('аниме')) + (ANITV.mine ? T(' · сцена из вашего словаря') : '')); }, 900);
+    else toast('📺 ' + n[0] + ' — ' + T(n[1]));
 }
 // газета на столе (котацу, тябудай, столик кафе) — одна на комнату
 const PAPER_SPOTS = { kotatsu: [0.62, 0.415, 0, 0.3], chabudai: [-0.05, 0.362, -0.3, -0.4], cafeTable: [0, 0.763, -0.21, 0.2] };
@@ -6407,10 +6409,10 @@ function showDoorHint(door) {
     hintEl.classList.add('door');
     document.getElementById('h-kanji').textContent = { izakaya: '居酒屋', konbini: 'コンビニ', class: '塾', home: '部屋' }[d.type] || '';
     document.getElementById('h-kana').textContent = '';
-    document.getElementById('h-tr').textContent = (ROOM_HINT[d.type] || 'Дверь') + ' — ' + (FINE ? 'клик' : 'тап') + ', чтобы войти';
+    document.getElementById('h-tr').textContent = T(FINE ? '{r} — клик, чтобы войти' : '{r} — тап, чтобы войти', { r: ROOM_HINT[d.type] || T('Дверь') });
     const st = document.getElementById('h-state'); st.textContent = ''; st.className = 'state';
     document.getElementById('h-jlpt').hidden = true; document.getElementById('h-review').hidden = true; document.getElementById('h-key').hidden = true;
-    hintEl.style.setProperty('--c', d.color || '#7c8cf8');
+    hintEl.style.setProperty('--c', d.color || '#3f6fd8');
     hintEl.classList.add('on');
 }
 function hideHint() { if (!hover.sign && !hover.door) return; hover.sign = null; hover.door = null; hover.sticky = 0; hintEl.classList.remove('on'); }
@@ -6464,13 +6466,13 @@ function reviewSign(s) {
     audio.ding(); buzz(12);
     s.glow.forEach((g) => { if (g.material) g.material.opacity = Math.min(0.5, g.material.opacity / 0.55); });
     hover.sign = null; showHint(s, true);
-    updateHud(); toast(source === 'demo' ? 'Вывеска зажглась (в макете расписание не меняется)' : 'Вывеска зажглась — повторение считается в тренажёре');
+    updateHud(); toast(source === 'demo' ? T('Вывеска зажглась (в макете расписание не меняется)') : T('Вывеска зажглась — повторение считается в тренажёре'));
 }
 document.getElementById('h-review').addEventListener('click', () => reviewSign(hover.sign));
 window.addEventListener('keydown', (e) => { if (e.code === 'KeyR' && hover.sign) reviewSign(hover.sign); });
 
 // ---- HUD ----
-function plural(n, a, b, c) { const m = n % 10, h = n % 100; if (m === 1 && h !== 11) return a; if (m >= 2 && m <= 4 && (h < 10 || h >= 20)) return b; return c; }
+function plural(n, a, b, c) { const l = window.SL_PLURAL && SL_PLURAL(n, a); if (l) return l; const m = n % 10, h = n % 100; if (m === 1 && h !== 11) return a; if (m >= 2 && m <= 4 && (h < 10 || h >= 20)) return b; return c; }
 let hudBlock = -1;
 function updateHud(force) {
     if (!blocks.length) return; // данные ещё грузятся (JLPT по сети)
@@ -6482,14 +6484,14 @@ function updateHud(force) {
         document.getElementById('q-emoji').textContent = '';
         document.getElementById('q-name').textContent = q.name;
         const total = data.words.length;
-        document.getElementById('q-sub').textContent = 'квартал ' + (bi + 1) + ' из ' + blocks.length + ' · ' + total + ' ' + plural(total, 'слово', 'слова', 'слов') + ' на всей улице';
+        document.getElementById('q-sub').textContent = T('квартал {i} из {n} · {t} {w} на всей улице', { i: bi + 1, n: blocks.length, t: total, w: plural(total, 'слово', 'слова', 'слов') });
         document.getElementById('dots').innerHTML = blocks.map((_, k) => '<i' + (k === bi ? ' class="on"' : '') + '></i>').join('');
     }
 }
 let toastT = 0;
 // заставка места: крупное японское название и подпись — вверху по центру, без плашки
 let bannerT = 0;
-const THEME_JP = { shinjuku: ['新宿', 'Синдзюку'], yokocho: ['横丁', 'Ёкотё'], matsuri: ['お祭り', 'Мацури'], sando: ['参道', 'Сандо'] };
+const THEME_JP = { shinjuku: ['新宿', T('Синдзюку')], yokocho: ['横丁', T('Ёкотё')], matsuri: ['お祭り', T('Мацури')], sando: ['参道', T('Сандо')] };
 function banner(jp, ru) { const el = document.getElementById('place'); if (!el) return; el.querySelector('.jp').textContent = jp; el.querySelector('.ru').textContent = ru; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); clearTimeout(bannerT); bannerT = setTimeout(() => el.classList.remove('show'), 3200); }
 function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2600); }
 
@@ -6502,10 +6504,10 @@ document.getElementById('share').addEventListener('click', async () => {
     g.fillText(document.getElementById('q-emoji').textContent + ' ' + document.getElementById('q-name').textContent, 18, 22);
     g.font = '700 30px ' + UI; g.textAlign = 'right'; g.fillText(String(litCount()), W - 18, 16);
     g.font = '500 12px ' + UI; g.fillStyle = 'rgba(255,255,255,0.75)'; g.fillText(plural(litCount(), 'вывеска горит', 'вывески горят', 'вывесок горит'), W - 18, 50);
-    g.textAlign = 'left'; g.font = '600 13px ' + UI; g.fillStyle = 'rgba(255,255,255,0.7)'; g.fillText('animei.space · Улица слов', 18, H - 34);
+    g.textAlign = 'left'; g.font = '600 13px ' + UI; g.fillStyle = 'rgba(255,255,255,0.7)'; g.fillText(T('animei.space · Улица слов'), 18, H - 34);
     const blob = await new Promise((res) => c.toBlob(res, 'image/png'));
     const file = new File([blob], 'animei-street.png', { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'Улица слов' }); return; } catch (e) { /* отменили */ } }
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: T('Улица слов') }); return; } catch (e) { /* отменили */ } }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 });
 
@@ -6527,9 +6529,9 @@ panel.querySelectorAll('[data-src]').forEach((b) => {
 if (SAMPLE) panel.querySelectorAll('a[data-theme]').forEach((a) => { const u = new URL(a.href, location.href); u.searchParams.set('src', 'sample'); a.href = u.toString(); });
 panel.querySelectorAll('[data-music]').forEach((b) => { b.classList.toggle('on', b.dataset.music === audio.variant); b.addEventListener('click', () => { audio.setVariant(b.dataset.music); panel.querySelectorAll('[data-music]').forEach((x) => x.classList.toggle('on', x === b)); }); });
 panel.querySelectorAll('[data-theme]').forEach((b) => { b.classList.toggle('on', b.dataset.theme === th.id); });
-if (window.STREET_WORDS && window.STREET_WORDS.words && !SAMPLE && location.protocol === 'file:') panel.querySelector('[data-src="demo"]').textContent = 'Мой словарь (выгрузка)';
+if (window.STREET_WORDS && window.STREET_WORDS.words && !SAMPLE && location.protocol === 'file:') panel.querySelector('[data-src="demo"]').textContent = T('Мой словарь (выгрузка)');
 const voiceBtn = panel.querySelector('[data-voices]');
-if (voiceBtn) { voiceBtn.classList.toggle('on', voicesPref); voiceBtn.addEventListener('click', () => { voicesPref = !voicesPref; saveSet({ voices: voicesPref }); voiceBtn.classList.toggle('on', voicesPref); if (!voicesPref) { if (talkAudio) talkAudio.pause(); if (ambAudio) ambAudio.pause(); } toast(voicesPref ? 'Голоса включены' : 'Голоса выключены'); }); }
+if (voiceBtn) { voiceBtn.classList.toggle('on', voicesPref); voiceBtn.addEventListener('click', () => { voicesPref = !voicesPref; saveSet({ voices: voicesPref }); voiceBtn.classList.toggle('on', voicesPref); if (!voicesPref) { if (talkAudio) talkAudio.pause(); if (ambAudio) ambAudio.pause(); } toast(voicesPref ? T('Голоса включены') : T('Голоса выключены')); }); }
 const rainBtn = panel.querySelector('[data-rain]'); rainBtn.hidden = false; rainBtn.classList.toggle('on', opts.rain);
 rainBtn.addEventListener('click', () => { opts.rain = !opts.rain; saveSet({ rain: opts.rain }); rainBtn.classList.toggle('on', opts.rain); if (rain) rain.visible = opts.rain; });
 const reflBtn = { classList: { remove() {}, toggle() {} } }; // кнопки отражений больше нет
@@ -6547,11 +6549,11 @@ function sampleOffer(n) {
     try { declined = localStorage.getItem(SAMPLE_OFFER_KEY); } catch (e) { /* приватный режим */ }
     if (declined !== null && n <= Number(declined) + 4) return;
     const el = document.getElementById('sample-offer');
-    el.querySelector('.so-t').textContent = n ? 'Твоя улица пока почти пустая' : 'У тебя пока нет своих слов';
+    el.querySelector('.so-t').textContent = n ? T('Твоя улица пока почти пустая') : T('У тебя пока нет своих слов');
     el.querySelector('.so-p').textContent = (n
-        ? 'Каждое сохранённое слово — своя вывеска, а у тебя их ' + n + '. '
-        : 'Сейчас горит встроенный набор. ')
-        + 'Загляни на улицу с тестовой колодой: больше 600 слов — выученные, на повторении, новые.';
+        ? T('Каждое сохранённое слово — своя вывеска, а у тебя их {n}. ', { n })
+        : T('Сейчас горит встроенный набор. '))
+        + T('Загляни на улицу с тестовой колодой: больше 600 слов — выученные, на повторении, новые.');
     el.hidden = false;
     if (document.pointerLockElement) document.exitPointerLock();
     document.getElementById('so-go').onclick = () => { const u = new URL(location.href); u.searchParams.set('src', 'sample'); location.href = u.toString(); };
@@ -6665,7 +6667,7 @@ function frame(now) {
     // туман и фон плавно переходят к теме квартала
     if (!inside.on && scene.fog && scene.fog.isFogExp2) { const k = 1 - Math.exp(-dt * 1.4); _fogC.set(th.fog); scene.fog.color.lerp(_fogC, k); scene.fog.density += (th.fogD - scene.fog.density) * k; _fogC.set(th.sky); if (scene.background && scene.background.isColor) scene.background.lerp(_fogC, k); hemi.color.lerp(_fogC.set(th.fog), k); }
     if (rain) rain.visible = opts.rain && !!th.rain && !inside.on;
-    if (!inside.on && camera.position.z < endGateZ + 5 && performance.now() - endShown > 15000) { endShown = performance.now(); const { need } = nextUnlock(); banner('この先、準備中', 'Выучите ещё ' + need + ' ' + plural3(need, 'слово', 'слова', 'слов') + ' — откроется новый квартал'); }
+    if (!inside.on && camera.position.z < endGateZ + 5 && performance.now() - endShown > 15000) { endShown = performance.now(); const { need } = nextUnlock(); banner('この先、準備中', T('Выучите ещё {n} {w} — откроется новый квартал', { n: need, w: plural3(need, 'слово', 'слова', 'слов') })); }
     FESTIVAL.update(t, dt); TEMPLE.update(t, dt); // сами решают: новые вспышки — только на Мацури, листья — только на Сандо
     TALK.update();
     if (inside.on && radio.led && radio.g && radio.g.parent) radio.led.material.color.setHSL(0.03, 1, 0.35 + 0.25 * (Math.sin(t * 3.2) * 0.5 + 0.5));
@@ -6685,7 +6687,7 @@ requestAnimationFrame(frame);
     if (!phone) return;
     const ov = document.getElementById('rotate'), portrait = () => innerHeight > innerWidth;
     let skipped = false, lockFailed = false;
-    const sync = () => { ov.classList.toggle('on', portrait() && !skipped); if (lockFailed) { ov.querySelector('.t').textContent = 'Поверните телефон горизонтально'; ov.querySelector('.sub').textContent = 'Этот браузер не умеет поворачивать экран сам'; } };
+    const sync = () => { ov.classList.toggle('on', portrait() && !skipped); if (lockFailed) { ov.querySelector('.t').textContent = T('Поверните телефон горизонтально'); ov.querySelector('.sub').textContent = T('Этот браузер не умеет поворачивать экран сам'); } };
     const go = async () => {
         try { if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: 'hide' }); } catch (e) { /* без полного экрана */ }
         try { await screen.orientation.lock('landscape'); lockFailed = false; } catch (e) { lockFailed = true; }
@@ -6707,7 +6709,7 @@ if (document.fonts && document.fonts.load) document.fonts.load('700 20px "Noto S
 </script>
 <script>(function () {
     function webgl() { try { var c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } }
-    function show(msg, why) { if (window.__walk) return; var el = document.getElementById('nowebgl'); el.querySelector('.msg').textContent = msg; el.querySelector('.why').textContent = why || ''; el.style.display = 'flex'; var l = document.getElementById('loading'); if (l) l.style.display = 'none'; }
+    function show(msg, why) { if (window.__walk) return; var tr = window.T || function (s) { return s; }; msg = tr(msg); why = tr(why || ''); var el = document.getElementById('nowebgl'); el.querySelector('.msg').textContent = msg; el.querySelector('.why').textContent = why || ''; el.style.display = 'flex'; var l = document.getElementById('loading'); if (l) l.style.display = 'none'; }
     var firstErr = '';
     window.__streetFail = show;
     window.addEventListener('error', function (e) {

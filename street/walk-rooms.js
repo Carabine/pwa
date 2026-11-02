@@ -4,7 +4,7 @@
 const ROOMX = (() => {
     const types = ['oneroom', 'washitsu', 'loft', 'ramen', 'cafe', 'books', 'arcade'];
     const names = { oneroom: 'ワンルーム · однушка студента', washitsu: '和室 · японская комната', loft: 'ロフト · лофт', ramen: 'ラーメン屋 · рамэнная', cafe: '喫茶店 · кафе', books: '本屋 · книжный', arcade: 'ゲーセン · игровой зал' };
-    const hints = { oneroom: 'Однушка', washitsu: 'Японская комната', loft: 'Лофт', ramen: 'Рамэнная', cafe: 'Кафе', books: 'Книжный', arcade: 'Игровой зал' };
+    const hints = { oneroom: T('Однушка'), washitsu: T('Японская комната'), loft: T('Лофт'), ramen: T('Рамэнная'), cafe: T('Кафе'), books: T('Книжный'), arcade: T('Игровой зал') };
     // какие предметы-слова уместны (по старым типам) и на чём висят слова без предмета
     const alias = { oneroom: 'home', washitsu: 'home', loft: 'home', ramen: 'izakaya', cafe: 'home', books: 'class', arcade: 'konbini' };
     const surf = { oneroom: 'home', washitsu: 'home', loft: 'home', ramen: 'izakaya', cafe: 'home', books: 'konbini', arcade: 'konbini' };

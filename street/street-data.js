@@ -68,7 +68,7 @@ function buildOwner() {
         const shift = Math.round((Date.parse(todayKey()) - Date.parse(S.snapshotDay)) / 864e5);
         if (shift) { schedule = {}; Object.keys(S.schedule || {}).forEach((k) => { const s = S.schedule[k]; schedule[k] = Object.assign({}, s, s.due ? { due: dayKey(new Date(Date.parse(s.due) + shift * 864e5)) } : {}); }); }
     }
-    if (extra.length) decks.push({ id: 'known-deck', name: 'Уже знаю', emoji: '✓', wordIds: extra.map((w) => w.id) });
+    if (extra.length) decks.push({ id: 'known-deck', name: T('Уже знаю'), emoji: '✓', wordIds: extra.map((w) => w.id) });
     return { words: words.concat(extra), schedule, decks, known: new Set(knownList.map((k) => k.kanji)), jlpt: {}, source: 'owner' };
 }
 
@@ -82,13 +82,13 @@ function buildDemo() {
         d.words.forEach((w, i) => {
             const id = 'demo-' + (++n);
             const state = STATE_CYCLE[(i + di * 4) % STATE_CYCLE.length];
-            words.push({ id, kanji: w[0], kana: w[1], translation: w[2], createdAt: new Date(Date.now() - (n * 7 + di) * 36e5).toISOString() });
+            words.push({ id, kanji: w[0], kana: w[1], translation: window.SL_DEMO ? SL_DEMO(w[0], w[2]) : w[2], createdAt: new Date(Date.now() - (n * 7 + di) * 36e5).toISOString() });
             jlpt[w[0]] = w[3];
             const s = demoSchedule(state);
             if (s) schedule[id] = s;
             ids.push(id);
         });
-        decks.push({ id: 'demo-deck-' + di, name: d.name, emoji: d.emoji, wordIds: ids });
+        decks.push({ id: 'demo-deck-' + di, name: T(d.name), emoji: d.emoji, wordIds: ids });
     });
     return { words, schedule, decks, known: new Set(), jlpt, source: 'demo' };
 }
@@ -144,9 +144,9 @@ function buildQuarters(data, capacity) {
     data.decks.forEach((d) => {
         const ws = d.wordIds.map((id) => byId.get(id)).filter((w) => w && !used.has(w.id));
         ws.forEach((w) => used.add(w.id));
-        push(d.name || 'Колода', d.emoji || '', ws);
+        push(d.name || T('Колода'), d.emoji || '', ws);
     });
-    push('Без колоды', '🌙', data.words.filter((w) => !used.has(w.id)));
+    push(T('Без колоды'), '🌙', data.words.filter((w) => !used.has(w.id)));
     // крошечные колоды (серия с 2–5 словами) сливаются с соседями, чтобы квартал не был огрызком
     const MIN = 8, merged = [];
     quarters.forEach((q) => {
@@ -154,7 +154,7 @@ function buildQuarters(data, capacity) {
         if (last && (last.words.length < MIN || q.words.length < MIN) && last.words.length + q.words.length <= capacity) { last.words = last.words.concat(q.words); last.name = last.name + ' + ' + q.name; }
         else merged.push({ name: q.name, emoji: q.emoji, words: q.words.slice() });
     });
-    if (!merged.length) merged.push({ name: 'Пустая улица', emoji: '🌙', words: [] });
+    if (!merged.length) merged.push({ name: T('Пустая улица'), emoji: '🌙', words: [] });
     return merged;
 }
 

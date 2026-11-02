@@ -158,7 +158,7 @@ const TALK = (() => {
     function head() {
         el.querySelector('.av').textContent = cur.icon || '💬';
         el.querySelector('.nm').textContent = cur.name;
-        el.querySelector('.rl').textContent = (cur.sub || '') + (cur.kind === 'order' && score.all ? (cur.sub ? ' · ' : '') + 'заказов верно: ' + score.ok + ' из ' + score.all : '');
+        el.querySelector('.rl').textContent = (cur.sub || '') + (cur.kind === 'order' && score.all ? (cur.sub ? ' · ' : '') + T('заказов верно: {a} из {b}', { a: score.ok, b: score.all }) : '');
     }
     // ---- шаг: реплика персонажа в ленту, задание, варианты ответа ----
     let showSeq = 0;
@@ -461,7 +461,7 @@ const TALK = (() => {
     const canTaste = (w) => { const m = propMeta(jpOf(w)); return EATABLE.has(jpOf(w)) || !!(m && ['dish', 'fruit', 'veg', 'fishy', 'can', 'bottle', 'jar'].indexOf(m.arch) >= 0); };
     const FOODISH = (w) => { const m = propMeta(jpOf(w)); return !!m && (m.where.indexOf('izakaya') >= 0 || m.where.indexOf('konbini') >= 0); };
     function order(stall) {
-        const ch = stall.ch; if (!ch || pool().length < 4) { toast('Нужно хотя бы 4 слова с переводом'); return; }
+        const ch = stall.ch; if (!ch || pool().length < 4) { toast(T('Нужно хотя бы 4 слова с переводом')); return; }
         begin({ kind: 'order', ch, stall, inside: false, icon: '🍢', name: 'Продавец', sub: stall.food });
         const round = (first) => {
             const w = pickWord(FOODISH); if (!w) return close();
@@ -500,7 +500,7 @@ const TALK = (() => {
     function playPiano(ch, s) {
         audio.resume();
         const dur = audio.playSong(s.id);
-        if (!dur) toast(audio.enabled ? 'Коснитесь экрана — включится звук' : 'Звук выключен — включите его кнопкой вверху');
+        if (!dur) toast(audio.enabled ? T('Коснитесь экрана — включится звук') : T('Звук выключен — включите его кнопкой вверху'));
         ch.playing = true; pianoCh = ch; note('piano', s.jp);
         LIFE.say(ch, ['♪ 「' + s.jp + '」', '♪ ' + s.ru], 2.6, LIFE.S.t);
         setTimeout(() => {
@@ -564,14 +564,14 @@ const TALK = (() => {
     let gachaAt = 0;
     function gacha() {
         if (performance.now() - gachaAt < 1500) return; gachaAt = performance.now();
-        const w = pickWord(); if (!w) { toast('Капсулы пусты — добавьте в словарь хотя бы 4 слова'); return; }
+        const w = pickWord(); if (!w) { toast(T('Капсулы пусты — добавьте в словарь хотя бы 4 слова')); return; }
         audio.ding(); if (typeof buzz === 'function') buzz(20);
         const k = kanaOf(w);
         note('gacha', jpOf(w));
         setTimeout(() => { banner('🎁 ' + jpOf(w), (k ? k + ' — ' : '') + meaning(w)); speak(k || jpOf(w)); }, 500);
     }
     // ---- интерактивные вещи в комнатах ----
-    const USE_LABEL = { kanpai: ['🍻', 'Крикнуть «乾杯!»'], buy: ['🛒', 'Купить что-нибудь'], ramen: ['🍜', 'Заказать рамэн'], claw: ['🕹', 'Сыграть в UFO-кэтчер'], study: ['✍', 'Позаниматься за столом'] };
+    const USE_LABEL = { kanpai: ['🍻', T('Крикнуть «乾杯!»')], buy: ['🛒', T('Купить что-нибудь')], ramen: ['🍜', T('Заказать рамэн')], claw: ['🕹', T('Сыграть в UFO-кэтчер')], study: ['✍', T('Позаниматься за столом')] };
     const SHOP = [['おにぎり', 'онигири', 150, '百五十円'], ['お茶', 'бутылку чая', 130, '百三十円'], ['肉まん', 'никуман', 180, '百八十円'], ['プリン', 'пудинг', 200, '二百円'], ['からあげ', 'караагэ', 250, '二百五十円']];
     let useAt = 0;
     function use(kind) {
@@ -581,19 +581,19 @@ const TALK = (() => {
         if (kind === 'kanpai') {
             const guests = room.filter((c) => !c.cat && ['chef', 'waiter', 'cook'].indexOf(c.role) < 0);
             guests.forEach((c, i) => setTimeout(() => LIFE.say(c, ['乾杯！', 'Будем!', 'cheers'], 2.2, LIFE.S.t), 200 + i * 140));
-            speak('かんぱい！'); audio.ding(); toast('🍻 乾杯！ — «Кампай!» · ' + (guests.length ? 'гости подняли кружки' : 'вы подняли кружку'));
+            speak('かんぱい！'); audio.ding(); toast('🍻 乾杯！ — «Кампай!» · ' + (guests.length ? T('гости подняли кружки') : T('вы подняли кружку')));
         } else if (kind === 'buy') {
             const it = pick(SHOP), clerk = room.find((c) => c.role === 'clerk');
             sayV(clerk, ['いらっしゃいませ！' + it[0] + '、' + it[3] + 'です。', 'Добро пожаловать! ' + it[1] + ' — ' + it[2] + ' иен.'], 3.2);
             if (!clerk) speak(it[0] + '、' + it[3]);
-            setTimeout(() => { toast('🛒 Куплено: ' + it[0] + ' (' + it[1] + ') — ' + it[2] + ' 円'); audio.ding(); }, 1200);
+            setTimeout(() => { toast(T('🛒 Куплено: ') + it[0] + ' (' + it[1] + ') — ' + it[2] + ' 円'); audio.ding(); }, 1200);
         } else if (kind === 'ramen') {
             const chef = room.find((c) => c.role === 'ramenChef' || c.role === 'chef');
             sayV(chef, ['へい、らっしゃい！ラーメン一丁！', 'Заходи! Один рамэн!'], 2.6); if (!chef) speak('ラーメン一丁！');
-            setTimeout(() => { sayV(chef, ['お待ち！熱いから気をつけて！', 'Готово! Осторожно, горячо!'], 2.8); audio.ding(); toast('🍜 Рамэн готов — いただきます！'); }, 3200);
+            setTimeout(() => { sayV(chef, ['お待ち！熱いから気をつけて！', 'Готово! Осторожно, горячо!'], 2.8); audio.ding(); toast(T('🍜 Рамэн готов — いただきます！')); }, 3200);
         } else if (kind === 'claw') {
-            audio.ding(); toast('🕹 Лапа опускается…');
-            setTimeout(() => { const w = Math.random() < 0.4 ? pickWord() : null; if (w) { banner('🧸 ' + jpOf(w), 'Выигрыш! Плюшевое «' + meaning(w) + '»' + (kanaOf(w) ? ' · ' + kanaOf(w) : '')); audio.ding(); speak(kanaOf(w) || jpOf(w)); } else toast(pick(['😿 Почти! Лапа соскользнула…', '😿 Мимо! Ещё разок?', '😿 Игрушка выскользнула в последний момент'])); }, 1600);
+            audio.ding(); toast(T('🕹 Лапа опускается…'));
+            setTimeout(() => { const w = Math.random() < 0.4 ? pickWord() : null; if (w) { banner('🧸 ' + jpOf(w), T('Выигрыш! Плюшевое «{m}»', { m: meaning(w) }) + (kanaOf(w) ? ' · ' + kanaOf(w) : '')); audio.ding(); speak(kanaOf(w) || jpOf(w)); } else toast(T(pick(['😿 Почти! Лапа соскользнула…', '😿 Мимо! Ещё разок?', '😿 Игрушка выскользнула в последний момент']))); }, 1600);
         } else if (kind === 'study') { WRITE.open(null); }
     }
     // ---- кровать: прилечь на минутку ----
@@ -602,7 +602,7 @@ const TALK = (() => {
         if (performance.now() - napAt < 4000) return; napAt = performance.now(); close();
         const el2 = document.getElementById('fade'); el2.classList.add('on');
         speak('おやすみなさい');
-        setTimeout(() => { el2.classList.remove('on'); banner('おはよう！', pick(['Пять минут сна — и снова за слова', 'Бодрость восстановлена', 'Приснилось, что вы говорите по-японски'])); if (typeof audio !== 'undefined') audio.ding(); }, 1800);
+        setTimeout(() => { el2.classList.remove('on'); banner('おはよう！', T(pick(['Пять минут сна — и снова за слова', 'Бодрость восстановлена', 'Приснилось, что вы говорите по-японски']))); if (typeof audio !== 'undefined') audio.ding(); }, 1800);
     }
     // ---- предметы: попробовать еду ----
     function taste(w) {
@@ -638,33 +638,33 @@ const TALK = (() => {
         }
         if (hc && hc.dist < (inside.on ? 3.8 : 3.6)) {
             const ch = hc.ch, stall = !inside.on && FESTIVAL.stalls ? FESTIVAL.stalls.find((s) => s.ch === ch) : null;
-            if (stall) out.push({ icon: '🍢', t: 'Заказать', fn: () => order(stall) }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
-            else if (ch.role === 'dev') out.push({ icon: '✉', t: 'Оставить отзыв', fn: () => { close(); MAIL.open(); } }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
-            else if (ch.role === 'pianist' && !ch.playing) out.push({ icon: '🎹', t: 'Попросить сыграть', fn: () => pianoMenu(ch) }, { icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
-            else if (ch.cat) out.push({ icon: '🐾', t: 'Погладить кота', fn: () => talk(ch) });
-            else out.push({ icon: '💬', t: 'Поговорить', fn: () => talk(ch) });
+            if (stall) out.push({ icon: '🍢', t: T('Заказать'), fn: () => order(stall) }, { icon: '💬', t: T('Поговорить'), fn: () => talk(ch) });
+            else if (ch.role === 'dev') out.push({ icon: '✉', t: T('Оставить отзыв'), fn: () => { close(); MAIL.open(); } }, { icon: '💬', t: T('Поговорить'), fn: () => talk(ch) });
+            else if (ch.role === 'pianist' && !ch.playing) out.push({ icon: '🎹', t: T('Попросить сыграть'), fn: () => pianoMenu(ch) }, { icon: '💬', t: T('Поговорить'), fn: () => talk(ch) });
+            else if (ch.cat) out.push({ icon: '🐾', t: T('Погладить кота'), fn: () => talk(ch) });
+            else out.push({ icon: '💬', t: T('Поговорить'), fn: () => talk(ch) });
             return out;
         }
         const h = pickAt(pt[0], pt[1], inside.on ? 2.8 : 9);
-        if (!inside.on && h && h.door && h.dist < 7.5) out.push({ icon: '🚪', t: 'Войти' + (ROOM_HINT[h.door.userData.door.type] ? ': ' + ROOM_HINT[h.door.userData.door.type] : ''), s: 'door' + h.door.userData.door.z, fn: () => enterRoom(h.door) });
-        if (h && h.radio) out.push({ icon: '📻', t: 'Сменить станцию', fn: () => radioNext() });
-        if (h && h.tv) out.push({ icon: '📺', t: 'Переключить канал', fn: () => tvNext(h.tv) });
-        if (h && h.post) out.push({ icon: '✉', t: 'Написать разработчику', fn: () => { close(); MAIL.open(); } });
-        if (h && h.gacha) out.push({ icon: '🎰', t: 'Крутить гачу', fn: () => gacha() });
-        if (h && h.inner && h.dist < 4.5) out.push({ icon: '🚪', t: 'Пройти: ' + h.innerRu, fn: () => enterInner(h.inner) });
-        if (h && h.bed && h.dist < 3) out.push({ icon: '😴', t: 'Прилечь', fn: () => nap() });
+        if (!inside.on && h && h.door && h.dist < 7.5) out.push({ icon: '🚪', t: T('Войти') + (ROOM_HINT[h.door.userData.door.type] ? ': ' + ROOM_HINT[h.door.userData.door.type] : ''), s: 'door' + h.door.userData.door.z, fn: () => enterRoom(h.door) });
+        if (h && h.radio) out.push({ icon: '📻', t: T('Сменить станцию'), fn: () => radioNext() });
+        if (h && h.tv) out.push({ icon: '📺', t: T('Переключить канал'), fn: () => tvNext(h.tv) });
+        if (h && h.post) out.push({ icon: '✉', t: T('Написать разработчику'), fn: () => { close(); MAIL.open(); } });
+        if (h && h.gacha) out.push({ icon: '🎰', t: T('Крутить гачу'), fn: () => gacha() });
+        if (h && h.inner && h.dist < 4.5) out.push({ icon: '🚪', t: T('Пройти: ') + h.innerRu, fn: () => enterInner(h.inner) });
+        if (h && h.bed && h.dist < 3) out.push({ icon: '😴', t: T('Прилечь'), fn: () => nap() });
         if (h && h.use && h.dist < 3.2 && USE_LABEL[h.use]) out.push({ icon: USE_LABEL[h.use][0], t: USE_LABEL[h.use][1], fn: () => use(h.use) });
-        if (h && h.book && h.dist < 3.2) out.push({ icon: '📖', t: 'Почитать книгу', fn: () => { close(); BOOKS.open(ROOM_THEME[inside.door && inside.door.userData.door.type] || 'street'); } });
-        if (h && h.paper) out.push({ icon: '📰', t: 'Читать газету', fn: () => { close(); PAPER.open(); } });
+        if (h && h.book && h.dist < 3.2) out.push({ icon: '📖', t: T('Почитать книгу'), fn: () => { close(); BOOKS.open(ROOM_THEME[inside.door && inside.door.userData.door.type] || 'street'); } });
+        if (h && h.paper) out.push({ icon: '📰', t: T('Читать газету'), fn: () => { close(); PAPER.open(); } });
         if (h && h.sign && h.sign.word && !h.sign.deco) {
             const sg = h.sign, w = sg.word, id = String(w.id || jpOf(w));
-            out.push({ icon: '🔊', t: 'Произнести', s: id, fn: () => speak(w.kana || jpOf(w)) });
-            if (sg.state !== 'lit') out.push({ icon: '✨', t: 'Повторить', s: id, fn: () => reviewSign(sg) });
-            if (inside.on && canTaste(w)) out.push({ icon: '🥢', t: 'Попробовать', s: id, fn: () => taste(w) });
+            out.push({ icon: '🔊', t: T('Произнести'), s: id, fn: () => speak(w.kana || jpOf(w)) });
+            if (sg.state !== 'lit') out.push({ icon: '✨', t: T('Повторить'), s: id, fn: () => reviewSign(sg) });
+            if (inside.on && canTaste(w)) out.push({ icon: '🥢', t: T('Попробовать'), s: id, fn: () => taste(w) });
         }
         if (inside.on && inside.door && inside.door.userData.door.type === 'class') {
             let bd = null; room.traverse((o) => { if (!bd && o.userData && o.userData.board) bd = o; });
-            if (bd) { _p.set((pt[0] / innerWidth) * 2 - 1, -(pt[1] / innerHeight) * 2 + 1); _ray.setFromCamera(_p, camera); _ray.far = 8; if (_ray.intersectObject(bd, false).length) out.push({ icon: '✍', t: 'Написать на доске', fn: () => { close(); WRITE.open(null); } }); }
+            if (bd) { _p.set((pt[0] / innerWidth) * 2 - 1, -(pt[1] / innerHeight) * 2 + 1); _ray.setFromCamera(_p, camera); _ray.far = 8; if (_ray.intersectObject(bd, false).length) out.push({ icon: '✍', t: T('Написать на доске'), fn: () => { close(); WRITE.open(null); } }); }
         }
         return out;
     }

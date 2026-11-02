@@ -28,7 +28,7 @@ const WRITE = (() => {
     function ui() {
         if (el) return el;
         el = document.createElement('div'); el.id = 'write';
-        el.innerHTML = '<div class="th"><div class="av">✍</div><div class="tt"><div class="nm">Доска</div><div class="rl">напиши слово по порядку черт</div></div><button class="tx" aria-label="Закрыть">×</button></div>'
+        el.innerHTML = '<div class="th"><div class="av">✍</div><div class="tt"><div class="nm">' + T('Доска') + '</div><div class="rl">' + T('напиши слово по порядку черт') + '</div></div><button class="tx" aria-label="Закрыть">×</button></div>'
             + '<div class="card"><div class="kana"></div><div class="mean"></div><div class="prog"></div></div>'
             + '<div class="bd"><div class="host"></div></div><div class="msg"></div>'
             + '<div class="row"><button class="b-show">▶ Порядок черт</button><button class="b-ghost">Обводка</button><button class="b-next">Другое слово</button></div>';

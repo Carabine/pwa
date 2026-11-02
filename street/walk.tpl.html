@@ -13,14 +13,14 @@
     <style>
         #joy { position: absolute; left: 22px; bottom: calc(env(safe-area-inset-bottom, 0px) + 196px); width: 110px; height: 110px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.28); background: rgba(10,10,20,0.3); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); pointer-events: none; opacity: .55; transition: opacity .2s; }
         #joy.on { opacity: 1; border-color: rgba(255,255,255,0.5); }
-        #joy-knob { position: absolute; left: 33px; top: 33px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.8); box-shadow: 0 0 16px rgba(124,140,248,0.9); transition: transform .05s; }
+        #joy-knob { position: absolute; left: 33px; top: 33px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.8); box-shadow: 0 0 16px rgba(63,111,216,0.9); transition: transform .05s; }
         #joy.run #joy-knob { background: #ffb35a; box-shadow: 0 0 18px rgba(255,150,60,0.95); }
         #joy::before { content: ''; position: absolute; inset: 14px; border-radius: 50%; border: 1px dashed rgba(255,255,255,0.18); }
         @media (hover: hover) and (pointer: fine) { #joy { display: none; } }
         .hint .d { display: none; } @media (hover: hover) and (pointer: fine) { .hint .m { display: none; } .hint .d { display: inline; } }
         html body .hud.bottom #music, html body .hud.bottom #gear { width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
         html body .hud.bottom #music { font-size: 22px; } html body .hud.bottom #gear { font-size: 16px; }
-        #music.on { color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 16px rgba(124,140,248,0.7); }
+        #music.on { color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 16px rgba(63,111,216,0.7); }
         #music:not(.on) { color: rgba(255,255,255,0.45); background-image: linear-gradient(135deg, transparent 46%, rgba(255,255,255,0.55) 47%, rgba(255,255,255,0.55) 53%, transparent 54%); }
         html body .hud.bottom #music svg, html body .hud.bottom #gear svg { display: block; flex: none; }
         /* телефон: подсказка слова — в правом верхнем углу, название места — слева под названием квартала */
@@ -29,7 +29,7 @@
             html body #hint.on { transform: translate(0, 0); }
             html body #h-kanji { font-size: 24px; }
         }
-        #walk.on { background: linear-gradient(135deg, #8d9bff, #6a7af0); box-shadow: 0 6px 22px rgba(124,140,248,0.45); }
+        #walk.on { background: linear-gradient(135deg, #3f6fd8, #6b8fe6); box-shadow: 0 6px 22px rgba(63,111,216,0.45); }
         .hint { font-size: 11px; color: var(--muted); font-weight: 500; }
         #fps { position: absolute; left: 10px; bottom: 6px; font: 11px monospace; color: #0f0; }
         #fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity .32s; }
@@ -239,7 +239,7 @@
         #panel .opts.seg .opt.on { background: var(--accent); }
         #panel .opts.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
         #panel .opts.grid .opt { border-radius: 10px; padding: 9px 10px; font-size: 12.5px; line-height: 1.2; text-align: left; }
-        #panel .opts.grid .opt.on { box-shadow: 0 0 12px rgba(124,140,248,0.5); }
+        #panel .opts.grid .opt.on { box-shadow: 0 0 12px rgba(63,111,216,0.5); }
         #panel .opts.tg { display: flex; flex-direction: column; gap: 0; }
         #panel .opts.tg .opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: none; box-shadow: none; border-radius: 0; padding: 9px 2px; font-size: 13.5px; font-weight: 500; text-align: left; }
         #panel .opts.tg .opt + .opt { border-top: 1px solid rgba(255,255,255,0.07); }
@@ -319,7 +319,7 @@
         #sample-offer .so-acts #so-no { font-size: 13px; padding: 10px 14px; }
         @keyframes so-in { from { opacity: 0; transform: translate(-50%, -6px); } to { opacity: 1; transform: translateX(-50%); } }
         #sample-chip { align-self: flex-start; margin-top: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(10,10,20,0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset; color: rgba(255,255,255,0.85); font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap; }
-        #sample-chip u { text-decoration: none; color: #a5b4fc; }
+        #sample-chip u { text-decoration: none; color: #a3bcf2; }
         body.loading #sample-offer, body.loading #sample-chip { visibility: hidden; }
         #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 14px; letter-spacing: 0.04em; pointer-events: none; z-index: 40; transition: opacity .4s; }
     </style>
@@ -377,7 +377,7 @@
     <div class="opts grid"><button class="opt" data-music="city">Ночной город</button><button class="opt" data-music="snow">Снег над крышами</button><button class="opt" data-music="train">Ночной поезд</button><button class="opt" data-music="tea">Чайный дом</button><button class="opt" data-music="stars">Звёзды</button><button class="opt" data-music="harbor">Гавань</button><button class="opt" data-music="radio">Радио за стеной</button><button class="opt" data-music="calm">Тихий вечер</button><button class="opt" data-music="lane">Переулок</button><button class="opt" data-music="lofi">Lo-fi</button></div>
     <h4>Звук и вид</h4>
     <div class="opts tg"><button class="opt" data-voices><span>Голоса прохожих</span><i></i></button><button class="opt" data-rain><span>Дождь</span><i></i></button><button class="opt" data-gyro><span>Гироскоп</span><i></i></button></div>
-    <p class="credits">Голоса: VOICEVOX:春日部つむぎ, VOICEVOX:四国めたん, VOICEVOX:九州そら, VOICEVOX:雨晴はう, VOICEVOX:玄野武宏, VOICEVOX:青山龍星, VOICEVOX:雀松朱司, VOICEVOX:白上虎太郎, VOICEVOX:麒ヶ島宗麟</p>
+    <p class="credits"><span>Голоса:</span> VOICEVOX:春日部つむぎ, VOICEVOX:四国めたん, VOICEVOX:九州そら, VOICEVOX:雨晴はう, VOICEVOX:玄野武宏, VOICEVOX:青山龍星, VOICEVOX:雀松朱司, VOICEVOX:白上虎太郎, VOICEVOX:麒ヶ島宗麟</p>
     </div>
 </div>
 <div id="hint">
@@ -398,13 +398,14 @@
 <div id="rotate"><div class="ph"></div><div class="t">Коснитесь — улица развернётся во весь экран</div><div class="sub">Гулять удобнее, держа телефон горизонтально</div><button type="button" id="rotate-skip">Остаться вертикально</button></div>
 <div id="nowebgl"><div class="msg"></div><div class="why"></div><a href="#" onclick="location.reload(); return false;">Попробовать ещё раз</a></div>
 <script>if (/[?&]src=sample\b/.test(location.search)) document.write('<script src="./sample-words.js"><\/script>'); else if (location.protocol === 'file:') document.write('<script src="./words-busyd.js"><\/script>');</script>
+<script src="./street-i18n.js"></script>
 <script src="./street-data.js"></script>
-<script type="module" onerror="window.__streetFail && window.__streetFail('Не загрузилась 3D-библиотека — похоже, проблема с сетью.', 'модули Three.js не загрузились')">
+<script type="module" onerror="window.__streetFail && window.__streetFail('Не загрузилась 3D-библиотека — похоже, проблема с сетью.', 'Three.js')">
 /*__WALK_JS__*/
 </script>
 <script>(function () {
     function webgl() { try { var c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } }
-    function show(msg, why) { if (window.__walk) return; var el = document.getElementById('nowebgl'); el.querySelector('.msg').textContent = msg; el.querySelector('.why').textContent = why || ''; el.style.display = 'flex'; var l = document.getElementById('loading'); if (l) l.style.display = 'none'; }
+    function show(msg, why) { if (window.__walk) return; var tr = window.T || function (s) { return s; }; msg = tr(msg); why = tr(why || ''); var el = document.getElementById('nowebgl'); el.querySelector('.msg').textContent = msg; el.querySelector('.why').textContent = why || ''; el.style.display = 'flex'; var l = document.getElementById('loading'); if (l) l.style.display = 'none'; }
     var firstErr = '';
     window.__streetFail = show;
     window.addEventListener('error', function (e) {

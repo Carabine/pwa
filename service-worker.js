@@ -1,6 +1,6 @@
 // Пути относительные — SW живёт в /app/, поэтому './' указывает на /app/.
 // ВАЖНО: меняй номер версии при каждом деплое — иначе старый кеш не сбросится.
-const CACHE_NAME = 'animei-cache-v0.0.732';
+const CACHE_NAME = 'animei-cache-v0.0.733';
 // Полный список генерит deploy/build-pwa.mjs из содержимого dist (страницы,
 // css, js, libs; скрытая админка исключена) и подставляет сюда при сборке.
 // В исходнике — только app-shell: без сборки SW тоже работает, офлайн беднее.
@@ -13,8 +13,11 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
     // Set — страховка от дубликата в списке: addAll с повторяющимся URL
     // отвергается целиком, и установка SW молча падает (наступили 20.08).
+    // cache: 'reload' — качаем мимо HTTP-кеша браузера: у /app/ нет Cache-Control,
+    // и addAll мог положить в офлайн-копию старый файл (словарь без новых ключей
+    // при свежем app.js → в меню «nav.apps» вместо перевода).
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll([...new Set(urlsToCache)]))
+        caches.open(CACHE_NAME).then((cache) => cache.addAll([...new Set(urlsToCache)].map((u) => new Request(u, { cache: 'reload' }))))
     );
 });
 

@@ -4,7 +4,7 @@
     const T = ['dev', 'animeshop', 'bedroom'];
     ROOMX.types.push(...T);
     Object.assign(ROOMX.names, { bedroom: '寝室 · спальня', dev: '開発室 · комната разработчика', animeshop: 'アニメショップ · аниме-магазин' });
-    Object.assign(ROOMX.hints, { bedroom: 'Спальня', dev: 'Комната разработчика', animeshop: 'Аниме-магазин' });
+    Object.assign(ROOMX.hints, { bedroom: window.T('Спальня'), dev: window.T('Комната разработчика'), animeshop: window.T('Аниме-магазин') });
     Object.assign(ROOMX.alias, { bedroom: 'home', dev: 'class', animeshop: 'konbini' });
     Object.assign(ROOMX.surf, { bedroom: 'home', dev: 'home', animeshop: 'konbini' });
     Object.assign(ROOMX.size, {

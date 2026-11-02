@@ -351,7 +351,8 @@ const ORD = ['Первый', 'Второй', 'Третий', 'Четвёртый
 function districtName(seed, used) {
     const rnd = mulberry32(seed);
     for (let tries = 0; tries < 20; tries++) {
-        const nm = rnd() < 0.18 ? ORD[Math.floor(rnd() * ORD.length)] + ' квартал' : NAME_A[Math.floor(rnd() * NAME_A.length)] + ' ' + NAME_B[Math.floor(rnd() * NAME_B.length)];
+        const NL = window.SL_NAMES || { ord: ORD, a: NAME_A, b: NAME_B, q: ' квартал' };
+        const nm = rnd() < 0.18 ? NL.ord[Math.floor(rnd() * NL.ord.length)] + NL.q : NL.a[Math.floor(rnd() * NL.a.length)] + ' ' + NL.b[Math.floor(rnd() * NL.b.length)];
         if (!used.has(nm)) { used.add(nm); return nm; }
     }
     return NAME_A[seed % NAME_A.length] + ' ' + NAME_B[seed % NAME_B.length];
@@ -530,7 +531,7 @@ const dynSigns = []; // мигающие и зажигающиеся
 let skyMesh = null, skyTheme = '', endGateZ = -1e9, endShown = 0;
 // сколько ещё выучить до следующего «открытия» (каждые 25 слов)
 const nextUnlock = () => { const lit = data && data.words ? litCount() : 0; return { lit, need: Math.max(1, Math.ceil((lit + 1) / 25) * 25 - lit) }; };
-const plural3 = (n, a, b, c) => { const m = n % 10, h = n % 100; return (m === 1 && h !== 11) ? a : (m >= 2 && m <= 4 && (h < 12 || h > 14)) ? b : c; };
+const plural3 = (n, a, b, c) => { const l = window.SL_PLURAL && SL_PLURAL(n, a); if (l) return l; const m = n % 10, h = n % 100; return (m === 1 && h !== 11) ? a : (m >= 2 && m <= 4 && (h < 12 || h > 14)) ? b : c; };
 // конец коридора: опущенная решётка с табличкой — дальше пока закрыто
 // красный почтовый ящик (ポスト) у начала улицы: «✉ Написать нам» — отзыв уходит в админку
 const postMeshes = [];
@@ -562,9 +563,9 @@ function buildEndGate() {
     const c = document.createElement('canvas'); c.width = 1024; c.height = 400; const cg = c.getContext('2d');
     cg.fillStyle = '#1c1814'; cg.fillRect(0, 0, 1024, 400); cg.strokeStyle = '#c8a050'; cg.lineWidth = 10; cg.strokeRect(14, 14, 996, 372);
     cg.fillStyle = '#ffb35a'; cg.textAlign = 'center'; cg.font = '900 92px ' + JP; cg.fillText('この先、準備中', 512, 128);
-    cg.fillStyle = '#f4ecd8'; cg.font = '700 46px ' + UI; cg.fillText('Дальше пока закрыто', 512, 210);
-    cg.font = '500 38px ' + UI; cg.fillText('Выучите ещё ' + need + ' ' + plural3(need, 'слово', 'слова', 'слов'), 512, 290);
-    cg.fillText('— и откроется новый квартал', 512, 342);
+    cg.fillStyle = '#f4ecd8'; cg.font = '700 46px ' + UI; cg.fillText(T('Дальше пока закрыто'), 512, 210);
+    cg.font = '500 38px ' + UI; cg.fillText(T('Выучите ещё {n} {w}', { n: need, w: plural3(need, 'слово', 'слова', 'слов') }), 512, 290);
+    cg.fillText(T('— и откроется новый квартал'), 512, 342);
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.02), new THREE.MeshBasicMaterial({ map: makeTex(c), fog: true, color: new THREE.Color(0.82, 0.82, 0.82) })); // приглушена, чтобы свечение не выжигало текст sign.position.set(0, 2.0, z + 0.06); world.add(sign);
     [-1, 1].forEach((k) => { const cone = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.55, 12), lamb('#e8601a')); cone.position.set(k * 1.6, 0.27, z + 0.7); world.add(cone); });
     const lamp = new THREE.PointLight(0xffd8a0, 2.2, 7, 1.6); lamp.position.set(0, 3.6, z + 1.5); world.add(lamp);
@@ -693,7 +694,7 @@ function buildWorld() {
         [-1, 1].forEach((side) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.25, 4.2, 0.25), post); p.position.set(side * (W2 - 0.35), 2.1, z); world.add(p); addCollider(p, null, 0.2); });
         const beam = new THREE.Mesh(new THREE.BoxGeometry(th.W - 0.4, 0.25, 0.25), post); beam.position.set(0, 4.2, z); world.add(beam);
         const tube = new THREE.Mesh(new THREE.BoxGeometry(th.W - 0.4, 0.06, 0.06), new THREE.MeshBasicMaterial({ color: new THREE.Color(mix(col, '#ffffff', 0.4)) })); tube.position.set(0, 4.05, z + 0.14); world.add(tube);
-        const name = next ? next.q.name : 'Конец улицы';
+        const name = next ? next.q.name : T('Конец улицы');
         const gt = texGate(name, '', col);
         const gw = Math.min(th.W - 0.8, 4.4);
         const sign = new THREE.Mesh(new THREE.PlaneGeometry(gw, gw / 4), new THREE.MeshBasicMaterial({ map: gt, transparent: true }));
@@ -1142,7 +1143,7 @@ const room = new THREE.Group(); room.visible = false; scene.add(room);
 const inside = { on: false, block: null, strips: [], lights: [], saved: null, door: null, steam: [] };
 const ROOM = { w: 7.6, d: 11.5, h: 3.2, doorX: 1.4, innerX: null };
 // вторая комната за внутренней дверью: [тип, надпись, куда ведёт]
-const INNER = { home: ['bedroom', '寝室', 'спальня'], loft: ['bedroom', '寝室', 'спальня'], washitsu: ['bedroom', '寝室', 'спальня'], izakaya: ['washitsu', '座敷', 'отдельный зал'], class: ['books', '図書室', 'школьная библиотека'], animeshop: ['arcade', '２階', 'игровой этаж'] };
+const INNER = { home: ['bedroom', '寝室', T('спальня')], loft: ['bedroom', '寝室', T('спальня')], washitsu: ['bedroom', '寝室', T('спальня')], izakaya: ['washitsu', '座敷', T('отдельный зал')], class: ['books', '図書室', T('школьная библиотека')], animeshop: ['arcade', '２階', T('игровой этаж')] };
 function innerDoorTex(jp, ru) {
     const c = document.createElement('canvas'); c.width = 256; c.height = 540; const g = c.getContext('2d');
     g.fillStyle = '#c8a878'; g.fillRect(0, 0, 256, 540); g.strokeStyle = '#7a5a36'; g.lineWidth = 10; g.strokeRect(5, 5, 246, 530);
@@ -1166,7 +1167,7 @@ function enterInner(t2) {
     fade(() => {
         inside.door = { userData: { door: Object.assign({}, parent.userData.door, { type: t2, z: parent.userData.door.z + 0.37, parentDoor: parent }) } };
         buildRoom(b, parent.userData.door.color, t2); LIFE.onEnter();
-        camera.position.set(ROOM.doorX - 0.5, 1.6, ROOM.d / 2 - 1.1); yaw = tYaw = 0.1; pitch = tPitch = 0; vel.set(0, 0, 0); hideHint(); document.getElementById('exit').textContent = '← Назад';
+        camera.position.set(ROOM.doorX - 0.5, 1.6, ROOM.d / 2 - 1.1); yaw = tYaw = 0.1; pitch = tPitch = 0; vel.set(0, 0, 0); hideHint(); document.getElementById('exit').textContent = T('← Назад');
         { const [jp, ru] = String(ROOM_NAMES[t2] || '').split(' · '); banner(spec[1] || jp || '', (spec[2] || ru || '') + ' · ' + b.q.name); }
     });
 }
@@ -1176,12 +1177,12 @@ function backToParent() {
     fade(() => {
         inside.door = parent; buildRoom(b, parent.userData.door.color, parent.userData.door.type); LIFE.onEnter();
         const x = ROOM.innerX != null ? ROOM.innerX : ROOM.doorX - 0.5;
-        camera.position.set(x, 1.6, ROOM.innerX != null ? -ROOM.d / 2 + 1.1 : ROOM.d / 2 - 1.1); yaw = tYaw = ROOM.innerX != null ? Math.PI : 0; pitch = tPitch = 0; vel.set(0, 0, 0); hideHint(); document.getElementById('exit').textContent = '← На улицу';
+        camera.position.set(x, 1.6, ROOM.innerX != null ? -ROOM.d / 2 + 1.1 : ROOM.d / 2 - 1.1); yaw = tYaw = ROOM.innerX != null ? Math.PI : 0; pitch = tPitch = 0; vel.set(0, 0, 0); hideHint(); document.getElementById('exit').textContent = T('← На улицу');
         { const [jp, ru] = String(ROOM_NAMES[parent.userData.door.type] || '').split(' · '); banner(jp || '', (ru || '') + ' · ' + b.q.name); }
     });
 } // размеры текущей комнаты, задаются генератором
 const ROOM_TYPES = ['izakaya', 'konbini', 'class', 'home'];
-const ROOM_NAMES = { izakaya: '居酒屋 · идзакая', konbini: 'コンビニ · комбини', class: '塾 · вечерняя школа', home: '部屋 · квартира' };
+const ROOM_NAMES = { izakaya: '居酒屋 · ' + T('идзакая'), konbini: 'コンビニ · ' + T('комбини'), class: '塾 · ' + T('вечерняя школа'), home: '部屋 · ' + T('квартира') };
 ROOM_TYPES.push(...ROOMX.types); Object.assign(ROOM_NAMES, ROOMX.names);
 const _plaques = new Map();
 function texPlaque(ch) { if (_plaques.has(ch)) return _plaques.get(ch); const t = texPlaque0(ch); t.userData.shareable = true; t.userData.shared = true; _plaques.set(ch, t); return t; }
@@ -1615,7 +1616,7 @@ function placeRadio(free) {
 const radio = { g: null, led: null, needle: null };
 const RADIO_ROOMS = new Set(['home', 'oneroom', 'washitsu', 'loft', 'izakaya', 'ramen', 'cafe']); // в комбини, классе, книжном и игровом зале радио нет
 function radioNext() { const v = audio.nextStation(); toast('📻 ' + (STATION_NAMES[v] || v)); document.querySelectorAll('#panel [data-music]').forEach((x) => x.classList.toggle('on', x.dataset.music === v)); if (radio.needle) radio.needle.position.x = 0.04 + (audio.stationIndex() / 9) * 0.1; }
-const STATION_NAMES = { city: 'Ночной город', snow: 'Снег над крышами', train: 'Ночной поезд', tea: 'Чайный дом', stars: 'Звёзды', harbor: 'Гавань', radio: 'Радио за стеной', calm: 'Тихий вечер', lane: 'Переулок', lofi: 'Lo-fi' };
+const STATION_NAMES = { city: T('Ночной город'), snow: T('Снег над крышами'), train: T('Ночной поезд'), tea: T('Чайный дом'), stars: T('Звёзды'), harbor: T('Гавань'), radio: T('Радио за стеной'), calm: T('Тихий вечер'), lane: T('Переулок'), lofi: 'Lo-fi' };
 let fading = false;
 function enterRoom(door) {
     if (fading || inside.on) return;
@@ -1972,7 +1973,7 @@ const audio = (() => {
         setMotion(k) { if (motionGain && ctx) { motionGain._lfo.gain.setTargetAtTime(Math.min(1, k) * 0.04, ctx.currentTime, 0.1); } },
         playSong, stopSong,
         ding() { if (!ctx || !enabled || !master) return; const w = ctx.currentTime; [N.C5, N.E5, N.G5, 1046.5].forEach((f, i) => keys(ctx, f, w + i * 0.08, 0.6, 0.05, master)); },
-        toggle() { enabled = !enabled; saveSet({ music2: enabled }); btn.classList.toggle('on', enabled); if (!enabled) { stop(); if (ctx) ctx.suspend(); } else this.resume(); toast(enabled ? 'Звук включён' : 'Звук выключен'); },
+        toggle() { enabled = !enabled; saveSet({ music2: enabled }); btn.classList.toggle('on', enabled); if (!enabled) { stop(); if (ctx) ctx.suspend(); } else this.resume(); toast(enabled ? T('Звук включён') : T('Звук выключен')); },
         get enabled() { return enabled; },
         get state() { return ctx ? ctx.state : 'none'; },
         // уровень на выходе (для проверок): RMS за 50 мс
@@ -2066,7 +2067,7 @@ document.addEventListener('pointerlockchange', () => { if (!document.pointerLock
 // гироскоп: телефон как окно в улицу (на iOS нужно разрешение по тапу)
 async function toggleGyro(btn) {
     if (gyro) { window.removeEventListener('deviceorientation', gyro.fn); gyro = null; btn.classList.remove('on'); saveSet({ gyro: false }); return; }
-    try { if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') { const r = await DeviceOrientationEvent.requestPermission(); if (r !== 'granted') { toast('Нет доступа к датчикам'); return; } } } catch (err) { toast('Нет доступа к датчикам'); return; }
+    try { if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') { const r = await DeviceOrientationEvent.requestPermission(); if (r !== 'granted') { toast(T('Нет доступа к датчикам')); return; } } } catch (err) { toast(T('Нет доступа к датчикам')); return; }
     gyro = { base: null, fn: null };
     gyro.fn = (e) => {
         if (e.alpha == null) return;
@@ -2075,7 +2076,7 @@ async function toggleGyro(btn) {
         let da = al - gyro.base.a; if (da > Math.PI) da -= Math.PI * 2; if (da < -Math.PI) da += Math.PI * 2;
         tYaw = gyro.base.yaw + da; tPitch = clamp(gyro.base.pitch + (bt - gyro.base.b) * 0.9, -1, 1);
     };
-    window.addEventListener('deviceorientation', gyro.fn); btn.classList.add('on'); saveSet({ gyro: true }); toast('Поворачивай телефон, чтобы осмотреться');
+    window.addEventListener('deviceorientation', gyro.fn); btn.classList.add('on'); saveSet({ gyro: true }); toast(T('Поворачивай телефон, чтобы осмотреться'));
 }
 const gyroBtn = document.querySelector('#panel [data-gyro]');
 if (gyroBtn) { gyroBtn.hidden = !('DeviceOrientationEvent' in window) || !('ontouchstart' in window); gyroBtn.addEventListener('click', () => toggleGyro(gyroBtn)); }
@@ -2092,18 +2093,18 @@ function tap(x, y) {
     if (h.tv) { buzz(10); tvNext(h.tv); return; }
     if (h.paper) { buzz(10); TALK.close(); PAPER.open(); return; }
     if (h.gacha) { if (h.dist < 3) { buzz(12); TALK.gacha(); } return; }
-    if (h.inner) { if (h.dist < 4.5) { buzz(15); enterInner(h.inner); } else toast('Подойдите ближе к двери'); return; }
+    if (h.inner) { if (h.dist < 4.5) { buzz(15); enterInner(h.inner); } else toast(T('Подойдите ближе к двери')); return; }
     if (h.bed) { if (h.dist < 3) { buzz(10); TALK.nap(); } return; }
     if (h.use) { if (h.dist < 3.2) { buzz(10); TALK.use(h.use); } return; }
     if (h.book) { if (h.dist < 3.2) { buzz(10); TALK.close(); BOOKS.open(ROOM_THEME[inside.door && inside.door.userData.door.type] || 'street'); } return; }
-    if (h.post) { if (h.dist < 6) { buzz(10); TALK.close(); MAIL.open(); } else toast('Подойдите ближе к почтовому ящику'); return; }
-    if (h.door) { if (h.dist < 7) { buzz(15); enterRoom(h.door); } else toast('Подойди ближе к двери'); return; }
+    if (h.post) { if (h.dist < 6) { buzz(10); TALK.close(); MAIL.open(); } else toast(T('Подойдите ближе к почтовому ящику')); return; }
+    if (h.door) { if (h.dist < 7) { buzz(15); enterRoom(h.door); } else toast(T('Подойди ближе к двери')); return; }
     buzz(10); showHint(h.sign, true);
 }
 
 // ---- подсказка сверху: наведение (прицел / курсор) или тап, без модалки ----
-const STATE_LABEL = { lit: 'выучено', warm: 'учу', new: 'новое', due: 'пора повторить', worn: 'забывается' };
-const ROOM_HINT = { izakaya: 'Идзакая', konbini: 'Комбини', class: 'Вечерняя школа', home: 'Квартира' }; Object.assign(ROOM_HINT, ROOMX.hints); Object.assign(ROOM_HINT, ROOMX.hints);
+const STATE_LABEL = { lit: T('выучено'), warm: T('учу'), new: T('новое'), due: T('пора повторить'), worn: T('забывается') };
+const ROOM_HINT = { izakaya: T('Идзакая'), konbini: T('Комбини'), class: T('Вечерняя школа'), home: T('Квартира') }; Object.assign(ROOM_HINT, ROOMX.hints); Object.assign(ROOM_HINT, ROOMX.hints);
 const hintEl = document.getElementById('hint');
 const hover = { sign: null, door: null, sticky: 0, lastMouse: null, frame: 0, gazeKey: null, gazeT: 0 };
 // телефон: подсказка по взгляду — что в центре экрана (до 7 м), то и подписываем, после короткой задержки
@@ -2194,8 +2195,8 @@ function voiceLine(ch, line, force) {
 function pickAt(x, y, d) { return pick(x, y, d); }
 function tvNext(m) {
     const n = LIFE.nextChannel(m.userData.canvasTex || m.material.map); if (!n) return;
-    if (n[0] === 'アニメ' && ANITV.ensure()) setTimeout(() => { const r = ANITV.resumed; toast(r ? '📺 «' + r.title + '» · серия ' + r.ep + ' — с того места, где вы остановились' : '📺 アニメ — ' + (ANITV.title ? '«' + ANITV.title + '»' : 'аниме') + (ANITV.mine ? ' · сцена из вашего словаря' : '')); }, 900);
-    else toast('📺 ' + n[0] + ' — ' + n[1]);
+    if (n[0] === 'アニメ' && ANITV.ensure()) setTimeout(() => { const r = ANITV.resumed; toast(r ? T('📺 «{t}» · серия {ep} — с того места, где вы остановились', { t: r.title, ep: r.ep }) : '📺 アニメ — ' + (ANITV.title ? '«' + ANITV.title + '»' : T('аниме')) + (ANITV.mine ? T(' · сцена из вашего словаря') : '')); }, 900);
+    else toast('📺 ' + n[0] + ' — ' + T(n[1]));
 }
 // газета на столе (котацу, тябудай, столик кафе) — одна на комнату
 const PAPER_SPOTS = { kotatsu: [0.62, 0.415, 0, 0.3], chabudai: [-0.05, 0.362, -0.3, -0.4], cafeTable: [0, 0.763, -0.21, 0.2] };
@@ -2254,10 +2255,10 @@ function showDoorHint(door) {
     hintEl.classList.add('door');
     document.getElementById('h-kanji').textContent = { izakaya: '居酒屋', konbini: 'コンビニ', class: '塾', home: '部屋' }[d.type] || '';
     document.getElementById('h-kana').textContent = '';
-    document.getElementById('h-tr').textContent = (ROOM_HINT[d.type] || 'Дверь') + ' — ' + (FINE ? 'клик' : 'тап') + ', чтобы войти';
+    document.getElementById('h-tr').textContent = T(FINE ? '{r} — клик, чтобы войти' : '{r} — тап, чтобы войти', { r: ROOM_HINT[d.type] || T('Дверь') });
     const st = document.getElementById('h-state'); st.textContent = ''; st.className = 'state';
     document.getElementById('h-jlpt').hidden = true; document.getElementById('h-review').hidden = true; document.getElementById('h-key').hidden = true;
-    hintEl.style.setProperty('--c', d.color || '#7c8cf8');
+    hintEl.style.setProperty('--c', d.color || '#3f6fd8');
     hintEl.classList.add('on');
 }
 function hideHint() { if (!hover.sign && !hover.door) return; hover.sign = null; hover.door = null; hover.sticky = 0; hintEl.classList.remove('on'); }
@@ -2311,13 +2312,13 @@ function reviewSign(s) {
     audio.ding(); buzz(12);
     s.glow.forEach((g) => { if (g.material) g.material.opacity = Math.min(0.5, g.material.opacity / 0.55); });
     hover.sign = null; showHint(s, true);
-    updateHud(); toast(source === 'demo' ? 'Вывеска зажглась (в макете расписание не меняется)' : 'Вывеска зажглась — повторение считается в тренажёре');
+    updateHud(); toast(source === 'demo' ? T('Вывеска зажглась (в макете расписание не меняется)') : T('Вывеска зажглась — повторение считается в тренажёре'));
 }
 document.getElementById('h-review').addEventListener('click', () => reviewSign(hover.sign));
 window.addEventListener('keydown', (e) => { if (e.code === 'KeyR' && hover.sign) reviewSign(hover.sign); });
 
 // ---- HUD ----
-function plural(n, a, b, c) { const m = n % 10, h = n % 100; if (m === 1 && h !== 11) return a; if (m >= 2 && m <= 4 && (h < 10 || h >= 20)) return b; return c; }
+function plural(n, a, b, c) { const l = window.SL_PLURAL && SL_PLURAL(n, a); if (l) return l; const m = n % 10, h = n % 100; if (m === 1 && h !== 11) return a; if (m >= 2 && m <= 4 && (h < 10 || h >= 20)) return b; return c; }
 let hudBlock = -1;
 function updateHud(force) {
     if (!blocks.length) return; // данные ещё грузятся (JLPT по сети)
@@ -2329,14 +2330,14 @@ function updateHud(force) {
         document.getElementById('q-emoji').textContent = '';
         document.getElementById('q-name').textContent = q.name;
         const total = data.words.length;
-        document.getElementById('q-sub').textContent = 'квартал ' + (bi + 1) + ' из ' + blocks.length + ' · ' + total + ' ' + plural(total, 'слово', 'слова', 'слов') + ' на всей улице';
+        document.getElementById('q-sub').textContent = T('квартал {i} из {n} · {t} {w} на всей улице', { i: bi + 1, n: blocks.length, t: total, w: plural(total, 'слово', 'слова', 'слов') });
         document.getElementById('dots').innerHTML = blocks.map((_, k) => '<i' + (k === bi ? ' class="on"' : '') + '></i>').join('');
     }
 }
 let toastT = 0;
 // заставка места: крупное японское название и подпись — вверху по центру, без плашки
 let bannerT = 0;
-const THEME_JP = { shinjuku: ['新宿', 'Синдзюку'], yokocho: ['横丁', 'Ёкотё'], matsuri: ['お祭り', 'Мацури'], sando: ['参道', 'Сандо'] };
+const THEME_JP = { shinjuku: ['新宿', T('Синдзюку')], yokocho: ['横丁', T('Ёкотё')], matsuri: ['お祭り', T('Мацури')], sando: ['参道', T('Сандо')] };
 function banner(jp, ru) { const el = document.getElementById('place'); if (!el) return; el.querySelector('.jp').textContent = jp; el.querySelector('.ru').textContent = ru; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); clearTimeout(bannerT); bannerT = setTimeout(() => el.classList.remove('show'), 3200); }
 function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2600); }
 
@@ -2349,10 +2350,10 @@ document.getElementById('share').addEventListener('click', async () => {
     g.fillText(document.getElementById('q-emoji').textContent + ' ' + document.getElementById('q-name').textContent, 18, 22);
     g.font = '700 30px ' + UI; g.textAlign = 'right'; g.fillText(String(litCount()), W - 18, 16);
     g.font = '500 12px ' + UI; g.fillStyle = 'rgba(255,255,255,0.75)'; g.fillText(plural(litCount(), 'вывеска горит', 'вывески горят', 'вывесок горит'), W - 18, 50);
-    g.textAlign = 'left'; g.font = '600 13px ' + UI; g.fillStyle = 'rgba(255,255,255,0.7)'; g.fillText('animei.space · Улица слов', 18, H - 34);
+    g.textAlign = 'left'; g.font = '600 13px ' + UI; g.fillStyle = 'rgba(255,255,255,0.7)'; g.fillText(T('animei.space · Улица слов'), 18, H - 34);
     const blob = await new Promise((res) => c.toBlob(res, 'image/png'));
     const file = new File([blob], 'animei-street.png', { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'Улица слов' }); return; } catch (e) { /* отменили */ } }
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: T('Улица слов') }); return; } catch (e) { /* отменили */ } }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 });
 
@@ -2374,9 +2375,9 @@ panel.querySelectorAll('[data-src]').forEach((b) => {
 if (SAMPLE) panel.querySelectorAll('a[data-theme]').forEach((a) => { const u = new URL(a.href, location.href); u.searchParams.set('src', 'sample'); a.href = u.toString(); });
 panel.querySelectorAll('[data-music]').forEach((b) => { b.classList.toggle('on', b.dataset.music === audio.variant); b.addEventListener('click', () => { audio.setVariant(b.dataset.music); panel.querySelectorAll('[data-music]').forEach((x) => x.classList.toggle('on', x === b)); }); });
 panel.querySelectorAll('[data-theme]').forEach((b) => { b.classList.toggle('on', b.dataset.theme === th.id); });
-if (window.STREET_WORDS && window.STREET_WORDS.words && !SAMPLE && location.protocol === 'file:') panel.querySelector('[data-src="demo"]').textContent = 'Мой словарь (выгрузка)';
+if (window.STREET_WORDS && window.STREET_WORDS.words && !SAMPLE && location.protocol === 'file:') panel.querySelector('[data-src="demo"]').textContent = T('Мой словарь (выгрузка)');
 const voiceBtn = panel.querySelector('[data-voices]');
-if (voiceBtn) { voiceBtn.classList.toggle('on', voicesPref); voiceBtn.addEventListener('click', () => { voicesPref = !voicesPref; saveSet({ voices: voicesPref }); voiceBtn.classList.toggle('on', voicesPref); if (!voicesPref) { if (talkAudio) talkAudio.pause(); if (ambAudio) ambAudio.pause(); } toast(voicesPref ? 'Голоса включены' : 'Голоса выключены'); }); }
+if (voiceBtn) { voiceBtn.classList.toggle('on', voicesPref); voiceBtn.addEventListener('click', () => { voicesPref = !voicesPref; saveSet({ voices: voicesPref }); voiceBtn.classList.toggle('on', voicesPref); if (!voicesPref) { if (talkAudio) talkAudio.pause(); if (ambAudio) ambAudio.pause(); } toast(voicesPref ? T('Голоса включены') : T('Голоса выключены')); }); }
 const rainBtn = panel.querySelector('[data-rain]'); rainBtn.hidden = false; rainBtn.classList.toggle('on', opts.rain);
 rainBtn.addEventListener('click', () => { opts.rain = !opts.rain; saveSet({ rain: opts.rain }); rainBtn.classList.toggle('on', opts.rain); if (rain) rain.visible = opts.rain; });
 const reflBtn = { classList: { remove() {}, toggle() {} } }; // кнопки отражений больше нет
@@ -2394,11 +2395,11 @@ function sampleOffer(n) {
     try { declined = localStorage.getItem(SAMPLE_OFFER_KEY); } catch (e) { /* приватный режим */ }
     if (declined !== null && n <= Number(declined) + 4) return;
     const el = document.getElementById('sample-offer');
-    el.querySelector('.so-t').textContent = n ? 'Твоя улица пока почти пустая' : 'У тебя пока нет своих слов';
+    el.querySelector('.so-t').textContent = n ? T('Твоя улица пока почти пустая') : T('У тебя пока нет своих слов');
     el.querySelector('.so-p').textContent = (n
-        ? 'Каждое сохранённое слово — своя вывеска, а у тебя их ' + n + '. '
-        : 'Сейчас горит встроенный набор. ')
-        + 'Загляни на улицу с тестовой колодой: больше 600 слов — выученные, на повторении, новые.';
+        ? T('Каждое сохранённое слово — своя вывеска, а у тебя их {n}. ', { n })
+        : T('Сейчас горит встроенный набор. '))
+        + T('Загляни на улицу с тестовой колодой: больше 600 слов — выученные, на повторении, новые.');
     el.hidden = false;
     if (document.pointerLockElement) document.exitPointerLock();
     document.getElementById('so-go').onclick = () => { const u = new URL(location.href); u.searchParams.set('src', 'sample'); location.href = u.toString(); };
@@ -2512,7 +2513,7 @@ function frame(now) {
     // туман и фон плавно переходят к теме квартала
     if (!inside.on && scene.fog && scene.fog.isFogExp2) { const k = 1 - Math.exp(-dt * 1.4); _fogC.set(th.fog); scene.fog.color.lerp(_fogC, k); scene.fog.density += (th.fogD - scene.fog.density) * k; _fogC.set(th.sky); if (scene.background && scene.background.isColor) scene.background.lerp(_fogC, k); hemi.color.lerp(_fogC.set(th.fog), k); }
     if (rain) rain.visible = opts.rain && !!th.rain && !inside.on;
-    if (!inside.on && camera.position.z < endGateZ + 5 && performance.now() - endShown > 15000) { endShown = performance.now(); const { need } = nextUnlock(); banner('この先、準備中', 'Выучите ещё ' + need + ' ' + plural3(need, 'слово', 'слова', 'слов') + ' — откроется новый квартал'); }
+    if (!inside.on && camera.position.z < endGateZ + 5 && performance.now() - endShown > 15000) { endShown = performance.now(); const { need } = nextUnlock(); banner('この先、準備中', T('Выучите ещё {n} {w} — откроется новый квартал', { n: need, w: plural3(need, 'слово', 'слова', 'слов') })); }
     FESTIVAL.update(t, dt); TEMPLE.update(t, dt); // сами решают: новые вспышки — только на Мацури, листья — только на Сандо
     TALK.update();
     if (inside.on && radio.led && radio.g && radio.g.parent) radio.led.material.color.setHSL(0.03, 1, 0.35 + 0.25 * (Math.sin(t * 3.2) * 0.5 + 0.5));
@@ -2532,7 +2533,7 @@ requestAnimationFrame(frame);
     if (!phone) return;
     const ov = document.getElementById('rotate'), portrait = () => innerHeight > innerWidth;
     let skipped = false, lockFailed = false;
-    const sync = () => { ov.classList.toggle('on', portrait() && !skipped); if (lockFailed) { ov.querySelector('.t').textContent = 'Поверните телефон горизонтально'; ov.querySelector('.sub').textContent = 'Этот браузер не умеет поворачивать экран сам'; } };
+    const sync = () => { ov.classList.toggle('on', portrait() && !skipped); if (lockFailed) { ov.querySelector('.t').textContent = T('Поверните телефон горизонтально'); ov.querySelector('.sub').textContent = T('Этот браузер не умеет поворачивать экран сам'); } };
     const go = async () => {
         try { if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen({ navigationUI: 'hide' }); } catch (e) { /* без полного экрана */ }
         try { await screen.orientation.lock('landscape'); lockFailed = false; } catch (e) { lockFailed = true; }
