@@ -646,7 +646,7 @@
     transition: border-color var(--transition), background var(--transition);
 }
 .word-check.is-on {
-    color: #0a0a0f;
+    color: #fff;
     background: var(--primary);
     border-color: var(--primary);
 }
@@ -735,7 +735,7 @@
 .words-bulkbar__btn--primary {
     background: var(--primary);
     border-color: var(--primary);
-    color: #0a0a0f;
+    color: #fff;
     font-weight: 600;
 }
 @media (hover: hover) and (pointer: fine) {
