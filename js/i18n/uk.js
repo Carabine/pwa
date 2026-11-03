@@ -685,7 +685,6 @@ window.I18N_UK = {
         'feedback.thanks': 'Дякуємо, що допомагаєш!',
 
         'nav.settings': 'Налаштування',
-        'nav.account': 'Налаштування акаунта',
         'nav.progress': 'Мій прогрес',
         'progress.title': 'Мій прогрес',
         'progress.subtitle': 'Усе, що ви зібрали й вивчили',

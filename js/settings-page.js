@@ -8,8 +8,7 @@
 
     // ---- Вкладки: «Приложение» / «Аккаунт» ----
     // Активная вкладка живёт в хэше (#account), а не в состоянии страницы:
-    // так на неё можно дать ссылку — этим и пользуется пункт «Настройки
-    // аккаунта» в меню профиля (см. renderAuthState в app.js).
+    // так на неё можно дать ссылку.
     const tabs = Array.from(document.querySelectorAll('.settings-tab'));
     if (tabs.length) {
         const panel = (name) => document.getElementById('panel-' + name);

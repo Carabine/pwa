@@ -690,7 +690,6 @@ const I18N = {
         'feedback.thanks': 'Спасибо, что помогаешь!',
 
         'nav.settings': 'Настройки',
-        'nav.account': 'Настройки аккаунта',
         'nav.progress': 'Мой прогресс',
         'progress.title': 'Мой прогресс',
         'progress.subtitle': 'Всё, что вы собрали и выучили',

@@ -686,7 +686,6 @@ window.I18N_EN = {
         'feedback.thanks': 'Thank you for helping!',
 
         'nav.settings': 'Settings',
-        'nav.account': 'Account settings',
         'nav.progress': 'My progress',
         'progress.title': 'My progress',
         'progress.subtitle': 'Everything you have collected and learned',
