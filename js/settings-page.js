@@ -299,3 +299,38 @@
 
     renderStatus();
 })();
+
+// Установка приложения. Промпт ловит app.js (beforeinstallprompt → deferredPrompt,
+// общая глобальная let). Нет промпта — значит, браузер установку сейчас не
+// предлагает: уже установлено, iOS или установка спрятана в меню браузера —
+// тогда подсказываем, где её искать.
+(function () {
+    const note = document.getElementById('install-card-note');
+    const btn = document.getElementById('install-card-btn');
+    if (!note || !btn || typeof isAppInstalled !== 'function') return;
+
+    function render(installed) {
+        const can = !installed && !!deferredPrompt;
+        const key = installed ? 'settings.install.done'
+            : can ? 'settings.install.ready'
+            : isIOS() ? 'install.ios' : 'settings.install.manual';
+        note.dataset.i18n = key;     // язык догрузится позже — applyI18n перепишет
+        note.textContent = t(key);
+        btn.parentElement.hidden = !can;
+    }
+
+    // Обработчики app.js зарегистрированы раньше — deferredPrompt уже выставлен.
+    window.addEventListener('beforeinstallprompt', () => render(false));
+    window.addEventListener('appinstalled', () => render(true));
+    btn.addEventListener('click', async () => {
+        const p = deferredPrompt;
+        if (!p) return;
+        if (window.animeiTrack) window.animeiTrack('install', 'click');
+        p.prompt();
+        const { outcome } = await p.userChoice;
+        deferredPrompt = null;       // промпт одноразовый
+        if (window.animeiTrack) window.animeiTrack('install', outcome);
+        render(outcome === 'accepted');
+    });
+    render(isAppInstalled());
+})();

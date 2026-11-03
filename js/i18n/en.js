@@ -176,6 +176,10 @@ window.I18N_EN = {
         'settings.offline.noNet': 'No connection — can’t download right now',
         'settings.offline.checking': 'Checking what is already on this device…',
         'settings.offline.empty': 'No words yet — nothing to download',
+        'settings.install': 'Install',
+        'settings.install.ready': 'Animei can be installed as an app: its own icon on your screen, opens without the browser bar.',
+        'settings.install.manual': 'Your browser isn’t offering installation right now. If Animei is already on this device, open it from its icon. If not, look in the browser menu (⋮) for «Install app» or «Add to Home screen»; in desktop Chrome it’s under «Cast, save and share» → «Install page as app».',
+        'settings.install.done': '✓ Animei is installed on this device',
         'nav.login': 'Log in',
 
         'ui.quality.title': 'Video quality',
