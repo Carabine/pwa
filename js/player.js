@@ -253,6 +253,7 @@ async function init() {
     // на 10 секунд (холодный тайтл резолвится по внешним источникам долго).
     videoLoading.textContent = t('player.stageTracks');
 
+    state.downProviders = loadDownProviders();
     loadKnownWords();
     loadFranchise();   // параллельно: другие сезоны франшизы для дропдауна
 
@@ -554,6 +555,31 @@ function bestBurnedRuTrack() {
 const STANDIN_ORDER = ['megaplay', 'uniquestream'];
 const FALLBACK_FROM = new Set(['kickassanime', 'megaplay']);
 const isDown = (p) => state.downProviders.has(p);
+// Упавший источник помним и после перезагрузки страницы — на DOWN_TTL, в пределах
+// вкладки, отдельно по тайтлу. 04.11.2026 у MegaPlay 8 минут не отдавался CDN:
+// плеер откатывался на UniqueStream, но следующая серия открывалась заново и
+// снова начинала с упавшего MegaPlay — зритель спотыкался на каждой серии.
+const DOWN_KEY = 'animei:downSrc:' + shikimoriId;
+const DOWN_TTL = 30 * 60 * 1000;
+function readDown() {
+    try { return JSON.parse(sessionStorage.getItem(DOWN_KEY) || '{}') || {}; } catch { return {}; }
+}
+function loadDownProviders() {
+    const m = readDown();
+    return new Set(Object.keys(m).filter((p) => Date.now() - m[p] < DOWN_TTL));
+}
+function rememberDown(p) {
+    const m = readDown();
+    m[p] = Date.now();
+    try { sessionStorage.setItem(DOWN_KEY, JSON.stringify(m)); } catch { /* недоступен — помним до перезагрузки */ }
+}
+// Первая дорожка тайтла, а если её источник лёг — замена из той же цепочки
+// (тот же звук). У тайтлов без KAA (Nana) первая — MegaPlay.
+function firstLiveTrack() {
+    const t0 = state.translations[0];
+    if (!t0 || !isDown(t0.provider)) return t0;
+    return standInFor(t0) || t0;
+}
 function standInFor(track) {
     const dub = track.audio === 'en';
     for (const p of STANDIN_ORDER) {
@@ -611,7 +637,7 @@ function buildSubOptions() {
         // Вшитые в картинку русские не годятся: текста у нас нет.
         else if (!state.humanLangs.includes('uk')) {
             const soft = (lang) => chain.find((t) => t && (t.subLangs || []).includes(lang));
-            const best = kaa || state.translations[0];
+            const best = kaa || firstLiveTrack();
             const human = (lang) => (best && state.humanLangs.includes(lang)
                 ? { track: best, human: true, overBurned: pictureSubLang(best) } : null);
             // Порядок: русские самого KAA → русские anime365 поверх KAA → русские
@@ -634,7 +660,7 @@ function buildSubOptions() {
     // русским, и английские субтитры взять было больше неоткуда. Картинка при
     // этом может быть уже с текстом — так и подписываем, чтобы человек знал,
     // что строк будет две, и сам решал.
-    const best = kaa || state.translations[0];
+    const best = kaa || firstLiveTrack();
     for (const lang of state.humanLangs) {
         // Язык уже представлен — своей дорожкой KAA или вшитым в картинку
         // текстом. Второй строкой того же языка поверх первой смысла нет.
@@ -649,7 +675,7 @@ function buildSubOptions() {
     if (uk > 0) opts.unshift(opts.splice(uk, 1)[0]);
 
     // «Оригинал» — без наложения. Чистая картинка приятнее, но сойдёт любая.
-    const orig = kaa || state.translations[0];
+    const orig = kaa || firstLiveTrack();
     if (orig && !opts.some((o) => o.track === orig && !o.lang)) {
         opts.push({ lang: null, track: orig });
     }
@@ -767,6 +793,7 @@ function fallbackSource(reason) {
     if (!standIn) return false;
     const ep = state.episodes[parseInt(episodeSelect.value, 10)];
     state.downProviders.add(from);
+    rememberDown(from);
     if (state.hls) state.hls.stopLoad();
     if (ep) state.fallbackEpNumber = ep.number;
     // Позиция на замену: где играли; если поток так и не стартовал — ещё не
